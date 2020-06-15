@@ -1,0 +1,39 @@
+{
+    "common_dataset": {
+    "type": "DatasetConfig",
+    "label": "logo_labels",
+    "id": "x",
+    "metadata": "metadata",
+    "features": [
+      [
+	"image",
+	{
+	  "type": "Transformation",
+	  "feature_name": "logos",
+	  "preprocessing": {
+	    "type": "Resize48x48"
+	  },
+	  "augmentation": {
+	    "type": "ImageAugmentation"
+	  }
+	}
+     ],
+     [
+     "metadata", "metadata"
+     ]
+   ]
+  },
+
+  "targets_reader": {
+    "type": "InMemoryH5Reader",
+    "file_pattern": "%(pwd)s/moirai/experiments/icons/icons_w_metadata.h5",
+    "features": ["logos", "logo_labels", "logo_labels", "metadata"]
+  },
+
+
+  "calibration_reader": {
+    "type": "InMemoryH5Reader",
+    "file_pattern": "%(pwd)s/moirai/experiments/icons/icons_w_metadata.h5",
+    "features": ["logos", "logo_labels", "logo_labels", "metadata"]
+  }
+}

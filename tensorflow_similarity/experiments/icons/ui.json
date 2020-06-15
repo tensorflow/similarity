@@ -1,0 +1,30 @@
+{
+	"custom_configuration_module": "moirai.experiments.icons.augmentation",
+	"inputs": [
+		{
+			"parameter_name": "image",
+			"type": "ImageInputHandler"
+		}
+	],
+	"models": {
+		"v0": {
+			"filename": "moirai/experiments/icons/bogo.bundle",
+			"dataset_config": {
+				"type": "DatasetConfig",
+				"features": [
+					[
+						"image",
+						{
+							"type": "Transformation",
+							"feature_name": "image",
+							"preprocessing": {
+								"type": "Resize48x48"
+							}
+						}
+					]
+				]
+			}
+		}
+	},
+	"default_model": "v0"
+}
