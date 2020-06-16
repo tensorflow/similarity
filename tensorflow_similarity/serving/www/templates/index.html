@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.5.94/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/buefy/dist/buefy.min.css">
+    <link rel="shortcut icon"
+        href="https://www.gstatic.com/devrel-devsite/prod/ve2ecae0b57f609d246e9f5330d4901a6acc2b207e16e128652577256fc3fe7a5/tensorflow/images/favicon.png">
+    <title>Tensorflow Similarity</title>
+</head>
+
+<body height="100%">
+    <div id="app">
+
+        <!-- Navbar-->
+        <template>
+            <b-navbar>
+                <template slot="brand">
+                    <b-navbar-item href="#">
+                        <img src="static/images/logo.svg" alt="Tensorflow Similarity" height="100px" width="250px">
+                    </b-navbar-item>
+                </template>
+                <template slot="start">
+                    <b-navbar-item
+                        href="https://docs.google.com/document/d/1fEUrWd-XGIHeUoerPPazpKtZVeceBGgyXAuvY41Y2xc/edit#"
+                        target="_blank">
+                        Documentation
+                    </b-navbar-item>
+                </template>
+            </b-navbar>
+        </template>
+
+        <div>
+            <div v-if="!original_img_src" style="text-align: center;">
+                <!-- Component to drop file -->
+                <template>
+                    <!-- The v-if statement here make it only support single image upload-->
+                    <section style="text-align:center; margin-top:50px;">
+                        <b-field>
+                            <b-upload v-model="files" multiple drag-drop>
+                                <section class="section">
+                                    <div class="content has-text-centered">
+                                        <p>
+                                            <b-icon icon="upload" size="is-large">
+                                            </b-icon>
+                                        </p>
+                                        <p>Drop images here or click to upload</p>
+                                    </div>
+                                </section>
+                            </b-upload>
+                        </b-field>
+                    </section>
+                </template>
+
+                <!-- Component to draw images-->
+                <drawing-board
+                    style="background: white; box-shadow: 0px 2px 10px rgba(0,0, 0, 0.2); margin-top:20px; margin-bottom: 20px;">
+                </drawing-board>
+
+                <!--Button to confirm drawing finishes-->
+                <div>
+                    <b-button style="color:#FF8200;" icon-right="check" @click="doneDrawing()">
+                        Done Drawing
+                    </b-button>
+                </div>
+
+                <!--Select which dataset (currently mnist and emoji)-->
+                <b-select placeholder="mnist" v-model="dataset" style="text-align:center; margin-top: 20px;">
+                    <option value="mnist">mnist</option>
+                    <option value="emoji">emoji</option>
+                </b-select>
+
+            </div>
+
+            <div v-if="original_img_src && loaded">
+                <div class="columns">
+                    <!--Uploaded Image-->
+                    <section class="column is-2" style="margin-top:40px; margin-left:50px; margin-right:50px;">
+                        <div class="columns">
+                            <b-tag class="is-large title" style="color:#FF8200;">Uploaded Image</b-tag>
+                            <b-button style="color:#FF8200; margin-left:20px;" icon-right="information-outline"
+                                @click="explain_button_click('image')">
+                                Explain
+                            </b-button>
+                        </div>
+                        <ul class="columns is-multiline">
+                            <div class="card" style="margin-top: 10px;">
+                                <button class="delete is-small" type="button"
+                                    style="float: right; margin-top:5px; margin-right:5px; z-index: 1000;"
+                                    @click="deleteDropFile(index)"></button>
+                                <div class="card-image">
+                                    <figure class="image">
+                                        <img :src="original_img_src">
+                                    </figure>
+                                </div>
+                                <div class="card-content">
+                                    <div class="media">
+                                        <div class="media-content">
+                                            <p class="title is-4">{{"Predicted Label: " + predicted_label}}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </ul>
+                    </section>
+
+                    <!--Explain Image-->
+                    <section class="column is-2" v-if="show_image_explain"
+                        style="margin-top:40px; margin-left:50px; margin-right:50px;">
+                        <b-tag class="is-large title" style="color:#FF8200;">Explain</b-tag>
+                        <ul class="columns is-multiline">
+                            <li class="column">
+                                <div class="card" style="margin-top: 10px;">
+                                    <div class="card-image">
+                                        <figure class="image">
+                                            <img :src="explain_src">
+                                        </figure>
+                                    </div>
+                                    <div class="card-content">
+                                        <div class="media">
+                                            <div class="media-content">
+                                                <p class="title is-4">Algorithm: GradCam</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </section>
+                </div>
+
+                <!--Target Images-->
+                <template>
+                    <section style="margin-top:40px; margin-left:50px; margin-right:50px;" id="target_images">
+                        <div class="columns">
+                            <b-tag class="is-large title" style="color:#FF8200;">Target Images</b-tag>
+                            <b-button style="color:#FF8200; margin-left:20px;" icon-right="information-outline"
+                                @click="explain_button_click('target_images')">
+                                Explain
+                            </b-button>
+                            <b-slider style="margin-left: 30px; width: 600px;" size="is_medium" :min="1"
+                                :max="neighbors.length" v-model="num_targets_shown" lazy>
+                                <div v-if="neighbors.length < 200">
+                                    <template v-for="val in neighbors.length" v-if="val % 5 === 0">
+                                        <b-slider-tick :value="val" :key="val">{{ val }}</b-slider-tick>
+                                    </template>
+                                </div>
+                            </b-slider>
+                        </div>
+                        <ul class="columns is-multiline">
+                            <li v-for="(neighbor, index) in neighbors" v-if="index < num_targets_shown"
+                                class="column is-1">
+                                <!--Change background color for match and non-match-->
+                                <div class="card" style="margin-top: 10px;"
+                                    v-bind:style="[neighbor.label === predicted_label ? {'background-color': '#FF8200'} : {'background-color': '#FFF'}]">
+                                    <div class=" card-image">
+                                        <figure class="image">
+                                            <img :src="`../static/images/${dataset}_targets/${neighbor.label}.png`">
+                                        </figure>
+                                    </div>
+                                    <div class="card-content">
+                                        <div class="media">
+                                            <div class="media-content">
+                                                <p class="is-4">{{"Label: " + neighbor.label}}</p>
+                                                <p class="is-4">{{"Distance: " + neighbor.distance}}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </section>
+                </template>
+
+                <!--Target Explain Images-->
+                <template v-if="show_target_explains">
+                    <section style="margin-top:40px; margin-left:50px; margin-right:50px;" id="target_images">
+                        <b-tag class="is-large title" style="color:#FF8200;">Target Images Explain</b-tag>
+                        <ul class="columns is-multiline">
+                            <li v-for="(src, index) in neighbor_explain_srcs" v-if="index < num_targets_shown"
+                                class="column is-1">
+                                <!--Change background color for match and non-match-->
+                                <div class="card" style="margin-top: 10px;">
+                                    <div class=" card-image">
+                                        <figure class="image">
+                                            <img :src="src">
+                                        </figure>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </section>
+                </template>
+            </div>
+        </div>
+    </div>
+
+
+    </div>
+
+    <!--install Vue-->
+    <script src="https://unpkg.com/vue"></script>
+    <!-- Full bundle of Buefy -->
+    <script src="https://unpkg.com/buefy/dist/buefy.min.js"></script>
+    <!--Axios-->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <script>
+        // drawing board component
+        var drawing_board = Vue.component('drawing-board', {
+            data: function () {
+                return {
+                    mouse: {
+                        current: {
+                            x: 0,
+                            y: 0
+                        },
+                        previous: {
+                            x: 0,
+                            y: 0
+                        },
+                        down: false
+                    }
+                }
+            },
+            computed: {
+                currentMouse: function () {
+                    var c = document.getElementById("canvas");
+                    var rect = c.getBoundingClientRect();
+
+                    return {
+                        x: this.mouse.current.x - rect.left,
+                        y: this.mouse.current.y - rect.top
+                    }
+                }
+            },
+            template: '<canvas id="canvas" v-on:mousedown="handleMouseDown" v-on:mouseup="handleMouseUp" v-on:mousemove="handleMouseMove" width="240px" height="240px"></canvas>',
+            methods: {
+                draw: function (event) {
+
+                    if (this.mouse.down) {
+                        var c = document.getElementById("canvas");
+
+                        var ctx = c.getContext("2d");
+
+                        ctx.clearRect(0, 0, 240, 240);
+
+
+                        ctx.lineTo(this.currentMouse.x, this.currentMouse.y);
+                        ctx.strokeStyle = "#555";
+                        ctx.lineWidth = 10;
+                        ctx.stroke()
+                    }
+
+                },
+                handleMouseDown: function (event) {
+                    this.mouse.down = true;
+                    this.mouse.current = {
+                        x: event.pageX,
+                        y: event.pageY
+                    }
+
+                    var c = document.getElementById("canvas");
+                    var ctx = c.getContext("2d");
+
+                    ctx.moveTo(this.currentMouse.x, this.currentMouse.y)
+
+
+                },
+                handleMouseUp: function () {
+                    this.mouse.down = false;
+                },
+                handleMouseMove: function (event) {
+
+                    this.mouse.current = {
+                        x: event.pageX,
+                        y: event.pageY
+                    }
+
+                    this.draw(event)
+
+                }
+            },
+            ready: function () {
+
+                var c = document.getElementById("canvas");
+                var ctx = c.getContext("2d");
+                ctx.translate(0.5, 0.5);
+                ctx.imageSmoothingEnabled = false;
+                // this.draw();
+            }
+        })
+
+
+        var vue = new Vue({
+            el: '#app',
+            data: {
+                // data storage for files droped
+                files: [],
+                neighbors: [],
+                loaded: false,
+                predicted_label: null,
+                explain_src: "",
+                neighbor_explain_srcs: [],
+                original_img_src: "",
+                dataset: "mnist",
+                show_image_explain: false,
+                show_target_explains: false,
+                num_targets_shown: 1,
+            },
+            methods: {
+                // helper methods to delete uploaded files
+                deleteDropFile(index) {
+                    this.files.splice(index, 1)
+                    this.neighbors = {}
+                    this.loaded = false
+                    this.predicted_label = null
+                    this.explain_src = ""
+                    this.neighbor_explain_srcs = []
+                    this.original_img_src = ""
+                    this.dataset = "mnist"
+                    this.show_image_explain = false
+                    this.show_target_explains = false
+                    this.num_targets_shown = 1
+                },
+
+                explain_button_click(name) {
+                    if (name === "image") {
+                        this.show_image_explain = !this.show_image_explain
+                    } else if (name === "target_images") {
+                        this.show_target_explains = !this.show_target_explains
+                    }
+                },
+
+                // helper methods to get the distances
+                getDistances(file) {
+                    reader = new FileReader()
+                    // create a listener so that when it loads into base64
+                    // we send the data to backend
+                    reader.addEventListener("load", function () {
+
+                        path = 'http://localhost:5000/distances'
+                        payload = { data: reader.result, dataset: vue.dataset }
+                        axios.post(path, payload).then(
+                            response => {
+                                // the response's data is the neighbors
+                                // to targets
+                                data = response.data
+                                vue.neighbors = data.neighbors
+                                vue.loaded = true
+                                vue.predicted_label = data.predicted_label
+                                vue.explain_src = data.explain_src
+                                vue.neighbor_explain_srcs = data.neighbor_explain_srcs
+                            }
+                        )
+                    })
+
+                    // read the uploaded file into base64
+                    reader.readAsDataURL(file)
+
+                },
+
+                doneDrawing() {
+                    var c = document.getElementById("canvas");
+                    var ctx = c.getContext("2d")
+                    var imgData = ctx.getImageData(0, 0, 240, 240)
+
+                    path = 'http://localhost:5000/distances'
+                    payload = { data: imgData.data, dataset: this.dataset }
+
+                    axios.post(path, payload).then(
+                        response => {
+                            // the response's data is the neighbors
+                            // to targets
+                            data = response.data
+                            vue.neighbors = data.neighbors
+                            vue.loaded = true
+                            vue.predicted_label = data.predicted_label
+                            vue.explain_src = data.explain_src
+                            vue.neighbor_explain_srcs = data.neighbor_explain_srcs
+                            vue.original_img_src = data.original_img_src
+                        }
+                    )
+                }
+            },
+            watch: {
+                // when an image is uploaded, make an URL and append it to
+                // the File object.
+                files: function (val) {
+                    file = null
+                    for (index = 0; index < this.files.length; index++) {
+                        file = val[index]
+                        file_url = URL.createObjectURL(file)
+                        this.files[index].url = file_url
+                    }
+
+                    if (file !== null) {
+                        this.original_img_src = file_url
+                        this.getDistances(file)
+                    }
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>
