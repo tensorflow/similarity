@@ -1,4 +1,4 @@
-tensorflow_similarity/serving/www/venv
+/venv
 .DS_Store
 .ipynb_checkpoints
 node_modules
