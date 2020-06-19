@@ -22,8 +22,8 @@ from flask_cors import CORS
 from matplotlib import pyplot as plt
 from tensorflow_similarity.api.engine.simhash import SimHash
 
-from explain import Explainer
-from utils import (base64_to_numpy, beautify_grayscale, figure_to_src, is_rgb,
+from tensorflow_similarity.serving.www.explain import Explainer
+from tensorflow_similarity.serving.www.utils import (base64_to_numpy, beautify_grayscale, figure_to_src, is_rgb,
                    read_emoji_targets, read_mnist_targets)
 
 
@@ -53,14 +53,13 @@ AREA = WIDTH ** 2
 
 @app.route('/')
 def index():
-
     # paths to models
     mnist_model_path = "saved_models/mnist_model.h5"
     emoji_model_path = "saved_models/emoji_model.h5"
 
     # load models
-    mnist_model = tf.keras.models.load_model(mnist_model_path)
-    emoji_model = tf.keras.models.load_model(emoji_model_path)
+    mnist_model = tf.keras.models.load_model(mnist_model_path, custom_objects={'tf': tf})
+    emoji_model = tf.keras.models.load_model(emoji_model_path, custom_objects={'tf': tf})
 
     # initialize Explainers
     mnist_explainer = Explainer(mnist_model.tower_model)
