@@ -1,23 +1,32 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import Home from "../views/Home.vue";
+import MNIST from "../views/MNIST.vue";
+import emoji from "../views/emoji.vue";
+import Pokemon from "../views/Pokemon.vue";
+import IMDB from "../views/IMDB.vue";
 
 Vue.use(VueRouter);
 
 const routes = [
   {
     path: "/",
-    name: "Home",
-    component: Home
+    name: "MNIST",
+    component: MNIST
   },
   {
-    path: "/about",
-    name: "About",
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () =>
-      import(/* webpackChunkName: "about" */ "../views/About.vue")
+    path: "/emoji",
+    name: "emoji",
+    component: emoji
+  },
+  {
+    path: "/Pokemon",
+    name: "Pokemon",
+    component: Pokemon
+  },
+  {
+    path: "/IMDB",
+    name: "IMDB",
+    component: IMDB
   }
 ];
 
