@@ -13,9 +13,12 @@ through a GradCam++ visualization.
 0. Create a python venv: `python3 -m venv venv`
 1. Activate the venv: `. venv/bin/activate`
 2. Install Flask `pip install Flask`
-3. Install all other dependencies `pip install tensorflow==2.1.1 & !pip install keras-tuner confusable-homoglyphs matplotlib==3.1.0 tensorflow-plot uuid & pip install --upgrade grpcio & pip install umap-learn plotly altair MulticoreTSNE & pip install -U altair vega_datasets vega & wget https://anaconda.org/CannyLab/tsnecuda/2.1.0/download/linux-64/tsnecuda-2.1.0-cuda100.tar.bz2 !tar xvjf tsnecuda-2.1.0-cuda100.tar.bz2 & cp -r site-packages/* /usr/local/lib/python3.6/dist-packages/ & ln -s /content/lib/libfaiss.so $LD_LIBRARY_PATH/libfaiss.so`
+3. Install all other dependencies <pre><code>pip install tensorflow==2.1.1 & !pip install keras-tuner confusable-homoglyphs matplotlib==3.1.0 tensorflow-plot uuid & pip install --upgrade grpcio & pip install umap-learn plotly altair MulticoreTSNE & pip install -U altair vega_datasets vega & wget https://anaconda.org/CannyLab/tsnecuda/2.1.0/download/linux-64/tsnecuda-2.1.0-cuda100.tar.bz2 !tar xvjf tsnecuda-2.1.0-cuda100.tar.bz2 & cp -r site-packages/* /usr/local/lib/python3.6/dist-packages/ & ln -s /content/lib/libfaiss.so $LD_LIBRARY_PATH/libfaiss.so
+</code></pre>
 5. Export the server application `export FLASK_APP=main.py`
 6. Run the application `flask run`
+
+
 
 ## Tutorials
 
