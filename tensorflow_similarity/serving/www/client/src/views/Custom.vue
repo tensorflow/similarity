@@ -1,16 +1,14 @@
 <template>
-  <div class="Pokemon">
-    <h3>Pokemon</h3>
+  <div class="Custom">
+    <h3>Custom</h3>
   </div>
 </template>
 
 <script>
-
-
 export default {
-  name: "Pokemon",
+  name: "Custom",
   components: {
-    
+
   }
 };
 </script>

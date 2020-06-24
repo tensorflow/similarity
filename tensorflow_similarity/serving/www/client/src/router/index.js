@@ -4,6 +4,8 @@ import MNIST from "../views/MNIST.vue";
 import emoji from "../views/emoji.vue";
 import Pokemon from "../views/Pokemon.vue";
 import IMDB from "../views/IMDB.vue";
+import Custom from "../views/Custom.vue";
+
 
 Vue.use(VueRouter);
 
@@ -27,6 +29,11 @@ const routes = [
     path: "/IMDB",
     name: "IMDB",
     component: IMDB
+  },
+  {
+    path: "/Custom",
+    name: "Custom",
+    component: Custom
   }
 ];
 
