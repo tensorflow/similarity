@@ -1,6 +1,6 @@
 <template>
   <div class="Custom">
-    <h3>Custom</h3>
+    <h3>Upload your own!</h3>
   </div>
 </template>
 
