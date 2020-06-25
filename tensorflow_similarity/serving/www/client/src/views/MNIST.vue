@@ -8,6 +8,7 @@
       </div>
       <div class="column">Upload file</div>
     </div>
+    <div v-if="this.loaded">{{this.predicted_label}}</div>
   </div>
 </template>
 
@@ -23,16 +24,16 @@ export default {
   data: function() {
     return {
       files: [],
-                neighbors: [],
-                loaded: false,
-                predicted_label: null,
-                explain_src: "",
-                neighbor_explain_srcs: [],
-                original_img_src: "",
-                dataset: "mnist",
-                show_image_explain: false,
-                show_target_explains: false,
-                num_targets_shown: 1
+      neighbors: [],
+      loaded: false,
+      predicted_label: null,
+      explain_src: "",
+      neighbor_explain_srcs: [],
+      original_img_src: "",
+      dataset: "mnist",
+      how_image_explain: false,
+      show_target_explains: false,
+      num_targets_shown: 1
     }
   },
   methods: {
@@ -46,7 +47,14 @@ export default {
       console.log(payload, path)
       axios.post(path, payload).then(
         response => {
-          this.$props = response.data
+          console.log(response)
+          this.data = response.data
+          this.neighbors = this.data.neighbors
+          this.loaded = true
+          this.predicted_label = this.data.predicted_label
+          this.explain_src = this.data.explain_src
+          this.neighbor_explain_srcs = this.data.neighbor_explain_srcs
+          this.original_img_src = this.data.original_img_src
 
         }
       )
