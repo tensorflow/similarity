@@ -6,7 +6,7 @@
         <drawingboard/>
         
       </div>
-      <div class="column-right"><upload/></div>
+      <div class="column-right"><upload @newFileUploaded="onNewUpload"/></div>
     </div>
     <div class="row">
       <div class="column-left"><button class="btn" v-on:click="submit">Submit</button></div>
@@ -25,9 +25,6 @@ export default {
   components: {
     Drawingboard,
     Upload
-  },
-  props: {
-    file_prop: Array
   },
   data: function() {
     return {
@@ -67,6 +64,9 @@ export default {
         }
       )
     },
+    onNewUpload(files) {
+      console.log('Upload received', files);
+    },
     getDistances: function(file) {
       var reader = new FileReader()
       reader.addEventListener("load", function () {
@@ -87,17 +87,21 @@ export default {
     },
     
     watch: {
-      'files': function (val) {
-        console.log("Uploaded file")
-        var file = null
-        for (var index = 0; index < this.$props.files.length; index++) {
-          file = val[index]
-          var file_url = URL.createObjectURL(file)
-          this.files[index].url = file_url
-        }
-        if (file !== null) {
-          this.original_img_src = file_url
-          this.getDistances(file)
+      files: {
+        deep: true,
+        handler(val) {
+          
+          console.log("Uploaded file")
+          var file = null
+          for (var index = 0; index < this.files.length; index++) {
+            file = val[index]
+            var file_url = URL.createObjectURL(file)
+            this.files[index].url = file_url
+          }
+          if (file !== null) {
+            this.original_img_src = file_url
+            this.getDistances(file)
+          }
         }
       }
     }

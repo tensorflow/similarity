@@ -44,7 +44,16 @@
             deleteDropFile(index) {
                 this.dropFiles.splice(index, 1)
             }
-        }
+        },
+        watch: {
+            dropFiles: {
+                deep: true,
+                handler() {
+                    console.log("Uploaded file in upload component");
+                    this.$emit('newFileUploaded', this.dropFiles)
+                }
+            }
+        }   
     }
 </script>
 
