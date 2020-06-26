@@ -98,7 +98,7 @@ export default {
   position: relative;
 }
 #canvas {
-  background-color: white;
+  background-color: #f9f9f9;
   z-index: 0;
 }
 #cursor {
@@ -109,6 +109,6 @@ export default {
   left: 0;
   top: 0;
   border: 2px solid #c8c8c8;
-  border-radius: 10px 0 10px 10px;
+  border-radius: 10px 10px 10px 10px;
 }
 </style>

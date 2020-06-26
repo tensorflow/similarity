@@ -13,7 +13,11 @@ const routes = [
   {
     path: "/",
     name: "MNIST",
-    component: MNIST
+    component: MNIST,
+    meta: {
+      title: "Tensorflow Similarity"
+
+    }
   },
   {
     path: "/emoji",
