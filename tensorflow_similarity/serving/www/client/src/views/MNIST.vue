@@ -49,7 +49,7 @@ export default {
       var imgData = ctx.getImageData(0, 0, 240, 240)
       var payload = { data: imgData.data, dataset: "mnist" }
       var path = 'http://localhost:5000/distances'
-      console.log(payload, path)
+      //console.log(payload, path)
       axios.post(path, payload).then(
         response => {
           console.log(response)
@@ -64,47 +64,47 @@ export default {
         }
       )
     },
-    onNewUpload(files) {
-      console.log('Upload received', files);
+    onNewUpload: function(val) {
+      //console.log('Upload received', val);
+      this.files.push(val)
+      var file = null
+      for (var index = 0; index < this.files.length; index++) {
+        file = val[index]
+        //console.log(file)
+        var file_url = URL.createObjectURL(file)
+        //console.log(file_url)
+        this.files[index].url = file_url
+      }
+
+      console.log(this.files)
+
+      if (file !== null) {
+        this.original_img_src = file_url
+        this.getDistances(file)
+      }
+
     },
     getDistances: function(file) {
+      console.log("getting Distances")
       var reader = new FileReader()
       reader.addEventListener("load", function () {
         var path = 'http://localhost:5000/distances'
         var payload = { data: reader.result, dataset: "mnist" }
         axios.post(path, payload).then(
-        response => {                  
-          this.data = response.data
-          this.neighbors = this.data.neighbors
-          this.loaded = true
-          this.predicted_label = this.data.predicted_label
-          this.explain_src = this.data.explain_src
-          this.neighbor_explain_srcs = this.data.neighbor_explain_srcs
-        })
+          response => {    
+            console.log(response)
+            this.data = response.data
+            this.neighbors = this.data.neighbors
+            this.loaded = true
+            this.predicted_label = this.data.predicted_label
+            this.explain_src = this.data.explain_src
+            this.neighbor_explain_srcs = this.data.neighbor_explain_srcs
+            this.original_img_src = this.data.original_img_src  
+          }
+        )
       })
-
       reader.readAsDataURL(file)
     },
-    
-    watch: {
-      files: {
-        deep: true,
-        handler(val) {
-          
-          console.log("Uploaded file")
-          var file = null
-          for (var index = 0; index < this.files.length; index++) {
-            file = val[index]
-            var file_url = URL.createObjectURL(file)
-            this.files[index].url = file_url
-          }
-          if (file !== null) {
-            this.original_img_src = file_url
-            this.getDistances(file)
-          }
-        }
-      }
-    }
   }
 };
 </script>
