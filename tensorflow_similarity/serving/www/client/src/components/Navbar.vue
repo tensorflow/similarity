@@ -6,6 +6,7 @@
         <div class="navbar-item"><router-link to="/emoji">emoji</router-link></div>
         <div class="navbar-item"><router-link to="/pokemon">Pokemon</router-link></div>
         <div class="navbar-item"><router-link to="/IMDB">IMDB</router-link></div> 
+
         <div class="navbar-item"><a href="https://docs.google.com/document/d/1fEUrWd-XGIHeUoerPPazpKtZVeceBGgyXAuvY41Y2xc/edit#">Documentation</a></div>     
 
     </nav>
