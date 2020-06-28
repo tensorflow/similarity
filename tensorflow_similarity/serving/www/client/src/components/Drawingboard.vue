@@ -48,6 +48,7 @@ export default {
   },
   methods: {
     setCanvas() {
+      // initialize canvas
       this.$refs.canvasWrapper.style.gridTemplateColumns = `${this.width}px 30px`;
       this.$refs.canvasWrapper.style.width = `${this.width + 30}px`;
       this.$refs.canvasWrapper.style.height = `${this.height}px`;
@@ -59,6 +60,7 @@ export default {
       this.cursorContext = this.$refs.cursor.getContext('2d');
     },
     bindEvents() {
+      // bind mouse events
       this.$refs.canvas.addEventListener('mousedown', (event) => {
         this.isDrawing = true;
         [this.lastX, this.lastY] = [event.offsetX, event.offsetY];
@@ -68,6 +70,7 @@ export default {
       this.$refs.canvas.addEventListener('mouseout', () => this.isDrawing = false);
     },
     draw(event) {
+      // draw mouse path on the canvas
       this.drawCursor(event);
       if (!this.isDrawing) return;
       this.canvasContext.globalCompositeOperation = 'source-over';
@@ -79,6 +82,7 @@ export default {
       [this.lastX, this.lastY] = [event.offsetX, event.offsetY];
     },
     drawCursor(event) {
+      // show cursor on the canvas
       this.cursorContext.beginPath();
       this.cursorContext.ellipse(
         event.offsetX, event.offsetY,

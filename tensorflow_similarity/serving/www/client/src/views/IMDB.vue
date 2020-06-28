@@ -39,16 +39,13 @@ export default {
   },
 methods: {
     submit: function() {
-      console.log("Submit mnist")
       var c = document.getElementById("canvas")
       var ctx = c.getContext("2d")
       var imgData = ctx.getImageData(0, 0, 240, 240)
       var payload = { data: imgData.data, dataset: "mnist" }
       var path = 'http://localhost:5000/distances'
-      console.log(payload, path)
       axios.post(path, payload).then(
         response => {
-          console.log(response)
           this.data = response.data
           this.neighbors = this.data.neighbors
           this.loaded = true
@@ -61,7 +58,6 @@ methods: {
       )
     },
     onNewUpload(files) {
-      console.log('Upload received', files);
     },
     getDistances: function(file) {
       var reader = new FileReader()
@@ -87,7 +83,6 @@ methods: {
         deep: true,
         handler(val) {
           
-          console.log("Uploaded file")
           var file = null
           for (var index = 0; index < this.files.length; index++) {
             file = val[index]

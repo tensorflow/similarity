@@ -49,7 +49,6 @@
             dropFiles: {
                 deep: true,
                 handler() {
-                    console.log("Uploaded file in upload component", this.dropFiles);
                     this.$emit('newFileUploaded', this.dropFiles)
                 }
             }
