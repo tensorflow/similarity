@@ -2,7 +2,6 @@ import Vue from "vue";
 import VueRouter from "vue-router";
 import MNIST from "../views/MNIST.vue";
 import emoji from "../views/emoji.vue";
-import Pokemon from "../views/Pokemon.vue";
 import IMDB from "../views/IMDB.vue";
 import Custom from "../views/Custom.vue";
 
@@ -24,11 +23,7 @@ const routes = [
     name: "emoji",
     component: emoji
   },
-  {
-    path: "/Pokemon",
-    name: "Pokemon",
-    component: Pokemon
-  },
+
   {
     path: "/IMDB",
     name: "IMDB",

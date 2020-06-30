@@ -90,18 +90,23 @@ def get_distances():
         x_targets = mnist_x_targets
         y_targets = mnist_y_targets
         num_neighbors = len(y_targets)
+        size = 28
     elif (dataset == "emoji"):
         model = emoji_model
         explainer = emoji_explainer
         x_targets = emoji_x_targets
         y_targets = emoji_y_targets
         num_neighbors = len(y_targets)
+        size = 32
+    elif (dataset == "imdb"):
+        response_object["predicted_label"] = "1"
+        return jsonify(response_object)
 
     dictionary_key = "example"
     if dataset == "emoji":
         dictionary_key = "image"
 
-    images_data = processing_request(request)
+    images_data = processing_request(request, size)
 
     x_test = {dictionary_key: images_data}
 
@@ -156,7 +161,7 @@ def get_distances():
     return jsonify(response_object)
 
 
-def processing_request(request):
+def processing_request(request, size):
     """Process the request to compute distances from the frontend
        and return the numpy array of input images. Currently only supports
        uploading one image."""
@@ -186,13 +191,6 @@ def processing_request(request):
     else:
         # receive a drawing
         data_arr = np.zeros(AREA * NUM_CHANNELS)
-
-        size = 0
-
-        if (dataset == "mnist"):
-            size = 28
-        elif (dataset == "emoji"):
-            size = 32
 
         # flatten the dictionary into an array
         # the dictionary given from frontend if formatted

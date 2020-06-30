@@ -4,7 +4,6 @@
         <div class="navbar-item"><router-link to="/Custom">Upload Custom</router-link></div>  
         <div class="navbar-item"><router-link to="/">MNIST</router-link></div>
         <div class="navbar-item"><router-link to="/emoji">emoji</router-link></div>
-        <div class="navbar-item"><router-link to="/pokemon">Pokemon</router-link></div>
         <div class="navbar-item"><router-link to="/IMDB">IMDB</router-link></div> 
 
         <div class="navbar-item"><a href="https://docs.google.com/document/d/1fEUrWd-XGIHeUoerPPazpKtZVeceBGgyXAuvY41Y2xc/edit#">Documentation</a></div>     
@@ -40,7 +39,6 @@ nav a {
     border-bottom: 3px solid transparent;
     transition: 0.4s;
 }
-
 
 nav a.router-link-exact-active,
 nav a:hover {

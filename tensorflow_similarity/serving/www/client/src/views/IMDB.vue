@@ -39,10 +39,10 @@ export default {
   },
 methods: {
     submit: function() {
-      var c = document.getElementById("canvas")
-      var ctx = c.getContext("2d")
-      var imgData = ctx.getImageData(0, 0, 240, 240)
-      var payload = { data: imgData.data, dataset: "imdb" }
+      var payload = { data: this.text, dataset: "imdb" }
+
+      // currently the behavior for imdb is not implemented on the backend.
+      // instead it simply return an empty response object.
       var path = 'http://localhost:5000/distances'
       axios.post(path, payload).then(
         response => {
@@ -78,77 +78,11 @@ methods: {
 
       reader.readAsDataURL(file)
     },
-    
-    watch: {
-      files: {
-        deep: true,
-        handler(val) {
-          
-          var file = null
-          for (var index = 0; index < this.files.length; index++) {
-            file = val[index]
-            var file_url = URL.createObjectURL(file)
-            this.files[index].url = file_url
-          }
-          if (file !== null) {
-            this.original_img_src = file_url
-            this.getDistances(file)
-          }
-        }
-      }
-    }
   }
 };
 </script>
 
 <style>
-* {
-  box-sizing: border-box;
-}
-
-.row {
-  display: flex;
-  justify-content: center;
-  align-content: center;
-}
-
-.column-right {
-  padding: 10px;
-  height: 100%;
-  display: flex;
-  justify-content: left;
-  align-items: center;
-}
-
-.column-left {
-  padding: 10px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: right;
-  align-items: right;
-}
-
-.btn {
-  transition-duration: 0.4s;
-  height: 40px;
-  width: 90px;
-  background-color: #425066;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  border: none;
-  color: #fff;
-  border-radius: 30px;
-  padding: 10px;
-}
-
-.btn:hover {
-  background-color: #FF6F00;
-  color: #425066;
-  border: none;
-}
 
 #txtarea {
   padding: 15px;

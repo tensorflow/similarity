@@ -1,19 +1,19 @@
 <template>
   <div class="MNIST">
     <h3>MNIST</h3>
-    <div class="row-m">
+    <div class="row">
       <div class="column-left">
         <drawingboard/>
         
       </div>
       <div class="column-right"><upload @newFileUploaded="onNewUpload"/></div>
     </div>
-    <div class="row-m">
+    <div class="row">
       <div class="column-left"><button class="btn" v-on:click="submit">Submit</button></div>
     </div>
     <div v-if="this.loaded">
       <targets />
-      <div class="row-m">
+      <div class="row">
         <ul>
           <li v-for="(neighbor) in neighbors" v-bind:key="neighbor.label">
             <div class="card" v-bind:style="[neighbor.label === predicted_label ? {'background-color': '#FF8200'} : {'background-color': '#f6f6f6'}]">
@@ -108,7 +108,6 @@ export default {
         var payload = { data: reader.result, dataset: "mnist" }
         axios.post(path, payload).then(
           response => {    
-            console.log(response)
             this.data = response.data
             this.neighbors = this.data.neighbors
             this.loaded = true
@@ -130,7 +129,7 @@ export default {
   box-sizing: border-box;
 }
 
-.row-m {
+.row {
   display: flex;
   justify-content: center;
   align-content: center;
