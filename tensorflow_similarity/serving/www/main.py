@@ -39,9 +39,6 @@ class VueFlask(Flask):
 
 app = VueFlask(__name__)
 
-# Global storage to store objects (such as model) that should be computed
-# only once every session
-STORAGE = defaultdict(dict)
 # enable CORS
 CORS(app, resources={r'/*': {'origins': '*'}})
 
@@ -53,7 +50,13 @@ AREA = WIDTH ** 2
 
 @app.route('/')
 def index():
+    return render_template("index.html")
+
+
+@app.route('/distances', methods=['POST'])
+def get_distances():
     # paths to models
+
     mnist_model_path = "saved_models/mnist_model.h5"
     emoji_model_path = "saved_models/emoji_model.h5"
 
@@ -77,80 +80,22 @@ def index():
     emoji_model.build_database(emoji_x_targets, emoji_y_targets)
     emoji_x_targets = emoji_x_targets["image"]
 
-    # store mnist model and data
-    mnist_storage = STORAGE["mnist"]
-    mnist_storage["model"] = mnist_model
-    mnist_storage["explainer"] = mnist_explainer
-    mnist_storage["x_targets"] = mnist_x_targets
-    mnist_storage["y_targets"] = mnist_y_targets
-    mnist_storage["size"] = 28
-
-    # store emoji model and data
-
-    emoji_storage = STORAGE["emoji"]
-    emoji_storage["model"] = emoji_model
-    emoji_storage["explainer"] = emoji_explainer
-    emoji_storage["x_targets"] = emoji_x_targets
-    emoji_storage["y_targets"] = emoji_y_targets
-    emoji_storage["size"] = 32
-
-    return render_template("index.html")
-
-
-@app.route('/distances', methods=['POST'])
-def get_distances():
-    # paths to models
-
-    if not STORAGE:
-        mnist_model_path = "saved_models/mnist_model.h5"
-        emoji_model_path = "saved_models/emoji_model.h5"
-
-        # load models
-        mnist_model = tf.keras.models.load_model(mnist_model_path, custom_objects={'tf': tf})
-        emoji_model = tf.keras.models.load_model(emoji_model_path, custom_objects={'tf': tf})
-
-        # initialize Explainers
-        mnist_explainer = Explainer(mnist_model.tower_model)
-        emoji_explainer = Explainer(emoji_model.tower_model)
-
-        # read in target data for mnist and emoji datasets
-        mnist_x_targets, mnist_y_targets = read_mnist_targets()
-        emoji_x_targets, emoji_y_targets = read_emoji_targets()
-
-        # compute database with targets
-        mnist_model.build_database(
-            mnist_x_targets, mnist_y_targets)
-        mnist_x_targets = mnist_x_targets["example"]
-
-        emoji_model.build_database(emoji_x_targets, emoji_y_targets)
-        emoji_x_targets = emoji_x_targets["image"]
-
-        # store mnist model and data
-        mnist_storage = STORAGE["mnist"]
-        mnist_storage["model"] = mnist_model
-        mnist_storage["explainer"] = mnist_explainer
-        mnist_storage["x_targets"] = mnist_x_targets
-        mnist_storage["y_targets"] = mnist_y_targets
-        mnist_storage["size"] = 28
-
-        # store emoji model and data
-
-        emoji_storage = STORAGE["emoji"]
-        emoji_storage["model"] = emoji_model
-        emoji_storage["explainer"] = emoji_explainer
-        emoji_storage["x_targets"] = emoji_x_targets
-        emoji_storage["y_targets"] = emoji_y_targets
-        emoji_storage["size"] = 32
-
     response_object = {'status': 'success'}
 
     dataset = request.get_json().get('dataset')
-    storage = STORAGE[dataset]
-    model = storage["model"]
-    explainer = storage["explainer"]
-    x_targets = storage["x_targets"]
-    y_targets = storage["y_targets"]
-    num_neighbors = len(y_targets)
+
+    if (dataset == "mnist"):
+        model = mnist_model
+        explainer = mnist_explainer
+        x_targets = mnist_x_targets
+        y_targets = mnist_y_targets
+        num_neighbors = len(y_targets)
+    elif (dataset == "emoji"):
+        model = emoji_model
+        explainer = emoji_explainer
+        x_targets = emoji_x_targets
+        y_targets = emoji_y_targets
+        num_neighbors = len(y_targets)
 
     dictionary_key = "example"
     if dataset == "emoji":
@@ -241,7 +186,13 @@ def processing_request(request):
     else:
         # receive a drawing
         data_arr = np.zeros(AREA * NUM_CHANNELS)
-        size = STORAGE[dataset]["size"]
+
+        size = 0
+
+        if (dataset == "mnist"):
+            size = 28
+        elif (dataset == "emoji"):
+            size = 32
 
         # flatten the dictionary into an array
         # the dictionary given from frontend if formatted
