@@ -1,7 +1,7 @@
 <template>
     <nav>
         <div class="navbar-item"><img alt="TF similarity logo" src="../assets/logo.svg" /></div>
-        <div class="navbar-item"><router-link to="/Custom">Upload Custom</router-link></div>  
+        <div class="navbar-item"><router-link to="/Custom">Try Your Model</router-link></div>  
         <div class="navbar-item"><router-link to="/">MNIST</router-link></div>
         <div class="navbar-item"><router-link to="/emoji">emoji</router-link></div>
         <div class="navbar-item"><router-link to="/IMDB">IMDB</router-link></div> 

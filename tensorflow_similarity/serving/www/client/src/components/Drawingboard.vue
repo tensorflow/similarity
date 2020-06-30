@@ -50,7 +50,7 @@ export default {
     setCanvas() {
       // initialize canvas
       this.$refs.canvasWrapper.style.gridTemplateColumns = `${this.width}px 30px`;
-      this.$refs.canvasWrapper.style.width = `${this.width + 30}px`;
+      this.$refs.canvasWrapper.style.width = `${this.width}px`;
       this.$refs.canvasWrapper.style.height = `${this.height}px`;
       this.canvasContext = this.$refs.canvas.getContext('2d');
       this.canvasContext.lineJoin = 'round';
