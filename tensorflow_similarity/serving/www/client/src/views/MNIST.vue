@@ -1,30 +1,55 @@
 <template>
   <div class="MNIST">
     <h3>MNIST</h3>
-    <div class=row>
+    <div class="row-m">
       <div class="column-left">
         <drawingboard/>
         
       </div>
       <div class="column-right"><upload @newFileUploaded="onNewUpload"/></div>
     </div>
-    <div class="row">
+    <div class="row-m">
       <div class="column-left"><button class="btn" v-on:click="submit">Submit</button></div>
     </div>
-    <div v-if="this.loaded">{{this.predicted_label}}</div>
+    <div v-if="this.loaded">
+      <targets />
+      <div class="row-m">
+        <ul>
+          <li v-for="(neighbor) in neighbors" v-bind:key="neighbor.label">
+            <div class="card" v-bind:style="[neighbor.label === predicted_label ? {'background-color': '#FF8200'} : {'background-color': '#f6f6f6'}]">
+                <div class=" card-image">
+                  <figure class="image">
+                    <img :src="`http://localhost:5000/static/images/${dataset}_targets/${neighbor.label}.png`">
+                  </figure>
+                </div>
+              <div class="card-content">
+                <div class="media">
+                  <div class="media-content">
+                    <p >{{"Label: " + neighbor.label}}</p>
+                    <p >{{"Distance: " + neighbor.distance}}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import Drawingboard from "../components/Drawingboard.vue";
 import Upload from "../components/Upload.vue";
+import Targets from "../components/Targets.vue";
 import axios from 'axios';
 
 export default {
   name: "MNIST",
   components: {
     Drawingboard,
-    Upload
+    Upload,
+    Targets
   },
   data: function() {
     return {
@@ -78,11 +103,12 @@ export default {
     },
     getDistances: function(file) {
       var reader = new FileReader()
-      reader.addEventListener("load", function () {
+      reader.addEventListener("load", () => {
         var path = 'http://localhost:5000/distances'
         var payload = { data: reader.result, dataset: "mnist" }
         axios.post(path, payload).then(
           response => {    
+            console.log(response)
             this.data = response.data
             this.neighbors = this.data.neighbors
             this.loaded = true
@@ -104,10 +130,11 @@ export default {
   box-sizing: border-box;
 }
 
-.row {
+.row-m {
   display: flex;
   justify-content: center;
   align-content: center;
+  flex-direction: row;
 }
 
 .column-right {
@@ -116,6 +143,25 @@ export default {
   display: flex;
   justify-content: left;
   align-items: center;
+}
+
+ul {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.card-image {
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  margin: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  color: #425066;
+  text-align: center;
 }
 
 .column-left {

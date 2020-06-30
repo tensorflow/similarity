@@ -42,7 +42,7 @@ methods: {
       var c = document.getElementById("canvas")
       var ctx = c.getContext("2d")
       var imgData = ctx.getImageData(0, 0, 240, 240)
-      var payload = { data: imgData.data, dataset: "mnist" }
+      var payload = { data: imgData.data, dataset: "imdb" }
       var path = 'http://localhost:5000/distances'
       axios.post(path, payload).then(
         response => {
@@ -58,12 +58,13 @@ methods: {
       )
     },
     onNewUpload(files) {
+      console.log(files)
     },
     getDistances: function(file) {
       var reader = new FileReader()
       reader.addEventListener("load", function () {
         var path = 'http://localhost:5000/distances'
-        var payload = { data: reader.result, dataset: "mnist" }
+        var payload = { data: reader.result, dataset: "imdb" }
         axios.post(path, payload).then(
         response => {                  
           this.data = response.data
