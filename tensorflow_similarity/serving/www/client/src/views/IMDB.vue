@@ -37,7 +37,7 @@ export default {
       num_targets_shown: 1
     }
   },
-methods: {
+  methods: {
     submit: function() {
       var payload = { data: this.text, dataset: "imdb" }
 
@@ -57,27 +57,39 @@ methods: {
         }
       )
     },
-    onNewUpload(files) {
-      console.log(files)
+    onNewUpload: function(val) {
+      this.files.push(val)
+      var file = null
+      for (var index = 0; index < this.files.length; index++) {
+        file = val[index]
+        var file_url = URL.createObjectURL(file)
+        this.files[index].url = file_url
+      }
+
+      if (file !== null) {
+        this.original_img_src = file_url
+        this.getDistances(file)
+      }
     },
     getDistances: function(file) {
       var reader = new FileReader()
-      reader.addEventListener("load", function () {
+      reader.addEventListener("load", () => {
         var path = 'http://localhost:5000/distances'
         var payload = { data: reader.result, dataset: "imdb" }
         axios.post(path, payload).then(
-        response => {                  
-          this.data = response.data
-          this.neighbors = this.data.neighbors
-          this.loaded = true
-          this.predicted_label = this.data.predicted_label
-          this.explain_src = this.data.explain_src
-          this.neighbor_explain_srcs = this.data.neighbor_explain_srcs
-        })
+          response => {    
+            this.data = response.data
+            this.neighbors = this.data.neighbors
+            this.loaded = true
+            this.predicted_label = this.data.predicted_label
+            this.explain_src = this.data.explain_src
+            this.neighbor_explain_srcs = this.data.neighbor_explain_srcs
+            this.original_img_src = this.data.original_img_src  
+          }
+        )
       })
-
       reader.readAsDataURL(file)
-    },
+    }
   }
 };
 </script>

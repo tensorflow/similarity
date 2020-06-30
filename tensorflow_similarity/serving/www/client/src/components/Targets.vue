@@ -1,6 +1,6 @@
 <template>
     <div class="Targets">
-        <div class=row-t>
+        <div class=row>
             <div class="column-t">
                 <h3>Predicted Label: {{this.$parent.predicted_label}}</h3>
                 <div class="original">
@@ -26,12 +26,6 @@ export default {
   justify-content: center;
   align-items: center;
   flex-direction: column;
-}
-
-.row-t {
-  display: flex;
-  justify-content: center;
-  align-content: center;
 }
 
 .image {

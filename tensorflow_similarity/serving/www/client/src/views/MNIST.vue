@@ -119,7 +119,7 @@ export default {
         )
       })
       reader.readAsDataURL(file)
-    },
+    }
   }
 };
 </script>

@@ -91,6 +91,7 @@ def get_distances():
         y_targets = mnist_y_targets
         num_neighbors = len(y_targets)
         size = 28
+        dictionary_key = "example"
     elif (dataset == "emoji"):
         model = emoji_model
         explainer = emoji_explainer
@@ -98,13 +99,10 @@ def get_distances():
         y_targets = emoji_y_targets
         num_neighbors = len(y_targets)
         size = 32
+        dictionary_key = "image"
     elif (dataset == "imdb"):
         response_object["predicted_label"] = "1"
         return jsonify(response_object)
-
-    dictionary_key = "example"
-    if dataset == "emoji":
-        dictionary_key = "image"
 
     images_data = processing_request(request, size)
 
