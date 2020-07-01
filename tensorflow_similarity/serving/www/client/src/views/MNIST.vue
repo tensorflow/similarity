@@ -11,7 +11,7 @@
     <div class="row">
       <div class="column-left"><button class="btn" v-on:click="submit">Submit</button></div>
     </div>
-    <div v-if="this.loaded">
+    <div class="target-wrapper" v-if="this.loaded">
       <targets />
       <div class="row">
         <ul>

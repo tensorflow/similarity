@@ -11,7 +11,7 @@
     <div class="row">
       <div class="column-left"><button class="btn" v-on:click="submit">Submit</button></div>
     </div>
-    <div v-if="this.loaded">
+    <div class="target-wrapper" v-if="this.loaded">
       <targets />
       <div class="row">
         <ul>
@@ -40,16 +40,15 @@
 
 <script>
 import Drawingboard from "../components/Drawingboard.vue";
+import Targets from "../components/Targets.vue";
 import Upload from "../components/Upload.vue";
 import axios from 'axios';
 export default {
   name: "emoji",
   components: {
     Drawingboard,
-    Upload
-  },
-  props: {
-    files: []
+    Upload,
+    Targets
   },
   data: function() {
     return {

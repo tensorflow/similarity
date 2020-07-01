@@ -23,7 +23,7 @@
                 :key="index"
                 class="tag is-primary" >
                 {{file.name}}
-                <button class="delete is-small"
+                <button ref="delete-btn" class="delete is-small"
                     type="button"
                     @click="deleteDropFile(index)">
                 </button>
