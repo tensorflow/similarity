@@ -24,7 +24,7 @@ from tensorflow_similarity.api.engine.simhash import SimHash
 
 from tensorflow_similarity.serving.www.explain import Explainer
 from tensorflow_similarity.serving.www.utils import (base64_to_numpy, beautify_grayscale, figure_to_src, is_rgb,
-                   read_emoji_targets, read_mnist_targets)
+                 read_image_dataset_targets)
 
 
 class VueFlask(Flask):
@@ -55,57 +55,42 @@ def index():
 
 @app.route('/distances', methods=['POST'])
 def get_distances():
-    # paths to models
-
-    mnist_model_path = "saved_models/mnist_model.h5"
-    emoji_model_path = "saved_models/emoji_model.h5"
-
-    # load models
-    mnist_model = tf.keras.models.load_model(mnist_model_path, custom_objects={'tf': tf})
-    emoji_model = tf.keras.models.load_model(emoji_model_path, custom_objects={'tf': tf})
-
-    # initialize Explainers
-    mnist_explainer = Explainer(mnist_model.tower_model)
-    emoji_explainer = Explainer(emoji_model.tower_model)
-
-    # read in target data for mnist and emoji datasets
-    mnist_x_targets, mnist_y_targets = read_mnist_targets()
-    emoji_x_targets, emoji_y_targets = read_emoji_targets()
-
-    # compute database with targets
-    mnist_model.build_database(
-        mnist_x_targets, mnist_y_targets)
-    mnist_x_targets = mnist_x_targets["example"]
-
-    emoji_model.build_database(emoji_x_targets, emoji_y_targets)
-    emoji_x_targets = emoji_x_targets["image"]
-
+    dataset = request.get_json().get('dataset')
     response_object = {'status': 'success'}
 
-    dataset = request.get_json().get('dataset')
-
-    if (dataset == "mnist"):
-        model = mnist_model
-        explainer = mnist_explainer
-        x_targets = mnist_x_targets
-        y_targets = mnist_y_targets
-        num_neighbors = len(y_targets)
+    if dataset == "mnist":
+        # pretrained mnist model
+        model_path = "saved_models/mnist_model.h5"
+        targets_directory = "static/images/mnist_targets/"
+        is_rgb = False
         size = 28
-        dictionary_key = "example"
-    elif (dataset == "emoji"):
-        model = emoji_model
-        explainer = emoji_explainer
-        x_targets = emoji_x_targets
-        y_targets = emoji_y_targets
-        num_neighbors = len(y_targets)
+    elif dataset == "emoji":
+        # pretrained emoji model
+        model_path = "saved_models/emoji_model.h5"
+        targets_directory = "static/images/emoji_targets/"
+        is_rgb = True
         size = 32
-        dictionary_key = "image"
-    elif (dataset == "imdb"):
+    elif dataset == "imdb":
+        # placeholder for pretrained imdb model, currently returns 1 as sentiment
         response_object["predicted_label"] = "1"
         return jsonify(response_object)
 
-    images_data = processing_request(request, size)
+    # load model
+    model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
+    dictionary_key = model.layers[0].name
 
+    # initialize Explainer
+    explainer = Explainer(model.tower_model)
+
+    # read in target data
+    x_targets, y_targets = read_image_dataset_targets(targets_directory, is_rgb, size, dictionary_key)
+    num_neighbors = len(y_targets)
+
+    # compute target database
+    model.build_database(x_targets, y_targets)
+    x_targets = x_targets[dictionary_key]
+
+    images_data = processing_request(request, size)
     x_test = {dictionary_key: images_data}
 
     # get neighbors

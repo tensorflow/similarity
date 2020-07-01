@@ -54,36 +54,6 @@ def beautify_grayscale(images):
     return max_value - images
 
 
-def read_mnist_targets():
-    """ Reads the target images from static/images/mnist_targets.
-    """
-
-    mnist_targets_directory = "static/images/mnist_targets/"
-    image_files = os.listdir(mnist_targets_directory)
-    x_targets = [None] * len(image_files)
-    y_targets = [None] * len(image_files)
-    for i, image_file in enumerate(image_files):
-        image_path = mnist_targets_directory + image_file
-        image_data = imageio.imread(image_path)
-        x_targets[i] = image_data
-
-        # the label for each target is the name of the file without the
-        # extension
-        label = image_file.split('.')[0]
-        y_targets[i] = label
-
-    #
-    x_targets = np.array(x_targets)
-    x_targets = np.max(x_targets) - x_targets
-    x_targets = x_targets / np.max(x_targets)
-    x_targets = x_targets[..., np.newaxis]
-    y_targets = np.array(y_targets)
-
-    packaged_x_targets = {"example": x_targets}
-
-    return packaged_x_targets, y_targets
-
-
 def figure_to_src(figure):
     io_bytes = BytesIO()
     figure.savefig(io_bytes, format='png', bbox_inches='tight')
@@ -95,31 +65,45 @@ def figure_to_src(figure):
     return src
 
 
-def read_emoji_targets():
-    """ Reads the target images from static/images/mnist_targets.
+def read_image_dataset_targets(directory, is_rgb, size, dict_key):
+    """ Reads the target images from specified directory.
     """
 
-    targets_directory = "static/images/emoji_targets/"
+    targets_directory = directory
     image_files = os.listdir(targets_directory)
     x_targets = [None] * len(image_files)
     y_targets = [None] * len(image_files)
     for i, image_file in enumerate(image_files):
         image_path = targets_directory + image_file
-        image_data = imageio.imread(image_path)[:, :, :3]
-        x_targets[i] = image_data
+        if is_rgb:
+            image_data = imageio.imread(image_path)[:, :, :3]
+        else:
+            image_data = imageio.imread(image_path)
 
+        x_targets[i] = image_data
         # the label for each target is the name of the file without the
         # extension
         label = image_file.split('.')[0]
         y_targets[i] = label
 
-    # turn the target images into grayscale
-    x_targets = np.asarray(x_targets)
-    x_targets = tf.image.rgb_to_grayscale(x_targets).numpy()
-    # normalize and map white (empty) pixels to 0 instead of max
-    x_targets = (np.max(x_targets) - x_targets) / np.max(x_targets)
-    x_targets = tf.image.resize(x_targets, (32, 32))
+    if is_rgb:
+        # turn the target images into grayscale
+        x_targets = np.asarray(x_targets)
+        x_targets = tf.image.rgb_to_grayscale(x_targets).numpy()
+        # normalize and map white (empty) pixels to 0 instead of max
+        x_targets = (np.max(x_targets) - x_targets) / np.max(x_targets)
+        
+    else:
+        x_targets = np.array(x_targets)
+        x_targets = np.max(x_targets) - x_targets
+        x_targets = x_targets / np.max(x_targets)
+        x_targets = x_targets[..., np.newaxis]
+        y_targets = np.array(y_targets)
 
-    packaged_x_targets = {"image": x_targets}
+    x_targets = tf.image.resize(x_targets, (size, size))
+    packaged_x_targets = {dict_key: x_targets}
 
     return packaged_x_targets, y_targets
+
+
+    
