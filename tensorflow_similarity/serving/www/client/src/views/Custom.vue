@@ -1,6 +1,6 @@
 <template>
   <div class="Custom">
-    <h3>Custom</h3>
+    <h3>Try your own Model!</h3>
   </div>
 </template>
 
