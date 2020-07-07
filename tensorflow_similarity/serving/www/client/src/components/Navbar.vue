@@ -3,10 +3,10 @@
         <div class="navbar-item"><img alt="TF similarity logo" src="../assets/logo.svg" /></div>
         <div class="navbar-item"><router-link to="/Custom">Try Your Model</router-link></div>  
         <div class="navbar-item"><router-link to="/">MNIST</router-link></div>
-        <div class="navbar-item"><router-link to="/emoji">emoji</router-link></div>
+        <div class="navbar-item"><router-link to="/emoji">Emoji</router-link></div>
         <div class="navbar-item"><router-link to="/IMDB">IMDB</router-link></div> 
 
-        <div class="navbar-item"><a href="https://docs.google.com/document/d/1fEUrWd-XGIHeUoerPPazpKtZVeceBGgyXAuvY41Y2xc/edit#">Documentation</a></div>     
+        <div class="navbar-item"><a href="https://github.com/tensorflow/similarity">Documentation</a></div>     
 
     </nav>
 </template>
