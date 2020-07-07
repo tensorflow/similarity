@@ -38,7 +38,7 @@
 
 header {
   width: 100vw;
-  background-color: #CCCCCC;
+  background-color: #c4c4c4;
   padding: 5px;
   text-align: center;
 }

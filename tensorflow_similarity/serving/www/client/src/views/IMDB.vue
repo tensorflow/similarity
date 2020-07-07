@@ -8,7 +8,26 @@
      <div class="row">
       <div class="column-left"><button class="btn" v-on:click="submit">Submit</button></div>
     </div>
-    <div v-if="this.loaded">{{this.predicted_label}}</div>
+    <div class="target-wrapper" v-if="this.loaded">
+      <h3>Predicted Sentiment: {{this.predicted_label}}</h3>
+      <div class="row">
+        <ul>
+          <li v-for="(neighbor) in neighbors" v-bind:key="neighbor.label">
+            <div class="card" v-bind:style="[neighbor.label === predicted_label ? {'background-color': '#FF8200'} : {'background-color': '#f6f6f6'}]">
+                
+              <div class="card-content">
+                <div class="media">
+                  <div class="media-content">
+                    <p >{{"Sentiment Label: " + neighbor.label}}</p>
+                    <p >{{"Distance: " + neighbor.distance}}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -46,6 +65,7 @@ export default {
       var path = 'http://localhost:5000/distances'
       axios.post(path, payload).then(
         response => {
+          console.log(response)
           this.data = response.data
           this.neighbors = this.data.neighbors
           this.loaded = true

@@ -15,11 +15,36 @@
 import base64
 import os
 from io import BytesIO
+import string
 
 import imageio
 import numpy as np
 import tensorflow as tf
+import numpy as np
+from tensorflow import keras
+
+from tensorflow_similarity.serving.www.explain import Explainer
 from matplotlib import pyplot as plt
+
+def load_model(model_path):
+    """ Load a tf similarity model
+
+    Args:
+        model_path (String): the path to the stored model
+
+    Returns:
+        model: the loaded tf model
+        dictionary_key: the dictionary key of the dict that must be passed to the model
+    """
+    # load model and initialize explainer
+    model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
+    dictionary_key = model.layers[0].name
+    if "IMDB" in model_path:
+        explainer = None
+    else:
+        explainer = Explainer(model.tower_model)
+
+    return model, dictionary_key, explainer
 
 
 def base64_to_numpy(data):
@@ -63,6 +88,49 @@ def figure_to_src(figure):
     src = "data:image/png;base64," + pic_hash_str
     plt.close(figure)
     return src
+
+def encode_review(text):
+    imdb = keras.datasets.imdb
+    word_index = imdb.get_word_index()
+    word_index = {k: (v+3) for k,v in word_index.items()}
+    word_index["<PAD>"] = 0
+    word_index["<START>"] = 1
+    word_index["<UNK>"] = 2  # unknown
+    word_index["<UNUSED>"] = 3
+
+    text = text.translate(string.punctuation)
+    text = text.lower().split(" ")
+    if len(text) > 398:
+        text = text[398:]
+    for i in range (0, len(text)):
+        text[i] = word_index.get(text[i], 2)
+    text.insert(0, 1)
+    
+    while len(text) < 400:
+        text.append(0)
+    return np.asarray(text)
+
+def read_text_dataset_targets(directory, dict_key):
+    targets_directory = directory
+    text_files = os.listdir(targets_directory)
+    x_targets = [None] * len(text_files)
+    y_targets = [None] * len(text_files)
+    for i, text_file in enumerate(text_files):
+        text_path = targets_directory + text_file
+        f = open(text_path, "r")
+        text_data = f.read()
+        f.close()
+        text_data = encode_review(text_data)
+
+        x_targets[i] = text_data
+        # the label for each target is the name of the file without the
+        # extension
+        label = text_file.split('.')[0]
+        y_targets[i] = label
+    packaged_x_targets = {dict_key: np.asarray(x_targets)}
+
+    return packaged_x_targets, y_targets
+
 
 
 def read_image_dataset_targets(directory, is_rgb, size, dict_key):

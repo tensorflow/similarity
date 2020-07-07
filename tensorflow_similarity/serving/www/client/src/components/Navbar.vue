@@ -46,7 +46,6 @@ nav a:hover {
 }
 
 nav .navbar-item {
-    color: #425066;
     padding: 5px 20px;
     font-size: 20px;
     position: relative;
