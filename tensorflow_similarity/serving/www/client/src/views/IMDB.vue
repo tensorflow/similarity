@@ -9,23 +9,24 @@
       <div class="column-left"><button class="btn" v-on:click="submit">Submit</button></div>
     </div>
     <div class="target-wrapper" v-if="this.loaded">
-      <h3>Predicted Sentiment: {{this.predicted_label}}</h3>
+      <h3>Predicted Sentiment: {{this.predicted_label == 0 ? "Negative" : "Positive"}}</h3>
       <div class="row">
-        <ul>
-          <li v-for="(neighbor) in neighbors" v-bind:key="neighbor.label">
-            <div class="card" v-bind:style="[neighbor.label === predicted_label ? {'background-color': '#FF8200'} : {'background-color': '#f6f6f6'}]">
-                
-              <div class="card-content">
-                <div class="media">
-                  <div class="media-content">
-                    <p >{{"Sentiment Label: " + neighbor.label}}</p>
-                    <p >{{"Distance: " + neighbor.distance}}</p>
+        <div class="scroll-menu-wrapper">
+          <ul class="scroll-menu">
+            <li v-for="(neighbor) in neighbors" v-bind:key="neighbor.label">
+              <div class="card" v-bind:style="[neighbor.label === predicted_label ? {'background-color': '#FF8200'} : {'background-color': '#f6f6f6'}]">
+                <div class="card-content">
+                  <div class="media">
+                    <div class="media-content">
+                      <p>{{neighbor.label == 0 ? "Negative" : "Positive"}}</p>
+                      <p >{{"Distance: " + neighbor.distance}}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </li>
-        </ul>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>

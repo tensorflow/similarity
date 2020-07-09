@@ -14,25 +14,27 @@
     <div class="target-wrapper" v-if="this.loaded">
       <targets />
       <div class="row">
-        <ul>
-          <li v-for="(neighbor) in neighbors" v-bind:key="neighbor.label">
-            <div class="card" v-bind:style="[neighbor.label === predicted_label ? {'background-color': '#FF8200'} : {'background-color': '#f6f6f6'}]">
-                <div class=" card-image">
-                  <figure class="image">
-                    <img :src="`http://localhost:5000/static/images/${dataset}_targets/${neighbor.label}.png`">
-                  </figure>
-                </div>
-              <div class="card-content">
-                <div class="media">
-                  <div class="media-content">
-                    <p >{{"Label: " + neighbor.label}}</p>
-                    <p >{{"Distance: " + neighbor.distance}}</p>
+        <div class="scroll-menu-wrapper">
+          <ul class = scroll-menu>
+            <li v-for="(neighbor) in neighbors" v-bind:key="neighbor.label">
+              <div class="card" v-bind:style="[neighbor.label === predicted_label ? {'background-color': '#FF8200'} : {'background-color': '#f6f6f6'}]">
+                  <div class=" card-image">
+                    <figure class="image">
+                      <img :src="`http://localhost:5000/static/images/${dataset}_targets/${neighbor.label}.png`">
+                    </figure>
+                  </div>
+                <div class="card-content">
+                  <div class="media">
+                    <div class="media-content">
+                      <p >{{"Label: " + neighbor.label}}</p>
+                      <p >{{"Distance: " + neighbor.distance}}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </li>
-        </ul>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>

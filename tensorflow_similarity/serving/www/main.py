@@ -116,7 +116,7 @@ def get_distances():
             explain_src = figure_to_src(figure)
             neighbor_explain_srcs.append(explain_src)
         else:
-            original_images = np.array([x_target])
+            original_images = request_data
             explain_src = []
             neighbor_explain_srcs = []
 

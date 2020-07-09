@@ -125,7 +125,7 @@ def read_text_dataset_targets(directory, dict_key):
         x_targets[i] = text_data
         # the label for each target is the name of the file without the
         # extension
-        label = text_file.split('.')[0]
+        label = text_file.split('.')[0].split('-')[0]
         y_targets[i] = label
     packaged_x_targets = {dict_key: np.asarray(x_targets)}
 
