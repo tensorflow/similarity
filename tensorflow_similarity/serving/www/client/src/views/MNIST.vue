@@ -1,7 +1,7 @@
 <template>
   <div class="MNIST">
-    <h3>MNIST</h3>
-    <div class="row">
+    <h3></h3>
+    <div class="row" v-bind:style="{'margin-top': '20px'}">
       <div class="column-left">
         <drawingboard/>
         
@@ -147,15 +147,15 @@ export default {
   align-items: center;
 }
 
-
 .card-image {
   display: flex;
   justify-content: center;
+  padding-top: 10px;
+  padding-left: 10px;
 }
 
 .card {
   margin: 10px;
-  padding: 10px;
   border-radius: 5px;
   color: #425066;
   text-align: center;
@@ -177,6 +177,7 @@ export default {
 .scroll-menu-wrapper {
   width: 45%;
   padding-top: 15px;
+  padding-bottom: 40px;
 }
 
 .column-left {

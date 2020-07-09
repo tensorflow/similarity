@@ -89,7 +89,7 @@ def figure_to_src(figure):
     plt.close(figure)
     return src
 
-def encode_review(text):
+def get_imdb_dict():
     imdb = keras.datasets.imdb
     word_index = imdb.get_word_index()
     word_index = {k: (v+3) for k,v in word_index.items()}
@@ -98,6 +98,10 @@ def encode_review(text):
     word_index["<UNK>"] = 2  # unknown
     word_index["<UNUSED>"] = 3
 
+    return word_index
+
+def encode_review(text):
+    word_index = get_imdb_dict()
     text = text.translate(string.punctuation)
     text = text.lower().split(" ")
     if len(text) > 398:
@@ -109,6 +113,12 @@ def encode_review(text):
     while len(text) < 400:
         text.append(0)
     return np.asarray(text)
+
+
+def decode_review(text):
+    word_index = get_imdb_dict()
+    reverse_word_index = dict([(value, key) for (key, value) in word_index.items()])
+    return ' '.join([reverse_word_index.get(i, '?') for i in text])
 
 def read_text_dataset_targets(directory, dict_key):
     targets_directory = directory

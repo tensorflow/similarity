@@ -24,7 +24,7 @@ from tensorflow_similarity.api.engine.simhash import SimHash
 
 from tensorflow_similarity.serving.www.explain import Explainer
 from tensorflow_similarity.serving.www.utils import (load_model, base64_to_numpy, beautify_grayscale, figure_to_src, is_rgb,
-                 read_image_dataset_targets, read_text_dataset_targets, encode_review)
+                 read_image_dataset_targets, read_text_dataset_targets, encode_review, decode_review)
 
 
 class VueFlask(Flask):
@@ -108,6 +108,9 @@ def get_distances():
         index = neighbor.index
         x_target = x_targets[index]
 
+        # put it in an dictionary
+        neighbor_obj = {"label": label}
+
         # explainability
         if (explainer is not None):
             original_images = np.array([x_target])
@@ -118,16 +121,16 @@ def get_distances():
         else:
             original_images = request_data
             explain_src = []
-            neighbor_explain_srcs = []
+            neighbor_obj["text"] = decode_review(x_target)
 
         distance = round(neighbor.distance, 3)
-        # put it in an dictionary
-        neighbor_obj = {"label": label, "distance": distance}
+        
         result_data.append(neighbor_obj)
         if distance < smallest_distance:
             predicted_label = label
             smallest_distance = distance
 
+        neighbor_obj["distance"] = distance
     # explainability
     if explainer is not None:
         original_images = x_test[dictionary_key]
@@ -145,7 +148,7 @@ def get_distances():
     response_object["neighbor_explain_srcs"] = neighbor_explain_srcs
 
     if dataset == "imdb":
-        pass
+        response_object["original_text"] = request.get_json().get('data')
     else:
         original_image = beautify_grayscale(original_images[0])
         original_image = np.squeeze(original_image)

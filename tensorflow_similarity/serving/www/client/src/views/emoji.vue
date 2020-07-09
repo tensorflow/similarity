@@ -1,7 +1,7 @@
 <template>
   <div class="emoji">
-    <h3>Emoji</h3>
-    <div class="row">
+    <h3></h3>
+    <div class="row" v-bind:style="{'margin-top': '20px'}">
       <div class="column-left">
         <drawingboard/>
         
