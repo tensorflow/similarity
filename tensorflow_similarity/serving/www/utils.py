@@ -26,6 +26,40 @@ from tensorflow import keras
 from tensorflow_similarity.serving.www.explain import Explainer
 from matplotlib import pyplot as plt
 
+import json
+from tabulate import tabulate
+
+def get_layers(model, dtype=tf.keras.layers.Conv2D):
+    """get model layers of a given dtype"""
+    layers = []
+    for layer in model.layers:
+        if isinstance(layer, dtype):
+            layers.append(layer)
+    return layers
+
+
+def get_layer_names(model, dtype=tf.keras.layers.Conv2D, verbose=0):
+    """get model layer names of a given dtype"""
+    layers = get_layers(model, dtype=dtype)
+    if verbose:
+        rows = []
+        for layer in layers:
+            rows.append([layer.name, str(layer.output_shape)])
+
+        print(tabulate(rows, headers=['name', 'shape']))
+
+    return [l.name for l in layers]
+
+
+def save_explanations(output_path, explanations, stub):
+    "Save explanations in jsonl format"
+
+    fname = output_path / (stub + '.json')
+    with open(str(fname), 'w+') as out:
+        for explanation in explanations:
+            out.write(json.dumps(explanation) + '\n')
+    return fname
+
 def load_model(model_path):
     """ Load a tf similarity model
 

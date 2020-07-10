@@ -23,7 +23,7 @@
                     <div class="media-content">
                       <p>{{neighbor.label == 0 ? "Negative" : "Positive"}}</p>
                       <p >{{"Distance: " + neighbor.distance}}</p>
-                      <button class="btn-embedding" v-on:click="mouseOver(index)">Show Embedding</button>
+                      <button class="btn-embedding" v-on:click="mouseOver(index)">Show Text</button>
                     </div>
                   </div>
                 </div>
@@ -157,7 +157,7 @@ export default {
 .btn-embedding {
   transition-duration: 0.4s;
   height: 30px;
-  width: 140px;
+  width: 90px;
   margin-top: 10px;
   background-color: #425066;
   text-align: center;

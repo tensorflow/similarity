@@ -14,10 +14,11 @@
 
 
 import unittest
-from tensorflow_similarity.serving.www.main import app
+from tensorflow_similarity.serving.www.main import (app, processing_request)
 from tensorflow_similarity.serving.www.explain import Explainer
 from tensorflow_similarity.serving.www.utils import (load_model)
 import tensorflow as tf
+import json
 
 class FlaskTestCase(unittest.TestCase):
     
@@ -29,9 +30,18 @@ class FlaskTestCase(unittest.TestCase):
 
     def test_load_model(self):
         model, dict_key, explainer = load_model('../../../tensorflow_similarity/serving/www/saved_models/mnist_model.h5')
-        self.assertEqual(dict_key, "text")
+        self.assertEqual(dict_key, "example")
         self.assertIsNotNone(model)
         self.assertIsInstance(explainer, Explainer)
+
+    def test_processing_request(self):
+        requestDict = {'data': {'0': 0, '1': 1}, 'dataset': 'mnist'}
+        # request = json.dumps(requestDict)
+        # sprint(request)
+        size = 2
+        result = processing_request(requestDict, size)
+        print(result)
+        
 
 if __name__ == "__main__":
     unittest.main()

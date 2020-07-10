@@ -15,7 +15,7 @@
       <targets />
       <div class="row">
         <div class="scroll-menu-wrapper">
-          <ul class = scroll-menu>
+          <ul class = "scroll-menu">
             <li v-for="(neighbor) in neighbors" v-bind:key="neighbor.label">
               <div class="card" v-bind:style="[neighbor.label === predicted_label ? {'background-color': '#FF8200'} : {'background-color': '#f6f6f6'}]">
                   <div class=" card-image">
@@ -54,6 +54,7 @@ export default {
   },
   data: function() {
     return {
+      files: [],
       neighbors: [],
       loaded: false,
       predicted_label: null,
@@ -106,7 +107,7 @@ export default {
         var path = 'http://localhost:5000/distances'
         var payload = { data: reader.result, dataset: "emoji" }
         axios.post(path, payload).then(
-        response => {                  
+        response => {   
           this.data = response.data
           this.neighbors = this.data.neighbors
           this.loaded = true
