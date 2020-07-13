@@ -78,7 +78,6 @@ export default {
       var path = 'http://localhost:5000/distances'
       axios.post(path, payload).then(
         response => {
-          console.log(response)
           this.data = response.data
           this.neighbors = this.data.neighbors
           this.loaded = true
