@@ -14,6 +14,7 @@
 
 from collections import defaultdict
 
+import os
 import numpy as np
 import requests
 import tensorflow as tf
@@ -60,20 +61,20 @@ def get_distances():
 
     if dataset == "mnist":
         # pretrained mnist model
-        model_path = "saved_models/mnist_model.h5"
-        targets_directory = "static/images/mnist_targets/"
+        model_path = os.path.dirname(__file__) + "/saved_models/mnist_model.h5"
+        targets_directory = os.path.dirname(__file__) + "/static/images/mnist_targets/"
         is_rgb = False
         size = 28
     elif dataset == "emoji":
         # pretrained emoji model
-        model_path = "saved_models/emoji_model.h5"
-        targets_directory = "static/images/emoji_targets/"
+        model_path = os.path.dirname(__file__) + "/saved_models/emoji_model.h5"
+        targets_directory = os.path.dirname(__file__) + "/static/images/emoji_targets/"
         is_rgb = True
         size = 32
     elif dataset == "imdb":
         # pretrained imdb model
-        targets_directory = "static/text/imdb_targets/"
-        model_path = "saved_models/IMDB_model.h5"
+        targets_directory = os.path.dirname(__file__) + "/static/text/imdb_targets/"
+        model_path = os.path.dirname(__file__) + "/saved_models/IMDB_model.h5"
         truncate_length = 400
         size = -1
 

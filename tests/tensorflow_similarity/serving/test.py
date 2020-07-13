@@ -16,7 +16,7 @@
 import unittest
 from tensorflow_similarity.serving.www.main import (app, processing_request)
 from tensorflow_similarity.serving.www.explain import Explainer
-from tensorflow_similarity.serving.www.utils import (load_model, get_imdb_dict, encode_review, decode_review)
+from tensorflow_similarity.serving.www.utils import (load_model, get_imdb_dict, encode_review, decode_review, read_image_dataset_targets, read_text_dataset_targets)
 import numpy as np
 import json
 import requests
@@ -54,30 +54,41 @@ class ServingTestCase(unittest.TestCase):
         decoded_text = decode_review(np.asarray([1,14,20,16,777,0]))
         self.assertEqual("<START> this movie was fantastic <PAD>", decoded_text)
 
+    def test_read_text_dataset_targets(self):
+        x, y = read_text_dataset_targets("../../../tensorflow_similarity/serving/www/static/text/imdb_targets/", "text")
+        self.assertEqual(len(x["text"]), 6)
+        self.assertEqual(len(y), 6)
+        self.assertEqual(y, ['1', '0', '1', '0', '0', '1'])
+
+    def test_read_image_dataset_targets(self):
+        x, y = read_image_dataset_targets("../../../tensorflow_similarity/serving/www/static/images/mnist_targets/", False, 28, "example")
+        x1, y1 = read_image_dataset_targets("../../../tensorflow_similarity/serving/www/static/images/emoji_targets/", True, 32, "image")
+        self.assertEqual(len(x["example"]), 10)
+        self.assertEqual(len(y), 10)
+        self.assertTrue((y == ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']).all())
+        self.assertEqual(len(x1["image"]), 109)
+        self.assertEqual(len(y1), 109)
+
     def test_mnist_response(self):
-        headers = headers = {'Content-Type': 'application/json' }
+        tester = app.test_client(self)
         payload = {'data': {'0': 0, '1': 1}, 'dataset': 'mnist'}
-        url = "http://127.0.0.1:5000/distances"
-        response = requests.post(url, headers=headers, data=json.dumps(payload,indent=4))
-        self.assertEqual(response.json()['predicted_label'], '3')
+        response = tester.post("/distances", data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(response.get_json()['predicted_label'], '3')
         self.assertEqual(response.status_code, 200)
 
     def test_imdb_response(self):
-        headers = headers = {'Content-Type': 'application/json' }
+        tester = app.test_client(self)
         payload = {'data': "This movie sucked", 'dataset': 'imdb'} 
-        url = "http://127.0.0.1:5000/distances"
-        response = requests.post(url, headers=headers, data=json.dumps(payload,indent=4))
-        self.assertEqual(response.json()['predicted_label'], '0')
+        response = tester.post("/distances", data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(response.get_json()['predicted_label'], '0')
         self.assertEqual(response.status_code, 200)
 
     def test_emoji_response(self):
-        headers = headers = {'Content-Type': 'application/json' }
+        tester = app.test_client(self)
         payload = {'data': {'0': 0, '1': 1}, 'dataset': 'emoji'}
-        url = "http://127.0.0.1:5000/distances"
-        response = requests.post(url, headers=headers, data=json.dumps(payload,indent=4))
-        self.assertEqual(response.json()['predicted_label'], 'face_without_mouth')
+        response = tester.post("/distances", data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(response.get_json()['predicted_label'], 'face_without_mouth')
         self.assertEqual(response.status_code, 200)
-        
 
 if __name__ == "__main__":
     unittest.main()
