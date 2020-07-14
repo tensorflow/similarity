@@ -22,7 +22,7 @@ describe("Navbar.vue", () => {
     })
 
     it("has router link to emoji model", () => {
-        expect(wrapper.html()).toContain('<router-link-stub to=\"/emoji\">emoji</router-link-stub>')
+        expect(wrapper.html()).toContain('<router-link-stub to=\"/emoji\">Emoji</router-link-stub>')
     })
 
     it("has router link to imdb model", () => {
@@ -30,6 +30,6 @@ describe("Navbar.vue", () => {
     })
 
     it("has link to documentation", () => {
-        expect(wrapper.html()).toContain('<a href="https://docs.google.com/document/d/1fEUrWd-XGIHeUoerPPazpKtZVeceBGgyXAuvY41Y2xc/edit#">Documentation</a>')
+        expect(wrapper.html()).toContain('<a href=\"https://github.com/tensorflow/similarity\">Documentation</a>')
     })
 })

@@ -24,41 +24,12 @@ import numpy as np
 from tensorflow import keras
 
 from tensorflow_similarity.serving.www.explain import Explainer
+from tensorflow_similarity.serving.www.constants import IMDB_REVIEW_LENGTH
+
 from matplotlib import pyplot as plt
 
 import json
 from tabulate import tabulate
-
-def get_layers(model, dtype=tf.keras.layers.Conv2D):
-    """get model layers of a given dtype"""
-    layers = []
-    for layer in model.layers:
-        if isinstance(layer, dtype):
-            layers.append(layer)
-    return layers
-
-
-def get_layer_names(model, dtype=tf.keras.layers.Conv2D, verbose=0):
-    """get model layer names of a given dtype"""
-    layers = get_layers(model, dtype=dtype)
-    if verbose:
-        rows = []
-        for layer in layers:
-            rows.append([layer.name, str(layer.output_shape)])
-
-        print(tabulate(rows, headers=['name', 'shape']))
-
-    return [l.name for l in layers]
-
-
-def save_explanations(output_path, explanations, stub):
-    "Save explanations in jsonl format"
-
-    fname = output_path / (stub + '.json')
-    with open(str(fname), 'w+') as out:
-        for explanation in explanations:
-            out.write(json.dumps(explanation) + '\n')
-    return fname
 
 def load_model(model_path):
     """ Load a tf similarity model
@@ -69,6 +40,7 @@ def load_model(model_path):
     Returns:
         model: the loaded tf model
         dictionary_key: the dictionary key of the dict that must be passed to the model
+        explainer: Explainer instance which implements GradCam for explainability
     """
     # load model and initialize explainer
     model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
@@ -124,7 +96,7 @@ def figure_to_src(figure):
     return src
 
 def get_imdb_dict():
-    imdb = keras.datasets.imdb
+    imdb = tf.keras.datasets.imdb
     word_index = imdb.get_word_index()
     word_index = {k: (v+3) for k,v in word_index.items()}
     word_index["<PAD>"] = 0
@@ -135,27 +107,45 @@ def get_imdb_dict():
     return word_index
 
 def encode_review(text):
+    """Convert a string to a numpy array for the pretrained IMDB model
+
+    Args:
+        text (String): The text to be converted to a numpy array
+
+    Returns:
+        (np.array): the numpy array representation of the string compatible with the model
+    """
     word_index = get_imdb_dict()
     text = text.translate(string.punctuation)
     text = text.lower().split(" ")
-    if len(text) > 398:
-        text = text[398:]
+    if len(text) > IMDB_REVIEW_LENGTH - 2:
+        text = text[IMDB_REVIEW_LENGTH - 2:]
     for i in range (0, len(text)):
         text[i] = word_index.get(text[i], 2)
     text.insert(0, 1)
     
-    while len(text) < 400:
+    while len(text) < IMDB_REVIEW_LENGTH:
         text.append(0)
     return np.asarray(text)
 
 
 def decode_review(text):
+    """Convert a string encoded as a numpy array back to its string representation
+
+    Args:
+        text (np.array): The text to be converted to a numpy array
+
+    Returns:
+        (String): the String representation of the np array compatible with the model
+    """
     word_index = get_imdb_dict()
     reverse_word_index = dict([(value, key) for (key, value) in word_index.items()])
     return ' '.join([reverse_word_index.get(i, '?') for i in text])
 
-def read_text_dataset_targets(directory, dict_key):
-    targets_directory = directory
+
+def read_text_dataset_targets(targets_directory, dict_key):
+    """ Reads the target text files from specified directory.
+    """
     text_files = os.listdir(targets_directory)
     x_targets = [None] * len(text_files)
     y_targets = [None] * len(text_files)
@@ -169,7 +159,7 @@ def read_text_dataset_targets(directory, dict_key):
         x_targets[i] = text_data
         # the label for each target is the name of the file without the
         # extension
-        label = text_file.split('.')[0].split('-')[0]
+        label = '1' if text_file.split('.')[0].split('-')[0] == "positive" else '0'
         y_targets[i] = label
     packaged_x_targets = {dict_key: np.asarray(x_targets)}
 
@@ -177,11 +167,9 @@ def read_text_dataset_targets(directory, dict_key):
 
 
 
-def read_image_dataset_targets(directory, is_rgb, size, dict_key):
+def read_image_dataset_targets(targets_directory, is_rgb, size, dict_key):
     """ Reads the target images from specified directory.
     """
-
-    targets_directory = directory
     image_files = os.listdir(targets_directory)
     x_targets = [None] * len(image_files)
     y_targets = [None] * len(image_files)

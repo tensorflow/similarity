@@ -17,9 +17,12 @@ import unittest
 from tensorflow_similarity.serving.www.main import (app, processing_request)
 from tensorflow_similarity.serving.www.explain import Explainer
 from tensorflow_similarity.serving.www.utils import (load_model, get_imdb_dict, encode_review, decode_review, read_image_dataset_targets, read_text_dataset_targets)
+from tensorflow_similarity.serving.www.constants import IMDB_REVIEW_LENGTH
 import numpy as np
 import json
 import requests
+
+BASE_TARGET_PATH = "../../../tensorflow_similarity/serving/www/static/"
 
 class ServingTestCase(unittest.TestCase):
     
@@ -46,27 +49,30 @@ class ServingTestCase(unittest.TestCase):
 
     def test_encode_review(self):
         encoded_arr = encode_review("This movie was fantastic")
-        test_arr = np.asarray([1,14,20,16,777,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-        self.assertTrue((encoded_arr == test_arr).all())
+        expected_encoding = [1,14,20,16,777]
+        while len(expected_encoding) < IMDB_REVIEW_LENGTH:
+            expected_encoding.append(0)
+        expected_encoding = np.asarray(expected_encoding)
+        self.assertTrue((encoded_arr == expected_encoding).all())
 
     def test_decode_review(self):
         decoded_text = decode_review(np.asarray([1,14,20,16,777,0]))
         self.assertEqual("<START> this movie was fantastic <PAD>", decoded_text)
 
     def test_read_text_dataset_targets(self):
-        x, y = read_text_dataset_targets("../../../tensorflow_similarity/serving/www/static/text/imdb_targets/", "text")
+        x, y = read_text_dataset_targets(BASE_TARGET_PATH + "/text/imdb_targets/", "text")
         self.assertEqual(len(x["text"]), 6)
         self.assertEqual(len(y), 6)
-        self.assertEqual(y, ['1', '0', '1', '0', '0', '1'])
+        self.assertEqual(y, ['0', '0', '0', '1', '1', '1'])
 
     def test_read_image_dataset_targets(self):
-        x, y = read_image_dataset_targets("../../../tensorflow_similarity/serving/www/static/images/mnist_targets/", False, 28, "example")
-        x1, y1 = read_image_dataset_targets("../../../tensorflow_similarity/serving/www/static/images/emoji_targets/", True, 32, "image")
-        self.assertEqual(len(x["example"]), 10)
-        self.assertEqual(len(y), 10)
-        self.assertTrue((y == ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']).all())
-        self.assertEqual(len(x1["image"]), 109)
-        self.assertEqual(len(y1), 109)
+        mnist_targets, mnist_target_labels = read_image_dataset_targets(BASE_TARGET_PATH + "images/mnist_targets/", False, 28, "example")
+        emoji_targets, emoji_targets_labels = read_image_dataset_targets(BASE_TARGET_PATH + "/images/emoji_targets/", True, 32, "image")
+        self.assertEqual(len(mnist_targets["example"]), 10)
+        self.assertEqual(len(mnist_target_labels), 10)
+        self.assertTrue((mnist_target_labels == ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']).all())
+        self.assertEqual(len(emoji_targets["image"]), 109)
+        self.assertEqual(len(emoji_targets_labels), 109)
 
     def test_mnist_response(self):
         tester = app.test_client(self)

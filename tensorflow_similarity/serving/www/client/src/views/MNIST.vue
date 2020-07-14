@@ -1,7 +1,7 @@
 <template>
   <div class="MNIST">
     <h3></h3>
-    <div class="row" v-bind:style="{'margin-top': '20px'}">
+    <div class="row-top">
       <div class="column-left">
         <drawingboard/>
         
@@ -132,6 +132,15 @@ export default {
 }
 
 .row {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  flex-direction: row;
+  overflow-x: auto;
+}
+
+.row-top {
+  margin-top: 20px;
   display: flex;
   justify-content: center;
   align-content: center;

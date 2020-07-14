@@ -1,7 +1,7 @@
 <template>
   <div class="IMDB">
     <h3></h3>
-    <div class=row v-bind:style="{'margin-top': '20px'}">
+    <div class="row-top" >
       <div class="column-left"><textarea id= "txtarea" v-model="text" placeholder="Type a movie review!"></textarea></div>
       <div class="column-right"><upload @newFileUploaded="onNewUpload"/></div>
     </div>

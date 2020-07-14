@@ -58,24 +58,24 @@ def index():
 def get_distances():
     dataset = request.get_json().get('dataset')
     response_object = {'status': 'success'}
+    base_path = os.path.dirname(__file__)
 
     if dataset == "mnist":
         # pretrained mnist model
-        model_path = os.path.dirname(__file__) + "/saved_models/mnist_model.h5"
-        targets_directory = os.path.dirname(__file__) + "/static/images/mnist_targets/"
+        model_path = base_path + "/saved_models/mnist_model.h5"
+        targets_directory = base_path + "/static/images/mnist_targets/"
         is_rgb = False
         size = 28
     elif dataset == "emoji":
         # pretrained emoji model
-        model_path = os.path.dirname(__file__) + "/saved_models/emoji_model.h5"
-        targets_directory = os.path.dirname(__file__) + "/static/images/emoji_targets/"
+        model_path = base_path + "/saved_models/emoji_model.h5"
+        targets_directory = base_path + "/static/images/emoji_targets/"
         is_rgb = True
         size = 32
     elif dataset == "imdb":
         # pretrained imdb model
-        targets_directory = os.path.dirname(__file__) + "/static/text/imdb_targets/"
-        model_path = os.path.dirname(__file__) + "/saved_models/IMDB_model.h5"
-        truncate_length = 400
+        targets_directory = base_path + "/static/text/imdb_targets/"
+        model_path = base_path + "/saved_models/IMDB_model.h5"
         size = -1
 
     # load model
@@ -113,7 +113,7 @@ def get_distances():
         neighbor_obj = {"label": label}
 
         # explainability
-        if (explainer is not None):
+        if explainer is not None:
             original_images = np.array([x_target])
             heat_maps = explainer.explain(original_images)
             figure = explainer.render(original_images, heat_maps)
