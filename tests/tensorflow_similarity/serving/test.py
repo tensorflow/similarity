@@ -60,10 +60,10 @@ class ServingTestCase(unittest.TestCase):
         self.assertEqual("<START> this movie was fantastic <PAD>", decoded_text)
 
     def test_read_text_dataset_targets(self):
-        x, y = read_text_dataset_targets(BASE_TARGET_PATH + "/text/imdb_targets/", "text")
-        self.assertEqual(len(x["text"]), 6)
-        self.assertEqual(len(y), 6)
-        self.assertEqual(y, ['0', '0', '0', '1', '1', '1'])
+        imdb_targets, imdb_targets_labels = read_text_dataset_targets(BASE_TARGET_PATH + "/text/imdb_targets/", "text")
+        self.assertEqual(len(imdb_targets["text"]), 6)
+        self.assertEqual(len(imdb_targets_labels), 6)
+        self.assertEqual(imdb_targets_labels, ['0', '0', '0', '1', '1', '1'])
 
     def test_read_image_dataset_targets(self):
         mnist_targets, mnist_target_labels = read_image_dataset_targets(BASE_TARGET_PATH + "images/mnist_targets/", False, 28, "example")
