@@ -174,7 +174,7 @@ def read_text_dataset_targets(targets_directory, dict_key):
     y_targets = [None] * len(text_files)
     for i, text_file in enumerate(text_files):
         # open each text file, read the data and encode it as a np array
-        text_path = targets_directory + text_file
+        text_path = os.path.join(targets_directory, text_file)
         f = open(text_path, "r")
         text_data = f.read()
         f.close()
@@ -211,7 +211,7 @@ def read_image_dataset_targets(targets_directory, is_rgb, size, dict_key):
     x_targets = [None] * len(image_files)
     y_targets = [None] * len(image_files)
     for i, image_file in enumerate(image_files):
-        image_path = targets_directory + image_file
+        image_path = os.path.join(targets_directory, text_file)
         if is_rgb:
             image_data = imageio.imread(image_path)[:, :, :3]
         else:
