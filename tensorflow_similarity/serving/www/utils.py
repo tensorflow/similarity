@@ -21,10 +21,8 @@ import imageio
 import numpy as np
 import tensorflow as tf
 import numpy as np
-from tensorflow import keras
 
 from tensorflow_similarity.serving.www.explain import Explainer
-from tensorflow_similarity.serving.www.constants import IMDB_REVIEW_LENGTH
 
 from matplotlib import pyplot as plt
 
@@ -75,6 +73,10 @@ def base64_to_numpy(data):
     os.remove('temp.png')
     return result
 
+def read_config(config_file):
+    with open(os.path.dirname(__file__) + "/" + config_file, 'r') as f:
+        config = json.load(f)
+    return config
 
 def is_rgb(images):
     return len(images.shape) == 4
@@ -96,8 +98,15 @@ def figure_to_src(figure):
     return src
 
 def get_imdb_dict():
+    """Create a word to index mapping to convert plain text to a format that
+       can be handled by a model
+    
+    Returns:
+        word_index (dict): a dictionary of words mapping to their respective integer representation
+    """
     imdb = tf.keras.datasets.imdb
     word_index = imdb.get_word_index()
+    # shift all indeces up by 3 to add PAD START UNK and UNUSED tokens to dict
     word_index = {k: (v+3) for k,v in word_index.items()}
     word_index["<PAD>"] = 0
     word_index["<START>"] = 1
@@ -107,7 +116,7 @@ def get_imdb_dict():
     return word_index
 
 def encode_review(text):
-    """Convert a string to a numpy array for the pretrained IMDB model
+    """Convert a string to a numpy array compatible with the pretrained IMDB model
 
     Args:
         text (String): The text to be converted to a numpy array
@@ -116,17 +125,23 @@ def encode_review(text):
         (np.array): the numpy array representation of the string compatible with the model
     """
     word_index = get_imdb_dict()
-    text = text.translate(string.punctuation)
-    text = text.lower().split(" ")
-    if len(text) > IMDB_REVIEW_LENGTH - 2:
-        text = text[IMDB_REVIEW_LENGTH - 2:]
-    for i in range (0, len(text)):
-        text[i] = word_index.get(text[i], 2)
-    text.insert(0, 1)
-    
-    while len(text) < IMDB_REVIEW_LENGTH:
-        text.append(0)
-    return np.asarray(text)
+    # preprocess string by removing punctuation, converting to lower case and splitting into words 
+    text_arr = text.translate(string.punctuation).lower().split(" ")
+    IMDB_REVIEW_LENGTH = read_config("serving_config.json")["imdb"]["review_length"]
+    if len(text_arr) > IMDB_REVIEW_LENGTH - 2:
+        # if the review is longer than IMDB_REVIEW_LENGTH - 2 words, truncate to IMDB_REVIEW_LENGTH - 2 words 
+        # to account for START and STOP tokens
+        text_arr = text_arr[IMDB_REVIEW_LENGTH - 2:]
+    for i, word in enumerate(text_arr):
+        # replace every word in the array with its integer representation in the word_index or UNK 
+        # if it isn't in the word_index
+        text_arr[i] = word_index.get(word, 2)
+    # insert the START token at the beginning of the array
+    text_arr.insert(0, 1)
+    # pad the array to the correct length with PAD tokens
+    num_zero_filling = IMDB_REVIEW_LENGTH - len(text_arr)
+    text_arr.extend([0] * num_zero_filling)
+    return np.asarray(text_arr)
 
 
 def decode_review(text):
@@ -145,11 +160,20 @@ def decode_review(text):
 
 def read_text_dataset_targets(targets_directory, dict_key):
     """ Reads the target text files from specified directory.
+
+    Args: 
+        targets_directory (String): the directory from which targets should be read
+        dict_key (String): the key that is used by a model to access targets in a dict
+
+    Returns:
+        packaged_x_targets (dict): a dict containting the target text files encoded as np arrays
+        y_targets (list): the corresponsing labels for the x_targets
     """
     text_files = os.listdir(targets_directory)
     x_targets = [None] * len(text_files)
     y_targets = [None] * len(text_files)
     for i, text_file in enumerate(text_files):
+        # open each text file, read the data and encode it as a np array
         text_path = targets_directory + text_file
         f = open(text_path, "r")
         text_data = f.read()
@@ -157,9 +181,12 @@ def read_text_dataset_targets(targets_directory, dict_key):
         text_data = encode_review(text_data)
 
         x_targets[i] = text_data
-        # the label for each target is the name of the file without the
-        # extension
-        label = '1' if text_file.split('.')[0].split('-')[0] == "positive" else '0'
+        # the label for each target is 1 if the file name starts with positive
+        # and 0 otherwise
+        if text_file.split('.')[0].split('-')[0] == "positive":
+            label = '1'
+        else:
+            label = '0'
         y_targets[i] = label
     packaged_x_targets = {dict_key: np.asarray(x_targets)}
 
@@ -169,6 +196,16 @@ def read_text_dataset_targets(targets_directory, dict_key):
 
 def read_image_dataset_targets(targets_directory, is_rgb, size, dict_key):
     """ Reads the target images from specified directory.
+        
+    Args: 
+        targets_directory (String): the directory from which targets should be read
+        is_rgb (bool): are images in rgb or grayscale
+        size (integer): the dimension of the image (size * size)
+        dict_key (String): the key that is used by a model to access targets in a dict
+
+    Returns:
+        packaged_x_targets (dict): a dict containting the target image files encoded as np arrays
+        y_targets (list): the corresponsing labels for the x_targets
     """
     image_files = os.listdir(targets_directory)
     x_targets = [None] * len(image_files)

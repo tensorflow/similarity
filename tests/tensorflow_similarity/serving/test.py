@@ -16,13 +16,11 @@
 import unittest
 from tensorflow_similarity.serving.www.main import (app, processing_request)
 from tensorflow_similarity.serving.www.explain import Explainer
-from tensorflow_similarity.serving.www.utils import (load_model, get_imdb_dict, encode_review, decode_review, read_image_dataset_targets, read_text_dataset_targets)
-from tensorflow_similarity.serving.www.constants import IMDB_REVIEW_LENGTH
+from tensorflow_similarity.serving.www.utils import (read_config, load_model, get_imdb_dict, encode_review, decode_review, read_image_dataset_targets, read_text_dataset_targets)
 import numpy as np
 import json
 import requests
 
-BASE_TARGET_PATH = "../../../tensorflow_similarity/serving/www/static/"
 
 class ServingTestCase(unittest.TestCase):
     
@@ -31,6 +29,12 @@ class ServingTestCase(unittest.TestCase):
         response = tester.get("/")
         statuscode = response.status_code
         self.assertEqual(statuscode, 200)
+
+    def test_read_config(self):
+        config = read_config("serving_config.json")
+        self.assertIsNotNone(config["mnist"])
+        self.assertIsNotNone(config["imdb"])
+        self.assertIsNotNone(config["emoji"])
 
     def test_load_model(self):
         model, dict_key, explainer = load_model('../../../tensorflow_similarity/serving/www/saved_models/mnist_model.h5')
@@ -50,8 +54,8 @@ class ServingTestCase(unittest.TestCase):
     def test_encode_review(self):
         encoded_arr = encode_review("This movie was fantastic")
         expected_encoding = [1,14,20,16,777]
-        while len(expected_encoding) < IMDB_REVIEW_LENGTH:
-            expected_encoding.append(0)
+        IMDB_REVIEW_LENGTH = read_config("serving_config.json")["imdb"]["review_length"]
+        expected_encoding.extend([0] * (IMDB_REVIEW_LENGTH - len(expected_encoding)))
         expected_encoding = np.asarray(expected_encoding)
         self.assertTrue((encoded_arr == expected_encoding).all())
 
@@ -60,14 +64,16 @@ class ServingTestCase(unittest.TestCase):
         self.assertEqual("<START> this movie was fantastic <PAD>", decoded_text)
 
     def test_read_text_dataset_targets(self):
-        imdb_targets, imdb_targets_labels = read_text_dataset_targets(BASE_TARGET_PATH + "/text/imdb_targets/", "text")
+        config = read_config("serving_config.json")
+        imdb_targets, imdb_targets_labels = read_text_dataset_targets(config["BASE_TARGET_PATH"] + config["imdb"]["targets"], "text")
         self.assertEqual(len(imdb_targets["text"]), 6)
         self.assertEqual(len(imdb_targets_labels), 6)
         self.assertEqual(imdb_targets_labels, ['0', '0', '0', '1', '1', '1'])
 
     def test_read_image_dataset_targets(self):
-        mnist_targets, mnist_target_labels = read_image_dataset_targets(BASE_TARGET_PATH + "images/mnist_targets/", False, 28, "example")
-        emoji_targets, emoji_targets_labels = read_image_dataset_targets(BASE_TARGET_PATH + "/images/emoji_targets/", True, 32, "image")
+        config = read_config("serving_config.json")
+        mnist_targets, mnist_target_labels = read_image_dataset_targets(config["BASE_TARGET_PATH"] + config["mnist"]["targets"], False, 28, "example")
+        emoji_targets, emoji_targets_labels = read_image_dataset_targets(config["BASE_TARGET_PATH"] + config["emoji"]["targets"], True, 32, "image")
         self.assertEqual(len(mnist_targets["example"]), 10)
         self.assertEqual(len(mnist_target_labels), 10)
         self.assertTrue((mnist_target_labels == ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']).all())

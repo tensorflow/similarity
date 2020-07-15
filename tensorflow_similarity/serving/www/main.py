@@ -25,7 +25,7 @@ from tensorflow_similarity.api.engine.simhash import SimHash
 
 from tensorflow_similarity.serving.www.explain import Explainer
 from tensorflow_similarity.serving.www.utils import (load_model, base64_to_numpy, beautify_grayscale, figure_to_src, is_rgb,
-                 read_image_dataset_targets, read_text_dataset_targets, encode_review, decode_review)
+                 read_image_dataset_targets, read_text_dataset_targets, encode_review, decode_review, read_config)
 
 
 class VueFlask(Flask):
@@ -56,26 +56,27 @@ def index():
 
 @app.route('/distances', methods=['POST'])
 def get_distances():
+    config = read_config("serving_config.json")
     dataset = request.get_json().get('dataset')
     response_object = {'status': 'success'}
     base_path = os.path.dirname(__file__)
 
     if dataset == "mnist":
         # pretrained mnist model
-        model_path = base_path + "/saved_models/mnist_model.h5"
-        targets_directory = base_path + "/static/images/mnist_targets/"
+        model_path = base_path + config["mnist"]["model_path"]
+        targets_directory = base_path + config["mnist"]["targets"]
         is_rgb = False
-        size = 28
+        size = config["mnist"]["size"]
     elif dataset == "emoji":
         # pretrained emoji model
-        model_path = base_path + "/saved_models/emoji_model.h5"
-        targets_directory = base_path + "/static/images/emoji_targets/"
+        model_path = base_path + config["emoji"]["model_path"]
+        targets_directory = base_path + config["emoji"]["targets"]
         is_rgb = True
-        size = 32
+        size = config["emoji"]["size"]
     elif dataset == "imdb":
         # pretrained imdb model
-        targets_directory = base_path + "/static/text/imdb_targets/"
-        model_path = base_path + "/saved_models/IMDB_model.h5"
+        targets_directory = base_path + config["imdb"]["targets"]
+        model_path = base_path + config["imdb"]["model_path"] 
         size = -1
 
     # load model
