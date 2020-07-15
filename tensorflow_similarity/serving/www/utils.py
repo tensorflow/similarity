@@ -74,7 +74,7 @@ def base64_to_numpy(data):
     return result
 
 def read_config(config_file):
-    with open(os.path.dirname(__file__) + "/" + config_file, 'r') as f:
+    with open(os.path.join(os.path.dirname(__file__), config_file), 'r') as f:
         config = json.load(f)
     return config
 
@@ -131,7 +131,7 @@ def encode_review(text):
     if len(text_arr) > IMDB_REVIEW_LENGTH - 2:
         # if the review is longer than IMDB_REVIEW_LENGTH - 2 words, truncate to IMDB_REVIEW_LENGTH - 2 words 
         # to account for START and STOP tokens
-        text_arr = text_arr[IMDB_REVIEW_LENGTH - 2:]
+        text_arr = text_arr[:IMDB_REVIEW_LENGTH - 2]
     for i, word in enumerate(text_arr):
         # replace every word in the array with its integer representation in the word_index or UNK 
         # if it isn't in the word_index
