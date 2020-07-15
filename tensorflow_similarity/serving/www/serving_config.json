@@ -1,0 +1,18 @@
+{
+    "BASE_TARGET_PATH": "../../../tensorflow_similarity/serving/www/",
+    "mnist": {
+        "model_path": "/saved_models/mnist_model.h5",
+        "targets": "/static/images/mnist_targets/",
+        "size" : 28
+    },
+    "emoji": {
+        "model_path": "/saved_models/emoji_model.h5",
+        "targets": "/static/images/emoji_targets/",
+        "size" : 32
+    },
+    "imdb": {
+        "targets": "/static/text/imdb_targets/",
+        "model_path": "/saved_models/IMDB_model.h5",
+        "review_length":  400
+    }
+}
