@@ -58,6 +58,12 @@ class ServingTestCase(unittest.TestCase):
         expected_encoding.extend([0] * (IMDB_REVIEW_LENGTH - len(expected_encoding)))
         expected_encoding = np.asarray(expected_encoding)
         self.assertTrue((encoded_arr == expected_encoding).all())
+        encoded_arr = encode_review("This " * 700)
+        expected_encoding = [1]
+        expected_encoding.extend([14] * 398)
+        expected_encoding.extend([0])
+        expected_encoding = np.asarray(expected_encoding)
+        self.assertTrue((encoded_arr == expected_encoding).all())
 
     def test_decode_review(self):
         decoded_text = decode_review(np.asarray([1,14,20,16,777,0]))
