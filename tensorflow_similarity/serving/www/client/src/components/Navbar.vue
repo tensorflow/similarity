@@ -27,7 +27,7 @@ nav {
 }
 
 nav a {
-    font-family: sans-serif;
+    font-family: Roboto;
     color: #FFFFFF;
     padding: 5px 20px;
     position: relative;
@@ -51,7 +51,6 @@ nav .navbar-item {
     position: relative;
     text-align: center;
     display: flex;
-    border-bottom: 3px solid transparent;
     text-decoration: none;
 }
 
