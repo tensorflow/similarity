@@ -1,7 +1,7 @@
 <template>
   <div class="MNIST">
-    <h3>MNIST</h3>
-    <div class="row">
+    <h3></h3>
+    <div class="row-top">
       <div class="column-left">
         <drawingboard/>
         
@@ -14,25 +14,27 @@
     <div class="target-wrapper" v-if="this.loaded">
       <targets />
       <div class="row">
-        <ul>
-          <li v-for="(neighbor) in neighbors" v-bind:key="neighbor.label">
-            <div class="card" v-bind:style="[neighbor.label === predicted_label ? {'background-color': '#FF8200'} : {'background-color': '#f6f6f6'}]">
-                <div class=" card-image">
-                  <figure class="image">
-                    <img :src="`http://localhost:5000/static/images/${dataset}_targets/${neighbor.label}.png`">
-                  </figure>
-                </div>
-              <div class="card-content">
-                <div class="media">
-                  <div class="media-content">
-                    <p >{{"Label: " + neighbor.label}}</p>
-                    <p >{{"Distance: " + neighbor.distance}}</p>
+        <div class="scroll-menu-wrapper">
+          <ul class="scroll-menu">
+            <li v-for="(neighbor) in neighbors" v-bind:key="neighbor.label">
+              <div class="card" v-bind:style="[neighbor.label === predicted_label ? {'background-color': '#FF8200'} : {'background-color': '#f6f6f6'}]">
+                  <div class=" card-image">
+                    <figure class="image">
+                      <img :src="`http://localhost:5000/static/images/${dataset}_targets/${neighbor.label}.png`">
+                    </figure>
+                  </div>
+                <div class="card-content">
+                  <div class="media">
+                    <div class="media-content">
+                      <p >{{"Label: " + neighbor.label}}</p>
+                      <p >{{"Distance: " + neighbor.distance}}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </li>
-        </ul>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -134,6 +136,16 @@ export default {
   justify-content: center;
   align-content: center;
   flex-direction: row;
+  overflow-x: auto;
+}
+
+.row-top {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  flex-direction: row;
+  overflow-x: auto;
 }
 
 .column-right {
@@ -144,23 +156,37 @@ export default {
   align-items: center;
 }
 
-ul {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-}
-
 .card-image {
   display: flex;
   justify-content: center;
+  padding-top: 10px;
+  padding-left: 10px;
 }
 
 .card {
   margin: 10px;
-  padding: 10px;
   border-radius: 5px;
   color: #425066;
   text-align: center;
+  display: inline-block;
+}
+
+.scroll-menu {
+  overflow: auto;
+  white-space: nowrap;
+  flex: none;
+  display: flex;
+  align-content: center;
+  flex-direction: row;
+  border-style: solid;
+  border-radius: 10px;
+  border-width: 1px;
+}
+
+.scroll-menu-wrapper {
+  width: 45%;
+  padding-top: 15px;
+  padding-bottom: 40px;
 }
 
 .column-left {
