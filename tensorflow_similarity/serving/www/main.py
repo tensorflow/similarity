@@ -58,7 +58,6 @@ def index():
 def get_distances():
     config = read_config("serving_config.json")
     dataset = request.get_json().get('dataset')
-    response_object = {'status': 'success'}
     base_path = os.path.dirname(__file__)
 
     if dataset == "mnist":
@@ -143,6 +142,8 @@ def get_distances():
     else:
         original_text = x_test[dictionary_key][0].tolist()
         explain_src = original_text
+
+    response_object = {'status': 'success'}
 
     response_object["neighbors"] = result_data
     response_object["predicted_label"] = predicted_label

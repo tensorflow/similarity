@@ -12,7 +12,7 @@
       <div class="original-text-wrapper" v-if="this.uploaded_file">
         <p>{{this.original_text}}</p>
       </div>
-      <h3 v-bind:style="{'font-weight': 'bold'}">Predicted Sentiment: {{this.predicted_label == 0 ? "Negative" : "Positive"}}</h3>
+      <h3 class="imdb-predicted-label" >Predicted Sentiment: {{this.predicted_label == 0 ? "Negative" : "Positive"}}</h3>
       <div class="row">
         <div class="scroll-menu-wrapper">
           <ul class="scroll-menu">
@@ -151,6 +151,10 @@ export default {
   font-size: 16px;
   background-color: #FFF;
   border: 1px solid #425066;
+}
+
+.imdb-predicted-label {
+  font-weight: bold;
 }
 
 .btn-embedding {

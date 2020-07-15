@@ -45,6 +45,8 @@ def load_model(model_path):
     dictionary_key = model.layers[0].name
     if "IMDB" in model_path:
         explainer = None
+        # current GradCam implementation only supports models with Conv2D layers
+        # in the future explainer will be replaced by a layer agnostic GradCam implementation
     else:
         explainer = Explainer(model.tower_model)
 
@@ -155,7 +157,7 @@ def decode_review(text):
     """
     word_index = get_imdb_dict()
     reverse_word_index = dict([(value, key) for (key, value) in word_index.items()])
-    return ' '.join([reverse_word_index.get(i, '?') for i in text])
+    return ' '.join([reverse_word_index.get(i, '<OOV>') for i in text])
 
 
 def read_text_dataset_targets(targets_directory, dict_key):
@@ -211,7 +213,7 @@ def read_image_dataset_targets(targets_directory, is_rgb, size, dict_key):
     x_targets = [None] * len(image_files)
     y_targets = [None] * len(image_files)
     for i, image_file in enumerate(image_files):
-        image_path = os.path.join(targets_directory, text_file)
+        image_path = os.path.join(targets_directory, image_file)
         if is_rgb:
             image_data = imageio.imread(image_path)[:, :, :3]
         else:
