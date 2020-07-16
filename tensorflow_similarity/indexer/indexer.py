@@ -48,11 +48,13 @@ class Indexer(object):
         # TODO
         pass
 
+
     """ Store an indexer to the disk
     """
     def save(path):
         # TODO
         pass
+
 
     """ Load an indexer from the disk
     """

@@ -18,28 +18,28 @@ from tensorflow_similarity.indexer.indexer import Indexer
 
 class ServingTestCase(unittest.TestCase):
     def test_indexer_constructor(self):
-        self.assertTrue(true)
+        self.assertTrue(False)
 
     def test_indexer_build(self):
-        self.assertTrue(true)
+        self.assertTrue(False)
 
     def test_indexer_find(self):
-        self.assertTrue(true)
+        self.assertTrue(False)
 
     def test_indexer_add(self):
-        self.assertTrue(true)
+        self.assertTrue(False)
 
     def test_indexer_remove(self):
-        self.assertTrue(true)
+        self.assertTrue(False)
 
     def test_indexer_save(self):
-        self.assertTrue(true)
+        self.assertTrue(False)
 
     def test_indexer_load(self):
-        self.assertTrue(true)
+        self.assertTrue(False)
 
     def test_indexer_rebuild(self):
-        self.assertTrue(true)
+        self.assertTrue(False)
 
     def test_indexer_compute_thresholds(self):
-        self.assertTrue(true)
+        self.assertTrue(False)
