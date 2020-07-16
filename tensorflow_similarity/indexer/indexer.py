@@ -28,68 +28,62 @@ class Indexer(object):
         self.index = nmslib.init(method='hnsw', space='cosinesimil')
         self.thresholds = dict()
 
-    """ build an index from a dataset 
-    """
     def build():
+        """ build an index from a dataset 
+        """
         # TODO
         pass
 
-
-    """ find the closest data points and their associated data in the index
-
-        Args:
-            item (Item): The item for a which a query of the most similar items should be performed
-            num_neighbors (int): The number of neighbors that should be returned
-
-        Returns:
-            neighbors (list(Item)): A list of the nearest neighbor items
-    """
     def find(item, num_neighbors):
+        """ find the closest data points and their associated data in the index
+
+            Args:
+                item (Item): The item for a which a query of the most similar items should be performed
+                num_neighbors (int): The number of neighbors that should be returned
+
+            Returns:
+                neighbors (list(Item)): A list of the nearest neighbor items
+        """
         # TODO
         pass
 
-
-    """ Store an indexer to the disk
-    """
     def save(path):
+        """ Store an indexer on the disk
+        """
         # TODO
         pass
 
-
-    """ Load an indexer from the disk
-    """
     def load(path):
+        """ Load an indexer from the disk
+        """
         # TODO
         pass
     
-
-    """ Add an item to the index
-        Args:
-            item (Item): The item to be added to the index
-    """
     def add(item):
+        """ Add an item to the index
+        
+            Args:
+                item (Item): The item to be added to the index
+        """
         # TODO
         pass
 
-
-     """ Remove an item from the index
-        Args:
-            item (Item): The item to removed added to the index
-    """
     def remove(item):
+        """ Remove an item from the index
+            Args:
+                item (Item): The item to removed added to the index
+        """
         # TODO
         pass
 
-
-    """ Rebuild the index after updates were made
-    """
     def rebuild():
+        """ Rebuild the index after updates were made
+        """
         # TODO
         pass
 
-
-    """ Compute thresholds for similarity using V measure score
-    """
     def compute_thresholds():
+        """ Compute thresholds for similarity using V measure score
+        """
         # TODO
         pass
