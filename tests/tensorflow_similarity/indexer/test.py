@@ -16,7 +16,7 @@
 import unittest
 from tensorflow_similarity.indexer.indexer import Indexer
 
-class ServingTestCase(unittest.TestCase):
+class IndexerTestCase(unittest.TestCase):
     def test_indexer_constructor(self):
         self.assertTrue(False)
 
