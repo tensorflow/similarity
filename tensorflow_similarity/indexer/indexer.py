@@ -19,17 +19,14 @@ class Indexer(object):
     """ Indexer class that indexes Embeddings. This allows for efficient
         searching of approximate nearest neighbors for a given embedding
         in metric space.
+
+        Args:
+            model_path (string): The path to the model that should be used to calculate embeddings
+            dataset (Dataset/Tf.Dataset?): The dataset to be indexed
+            index_dir (string): The path to the directory that should be used for indexing
     """
 
     def __init__(self, dataset, model_path, index_dir):
-        """ Constructor
-            
-            Args:
-                model_path (string): The path to the model that should be used to calculate embeddings
-                dataset (Dataset/Tf.Dataset?): The dataset that to be indexed
-                index_dir (string): The path to the directory that should be used for indexing
-        
-        """
         self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
         self.dataset = dataset
         self.index_dir = index_dir
