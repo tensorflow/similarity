@@ -16,8 +16,6 @@ import os
 import json
 import argparse
 from tensorflow_similarity.indexer.indexer import Indexer
-from tensorflow_similarity.serving.www.utils import read_config
-
 
 def is_valid_dir(parser, arg):
     if not os.path.exists(arg):
