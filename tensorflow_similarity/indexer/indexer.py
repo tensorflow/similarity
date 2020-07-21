@@ -23,10 +23,11 @@ class Indexer(object):
         Args:
             model_path (string): The path to the model that should be used to calculate embeddings
             dataset (Dataset/Tf.Dataset?): The dataset to be indexed
-            index_dir (string): The path to the directory where the indexer should be saved
+            index_dir (string): The path to the directory where the indexer should be saved,
+            space (string): The space (a space is a combination of data and the distance) to use in the indexer
     """
 
-    def __init__(self, dataset, model_path, index_dir, space):
+    def __init__(self, dataset, model_path, index_dir, space="cosinesimil"):
         self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
         self.dataset = dataset
         self.index_dir = index_dir
@@ -52,11 +53,8 @@ class Indexer(object):
         # TODO
         pass
 
-    def save(path):
+    def save():
         """ Store an indexer on the disk
-
-            Args:
-                path (string): The path/file that the indexer is be saved to
         """
         # TODO
         pass
