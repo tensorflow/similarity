@@ -13,8 +13,11 @@
 # limitations under the License.
 
 import os
+import json
 import argparse
 from tensorflow_similarity.indexer.indexer import Indexer
+from tensorflow_similarity.serving.www.utils import read_config
+
 
 def is_valid_dir(parser, arg):
     if not os.path.exists(arg):
@@ -24,11 +27,12 @@ def is_valid_dir(parser, arg):
 
 def main():
     args = argparse.ArgumentParser()
-    args.add_argument("-o", "--index_dir", required=True, help="index directory", type=lambda arg: is_valid_dir(args, arg))
-    args.add_argument("-m", "--model", required=True, help="Tf.similarity model", type=lambda arg: is_valid_dir(args, arg))
-    args.add_argument("-d", "--dataset", required=True, help="Dataset", type=lambda arg: is_valid_dir(args, arg))
+    args.add_argument("-c", "--config", required=True, help="config file", type=lambda arg: is_valid_dir(args, arg))
     args = args.parse_args()
-    indexer = Indexer(args.dataset, args.model, args.index_dir)
+    with open(os.path.join(os.path.dirname(__file__), args.config), 'r') as f:
+        config = json.load(f)
+    indexer_config = config["indexer"]
+    indexer = Indexer(indexer_config["dataset_dir"],indexer_config["model"], indexer_config["save_dir"], indexer_config["space"])
 
 if __name__ == "__main__":
     main()

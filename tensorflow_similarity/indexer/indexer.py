@@ -23,14 +23,14 @@ class Indexer(object):
         Args:
             model_path (string): The path to the model that should be used to calculate embeddings
             dataset (Dataset/Tf.Dataset?): The dataset to be indexed
-            index_dir (string): The path to the directory that should be used for indexing
+            index_dir (string): The path to the directory where the indexer should be saved
     """
 
-    def __init__(self, dataset, model_path, index_dir):
+    def __init__(self, dataset, model_path, index_dir, space):
         self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
         self.dataset = dataset
         self.index_dir = index_dir
-        self.index = nmslib.init(method='hnsw', space='cosinesimil')
+        self.index = nmslib.init(method='hnsw', space=space)
         self.thresholds = dict()
 
     def build():
