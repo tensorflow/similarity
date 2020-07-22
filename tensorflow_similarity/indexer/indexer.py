@@ -1,19 +1,6 @@
-# Copyright 2020 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import nmslib
 import tensorflow as tf
+from tensorflow_similarity.indexer.utils import (load_packaged_dataset)
 
 class Indexer(object):
     """ Indexer class that indexes Embeddings. This allows for efficient
@@ -22,24 +9,25 @@ class Indexer(object):
 
         Args:
             model_path (string): The path to the model that should be used to calculate embeddings
-            dataset (Dataset/Tf.Dataset?): The dataset to be indexed
+            dataset (string): The path
             index_dir (string): The path to the directory where the indexer should be saved,
             space (string): The space (a space is a combination of data and the distance) to use in the indexer
                             for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md
     """
 
-    def __init__(self, dataset, model_path, index_dir, space="cosinesimil"):
+    def __init__(self, dataset, dataset_labels, model_path, index_dir, space="cosinesimil"):
         self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
-        self.dataset = dataset
+        self.dataset, self.dataset_labels = load_packaged_dataset(dataset, dataset_labels, self.model.layers[0].name)
         self.index_dir = index_dir
         self.index = nmslib.init(method='hnsw', space=space)
         self.thresholds = dict()
 
-    def build():
+    def build(self):
         """ build an index from a dataset 
         """
-        # TODO
-        pass
+        embeddings = self.model.predict(self.dataset)
+        self.index.addDataPointBatch(embeddings)
+        self.index.createIndex(print_progress=True)
 
     def find(item, num_neighbors):
         """ find the closest data points and their associated data in the index

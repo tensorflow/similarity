@@ -1,0 +1,65 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import pytest
+import numpy as np
+import os
+import nmslib
+import jsonlines
+from tensorflow_similarity.indexer.indexer import Indexer
+from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines)
+
+def test_read_json_lines():
+    arr = np.random.rand(400, 50).tolist()
+    with jsonlines.open('data.json', mode='w') as writer:
+        for data_point in arr:
+            writer.write(data_point)
+    decoded_arr = read_json_lines(os.path.abspath("data.json"))
+    os.remove("data.json")
+    assert((arr == decoded_arr).all())
+
+def test_load_packaged_dataset():
+    x = np.random.rand(400, 50)
+    y = np.random.rand(400,)
+    with jsonlines.open('data.json', mode='w') as writer:
+        for data_point in x:
+            writer.write(data_point.tolist())
+
+    with jsonlines.open('labels.json', mode='w') as writer:
+        for data_point in y:
+            writer.write(data_point.tolist())
+
+    packaged_x, packaged_y = load_packaged_dataset(os.path.abspath("data.json"), os.path.abspath("labels.json"), "test")
+    os.remove("data.json")
+    os.remove("labels.json")
+    assert((y == packaged_y).all())
+    assert((x == packaged_x["test"]).all())
+
+def test_build():
+    x = np.random.randint(1000, size=(50, 400))
+    y = np.random.randint(2, size=50)
+    with jsonlines.open('data.json', mode='w') as writer:
+        for data_point in x:
+            writer.write(data_point.tolist())
+
+    with jsonlines.open('labels.json', mode='w') as writer:
+        for data_point in y:
+            writer.write(data_point.tolist())
+    indexer = Indexer(os.path.abspath("data.json"), os.path.abspath("labels.json"), os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"), "./")
+    indexer.build()
+    ids, dists = indexer.index.knnQuery(x[0], k=10)
+    os.remove("data.json")
+    os.remove("labels.json")
+    assert(isinstance(indexer.index, nmslib.dist.FloatIndex))
+    assert(isinstance(ids, np.ndarray))
