@@ -27,7 +27,7 @@ def test_read_json_lines():
             writer.write(data_point)
     decoded_arr = read_json_lines(os.path.abspath("data.json"))
     os.remove("data.json")
-    assert((arr == decoded_arr).all())
+    assert(arr == decoded_arr)
 
 def test_load_packaged_dataset():
     x = np.random.rand(400, 50)
@@ -63,3 +63,4 @@ def test_build():
     os.remove("labels.json")
     assert(isinstance(indexer.index, nmslib.dist.FloatIndex))
     assert(isinstance(ids, np.ndarray))
+    assert(isinstance(dists, np.ndarray))
