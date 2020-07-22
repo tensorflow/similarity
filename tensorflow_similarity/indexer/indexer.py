@@ -25,6 +25,7 @@ class Indexer(object):
             dataset (Dataset/Tf.Dataset?): The dataset to be indexed
             index_dir (string): The path to the directory where the indexer should be saved,
             space (string): The space (a space is a combination of data and the distance) to use in the indexer
+                            for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md
     """
 
     def __init__(self, dataset, model_path, index_dir, space="cosinesimil"):
