@@ -37,12 +37,16 @@ class Indexer(object):
         self.index = nmslib.init(method='hnsw', space=space)
         self.thresholds = dict()
 
-    def build(self, print_progress=True):
+    def build(self, verbose=0|1):
         """ build an index from a dataset 
+
+            Args:
+                verbose (int): Verbosity mode (0 = silent, 1 = progress bar)
         """
         embeddings = self.model.predict(self.dataset_examples)
         self.index.addDataPointBatch(embeddings)
-        self.index.createIndex(print_progress=print_progress)
+        print_progess = True if verbose > 0 else False
+        self.index.createIndex(print_progress=print_progess)
 
     def find(item, num_neighbors):
         """ find the closest data points and their associated data in the index
