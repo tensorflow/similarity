@@ -23,7 +23,7 @@ from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_jso
 
 def test_read_json_lines():
     arr = np.random.rand(400, 50).tolist()
-    fd, tmp_file = tempfile.mkstemp()
+    _, tmp_file = tempfile.mkstemp()
     with jsonlines.open(tmp_file, mode='w') as writer:
         for data_point in arr:
             writer.write(data_point)
@@ -34,11 +34,11 @@ def test_read_json_lines():
 def test_load_packaged_dataset():
     x = np.random.rand(400, 50)
     y = np.random.rand(400,)
-    fd1, tmp_file_examples = tempfile.mkstemp()
+    _, tmp_file_examples = tempfile.mkstemp()
     with jsonlines.open(tmp_file_examples, mode='w') as writer:
         for data_point in x:
             writer.write(data_point.tolist())
-    fd2, tmp_file_labels = tempfile.mkstemp()
+    _, tmp_file_labels = tempfile.mkstemp()
     with jsonlines.open(tmp_file_labels, mode='w') as writer:
         for data_point in y:
             writer.write(data_point.tolist())
@@ -52,11 +52,11 @@ def test_load_packaged_dataset():
 def test_build():
     x = np.random.randint(1000, size=(50, 400))
     y = np.random.randint(2, size=50)
-    fd1, tmp_file_examples = tempfile.mkstemp()
+    _, tmp_file_examples = tempfile.mkstemp()
     with jsonlines.open(tmp_file_examples, mode='w') as writer:
         for data_point in x:
             writer.write(data_point.tolist())
-    fd2, tmp_file_labels = tempfile.mkstemp()
+    _, tmp_file_labels = tempfile.mkstemp()
     with jsonlines.open(tmp_file_labels, mode='w') as writer:
         for data_point in y:
             writer.write(data_point.tolist())
