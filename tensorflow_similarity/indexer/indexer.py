@@ -23,8 +23,8 @@ class Indexer(object):
 
         Args:
             model_path (string): The path to the model that should be used to calculate embeddings
-            dataset (string): The path to the json lines file containing the dataset
-            dataset_labels (string): The path to the json lines file containing the labels for the dataset
+            dataset_examples_path (string): The path to the json lines file containing the dataset
+            dataset_labels_path (string): The path to the json lines file containing the labels for the dataset
             index_dir (string): The path to the directory where the indexer should be saved,
             space (string): The space (a space is a combination of data and the distance) to use in the indexer
                             for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md
