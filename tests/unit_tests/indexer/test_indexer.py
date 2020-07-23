@@ -15,6 +15,7 @@
 import pytest
 import numpy as np
 import os
+import tempfile
 import nmslib
 import jsonlines
 from tensorflow_similarity.indexer.indexer import Indexer
@@ -22,45 +23,48 @@ from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_jso
 
 def test_read_json_lines():
     arr = np.random.rand(400, 50).tolist()
-    with jsonlines.open('data.json', mode='w') as writer:
+    fd, tmp_file = tempfile.mkstemp()
+    with jsonlines.open(tmp_file, mode='w') as writer:
         for data_point in arr:
             writer.write(data_point)
-    decoded_arr = read_json_lines(os.path.abspath("data.json"))
-    os.remove("data.json")
+    decoded_arr = read_json_lines(tmp_file)
+    os.remove(tmp_file)
     assert(arr == decoded_arr)
 
 def test_load_packaged_dataset():
     x = np.random.rand(400, 50)
     y = np.random.rand(400,)
-    with jsonlines.open('data.json', mode='w') as writer:
+    fd1, tmp_file_examples = tempfile.mkstemp()
+    with jsonlines.open(tmp_file_examples, mode='w') as writer:
         for data_point in x:
             writer.write(data_point.tolist())
-
-    with jsonlines.open('labels.json', mode='w') as writer:
+    fd2, tmp_file_labels = tempfile.mkstemp()
+    with jsonlines.open(tmp_file_labels, mode='w') as writer:
         for data_point in y:
             writer.write(data_point.tolist())
 
-    packaged_x, packaged_y = load_packaged_dataset(os.path.abspath("data.json"), os.path.abspath("labels.json"), "test")
-    os.remove("data.json")
-    os.remove("labels.json")
+    packaged_x, packaged_y = load_packaged_dataset(os.path.abspath(tmp_file_examples), os.path.abspath(tmp_file_labels), "test")
+    os.remove(tmp_file_examples)
+    os.remove(tmp_file_labels)
     assert((y == packaged_y).all())
     assert((x == packaged_x["test"]).all())
 
 def test_build():
     x = np.random.randint(1000, size=(50, 400))
     y = np.random.randint(2, size=50)
-    with jsonlines.open('data.json', mode='w') as writer:
+    fd1, tmp_file_examples = tempfile.mkstemp()
+    with jsonlines.open(tmp_file_examples, mode='w') as writer:
         for data_point in x:
             writer.write(data_point.tolist())
-
-    with jsonlines.open('labels.json', mode='w') as writer:
+    fd2, tmp_file_labels = tempfile.mkstemp()
+    with jsonlines.open(tmp_file_labels, mode='w') as writer:
         for data_point in y:
             writer.write(data_point.tolist())
-    indexer = Indexer(os.path.abspath("data.json"), os.path.abspath("labels.json"), os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"), "./")
+    indexer = Indexer(os.path.abspath(tmp_file_examples), os.path.abspath(tmp_file_labels), os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"), "./")
     indexer.build()
     ids, dists = indexer.index.knnQuery(x[0], k=10)
-    os.remove("data.json")
-    os.remove("labels.json")
+    os.remove(tmp_file_examples)
+    os.remove(tmp_file_labels)
     assert(isinstance(indexer.index, nmslib.dist.FloatIndex))
     assert(isinstance(ids, np.ndarray))
     assert(isinstance(dists, np.ndarray))
