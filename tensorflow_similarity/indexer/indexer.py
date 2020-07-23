@@ -37,7 +37,7 @@ class Indexer(object):
         self.index = nmslib.init(method='hnsw', space=space)
         self.thresholds = dict()
 
-    def build(self, verbose=0|1):
+    def build(self, verbose=0):
         """ build an index from a dataset 
 
             Args:
