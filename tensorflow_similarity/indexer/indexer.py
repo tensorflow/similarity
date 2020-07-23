@@ -45,7 +45,7 @@ class Indexer(object):
         """
         embeddings = self.model.predict(self.dataset_examples)
         self.index.addDataPointBatch(embeddings)
-        print_progess = True if verbose > 0 else False
+        print_progess = verbose > 0
         self.index.createIndex(print_progress=print_progess)
 
     def find(item, num_neighbors):
