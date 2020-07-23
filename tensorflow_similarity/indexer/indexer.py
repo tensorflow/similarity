@@ -30,19 +30,19 @@ class Indexer(object):
                             for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md
     """
 
-    def __init__(self, dataset, dataset_labels, model_path, index_dir, space="cosinesimil"):
+    def __init__(self, dataset_examples_path, dataset_labels_path, model_path, index_dir, space="cosinesimil"):
         self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
-        self.dataset, self.dataset_labels = load_packaged_dataset(dataset, dataset_labels, self.model.layers[0].name)
+        self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path, dataset_labels_path, self.model.layers[0].name)
         self.index_dir = index_dir
         self.index = nmslib.init(method='hnsw', space=space)
         self.thresholds = dict()
 
-    def build(self):
+    def build(self, print_progress=True):
         """ build an index from a dataset 
         """
-        embeddings = self.model.predict(self.dataset)
+        embeddings = self.model.predict(self.dataset_examples)
         self.index.addDataPointBatch(embeddings)
-        self.index.createIndex(print_progress=True)
+        self.index.createIndex(print_progress=print_progress)
 
     def find(item, num_neighbors):
         """ find the closest data points and their associated data in the index
