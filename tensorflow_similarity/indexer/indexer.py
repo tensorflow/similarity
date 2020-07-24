@@ -14,6 +14,7 @@
 
 import nmslib
 import tensorflow as tf
+from tensorflow_similarity.indexer.utils import (load_packaged_dataset)
 
 class Indexer(object):
     """ Indexer class that indexes Embeddings. This allows for efficient
@@ -22,24 +23,30 @@ class Indexer(object):
 
         Args:
             model_path (string): The path to the model that should be used to calculate embeddings
-            dataset (Dataset/Tf.Dataset?): The dataset to be indexed
+            dataset_examples_path (string): The path to the json lines file containing the dataset
+            dataset_labels_path (string): The path to the json lines file containing the labels for the dataset
             index_dir (string): The path to the directory where the indexer should be saved,
             space (string): The space (a space is a combination of data and the distance) to use in the indexer
                             for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md
     """
 
-    def __init__(self, dataset, model_path, index_dir, space="cosinesimil"):
+    def __init__(self, dataset_examples_path, dataset_labels_path, model_path, index_dir, space="cosinesimil"):
         self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
-        self.dataset = dataset
+        self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path, dataset_labels_path, self.model.layers[0].name)
         self.index_dir = index_dir
         self.index = nmslib.init(method='hnsw', space=space)
         self.thresholds = dict()
 
-    def build():
+    def build(self, verbose=0):
         """ build an index from a dataset 
+
+            Args:
+                verbose (int): Verbosity mode (0 = silent, 1 = progress bar)
         """
-        # TODO
-        pass
+        embeddings = self.model.predict(self.dataset_examples)
+        self.index.addDataPointBatch(embeddings)
+        print_progess = verbose > 0
+        self.index.createIndex(print_progress=print_progess)
 
     def find(item, num_neighbors):
         """ find the closest data points and their associated data in the index
