@@ -30,8 +30,9 @@ def main():
     with open(os.path.join(os.path.dirname(__file__), args.config), 'r') as f:
         config = json.load(f)
     indexer_config = config["indexer"]
-    indexer = Indexer(indexer_config["dataset"], indexer_config["dataset_labels"], indexer_config["model"], indexer_config["save_dir"], indexer_config["space"])
-    indexer.build()
+    indexer = Indexer(indexer_config["dataset"], indexer_config.get("original", None), indexer_config["dataset_labels"], indexer_config["model"], indexer_config["save_dir"], indexer_config.get("space", "cosinesimil"))
+    indexer.build(1)
+    indexer.save()
 
 if __name__ == "__main__":
     main()

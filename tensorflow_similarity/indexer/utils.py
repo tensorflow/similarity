@@ -14,6 +14,8 @@
 
 import json
 import numpy as np
+import jsonlines
+from collections.abc import Iterable
 
 def load_packaged_dataset(dataset, dataset_labels, dict_key):
     """ load a dataset from json lines files
@@ -48,3 +50,17 @@ def read_json_lines(file):
         for line in f:
             data.append(json.loads(line))
     return data
+
+
+def write_json_lines(file, data):
+    """ write data to a json lines file
+
+        Args:
+            file (string): The path to the json lines file that should be written to
+            data (JSON serializable object): The data that should be written to the file
+    """
+    with jsonlines.open(file, mode='w') as writer:
+        if isinstance(data, Iterable):
+            writer.write_all(data)
+        else:
+            writer.write(data)

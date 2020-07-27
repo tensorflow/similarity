@@ -14,7 +14,9 @@
 
 import nmslib
 import tensorflow as tf
-from tensorflow_similarity.indexer.utils import (load_packaged_dataset)
+import numpy as np
+import os
+from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, write_json_lines)
 
 class Indexer(object):
     """ Indexer class that indexes Embeddings. This allows for efficient
@@ -24,15 +26,18 @@ class Indexer(object):
         Args:
             model_path (string): The path to the model that should be used to calculate embeddings
             dataset_examples_path (string): The path to the json lines file containing the dataset
+            dataset_original_path (string): The path to the json lines file containing the original dataset 
             dataset_labels_path (string): The path to the json lines file containing the labels for the dataset
             index_dir (string): The path to the directory where the indexer should be saved,
             space (string): The space (a space is a combination of data and the distance) to use in the indexer
                             for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md
     """
 
-    def __init__(self, dataset_examples_path, dataset_labels_path, model_path, index_dir, space="cosinesimil"):
+    def __init__(self, dataset_examples_path, dataset_original_path, dataset_labels_path, model_path, index_dir, space="cosinesimil"):
         self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
         self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path, dataset_labels_path, self.model.layers[0].name)
+        if dataset_original_path is not None:
+            self.dataset_original = np.asarray(read_json_lines(dataset_original_path))
         self.index_dir = index_dir
         self.index = nmslib.init(method='hnsw', space=space)
         self.thresholds = dict()
@@ -48,24 +53,33 @@ class Indexer(object):
         print_progess = verbose > 0
         self.index.createIndex(print_progress=print_progess)
 
-    def find(item, num_neighbors):
+    def find(self, item, num_neighbors):
         """ find the closest data points and their associated data in the index
 
             Args:
-                item (Item): The item for a which a query of the most similar items should be performed
+                item (np.array): The item for a which a query of the most similar items should be performed
                 num_neighbors (int): The number of neighbors that should be returned
 
             Returns:
                 neighbors (list(Item)): A list of the nearest neighbor items
         """
-        # TODO
-        pass
+        ids, dists = self.index.knnQuery(self.model.predict({self.model.layers[0].name: item}), num_neighbors)
+        neighbors = []
+        for id, dist in zip(ids, dists):
+            neighbors.append({"data": self.dataset_original[id], "distance": dist, "label": self.dataset_labels[id]})
 
-    def save():
+    def save(self):
         """ Store an indexer on the disk
         """
-        # TODO
-        pass
+        if not os.path.exists(self.index_dir):
+            os.makedirs(self.index_dir)
+        self.index.saveIndex(os.path.join(self.index_dir, "index"))
+        write_json_lines(os.path.join(self.index_dir, "examples.json"), self.dataset_examples[self.model.layers[0].name].tolist())
+        write_json_lines(os.path.join(self.index_dir, "thresholds.json"), self.thresholds)
+        write_json_lines(os.path.join(self.index_dir, "labels.json"), self.dataset_labels.tolist())
+        if self.dataset_original is not None:
+            write_json_lines(os.path.join(self.index_dir, "original_examples.json"), self.dataset_original)
+
 
     def load(path):
         """ Load an indexer from the disk

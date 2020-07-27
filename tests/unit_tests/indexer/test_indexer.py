@@ -60,7 +60,7 @@ def test_build():
     with jsonlines.open(tmp_file_labels, mode='w') as writer:
         for data_point in y:
             writer.write(data_point.tolist())
-    indexer = Indexer(os.path.abspath(tmp_file_examples), os.path.abspath(tmp_file_labels), os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"), "./")
+    indexer = Indexer(os.path.abspath(tmp_file_examples), None, os.path.abspath(tmp_file_labels), os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"), "./")
     indexer.build()
     ids, dists = indexer.index.knnQuery(x[0], k=10)
     os.remove(tmp_file_examples)
