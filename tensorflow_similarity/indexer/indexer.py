@@ -33,14 +33,16 @@ class Indexer(object):
                             for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md
     """
 
-    def __init__(self, dataset_examples_path, dataset_original_path, dataset_labels_path, model_path, index_dir, space="cosinesimil"):
+    def __init__(self, dataset_examples_path, dataset_original_path, dataset_labels_path, model_path, index_dir, space="cosinesimil", thresholds=dict()):
         self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
         self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path, dataset_labels_path, self.model.layers[0].name)
         if dataset_original_path is not None:
             self.dataset_original = np.asarray(read_json_lines(dataset_original_path))
+        else:
+            self.dataset_original = self.dataset_examples[self.model.layers[0].name]
         self.index_dir = index_dir
         self.index = nmslib.init(method='hnsw', space=space)
-        self.thresholds = dict()
+        self.thresholds = thresholds
 
     def build(self, verbose=0):
         """ build an index from a dataset 
@@ -67,6 +69,7 @@ class Indexer(object):
         neighbors = []
         for id, dist in zip(ids, dists):
             neighbors.append({"data": self.dataset_original[id], "distance": dist, "label": self.dataset_labels[id]})
+        return neighbors
 
     def save(self):
         """ Store an indexer on the disk
@@ -77,18 +80,20 @@ class Indexer(object):
         write_json_lines(os.path.join(self.index_dir, "examples.json"), self.dataset_examples[self.model.layers[0].name].tolist())
         write_json_lines(os.path.join(self.index_dir, "thresholds.json"), self.thresholds)
         write_json_lines(os.path.join(self.index_dir, "labels.json"), self.dataset_labels.tolist())
-        if self.dataset_original is not None:
-            write_json_lines(os.path.join(self.index_dir, "original_examples.json"), self.dataset_original)
+        write_json_lines(os.path.join(self.index_dir, "original_examples.json"), self.dataset_original)
+        self.model.save(os.path.join(self.index_dir, "model.h5"))
 
-
-    def load(path):
+    def load(self, path):
         """ Load an indexer from the disk
 
             Args:
-                The path to the file that the indexer is be loaded from
+                The path that the indexer should be loaded from
         """
-        # TODO
-        pass
+        self(dataset_examples_path=os.path.join(path, "examples.json"), dataset_original_path=os.path.join(path, "original_examples.json"), dataset_labels_path=os.path.join(path, "labels.json"), model_path=os.path.join(path, "model.h5"), index_dir="./bundle", thresholds=os.path.join(path, "thresholds.json"))
+        self.index.loadIndex(os.path.join(path, "index"))
+        self.index.createIndex()
+        return self
+
     
     def add(item):
         """ Add an item to the index

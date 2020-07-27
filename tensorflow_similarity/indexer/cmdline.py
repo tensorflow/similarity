@@ -33,6 +33,7 @@ def main():
     indexer = Indexer(indexer_config["dataset"], indexer_config.get("original", None), indexer_config["dataset_labels"], indexer_config["model"], indexer_config["save_dir"], indexer_config.get("space", "cosinesimil"))
     indexer.build(1)
     indexer.save()
+    indexer2 = Indexer.load("./bundle")
 
 if __name__ == "__main__":
     main()
