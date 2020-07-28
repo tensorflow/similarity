@@ -17,9 +17,10 @@ import numpy as np
 import os
 import tempfile
 import nmslib
+import json
 import jsonlines
 from tensorflow_similarity.indexer.indexer import Indexer
-from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines)
+from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, write_json_lines)
 
 def test_read_json_lines():
     arr = np.random.rand(400, 50).tolist()
@@ -49,6 +50,26 @@ def test_load_packaged_dataset():
     assert((y == packaged_y).all())
     assert((x == packaged_x["test"]).all())
 
+def test_write_json_lines():
+    data = np.random.rand(400,)
+    _, tmp_file = tempfile.mkstemp()
+    write_json_lines(tmp_file, data)
+    temp_data = []
+    with open(tmp_file) as f:
+        for line in f:
+            temp_data.append(json.loads(line))
+    os.remove(tmp_file)
+    assert((data == temp_data).all())
+    data = np.random.rand(400,50)
+    _, tmp_file = tempfile.mkstemp()
+    write_json_lines(tmp_file, data.tolist())
+    temp_data = []
+    with open(tmp_file) as f:
+        for line in f:
+            temp_data.append(json.loads(line))
+    os.remove(tmp_file)
+    assert((data == temp_data).all())
+
 def test_build():
     x = np.random.randint(1000, size=(50, 400))
     y = np.random.randint(2, size=50)
@@ -68,3 +89,12 @@ def test_build():
     assert(isinstance(indexer.index, nmslib.dist.FloatIndex))
     assert(isinstance(ids, np.ndarray))
     assert(isinstance(dists, np.ndarray))
+
+def test_find():
+    assert(True)
+
+def test_save():
+    assert(True)
+
+def test_load():
+    assert(True)
