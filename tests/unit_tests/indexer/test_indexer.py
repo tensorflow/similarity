@@ -17,7 +17,9 @@ import numpy as np
 import os
 import tempfile
 import nmslib
+import shutil
 from scipy import spatial
+import tensorflow as tf
 import json
 import math
 import nmslib
@@ -106,9 +108,42 @@ def test_find():
     assert(np.isclose(index_dists, dists).all())
     assert((index_ids == ids).all())
 
-
 def test_save():
-    assert(True)
+    x = np.random.randint(1000, size=(50, 400))
+    y = np.random.randint(2, size=50)
+    _, tmp_file_examples = tempfile.mkstemp()
+    with jsonlines.open(tmp_file_examples, mode='w') as writer:
+        for data_point in x:
+            writer.write(data_point.tolist())
+    _, tmp_file_labels = tempfile.mkstemp()
+    with jsonlines.open(tmp_file_labels, mode='w') as writer:
+        for data_point in y:
+            writer.write(data_point.tolist())
+    temp_dir = tempfile.mkdtemp()
+    indexer = Indexer(os.path.abspath(tmp_file_examples), None, os.path.abspath(tmp_file_labels), os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"), temp_dir, thresholds={"likely":1})
+    indexer.build()
+    num = np.random.randint(1000, size=(1, 400))
+    neighbors = indexer.find(num, 10)
+    indexer.save()
+    saved_x = np.asarray(read_json_lines(os.path.abspath(os.path.join(temp_dir, "examples.json"))))
+    saved_y = read_json_lines(os.path.abspath(os.path.join(temp_dir, "labels.json")))
+    index = nmslib.init(method='hnsw', space="cosinesimil")
+    index.loadIndex(os.path.abspath(os.path.join(temp_dir, "index")), True)
+    index.createIndex()
+    temp_model = tf.keras.models.load_model(os.path.join(os.path.abspath(temp_dir), "model.h5"))
+    temp_ids, temp_dists = index.knnQuery(temp_model.predict({'text': num}), 10)
+    index_dists = np.asarray([neighbor["distance"] for neighbor in neighbors])
+    index_ids = np.asarray([neighbor["id"] for neighbor in neighbors])
+    shutil.rmtree(temp_dir)
+    os.remove(tmp_file_examples)
+    os.remove(tmp_file_labels)
+    print(index_ids, temp_ids)
+    print(index_dists, temp_dists)
+    assert((saved_x == indexer.dataset_examples[indexer.model.layers[0].name]).all())
+    assert((saved_y == indexer.dataset_labels).all())
+    assert((temp_ids == index_ids).all())
+    assert((temp_dists == index_dists).all())
+
 
 def test_load():
     assert(True)

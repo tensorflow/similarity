@@ -83,7 +83,7 @@ class Indexer(object):
         write_json_lines(os.path.join(self.index_dir, "examples.json"), self.dataset_examples[self.model.layers[0].name].tolist())
         write_json_lines(os.path.join(self.index_dir, "thresholds.json"), self.thresholds)
         write_json_lines(os.path.join(self.index_dir, "labels.json"), self.dataset_labels.tolist())
-        write_json_lines(os.path.join(self.index_dir, "original_examples.json"), self.dataset_original)
+        write_json_lines(os.path.join(self.index_dir, "original_examples.json"), self.dataset_original.tolist())
         self.model.save(os.path.join(self.index_dir, "model.h5"))
 
     @classmethod
