@@ -17,7 +17,10 @@ import numpy as np
 import os
 import tempfile
 import nmslib
+from scipy import spatial
 import json
+import math
+import nmslib
 import jsonlines
 from tensorflow_similarity.indexer.indexer import Indexer
 from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, write_json_lines)
@@ -91,10 +94,24 @@ def test_build():
     assert(isinstance(dists, np.ndarray))
 
 def test_find():
-    assert(True)
+    data_set = np.asarray(read_json_lines(os.path.abspath("test_data_set/data.json")))
+    indexer = Indexer(os.path.abspath("test_data_set/data.json"), None, os.path.abspath("test_data_set/labels.json"), os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"), "./")
+    indexer.index.addDataPointBatch(data_set)
+    indexer.index.createIndex()
+    neighbors = indexer.find(data_set[0], 20, True)
+    index_dists = np.asarray([neighbor["distance"] for neighbor in neighbors])
+    index_ids = np.asarray([neighbor["id"] for neighbor in neighbors])
+    dists = np.asarray([(spatial.distance.cosine(i, data_set[0])) for i in data_set[:20]])
+    ids = np.arange(20)
+    assert(np.isclose(index_dists, dists).all())
+    assert((index_ids == ids).all())
+
 
 def test_save():
     assert(True)
 
 def test_load():
+    assert(True)
+
+def test_compute_threhsolds():
     assert(True)

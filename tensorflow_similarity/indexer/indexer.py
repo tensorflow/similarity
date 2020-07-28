@@ -51,25 +51,28 @@ class Indexer(object):
                 verbose (int): Verbosity mode (0 = silent, 1 = progress bar)
         """
         embeddings = self.model.predict(self.dataset_examples)
-        self.index.addDataPointBatch(embeddings)
+        _ = self.index.addDataPointBatch(embeddings)
         print_progess = verbose > 0
         self.index.createIndex(print_progress=print_progess)
 
-    def find(self, item, num_neighbors):
+    def find(self, item, num_neighbors, embedding=False):
         """ find the closest data points and their associated data in the index
 
             Args:
                 item (np.array): The item for a which a query of the most similar items should be performed
                 num_neighbors (int): The number of neighbors that should be returned
+                embedding (bool): Whether or not the item is already in embedding form
 
             Returns:
-                neighbors (list(Item)): A list of the nearest neighbor items
+                neighbors (np.array(dict)): A list of the nearest neighbor items
         """
-        ids, dists = self.index.knnQuery(self.model.predict({self.model.layers[0].name: item}), num_neighbors)
+        if not embedding:
+            item = self.model.predict({self.model.layers[0].name: item})
+        ids, dists = self.index.knnQuery(item, num_neighbors)
         neighbors = []
         for id, dist in zip(ids, dists):
-            neighbors.append({"data": self.dataset_original[id], "distance": dist, "label": self.dataset_labels[id]})
-        return neighbors
+            neighbors.append({"id": id, "data": self.dataset_original[id], "distance": dist, "label": self.dataset_labels[id]})
+        return np.asarray(neighbors)
 
     def save(self):
         """ Store an indexer on the disk
