@@ -64,3 +64,13 @@ def write_json_lines(file, data):
             writer.write_all(data)
         else:
             writer.write(data)
+
+def write_json_lines_dict(file, data):
+    """ write a dict to a json lines file
+
+        Args:
+            file (string): The path to the json lines file that should be written to
+            data (dict): The dict that should be written to the file
+    """
+    with open(file, 'w') as writer:
+        json.dump(data, writer)

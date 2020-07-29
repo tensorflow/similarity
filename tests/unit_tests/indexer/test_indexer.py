@@ -144,9 +144,41 @@ def test_save():
     assert((temp_ids == index_ids).all())
     assert((temp_dists == index_dists).all())
 
-
 def test_load():
-    assert(True)
+    x = np.random.randint(1000, size=(50, 400))
+    y = np.random.randint(2, size=50)
+    _, tmp_file_examples = tempfile.mkstemp()
+    with jsonlines.open(tmp_file_examples, mode='w') as writer:
+        for data_point in x:
+            writer.write(data_point.tolist())
+    _, tmp_file_labels = tempfile.mkstemp()
+    with jsonlines.open(tmp_file_labels, mode='w') as writer:
+        for data_point in y:
+            writer.write(data_point.tolist())
+    temp_dir = tempfile.mkdtemp()
+    indexer = Indexer(os.path.abspath(tmp_file_examples), None, os.path.abspath(tmp_file_labels), os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"), temp_dir, thresholds={"likely":1})
+    indexer.build()
+    num = np.random.randint(1000, size=(1, 400))
+    neighbors = indexer.find(num, 10)
+    indexer.save()
+    loaded_indexer = Indexer.load(os.path.abspath(temp_dir))
+    assert((indexer.dataset_examples[indexer.model.layers[0].name] == loaded_indexer.dataset_examples[loaded_indexer.model.layers[0].name]).all())
+    assert((indexer.dataset_labels == loaded_indexer.dataset_labels).all())
+    assert(indexer.thresholds == loaded_indexer.thresholds)
 
 def test_compute_threhsolds():
+    x = np.random.randint(1000, size=(50, 400))
+    y = np.random.randint(2, size=50)
+    _, tmp_file_examples = tempfile.mkstemp()
+    with jsonlines.open(tmp_file_examples, mode='w') as writer:
+        for data_point in x:
+            writer.write(data_point.tolist())
+    _, tmp_file_labels = tempfile.mkstemp()
+    with jsonlines.open(tmp_file_labels, mode='w') as writer:
+        for data_point in y:
+            writer.write(data_point.tolist())
+    temp_dir = tempfile.mkdtemp()
+    indexer = Indexer(os.path.abspath(tmp_file_examples), None, os.path.abspath(tmp_file_labels), os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"), temp_dir)
+    indexer.build()
+    indexer.compute_thresholds()
     assert(True)

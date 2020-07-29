@@ -16,7 +16,8 @@ import nmslib
 import tensorflow as tf
 import numpy as np
 import os
-from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, write_json_lines)
+import json
+from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, write_json_lines, write_json_lines_dict)
 
 class Indexer(object):
     """ Indexer class that indexes Embeddings. This allows for efficient
@@ -81,7 +82,7 @@ class Indexer(object):
             os.makedirs(self.index_dir)
         self.index.saveIndex(os.path.join(self.index_dir, "index"), True)
         write_json_lines(os.path.join(self.index_dir, "examples.json"), self.dataset_examples[self.model.layers[0].name].tolist())
-        write_json_lines(os.path.join(self.index_dir, "thresholds.json"), self.thresholds)
+        write_json_lines_dict(os.path.join(self.index_dir, "thresholds.json"), self.thresholds)
         write_json_lines(os.path.join(self.index_dir, "labels.json"), self.dataset_labels.tolist())
         write_json_lines(os.path.join(self.index_dir, "original_examples.json"), self.dataset_original.tolist())
         self.model.save(os.path.join(self.index_dir, "model.h5"))
@@ -93,7 +94,7 @@ class Indexer(object):
             Args:
                 The path that the indexer should be loaded from
         """
-        indexer = cls(dataset_examples_path=os.path.join(path, "examples.json"), dataset_original_path=os.path.join(path, "original_examples.json"), dataset_labels_path=os.path.join(path, "labels.json"), model_path=os.path.join(path, "model.h5"), index_dir="./bundle", thresholds=os.path.join(path, "thresholds.json"))
+        indexer = cls(dataset_examples_path=os.path.join(path, "examples.json"), dataset_original_path=os.path.join(path, "original_examples.json"), dataset_labels_path=os.path.join(path, "labels.json"), model_path=os.path.join(path, "model.h5"), index_dir="./bundle", thresholds=read_json_lines(os.path.join(path, "thresholds.json"))[0])
         indexer.index.loadIndex(os.path.join(path, "index"), True)
         indexer.rebuild()
         return indexer
@@ -116,7 +117,7 @@ class Indexer(object):
         # TODO
         pass
 
-    def rebuild():
+    def rebuild(self):
         """ Rebuild the index after updates were made
         """
         self.index.createIndex()
