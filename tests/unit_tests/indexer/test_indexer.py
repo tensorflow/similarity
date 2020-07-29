@@ -166,6 +166,47 @@ def test_load():
     assert((indexer.dataset_labels == loaded_indexer.dataset_labels).all())
     assert(indexer.thresholds == loaded_indexer.thresholds)
 
+def test_add():
+    x = np.random.randint(1000, size=(1, 400))
+    y = np.random.randint(2, size=1)
+    _, tmp_file_examples = tempfile.mkstemp()
+    with jsonlines.open(tmp_file_examples, mode='w') as writer:
+        for data_point in x:
+            writer.write(data_point.tolist())
+    _, tmp_file_labels = tempfile.mkstemp()
+    with jsonlines.open(tmp_file_labels, mode='w') as writer:
+        for data_point in y:
+            writer.write(data_point.tolist())
+    temp_dir = tempfile.mkdtemp()
+    indexer = Indexer(os.path.abspath(tmp_file_examples), None, os.path.abspath(tmp_file_labels), os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"), temp_dir, thresholds={"likely":1})
+    indexer.build()
+    num = np.random.randint(1000, size=(1, 400))
+    x = np.concatenate((x, num))
+    y = np.append(y, 0)
+    indexer.add(num, 0)
+    assert((x == indexer.dataset_examples[indexer.model.layers[0].name]).all())
+    assert((y == indexer.dataset_labels).all())
+
+def test_remove():
+    x = np.random.randint(1000, size=(10, 400))
+    y = np.random.randint(2, size=10)
+    _, tmp_file_examples = tempfile.mkstemp()
+    with jsonlines.open(tmp_file_examples, mode='w') as writer:
+        for data_point in x:
+            writer.write(data_point.tolist())
+    _, tmp_file_labels = tempfile.mkstemp()
+    with jsonlines.open(tmp_file_labels, mode='w') as writer:
+        for data_point in y:
+            writer.write(data_point.tolist())
+    temp_dir = tempfile.mkdtemp()
+    indexer = Indexer(os.path.abspath(tmp_file_examples), None, os.path.abspath(tmp_file_labels), os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"), temp_dir, thresholds={"likely":1})
+    indexer.build()
+    indexer.remove(0)
+    assert((indexer.dataset_examples[indexer.model.layers[0].name] == x[1:]).all())
+    assert((indexer.dataset_labels == y[1:]).all())
+    indexer.remove(8)
+    assert((indexer.dataset_examples[indexer.model.layers[0].name] == x[1:-1]).all())
+
 def test_compute_threhsolds():
     x = np.random.randint(1000, size=(50, 400))
     y = np.random.randint(2, size=50)

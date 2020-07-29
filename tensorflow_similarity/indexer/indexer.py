@@ -45,6 +45,7 @@ class Indexer(object):
         self.index = nmslib.init(method='hnsw', space=space)
         self.thresholds = thresholds
 
+
     def build(self, verbose=0):
         """ build an index from a dataset 
 
@@ -55,6 +56,7 @@ class Indexer(object):
         _ = self.index.addDataPointBatch(embeddings)
         print_progess = verbose > 0
         self.index.createIndex(print_progress=print_progess)
+
 
     def find(self, item, num_neighbors, embedding=False):
         """ find the closest data points and their associated data in the index
@@ -75,6 +77,7 @@ class Indexer(object):
             neighbors.append({"id": id, "data": self.dataset_original[id], "distance": dist, "label": self.dataset_labels[id]})
         return np.asarray(neighbors)
 
+
     def save(self):
         """ Store an indexer on the disk
         """
@@ -86,6 +89,7 @@ class Indexer(object):
         write_json_lines(os.path.join(self.index_dir, "labels.json"), self.dataset_labels.tolist())
         write_json_lines(os.path.join(self.index_dir, "original_examples.json"), self.dataset_original.tolist())
         self.model.save(os.path.join(self.index_dir, "model.h5"))
+
 
     @classmethod
     def load(cls, path):
@@ -100,27 +104,46 @@ class Indexer(object):
         return indexer
 
     
-    def add(item):
+    def add(self, example, label, original_example=None):
         """ Add an item to the index
         
             Args:
-                item (Item): The item to be added to the index
+                example (np.array): The item to be added to the index
+                label (integer): The label corresponding to the item
+                original_example (object): The original data point 
         """
-        # TODO
-        pass
+        #print(self.dataset_examples[self.model.layers[0].name], "\n\n\n", example)
+        self.dataset_examples = {self.model.layers[0].name: np.concatenate((self.dataset_examples[self.model.layers[0].name], example))}
+        self.dataset_labels = np.append(self.dataset_labels, label)
+        if original_example:
+            self.dataset_original = np.concatenate((self.dataset_original, original_example))
+        else:
+            self.dataset_original = np.concatenate((self.dataset_original, example))
+        embeddings = self.model.predict(self.dataset_examples)
+        _ = self.index.addDataPointBatch(embeddings)
+        self.rebuild()
 
-    def remove(item):
+
+    def remove(self, id):
         """ Remove an item from the index
             Args:
-                item (Item): The item to removed added to the index
+                id (int): The index of the item in the dataset to be removed added to the index
         """
-        # TODO
-        pass
+        data = np.delete(self.dataset_examples[self.model.layers[0].name], id, 0)
+        print(data.shape)
+        self.dataset_examples = {self.model.layers[0].name: data}
+        self.dataset_original = np.delete(self.dataset_original, id, 0)
+        self.dataset_labels = np.delete(self.dataset_labels, id)
+        embeddings = self.model.predict(self.dataset_examples)
+        _ = self.index.addDataPointBatch(embeddings)
+        self.rebuild()
+
 
     def rebuild(self):
         """ Rebuild the index after updates were made
         """
         self.index.createIndex()
+
 
     def compute_thresholds(self):
         """ Compute thresholds for similarity using R Precision
