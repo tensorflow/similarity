@@ -33,6 +33,7 @@ def load_packaged_dataset(dataset, dataset_labels, dict_key):
     data_x = np.asarray(read_json_lines(dataset))
     data_y = np.asarray(read_json_lines(dataset_labels)).flatten()
     packaged_x = {dict_key: data_x}
+
     return packaged_x, data_y
 
 
@@ -49,6 +50,7 @@ def read_json_lines(file):
     with open(file) as f:
         for line in f:
             data.append(json.loads(line))
+            
     return data
 
 

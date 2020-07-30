@@ -46,11 +46,14 @@ class Indexer(object):
         thresholds=None
     ):
         self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
-        self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path, dataset_labels_path, self.model.layers[0].name)
+        self.model_dict_key = self.model.layers[0].name
+        self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path, 
+                                                                           dataset_labels_path, 
+                                                                           self.model_dict_key)
         if dataset_original_path is not None:
             self.dataset_original = np.asarray(read_json_lines(dataset_original_path))
         else:
-            self.dataset_original = self.dataset_examples[self.model.layers[0].name]
+            self.dataset_original = self.dataset_examples[self.model_dict_key]
         self.index_dir = index_dir
         self.index = nmslib.init(method='hnsw', space=space)
         if thresholds is not None:
@@ -83,11 +86,14 @@ class Indexer(object):
                 neighbors (np.array(dict)): A list of the nearest neighbor items
         """
         if not embedding:
-            item = self.model.predict({self.model.layers[0].name: item})
+            item = self.model.predict({self.model_dict_key: item})
         ids, dists = self.index.knnQuery(item, num_neighbors)
         neighbors = []
         for id, dist in zip(ids, dists):
-            neighbors.append({"id": id, "data": self.dataset_original[id], "distance": dist, "label": self.dataset_labels[id]})
+            neighbors.append({"id": id, 
+                              "data": self.dataset_original[id], 
+                              "distance": dist, 
+                              "label": self.dataset_labels[id]})
         return np.asarray(neighbors)
 
 
@@ -97,10 +103,12 @@ class Indexer(object):
         if not os.path.exists(self.index_dir):
             os.makedirs(self.index_dir)
         self.index.saveIndex(os.path.join(self.index_dir, "index"), True)
-        write_json_lines(os.path.join(self.index_dir, "examples.json"), self.dataset_examples[self.model.layers[0].name].tolist())
-        write_json_lines_dict(os.path.join(self.index_dir, "thresholds.json"), self.thresholds)
-        write_json_lines(os.path.join(self.index_dir, "labels.json"), self.dataset_labels.tolist())
-        write_json_lines(os.path.join(self.index_dir, "original_examples.json"), self.dataset_original.tolist())
+        write_json_lines(os.path.join(self.index_dir, "examples.jsonl"), 
+                                      self.dataset_examples[self.model_dict_key].tolist())
+        write_json_lines_dict(os.path.join(self.index_dir, "thresholds.jsonl"), self.thresholds)
+        write_json_lines(os.path.join(self.index_dir, "labels.jsonl"), self.dataset_labels.tolist())
+        write_json_lines(os.path.join(self.index_dir, "original_examples.jsonl"), 
+                                      self.dataset_original.tolist())
         self.model.save(os.path.join(self.index_dir, "model.h5"))
 
 
@@ -111,11 +119,11 @@ class Indexer(object):
             Args:
                 The path that the indexer should be loaded from
         """
-        indexer = cls(dataset_examples_path=os.path.join(path, "examples.json"), 
-                      dataset_original_path=os.path.join(path, "original_examples.json"), 
-                      dataset_labels_path=os.path.join(path, "labels.json"), 
+        indexer = cls(dataset_examples_path=os.path.join(path, "examples.jsonl"), 
+                      dataset_original_path=os.path.join(path, "original_examples.jsonl"), 
+                      dataset_labels_path=os.path.join(path, "labels.jsonl"), 
                       model_path=os.path.join(path, "model.h5"), index_dir="./bundle", 
-                      thresholds=read_json_lines(os.path.join(path, "thresholds.json"))[0])
+                      thresholds=read_json_lines(os.path.join(path, "thresholds.jsonl"))[0])
         indexer.index.loadIndex(os.path.join(path, "index"), True)
         indexer.index.createIndex()
         return indexer
@@ -129,7 +137,7 @@ class Indexer(object):
                 label (integer): The label corresponding to the item
                 original_example (object): The original data point 
         """
-        self.dataset_examples = {self.model.layers[0].name: np.concatenate((self.dataset_examples[self.model.layers[0].name], example))}
+        self.dataset_examples = {self.model_dict_key: np.concatenate((self.dataset_examples[self.model_dict_key], example))}
         self.dataset_labels = np.append(self.dataset_labels, label)
         if original_example:
             self.dataset_original = np.concatenate((self.dataset_original, original_example))
@@ -143,8 +151,8 @@ class Indexer(object):
             Args:
                 id (int): The index of the item in the dataset to be removed added to the index
         """
-        data = np.delete(self.dataset_examples[self.model.layers[0].name], id, 0)
-        self.dataset_examples = {self.model.layers[0].name: data}
+        dataset_examples = np.delete(self.dataset_examples[self.model_dict_key], id, 0)
+        self.dataset_examples = {self.model_dict_key: dataset_examples}
         self.dataset_original = np.delete(self.dataset_original, id, 0)
         self.dataset_labels = np.delete(self.dataset_labels, id)
         self.build()
