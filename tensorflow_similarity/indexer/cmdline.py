@@ -17,7 +17,7 @@ import json
 import argparse
 from tensorflow_similarity.indexer.indexer import Indexer
 
-def is_valid_dir(parser, arg):
+def arg_is_valid_dir(parser, arg):
     if not os.path.exists(arg):
         parser.error("The file or directory %s does not exist" % arg)
     else:
@@ -25,15 +25,24 @@ def is_valid_dir(parser, arg):
 
 def main():
     args = argparse.ArgumentParser()
-    args.add_argument("-c", "--config", required=True, help="config file", type=lambda arg: is_valid_dir(args, arg))
+    args.add_argument("-c", "--config", 
+                      required=True, 
+                      help="config file", 
+                      type=lambda arg: arg_is_valid_dir(args, arg))
     args = args.parse_args()
-    with open(os.path.join(os.path.dirname(__file__), args.config), 'r') as f:
-        config = json.load(f)
+
+    with open(os.path.join(os.path.dirname(__file__), args.config), 'r') as config_file:
+        config = json.load(config_file)
+
     indexer_config = config["indexer"]
-    indexer = Indexer(indexer_config["dataset"], indexer_config.get("original", None), indexer_config["dataset_labels"], indexer_config["model"], indexer_config["save_dir"], indexer_config.get("space", "cosinesimil"))
+    indexer = Indexer(indexer_config["dataset"], 
+                      indexer_config.get("original"), 
+                      indexer_config["dataset_labels"], 
+                      indexer_config["model"], 
+                      indexer_config["save_dir"], 
+                      indexer_config.get("space", "cosinesimil"))
     indexer.build(1)
     indexer.save()
-    indexer2 = Indexer.load("./bundle")
 
 if __name__ == "__main__":
     main()
