@@ -27,6 +27,9 @@ import jsonlines
 from tensorflow_similarity.indexer.indexer import Indexer
 from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, write_json_lines)
 
+def set_up():
+
+
 def test_read_json_lines():
     arr = np.random.rand(400, 50).tolist()
     _, tmp_file = tempfile.mkstemp()
@@ -162,6 +165,9 @@ def test_load():
     neighbors = indexer.find(num, 10)
     indexer.save()
     loaded_indexer = Indexer.load(os.path.abspath(temp_dir))
+    shutil.rmtree(temp_dir)
+    os.remove(tmp_file_examples)
+    os.remove(tmp_file_labels)
     assert((indexer.dataset_examples[indexer.model.layers[0].name] == loaded_indexer.dataset_examples[loaded_indexer.model.layers[0].name]).all())
     assert((indexer.dataset_labels == loaded_indexer.dataset_labels).all())
     assert(indexer.thresholds == loaded_indexer.thresholds)
@@ -184,6 +190,8 @@ def test_add():
     x = np.concatenate((x, num))
     y = np.append(y, 0)
     indexer.add(num, 0)
+    os.remove(tmp_file_examples)
+    os.remove(tmp_file_labels)
     assert((x == indexer.dataset_examples[indexer.model.layers[0].name]).all())
     assert((y == indexer.dataset_labels).all())
 
@@ -202,6 +210,8 @@ def test_remove():
     indexer = Indexer(os.path.abspath(tmp_file_examples), None, os.path.abspath(tmp_file_labels), os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"), temp_dir, thresholds={"likely":1})
     indexer.build()
     indexer.remove(0)
+    os.remove(tmp_file_examples)
+    os.remove(tmp_file_labels)
     assert((indexer.dataset_examples[indexer.model.layers[0].name] == x[1:]).all())
     assert((indexer.dataset_labels == y[1:]).all())
     indexer.remove(8)
@@ -222,4 +232,6 @@ def test_compute_threhsolds():
     indexer = Indexer(os.path.abspath(tmp_file_examples), None, os.path.abspath(tmp_file_labels), os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"), temp_dir)
     indexer.build()
     indexer.compute_thresholds()
+    os.remove(tmp_file_examples)
+    os.remove(tmp_file_labels)
     assert(True)

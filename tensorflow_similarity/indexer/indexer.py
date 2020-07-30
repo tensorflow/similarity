@@ -25,16 +25,26 @@ class Indexer(object):
         in metric space.
 
         Args:
-            model_path (string): The path to the model that should be used to calculate embeddings
             dataset_examples_path (string): The path to the json lines file containing the dataset
             dataset_original_path (string): The path to the json lines file containing the original dataset 
             dataset_labels_path (string): The path to the json lines file containing the labels for the dataset
+            model_path (string): The path to the model that should be used to calculate embeddings
             index_dir (string): The path to the directory where the indexer should be saved,
             space (string): The space (a space is a combination of data and the distance) to use in the indexer
                             for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md
+            thresholds (dict): A dictionionary mapping likeliness labels to thresholds
     """
 
-    def __init__(self, dataset_examples_path, dataset_original_path, dataset_labels_path, model_path, index_dir, space="cosinesimil", thresholds=dict()):
+    def __init__(
+        self, 
+        dataset_examples_path, 
+        dataset_original_path, 
+        dataset_labels_path, 
+        model_path, 
+        index_dir, 
+        space="cosinesimil", 
+        thresholds=None
+    ):
         self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
         self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path, dataset_labels_path, self.model.layers[0].name)
         if dataset_original_path is not None:
@@ -43,7 +53,10 @@ class Indexer(object):
             self.dataset_original = self.dataset_examples[self.model.layers[0].name]
         self.index_dir = index_dir
         self.index = nmslib.init(method='hnsw', space=space)
-        self.thresholds = thresholds
+        if thresholds is not None:
+            self.thresholds = thresholds
+        else:
+            self.thresholds = dict()
 
 
     def build(self, verbose=0):
@@ -98,9 +111,13 @@ class Indexer(object):
             Args:
                 The path that the indexer should be loaded from
         """
-        indexer = cls(dataset_examples_path=os.path.join(path, "examples.json"), dataset_original_path=os.path.join(path, "original_examples.json"), dataset_labels_path=os.path.join(path, "labels.json"), model_path=os.path.join(path, "model.h5"), index_dir="./bundle", thresholds=read_json_lines(os.path.join(path, "thresholds.json"))[0])
+        indexer = cls(dataset_examples_path=os.path.join(path, "examples.json"), 
+                      dataset_original_path=os.path.join(path, "original_examples.json"), 
+                      dataset_labels_path=os.path.join(path, "labels.json"), 
+                      model_path=os.path.join(path, "model.h5"), index_dir="./bundle", 
+                      thresholds=read_json_lines(os.path.join(path, "thresholds.json"))[0])
         indexer.index.loadIndex(os.path.join(path, "index"), True)
-        indexer.rebuild()
+        indexer.index.createIndex()
         return indexer
 
     
@@ -112,16 +129,13 @@ class Indexer(object):
                 label (integer): The label corresponding to the item
                 original_example (object): The original data point 
         """
-        #print(self.dataset_examples[self.model.layers[0].name], "\n\n\n", example)
         self.dataset_examples = {self.model.layers[0].name: np.concatenate((self.dataset_examples[self.model.layers[0].name], example))}
         self.dataset_labels = np.append(self.dataset_labels, label)
         if original_example:
             self.dataset_original = np.concatenate((self.dataset_original, original_example))
         else:
             self.dataset_original = np.concatenate((self.dataset_original, example))
-        embeddings = self.model.predict(self.dataset_examples)
-        _ = self.index.addDataPointBatch(embeddings)
-        self.rebuild()
+        self.build()
 
 
     def remove(self, id):
@@ -130,19 +144,10 @@ class Indexer(object):
                 id (int): The index of the item in the dataset to be removed added to the index
         """
         data = np.delete(self.dataset_examples[self.model.layers[0].name], id, 0)
-        print(data.shape)
         self.dataset_examples = {self.model.layers[0].name: data}
         self.dataset_original = np.delete(self.dataset_original, id, 0)
         self.dataset_labels = np.delete(self.dataset_labels, id)
-        embeddings = self.model.predict(self.dataset_examples)
-        _ = self.index.addDataPointBatch(embeddings)
-        self.rebuild()
-
-
-    def rebuild(self):
-        """ Rebuild the index after updates were made
-        """
-        self.index.createIndex()
+        self.build()
 
 
     def compute_thresholds(self):
