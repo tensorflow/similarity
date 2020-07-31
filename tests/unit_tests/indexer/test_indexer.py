@@ -31,23 +31,31 @@ from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_jso
 def set_up():
     """" Generate an indexer and a dataset
     """
-    x = np.random.randint(1000, size=(50, 400))
-    y = np.random.randint(2, size=50)
+    examples = np.random.randint(1000, size=(50, 400))
+    labels = np.random.randint(2, size=50)
     _, tmp_file_examples = tempfile.mkstemp()
     with jsonlines.open(tmp_file_examples, mode='w') as writer:
-        for data_point in x:
+        for data_point in examples:
             writer.write(data_point.tolist())
     _, tmp_file_labels = tempfile.mkstemp()
     with jsonlines.open(tmp_file_labels, mode='w') as writer:
-        for data_point in y:
+        for data_point in labels:
             writer.write(data_point.tolist())
     temp_dir = tempfile.mkdtemp()
-    indexer = Indexer(os.path.abspath(tmp_file_examples), 
-                      None, 
-                      os.path.abspath(tmp_file_labels), 
-                      os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"),
-                      temp_dir, thresholds={"likely":1})
-    return indexer, x, y, tmp_file_examples, tmp_file_labels, temp_dir
+
+    dataset_examples_path = os.path.abspath(tmp_file_examples)
+    dataset_labels_path = os.path.abspath(tmp_file_labels)
+    model_path = os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5")
+    index_dir = temp_dir
+    thresholds = {"likely":1}
+
+    indexer = Indexer(dataset_examples_path, 
+                      dataset_labels_path, 
+                      model_path,
+                      index_dir, 
+                      thresholds=thresholds)
+
+    return indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir
 
 def delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir):
     """ Delete temporary files/directories that were generated as part of testing
@@ -98,33 +106,33 @@ def test_load_packaged_dataset():
     """ Test case that asserts whether the data set loading util
         loads a saved dataset correctly
     """
-    x = np.random.rand(400, 50)
-    y = np.random.rand(400,)
+    examples = np.random.rand(400, 50)
+    labels = np.random.rand(400,)
     _, tmp_file_examples = tempfile.mkstemp()
     with jsonlines.open(tmp_file_examples, mode='w') as writer:
-        for data_point in x:
+        for data_point in examples:
             writer.write(data_point.tolist())
     _, tmp_file_labels = tempfile.mkstemp()
     with jsonlines.open(tmp_file_labels, mode='w') as writer:
-        for data_point in y:
+        for data_point in labels:
             writer.write(data_point.tolist())
 
-    packaged_x, packaged_y = load_packaged_dataset(os.path.abspath(tmp_file_examples), 
-                                                   os.path.abspath(tmp_file_labels), 
-                                                   "test")
+    packaged_examples, packaged_labels = load_packaged_dataset(os.path.abspath(tmp_file_examples), 
+                                                               os.path.abspath(tmp_file_labels), 
+                                                               "test")
     os.remove(tmp_file_examples)
     os.remove(tmp_file_labels)
 
-    assert((y == packaged_y).all())
-    assert((x == packaged_x["test"]).all())
+    assert((labels == packaged_labels).all())
+    assert((examples == packaged_examples["test"]).all())
 
 def test_build():
     """ Test case that asserts that the indexer correctly
         builds an index from a dataset
     """
-    indexer,x, y, tmp_file_examples, tmp_file_labels, _ = set_up()
+    indexer, examples, labels, tmp_file_examples, tmp_file_labels, _ = set_up()
     indexer.build()
-    ids, dists = indexer.index.knnQuery(x[0], k=10)
+    ids, dists = indexer.index.knnQuery(examples[0], k=10)
     
     os.remove(tmp_file_examples)
     os.remove(tmp_file_labels)
@@ -138,16 +146,22 @@ def test_find():
         finds the most similar embeddings and their distances
     """
     data_set = np.asarray(read_json_lines(os.path.abspath("test_data_set/data.json")))
-    indexer = Indexer(os.path.abspath("test_data_set/data.json"), 
-                                      None, os.path.abspath("test_data_set/labels.json"), 
-                                      os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"), 
-                                      "./")
+
+    dataset_examples_path = os.path.abspath("test_data_set/data.json")
+    dataset_labels_path = os.path.abspath("test_data_set/labels.json")
+    model_path = os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5")
+    index_dir = "./bundle"
+
+    indexer = Indexer(dataset_examples_path, 
+                      dataset_labels_path, 
+                      model_path, 
+                      index_dir)
     indexer.index.addDataPointBatch(data_set)
     indexer.index.createIndex()
     neighbors = indexer.find(data_set[0], 20, True)
     
-    index_dists = np.asarray([neighbor["distance"] for neighbor in neighbors])
-    index_ids = np.asarray([neighbor["id"] for neighbor in neighbors])
+    index_dists = np.asarray([neighbor.distance for neighbor in neighbors])
+    index_ids = np.asarray([neighbor.id for neighbor in neighbors])
     dists = np.asarray([(spatial.distance.cosine(i, data_set[0])) for i in data_set[:20]])
     ids = np.arange(20)
 
@@ -158,12 +172,12 @@ def test_save():
     """ Test case that asserts that the indexer is correctly
         saved to the disk
     """
-    indexer, x, y, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
+    indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
     indexer.build()
     indexer.save()
 
-    saved_x = np.asarray(read_json_lines(os.path.abspath(os.path.join(temp_dir, "examples.jsonl"))))
-    saved_y = read_json_lines(os.path.abspath(os.path.join(temp_dir, "labels.jsonl")))
+    saved_examples= np.asarray(read_json_lines(os.path.abspath(os.path.join(temp_dir, "examples.jsonl"))))
+    saved_labels = read_json_lines(os.path.abspath(os.path.join(temp_dir, "labels.jsonl")))
 
     saved_index = nmslib.init(method='hnsw', space="cosinesimil")
     saved_index.loadIndex(os.path.abspath(os.path.join(temp_dir, "index")), True)
@@ -174,13 +188,13 @@ def test_save():
     neighbors = indexer.find(num, 10)
     temp_ids, temp_dists = saved_index.knnQuery(temp_model.predict({'text': num}), 10)
 
-    index_dists = np.asarray([neighbor["distance"] for neighbor in neighbors])
-    index_ids = np.asarray([neighbor["id"] for neighbor in neighbors])
+    index_dists = np.asarray([neighbor.distance for neighbor in neighbors])
+    index_ids = np.asarray([neighbor.id for neighbor in neighbors])
     
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
-    assert((saved_x == indexer.dataset_examples[indexer.model_dict_key]).all())
-    assert((saved_y == indexer.dataset_labels).all())
+    assert((saved_examples== indexer.dataset_examples[indexer.model_dict_key]).all())
+    assert((saved_labels == indexer.dataset_labels).all())
     assert((temp_ids == index_ids).all())
     assert((temp_dists == index_dists).all())
 
@@ -188,7 +202,7 @@ def test_load():
     """ Test case that asserts that a saved indexer correctly
         loads from the disk
     """
-    indexer, x, y, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
+    indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
     indexer.build()
     num = np.random.randint(1000, size=(1, 400))
     neighbors = indexer.find(num, 10)
@@ -205,38 +219,38 @@ def test_add():
     """ Test case that asserts that the indexer correctly
         adds new items to the indexer
     """
-    indexer, x, y, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
+    indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
     indexer.build()
     num = np.random.randint(1000, size=(1, 400))
-    x = np.concatenate((x, num))
-    y = np.append(y, 0)
+    examples = np.concatenate((examples, num))
+    labels = np.append(labels, 0)
     indexer.add(num, 0)
     
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
     
-    assert((x == indexer.dataset_examples[indexer.model_dict_key]).all())
-    assert((y == indexer.dataset_labels).all())
+    assert((examples== indexer.dataset_examples[indexer.model_dict_key]).all())
+    assert((labels == indexer.dataset_labels).all())
 
 def test_remove():
     """ Test case that asserts that the indexer correctly
         removes items from the indexer
     """
-    indexer, x, y, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
+    indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
     indexer.build()
     indexer.remove(0)
     
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
-    assert((indexer.dataset_examples[indexer.model_dict_key] == x[1:]).all())
-    assert((indexer.dataset_labels == y[1:]).all())
+    assert((indexer.dataset_examples[indexer.model_dict_key] == examples[1:]).all())
+    assert((indexer.dataset_labels == labels[1:]).all())
     indexer.remove(len(indexer.dataset_labels) - 1)
-    assert((indexer.dataset_examples[indexer.model_dict_key] == x[1:-1]).all())
+    assert((indexer.dataset_examples[indexer.model_dict_key] == examples[1:-1]).all())
 
 def test_compute_threhsolds():
     """ Test case that asserts that the indexer correctly
         computes the thresholds for similarity
     """
-    indexer, x, y, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
+    indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
     indexer.build()
     indexer.compute_thresholds()
     

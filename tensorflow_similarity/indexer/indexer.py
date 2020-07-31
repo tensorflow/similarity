@@ -17,6 +17,7 @@ import tensorflow as tf
 import numpy as np
 import os
 import json
+import collections
 from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, write_json_lines, write_json_lines_dict)
 
 class Indexer(object):
@@ -26,22 +27,23 @@ class Indexer(object):
 
         Args:
             dataset_examples_path (string): The path to the json lines file containing the dataset
-            dataset_original_path (string): The path to the json lines file containing the original dataset 
             dataset_labels_path (string): The path to the json lines file containing the labels for the dataset
             model_path (string): The path to the model that should be used to calculate embeddings
-            index_dir (string): The path to the directory where the indexer should be saved,
+            index_dir (string): The path to the directory where the indexer should be saved
+            dataset_original_path (string): The path to the json lines file containing the original dataset. Defaults to None.
             space (string): The space (a space is a combination of data and the distance) to use in the indexer
-                            for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md
-            thresholds (dict): A dictionionary mapping likeliness labels to thresholds
+                            for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md.
+                            Defaults to "cosinesimil".
+            thresholds (dict): A dictionary mapping likeliness labels to thresholds. Defaults to None.
     """
 
     def __init__(
         self, 
         dataset_examples_path, 
-        dataset_original_path, 
         dataset_labels_path, 
         model_path, 
         index_dir, 
+        dataset_original_path=None,
         space="cosinesimil", 
         thresholds=None
     ):
@@ -74,7 +76,7 @@ class Indexer(object):
         self.index.createIndex(print_progress=print_progess)
 
 
-    def find(self, item, num_neighbors, embedding=False):
+    def find(self, item, num_neighbors, is_embedding=False):
         """ find the closest data points and their associated data in the index
 
             Args:
@@ -83,18 +85,16 @@ class Indexer(object):
                 embedding (bool): Whether or not the item is already in embedding form
 
             Returns:
-                neighbors (np.array(dict)): A list of the nearest neighbor items
+                neighbors (list(Neighbor)): A list of the nearest neighbor items
         """
-        if not embedding:
+        if not is_embedding:
             item = self.model.predict({self.model_dict_key: item})
-        ids, dists = self.index.knnQuery(item, num_neighbors)
-        neighbors = []
-        for id, dist in zip(ids, dists):
-            neighbors.append({"id": id, 
-                              "data": self.dataset_original[id], 
-                              "distance": dist, 
-                              "label": self.dataset_labels[id]})
-        return np.asarray(neighbors)
+        ids, distances = self.index.knnQuery(item, num_neighbors)
+        Neighbor = collections.namedtuple("Neighbor", ["id", "data", "distance", "label"])
+        return [
+            Neighbor(id=id, data=self.dataset_original[id], distance=distance, label= self.dataset_labels[id])
+            for id, distance in zip(ids, distances)
+        ]
 
 
     def save(self):
@@ -103,12 +103,21 @@ class Indexer(object):
         if not os.path.exists(self.index_dir):
             os.makedirs(self.index_dir)
         self.index.saveIndex(os.path.join(self.index_dir, "index"), True)
-        write_json_lines(os.path.join(self.index_dir, "examples.jsonl"), 
-                                      self.dataset_examples[self.model_dict_key].tolist())
+
+        examples_path = os.path.join(self.index_dir, "examples.jsonl")
+        dataset_examples  = self.dataset_examples[self.model_dict_key].tolist()
+        write_json_lines(examples_path, dataset_examples)
+
+        labels_path = os.path.join(self.index_dir, "labels.jsonl")
+        dataset_labels = self.dataset_labels.tolist()
+        write_json_lines(labels_path, dataset_labels)
+
+        original_examples_path = os.path.join(self.index_dir, "original_examples.jsonl")
+        dataset_original_examples = self.dataset_original.tolist()
+        write_json_lines(original_examples_path, dataset_original_examples)
+
         write_json_lines_dict(os.path.join(self.index_dir, "thresholds.jsonl"), self.thresholds)
-        write_json_lines(os.path.join(self.index_dir, "labels.jsonl"), self.dataset_labels.tolist())
-        write_json_lines(os.path.join(self.index_dir, "original_examples.jsonl"), 
-                                      self.dataset_original.tolist())
+
         self.model.save(os.path.join(self.index_dir, "model.h5"))
 
 
@@ -117,7 +126,9 @@ class Indexer(object):
         """ Load an indexer from the disk
 
             Args:
-                load (string): The path that the indexer should be loaded from
+                path (string): The path that the indexer should be loaded from disk.
+                               This directory should contain a tf.similarity model, dataset and 
+                               label files in jsonl format, a NMSLib index, and a thresholds dictionary.
         """
         indexer = cls(dataset_examples_path=os.path.join(path, "examples.jsonl"), 
                       dataset_original_path=os.path.join(path, "original_examples.jsonl"), 
