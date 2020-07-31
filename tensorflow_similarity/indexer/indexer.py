@@ -117,7 +117,7 @@ class Indexer(object):
         """ Load an indexer from the disk
 
             Args:
-                The path that the indexer should be loaded from
+                load (string): The path that the indexer should be loaded from
         """
         indexer = cls(dataset_examples_path=os.path.join(path, "examples.jsonl"), 
                       dataset_original_path=os.path.join(path, "original_examples.jsonl"), 
