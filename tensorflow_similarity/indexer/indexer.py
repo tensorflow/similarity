@@ -122,7 +122,8 @@ class Indexer(object):
         indexer = cls(dataset_examples_path=os.path.join(path, "examples.jsonl"), 
                       dataset_original_path=os.path.join(path, "original_examples.jsonl"), 
                       dataset_labels_path=os.path.join(path, "labels.jsonl"), 
-                      model_path=os.path.join(path, "model.h5"), index_dir="./bundle", 
+                      model_path=os.path.join(path, "model.h5"), 
+                      index_dir=path,
                       thresholds=read_json_lines(os.path.join(path, "thresholds.jsonl"))[0])
         indexer.index.loadIndex(os.path.join(path, "index"), True)
         indexer.index.createIndex()
@@ -161,26 +162,6 @@ class Indexer(object):
     def compute_thresholds(self):
         """ Compute thresholds for similarity using R Precision
         """
-        data = []
-        for embedding, label in zip(self.model.predict(self.dataset_examples), self.dataset_labels):
-            ids, distances = self.index.knnQuery(embedding, len(self.dataset_labels))
-            relevant = 0
-            retrieved = 0
-            data_point_thresholds = dict()
-            for id, distance in zip(ids, distances):
-                if self.dataset_labels[id] == label:
-                    relevant = relevant + 1
-                retrieved = retrieved + 1
-                r_precision = round(relevant / retrieved, 2)
-                data_point_thresholds[r_precision] = distance
-            for thresh, dist in data_point_thresholds.items():
-                l = self.thresholds.get(thresh, list())
-                l.append(dist)
-                self.thresholds[thresh] = l
-        for threshold, threshold_list in self.thresholds.items():
-            self.thresholds[threshold] = np.mean(threshold_list)
-
-        sort_orders = sorted(self.thresholds.items(), key=lambda x: x[1], reverse=True)
-
-        for i in sort_orders:
-            print(i[0], i[1])
+        # Currently the thresholds are placeholder values, in the future the indexer
+        # will use R precision to calculate thresholds
+        self.thresholds = {.001: "very likely", .01: "likely", .1: "possible", .2: "unlikely"}

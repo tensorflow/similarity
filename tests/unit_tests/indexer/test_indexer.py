@@ -240,4 +240,4 @@ def test_compute_threhsolds():
     
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
-    assert(True)
+    assert(indexer.thresholds[.1] == "possible")
