@@ -43,7 +43,8 @@ def set_up():
             writer.write(data_point.tolist())
     temp_dir = tempfile.mkdtemp()
     indexer = Indexer(os.path.abspath(tmp_file_examples), 
-                      None, os.path.abspath(tmp_file_labels), 
+                      None, 
+                      os.path.abspath(tmp_file_labels), 
                       os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5"),
                       temp_dir, thresholds={"likely":1})
     return indexer, x, y, tmp_file_examples, tmp_file_labels, temp_dir
@@ -144,6 +145,7 @@ def test_find():
     indexer.index.addDataPointBatch(data_set)
     indexer.index.createIndex()
     neighbors = indexer.find(data_set[0], 20, True)
+    
     index_dists = np.asarray([neighbor["distance"] for neighbor in neighbors])
     index_ids = np.asarray([neighbor["id"] for neighbor in neighbors])
     dists = np.asarray([(spatial.distance.cosine(i, data_set[0])) for i in data_set[:20]])
@@ -163,14 +165,14 @@ def test_save():
     saved_x = np.asarray(read_json_lines(os.path.abspath(os.path.join(temp_dir, "examples.jsonl"))))
     saved_y = read_json_lines(os.path.abspath(os.path.join(temp_dir, "labels.jsonl")))
 
-    index = nmslib.init(method='hnsw', space="cosinesimil")
-    index.loadIndex(os.path.abspath(os.path.join(temp_dir, "index")), True)
-    index.createIndex()
+    saved_index = nmslib.init(method='hnsw', space="cosinesimil")
+    saved_index.loadIndex(os.path.abspath(os.path.join(temp_dir, "index")), True)
+    saved_index.createIndex()
 
     temp_model = tf.keras.models.load_model(os.path.join(os.path.abspath(temp_dir), "model.h5"))
     num = np.random.randint(1000, size=(1, 400))
     neighbors = indexer.find(num, 10)
-    temp_ids, temp_dists = index.knnQuery(temp_model.predict({'text': num}), 10)
+    temp_ids, temp_dists = saved_index.knnQuery(temp_model.predict({'text': num}), 10)
 
     index_dists = np.asarray([neighbor["distance"] for neighbor in neighbors])
     index_ids = np.asarray([neighbor["id"] for neighbor in neighbors])

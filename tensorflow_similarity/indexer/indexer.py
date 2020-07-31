@@ -69,7 +69,7 @@ class Indexer(object):
                 verbose (int): Verbosity mode (0 = silent, 1 = progress bar)
         """
         embeddings = self.model.predict(self.dataset_examples)
-        _ = self.index.addDataPointBatch(embeddings)
+        self.index.addDataPointBatch(embeddings)
         print_progess = verbose > 0
         self.index.createIndex(print_progress=print_progess)
 
