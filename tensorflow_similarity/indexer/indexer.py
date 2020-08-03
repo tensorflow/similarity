@@ -82,7 +82,7 @@ class Indexer(object):
             Args:
                 item (np.array): The item for a which a query of the most similar items should be performed
                 num_neighbors (int): The number of neighbors that should be returned
-                embedding (bool): Whether or not the item is already in embedding form
+                is_embedding (bool): Whether or not the item is already in embedding form
 
             Returns:
                 neighbors (list(Neighbor)): A list of the nearest neighbor items

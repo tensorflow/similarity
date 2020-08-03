@@ -35,13 +35,13 @@ def main():
         config = json.load(config_file)
 
     indexer_config = config["indexer"]
-    indexer = Indexer(indexer_config["dataset"], 
+    indexer = Indexer(indexer_config.get("dataset"), 
                       indexer_config.get("original"), 
-                      indexer_config["dataset_labels"], 
-                      indexer_config["model"], 
-                      indexer_config["save_dir"], 
+                      indexer_config.get("dataset_labels"), 
+                      indexer_config.get("model"), 
+                      indexer_config.get("save_dir"), 
                       indexer_config.get("space", "cosinesimil"))
-    indexer.build(1)
+    indexer.build(indexer_config.get("verbose", 1))
     indexer.save()
 
 if __name__ == "__main__":

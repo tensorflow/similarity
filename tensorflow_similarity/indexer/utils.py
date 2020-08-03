@@ -61,6 +61,9 @@ def write_json_lines(file, data):
             file (string): The path to the json lines file that should be written to
             data (JSON serializable object): The data that should be written to the file
     """
+    if isinstance(data, np.ndarray):
+        data = data.tolist()
+
     with jsonlines.open(file, mode='w') as writer:
         if isinstance(data, Iterable):
             writer.write_all(data)
