@@ -17,21 +17,31 @@ import json
 import argparse
 from tensorflow_similarity.indexer.indexer import Indexer
 
-def is_valid_dir(parser, arg):
+def arg_is_valid_dir(parser, arg):
     if not os.path.exists(arg):
-        parser.error("The file or directory %s does not exist" % arg)
+        parser.error("The file or directory {} does not exist".format(arg))
     else:
         return arg
 
 def main():
     args = argparse.ArgumentParser()
-    args.add_argument("-c", "--config", required=True, help="config file", type=lambda arg: is_valid_dir(args, arg))
+    args.add_argument("-c", "--config", 
+                      required=True, 
+                      help="config file", 
+                      type=lambda arg: arg_is_valid_dir(args, arg))
     args = args.parse_args()
-    with open(os.path.join(os.path.dirname(__file__), args.config), 'r') as f:
-        config = json.load(f)
+
+    with open(os.path.join(os.path.dirname(__file__), args.config), 'r') as config_file:
+        config = json.load(config_file)
+
     indexer_config = config["indexer"]
-    indexer = Indexer(indexer_config["dataset"], indexer_config["dataset_labels"], indexer_config["model"], indexer_config["save_dir"], indexer_config["space"])
-    indexer.build()
+    indexer = Indexer(dataset_examples_path=indexer_config.get("dataset"), 
+                      dataset_labels_path=indexer_config.get("dataset_labels"), 
+                      model_path=indexer_config.get("model"), 
+                      dataset_original_path=indexer_config.get("original"),
+                      space=indexer_config.get("space", "cosinesimil"))
+    indexer.build(verbose=indexer_config.get("verbose", 1))
+    indexer.save(indexer_config.get("save_dir"))
 
 if __name__ == "__main__":
     main()
