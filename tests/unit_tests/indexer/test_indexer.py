@@ -94,7 +94,6 @@ def test_write_json_lines():
     """
     # Generate dataset labels
     data = np.random.rand(400,)
-
     _, tmp_file = tempfile.mkstemp()
     write_json_lines(tmp_file, data)
 
@@ -119,6 +118,7 @@ def test_write_json_lines():
 
     assert((data == temp_data).all())
     assert((data == temp_data).all())
+
 
 def test_load_packaged_dataset():
     """ Test case that asserts whether the data set loading util
@@ -213,7 +213,6 @@ def test_save():
     saved_examples = np.asarray(read_json_lines(saved_examples_path))
     
     # Load the saved dataset labels
-
     saved_labels_path = os.path.abspath(os.path.join(temp_dir, "labels.jsonl"))
     saved_labels = read_json_lines(saved_labels_path)
 
@@ -243,6 +242,7 @@ def test_save():
     assert((temp_ids == index_ids).all())
     assert((temp_dists == index_dists).all())
 
+
 def test_load():
     """ Test case that asserts that a saved indexer correctly
         loads from the disk
@@ -267,9 +267,10 @@ def test_load():
     assert((indexer_dataset_labels == loaded_indexer_dataset_labels).all())
     assert(indexer.thresholds == loaded_indexer.thresholds)
 
+
 def test_add():
     """ Test case that asserts that the indexer correctly
-        adds new items to the indexer
+        adds new items to the index
     """
     # Build an indexer
     indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()

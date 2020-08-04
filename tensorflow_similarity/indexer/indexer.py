@@ -39,7 +39,8 @@ class Indexer(object):
             
             dataset_original_path (string): The path to the json lines file containing the original dataset. 
                                             The original dataset should be used for datasets where the raw 
-                                            data is not ingestible by the model. Defaults to None.
+                                            data is not ingestible by the model or the raw data differs from the 
+                                            dataset examples. Defaults to None.
             space (string): The space (a space is a combination of data and the distance) to use in the indexer
                             for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md.
                             Defaults to "cosinesimil".
@@ -176,7 +177,8 @@ class Indexer(object):
             Args:
                 example (np.array): The item to be added to the index.
                 label (integer): The label corresponding to the item.
-                original_example (object): The original data point. Defaults to None.
+                original_example (object): The original data point if different from example.d
+                                           Defaults to None.
         """
         # Add the example to the dataset examples, dataset labels, and original dataset,
         # and rebuild the index
