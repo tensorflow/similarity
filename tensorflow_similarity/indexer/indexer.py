@@ -165,11 +165,17 @@ class Indexer(object):
                                label files in jsonl format, a NMSLib index, and a 
                                thresholds dictionary.
         """
-        indexer = cls(dataset_examples_path=os.path.join(path, "examples.jsonl"), 
-                      dataset_original_path=os.path.join(path, "original_examples.jsonl"), 
-                      dataset_labels_path=os.path.join(path, "labels.jsonl"), 
-                      model_path=os.path.join(path, "model.h5"), 
-                      thresholds=read_json_lines(os.path.join(path, "thresholds.jsonl"))[0])
+        dataset_examples_path = os.path.join(path, "examples.jsonl")
+        dataset_original_path = os.path.join(path, "original_examples.jsonl")
+        dataset_labels_path = os.path.join(path, "labels.jsonl")
+        model_path = os.path.join(path, "model.h5")
+        thresholds = read_json_lines(os.path.join(path, "thresholds.jsonl"))[0]
+
+        indexer = cls(dataset_examples_path=dataset_examples_path, 
+                      dataset_original_path=dataset_original_path, 
+                      dataset_labels_path=dataset_labels_path, 
+                      model_path=model_path, 
+                      thresholds=thresholds)
         indexer.index.loadIndex(os.path.join(path, "index"), True)
         indexer.index.createIndex()
 
