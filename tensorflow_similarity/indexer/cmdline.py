@@ -41,7 +41,7 @@ def main():
                       indexer_config.get("model"), 
                       indexer_config.get("save_dir"), 
                       indexer_config.get("space", "cosinesimil"))
-    indexer.build(indexer_config.get("verbose", 1))
+    indexer.build(verbose=indexer_config.get("verbose", 1))
     indexer.save()
 
 if __name__ == "__main__":

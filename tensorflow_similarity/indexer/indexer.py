@@ -20,21 +20,31 @@ import json
 import collections
 from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, write_json_lines, write_json_lines_dict)
 
+# Neighbor has the distance from the queried point to the item, the index
+# of that item in the dataset, the label of the item and the data in the dataset 
+# associated with the item.
+Neighbor = collections.namedtuple("Neighbor", ["id", "data", "distance", "label"])
+
+
 class Indexer(object):
     """ Indexer class that indexes Embeddings. This allows for efficient
         searching of approximate nearest neighbors for a given embedding
         in metric space.
 
         Args:
-            dataset_examples_path (string): The path to the json lines file containing the dataset
+            dataset_examples_path (string): The path to the json lines file containing the dataset that 
+                                            should be indexed and is ingestible by the model.
             dataset_labels_path (string): The path to the json lines file containing the labels for the dataset
             model_path (string): The path to the model that should be used to calculate embeddings
-            index_dir (string): The path to the directory where the indexer should be saved
-            dataset_original_path (string): The path to the json lines file containing the original dataset. Defaults to None.
+            
+            dataset_original_path (string): The path to the json lines file containing the original dataset. 
+                                            The original dataset should be used for datasets where the raw 
+                                            data is not ingestible by the model. Defaults to None.
             space (string): The space (a space is a combination of data and the distance) to use in the indexer
                             for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md.
                             Defaults to "cosinesimil".
             thresholds (dict): A dictionary mapping likeliness labels to thresholds. Defaults to None.
+                               i.e. {.001: "very likely", .01: "likely", .1: "possible", .2: "unlikely"}
     """
 
     def __init__(
@@ -42,7 +52,6 @@ class Indexer(object):
         dataset_examples_path, 
         dataset_labels_path, 
         model_path, 
-        index_dir, 
         dataset_original_path=None,
         space="cosinesimil", 
         thresholds=None
@@ -52,12 +61,13 @@ class Indexer(object):
         self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path, 
                                                                            dataset_labels_path, 
                                                                            self.model_dict_key)
+        self.index = nmslib.init(method='hnsw', space=space)
+
         if dataset_original_path is not None:
             self.dataset_original = np.asarray(read_json_lines(dataset_original_path))
         else:
             self.dataset_original = self.dataset_examples[self.model_dict_key]
-        self.index_dir = index_dir
-        self.index = nmslib.init(method='hnsw', space=space)
+
         if thresholds is not None:
             self.thresholds = thresholds
         else:
@@ -68,8 +78,10 @@ class Indexer(object):
         """ build an index from a dataset 
 
             Args:
-                verbose (int): Verbosity mode (0 = silent, 1 = progress bar)
+                verbose (int): Verbosity mode (0 = silent, 1 = progress bar).
+                Defaults to 0.
         """
+        # Compute the embeddings for the dataset examples and add them to the index
         embeddings = self.model.predict(self.dataset_examples)
         self.index.addDataPointBatch(embeddings)
         print_progess = verbose > 0
@@ -82,43 +94,60 @@ class Indexer(object):
             Args:
                 item (np.array): The item for a which a query of the most similar items should be performed
                 num_neighbors (int): The number of neighbors that should be returned
-                is_embedding (bool): Whether or not the item is already in embedding form
+                is_embedding (bool): Whether or not the item is already in embedding form.
+                                     Defaults to False.
 
             Returns:
-                neighbors (list(Neighbor)): A list of the nearest neighbor items
+                neighbors (list(Neighbor)): A list of the nearest neighbor items sorted by distance
+                                            to the original item that the query was performed on.
         """
         if not is_embedding:
             item = self.model.predict({self.model_dict_key: item})
+
+        # Query the index
         ids, distances = self.index.knnQuery(item, num_neighbors)
-        Neighbor = collections.namedtuple("Neighbor", ["id", "data", "distance", "label"])
-        return [
-            Neighbor(id=id, data=self.dataset_original[id], distance=distance, label= self.dataset_labels[id])
-            for id, distance in zip(ids, distances)
-        ]
+        
+        neighbors = []
+        for id, distance in zip(ids, distances):
+            neighbor = Neighbor(id=id, 
+                                data=self.dataset_original[id], 
+                                distance=distance, 
+                                label= self.dataset_labels[id])
+            neighbors.append(neighbor)
+        
+        return neighbors
 
 
-    def save(self):
+    def save(self, index_dir):
         """ Store an indexer on the disk
+            index_dir (string): The path to the directory where the indexer should be saved.
         """
-        if not os.path.exists(self.index_dir):
-            os.makedirs(self.index_dir)
-        self.index.saveIndex(os.path.join(self.index_dir, "index"), True)
+        if not os.path.exists(index_dir):
+            os.makedirs(index_dir)
 
-        examples_path = os.path.join(self.index_dir, "examples.jsonl")
-        dataset_examples  = self.dataset_examples[self.model_dict_key].tolist()
+        # Save the index
+        self.index.saveIndex(os.path.join(index_dir, "index"), True)
+
+        # Save the examples dataset
+        examples_path = os.path.join(index_dir, "examples.jsonl")
+        dataset_examples  = self.dataset_examples[self.model_dict_key]
         write_json_lines(examples_path, dataset_examples)
 
-        labels_path = os.path.join(self.index_dir, "labels.jsonl")
-        dataset_labels = self.dataset_labels.tolist()
+        # Save the dataset labels
+        labels_path = os.path.join(index_dir, "labels.jsonl")
+        dataset_labels = self.dataset_labels
         write_json_lines(labels_path, dataset_labels)
 
-        original_examples_path = os.path.join(self.index_dir, "original_examples.jsonl")
-        dataset_original_examples = self.dataset_original.tolist()
+        # Save the original dataset
+        original_examples_path = os.path.join(index_dir, "original_examples.jsonl")
+        dataset_original_examples = self.dataset_original
         write_json_lines(original_examples_path, dataset_original_examples)
+        
+        # Save the thresholds
+        write_json_lines_dict(os.path.join(index_dir, "thresholds.jsonl"), self.thresholds)
 
-        write_json_lines_dict(os.path.join(self.index_dir, "thresholds.jsonl"), self.thresholds)
-
-        self.model.save(os.path.join(self.index_dir, "model.h5"))
+        # Save the model
+        self.model.save(os.path.join(index_dir, "model.h5"))
 
 
     @classmethod
@@ -134,10 +163,10 @@ class Indexer(object):
                       dataset_original_path=os.path.join(path, "original_examples.jsonl"), 
                       dataset_labels_path=os.path.join(path, "labels.jsonl"), 
                       model_path=os.path.join(path, "model.h5"), 
-                      index_dir=path,
                       thresholds=read_json_lines(os.path.join(path, "thresholds.jsonl"))[0])
         indexer.index.loadIndex(os.path.join(path, "index"), True)
         indexer.index.createIndex()
+
         return indexer
 
     
@@ -145,24 +174,30 @@ class Indexer(object):
         """ Add an item to the index
         
             Args:
-                example (np.array): The item to be added to the index
-                label (integer): The label corresponding to the item
-                original_example (object): The original data point 
+                example (np.array): The item to be added to the index.
+                label (integer): The label corresponding to the item.
+                original_example (object): The original data point. Defaults to None.
         """
-        self.dataset_examples = {self.model_dict_key: np.concatenate((self.dataset_examples[self.model_dict_key], example))}
+        # Add the example to the dataset examples, dataset labels, and original dataset,
+        # and rebuild the index
+        dataset_examples = np.concatenate((self.dataset_examples[self.model_dict_key], example))
+        self.dataset_examples = {self.model_dict_key: dataset_examples}
         self.dataset_labels = np.append(self.dataset_labels, label)
         if original_example:
             self.dataset_original = np.concatenate((self.dataset_original, original_example))
         else:
             self.dataset_original = np.concatenate((self.dataset_original, example))
+
         self.build()
 
 
     def remove(self, id):
         """ Remove an item from the index
             Args:
-                id (int): The index of the item in the dataset to be removed added to the index
+                id (int): The index of the item in the dataset to be removed added to the index.
         """
+        # Delete the item from the dataset examples, original dataset and the dataset labels,
+        # and rebuild the index
         dataset_examples = np.delete(self.dataset_examples[self.model_dict_key], id, 0)
         self.dataset_examples = {self.model_dict_key: dataset_examples}
         self.dataset_original = np.delete(self.dataset_original, id, 0)
@@ -171,8 +206,10 @@ class Indexer(object):
 
 
     def compute_thresholds(self):
-        """ Compute thresholds for similarity using R Precision
+        """ Compute thresholds for similarity using R Precision.
         """
         # Currently the thresholds are placeholder values, in the future the indexer
         # will use R precision to calculate thresholds
-        self.thresholds = {.001: "very likely", .01: "likely", .1: "possible", .2: "unlikely"}
+        self.thresholds = {.001: "very likely", .01: "likely", .1: "possible", .2: "unlikely"} 
+        
+        # TODO compute thresholds
