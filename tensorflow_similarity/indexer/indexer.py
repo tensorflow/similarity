@@ -106,7 +106,7 @@ class Indexer(object):
                                                   sorted by distance for each item that the
                                                   query was performed on.
         """
-        # wrap items in an np array if necessary
+        # wrap items in np array if necessary
         if len(items.shape) < 2:
             items = np.asarray([items])
 
