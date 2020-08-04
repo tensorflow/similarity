@@ -19,7 +19,7 @@ from tensorflow_similarity.indexer.indexer import Indexer
 
 def arg_is_valid_dir(parser, arg):
     if not os.path.exists(arg):
-        parser.error("The file or directory %s does not exist" % arg)
+        parser.error("The file or directory {} does not exist".format(arg))
     else:
         return arg
 
@@ -35,14 +35,13 @@ def main():
         config = json.load(config_file)
 
     indexer_config = config["indexer"]
-    indexer = Indexer(indexer_config.get("dataset"), 
-                      indexer_config.get("original"), 
-                      indexer_config.get("dataset_labels"), 
-                      indexer_config.get("model"), 
-                      indexer_config.get("save_dir"), 
-                      indexer_config.get("space", "cosinesimil"))
+    indexer = Indexer(dataset_examples_path=indexer_config.get("dataset"), 
+                      dataset_labels_path=indexer_config.get("dataset_labels"), 
+                      model_path=indexer_config.get("model"), 
+                      dataset_original_path=indexer_config.get("original"),
+                      space=indexer_config.get("space", "cosinesimil"))
     indexer.build(verbose=indexer_config.get("verbose", 1))
-    indexer.save()
+    indexer.save("./bundle")
 
 if __name__ == "__main__":
     main()

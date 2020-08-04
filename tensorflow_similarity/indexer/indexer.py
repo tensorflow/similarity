@@ -38,9 +38,11 @@ class Indexer(object):
             dataset_labels_path (string): The path to the json lines file containing the labels for the dataset
             model_path (string): The path to the model that should be used to calculate embeddings
             dataset_original_path (string): The path to the json lines file containing the original dataset. 
-                                            The original dataset should be used for datasets where the raw 
+                                            The original dataset should be used for datasets where the original 
                                             data is not ingestible by the model or the raw data differs from the 
-                                            dataset examples. Defaults to None.
+                                            dataset examples. The original dataset is used to visualize datapoints 
+                                            for datasets where the original data cannot be reconstructed from the 
+                                            data ingested by the model such as text datasets. Defaults to None.
             space (string): The space (a space is a combination of data and the distance) to use in the indexer
                             for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md.
                             Defaults to "cosinesimil".
@@ -89,35 +91,41 @@ class Indexer(object):
         self.index.createIndex(print_progress=print_progess)
 
 
-    def find(self, item, num_neighbors, is_embedding=False):
+    def find(self, items, num_neighbors, is_embedding=False):
         """ find the closest data points and their associated data in the index
 
             Args:
-                item (np.array): The item for which a query of the most similar items should 
+                items (np.array): The items for which a query of the most similar items should 
                                  be performed
                 num_neighbors (int): The number of neighbors that should be returned
                 is_embedding (bool): Whether or not the item is already in embedding form.
                                      Defaults to False.
 
             Returns:
-                neighbors (list(Neighbor)): A list of the nearest neighbor items sorted by 
-                                            distance to the original item that the query 
-                                            was performed on.
+                neighbors (list(list(Neighbor))): A list of lists of the nearest neighbor items 
+                                                  sorted by distance to the original item that 
+                                                  the query was performed on.
         """
+        if len(items.shape) < 2:
+            items = np.asarray([items])
+
         if not is_embedding:
-            item = self.model.predict({self.model_dict_key: item})
+            items = self.model.predict({self.model_dict_key: items})
 
         # Query the index
-        ids, distances = self.index.knnQuery(item, num_neighbors)
-        
+        queries = self.index.knnQueryBatch(items, num_neighbors)
+
         neighbors = []
-        for id, distance in zip(ids, distances):
-            neighbor = Neighbor(id=id, 
+        for (ids, distances) in queries:
+            query_neighbors = []
+            for id, distance in zip(ids, distances):
+                neighbor = Neighbor(id=id, 
                                 data=self.dataset_original[id], 
                                 distance=distance, 
                                 label= self.dataset_labels[id])
-            neighbors.append(neighbor)
-        
+                query_neighbors.append(neighbor)
+            neighbors.append(query_neighbors)
+            
         return neighbors
 
 

@@ -170,9 +170,10 @@ def test_build():
     assert(isinstance(dists, np.ndarray))
 
 
-def test_find():
+def test_single_embedding_find():
     """ Test case that asserts that the indexer correctly
         finds the most similar embeddings and their distances
+        for an item that is in embedding form
     """
     dataset_examples_path = os.path.abspath("test_data_set/data.json")
     dataset_labels_path = os.path.abspath("test_data_set/labels.json")
@@ -188,7 +189,7 @@ def test_find():
                       model_path)
     indexer.index.addDataPointBatch(data_set)
     indexer.index.createIndex()
-    neighbors = indexer.find(data_set[0], 20, True)
+    neighbors = indexer.find(data_set[0], 20, True)[0]
     
     # Get the ids and distances for the queried nearest neighbors 
     index_dists = np.asarray([neighbor.distance for neighbor in neighbors])
@@ -201,6 +202,26 @@ def test_find():
     assert(np.isclose(index_dists, dists).all())
     assert((index_ids == ids).all())
 
+
+def test_multiple_examples_find():
+    """ Test case that asserts that the indexer correctly
+        finds the most similar embeddings and their distances
+        for multiple items that are not in embedding form
+    """
+    # Build an in indexer
+    indexer, examples, labels, tmp_file_examples, tmp_file_labels, tmp_dir = set_up()
+    indexer.build()
+
+    # Generate multiple examples and query the indexer for the nearest neighbors
+    data_point = np.random.randint(1000, size=(400))
+    data_point2 = np.random.randint(1000, size=(400))
+    neighbors = indexer.find(np.asarray([data_point, data_point2]), 2, False)
+
+    delete_temp_files(tmp_file_examples, tmp_file_labels, tmp_dir)
+
+    assert(neighbors[0][0].distance <= neighbors[0][1].distance)
+    assert(neighbors[1][0].distance <= neighbors[1][1].distance)
+    
 
 def test_save():
     """ Test case that asserts that the indexer is correctly
@@ -230,7 +251,7 @@ def test_save():
 
     # Generate a datapoint and use the loaded model to produce an embedding for it
     num = np.random.randint(1000, size=(1, 400))
-    neighbors = indexer.find(num, 10)
+    neighbors = indexer.find(num, 10)[0]
     embedding = saved_model.predict({'text': num})
 
     # Query the loaded index for the 10 nearest neighbors of the embedding
