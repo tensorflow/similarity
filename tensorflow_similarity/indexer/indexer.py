@@ -102,10 +102,11 @@ class Indexer(object):
                                      Defaults to False.
 
             Returns:
-                neighbors (list(list(Neighbor))): A list of lists of the nearest neighbor items 
-                                                  sorted by distance to the original item that 
-                                                  the query was performed on.
+                neighbors (list(list(Neighbor))): A list of nearest neighbor items lists
+                                                  sorted by distance for each item that the
+                                                  query was performed on.
         """
+        # wrap items in an np array if necessary
         if len(items.shape) < 2:
             items = np.asarray([items])
 

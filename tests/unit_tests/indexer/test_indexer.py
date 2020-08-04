@@ -213,9 +213,11 @@ def test_multiple_examples_find():
     indexer.build()
 
     # Generate multiple examples and query the indexer for the nearest neighbors
-    data_point = np.random.randint(1000, size=(400))
-    data_point2 = np.random.randint(1000, size=(400))
-    neighbors = indexer.find(np.asarray([data_point, data_point2]), 2, False)
+    data_point_one = np.random.randint(1000, size=(400))
+    data_point_two = np.random.randint(1000, size=(400))
+    neighbors = indexer.find(items=np.asarray([data_point_one, data_point_two]), 
+                             num_neighbors=2, 
+                             is_embedding=False)
 
     delete_temp_files(tmp_file_examples, tmp_file_labels, tmp_dir)
 
