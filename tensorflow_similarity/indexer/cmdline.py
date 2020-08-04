@@ -41,7 +41,7 @@ def main():
                       dataset_original_path=indexer_config.get("original"),
                       space=indexer_config.get("space", "cosinesimil"))
     indexer.build(verbose=indexer_config.get("verbose", 1))
-    indexer.save("./bundle")
+    indexer.save(indexer_config.get(save_dir))
 
 if __name__ == "__main__":
     main()

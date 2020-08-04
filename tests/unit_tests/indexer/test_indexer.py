@@ -189,7 +189,7 @@ def test_single_embedding_find():
                       model_path)
     indexer.index.addDataPointBatch(data_set)
     indexer.index.createIndex()
-    neighbors = indexer.find(data_set[0], 20, True)[0]
+    neighbors = indexer.find(np.asarray([data_set[0]]), 20, True)[0]
     
     # Get the ids and distances for the queried nearest neighbors 
     index_dists = np.asarray([neighbor.distance for neighbor in neighbors])
@@ -213,16 +213,20 @@ def test_multiple_examples_find():
     indexer.build()
 
     # Generate multiple examples and query the indexer for the nearest neighbors
-    data_point_one = np.random.randint(1000, size=(400))
-    data_point_two = np.random.randint(1000, size=(400))
-    neighbors = indexer.find(items=np.asarray([data_point_one, data_point_two]), 
-                             num_neighbors=2, 
+    examples = np.random.randint(1000, size=(25, 400))
+    neighbors = indexer.find(items=examples, 
+                             num_neighbors=20, 
                              is_embedding=False)
 
     delete_temp_files(tmp_file_examples, tmp_file_labels, tmp_dir)
 
-    assert(neighbors[0][0].distance <= neighbors[0][1].distance)
-    assert(neighbors[1][0].distance <= neighbors[1][1].distance)
+    neighbors_sorted = True
+    for neighbor_list in neighbors:
+        for i in range(len(neighbor_list) - 1):
+            if neighbor_list[i].distance > neighbor_list[i + 1].distance:
+                neighbors_sorted = False
+
+    assert(neighbors_sorted)
     
 
 def test_save():

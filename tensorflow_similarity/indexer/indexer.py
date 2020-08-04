@@ -106,10 +106,6 @@ class Indexer(object):
                                                sorted by distance for each item that the
                                                query was performed on.
         """
-        # wrap items in np array if necessary
-        if len(items.shape) < 2:
-            items = np.asarray([items])
-
         if not is_embedding:
             items = self.model.predict({self.model_dict_key: items})
 
