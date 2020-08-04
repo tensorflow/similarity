@@ -102,9 +102,9 @@ class Indexer(object):
                                      Defaults to False.
 
             Returns:
-                neighbors (list(list(Neighbor))): A list of nearest neighbor items lists
-                                                  sorted by distance for each item that the
-                                                  query was performed on.
+                output (list(list(Neighbor))): A list of nearest neighbor items lists
+                                               sorted by distance for each item that the
+                                               query was performed on.
         """
         # wrap items in np array if necessary
         if len(items.shape) < 2:
@@ -114,20 +114,20 @@ class Indexer(object):
             items = self.model.predict({self.model_dict_key: items})
 
         # Query the index
-        queries = self.index.knnQueryBatch(items, num_neighbors)
+        neighbors = self.index.knnQueryBatch(items, num_neighbors)
 
-        neighbors = []
-        for (ids, distances) in queries:
+        output = []
+        for (ids, distances) in neighbors:
             query_neighbors = []
             for id, distance in zip(ids, distances):
                 neighbor = Neighbor(id=id, 
-                                data=self.dataset_original[id], 
-                                distance=distance, 
-                                label= self.dataset_labels[id])
+                                    data=self.dataset_original[id], 
+                                    distance=distance, 
+                                    label= self.dataset_labels[id])
                 query_neighbors.append(neighbor)
-            neighbors.append(query_neighbors)
+            output.append(query_neighbors)
             
-        return neighbors
+        return output
 
 
     def save(self, index_dir):
