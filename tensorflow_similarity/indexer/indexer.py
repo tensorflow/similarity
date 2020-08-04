@@ -18,7 +18,8 @@ import numpy as np
 import os
 import json
 import collections
-from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, write_json_lines, write_json_lines_dict)
+from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, write_json_lines, 
+                                                 write_json_lines_dict)
 
 # Neighbor has the distance from the queried point to the item, the index
 # of that item in the dataset, the label of the item and the data in the dataset 
@@ -36,7 +37,6 @@ class Indexer(object):
                                             should be indexed and is ingestible by the model.
             dataset_labels_path (string): The path to the json lines file containing the labels for the dataset
             model_path (string): The path to the model that should be used to calculate embeddings
-            
             dataset_original_path (string): The path to the json lines file containing the original dataset. 
                                             The original dataset should be used for datasets where the raw 
                                             data is not ingestible by the model or the raw data differs from the 
@@ -80,7 +80,7 @@ class Indexer(object):
 
             Args:
                 verbose (int): Verbosity mode (0 = silent, 1 = progress bar).
-                Defaults to 0.
+                               Defaults to 0.
         """
         # Compute the embeddings for the dataset examples and add them to the index
         embeddings = self.model.predict(self.dataset_examples)
@@ -93,14 +93,16 @@ class Indexer(object):
         """ find the closest data points and their associated data in the index
 
             Args:
-                item (np.array): The item for a which a query of the most similar items should be performed
+                item (np.array): The item for which a query of the most similar items should 
+                                 be performed
                 num_neighbors (int): The number of neighbors that should be returned
                 is_embedding (bool): Whether or not the item is already in embedding form.
                                      Defaults to False.
 
             Returns:
-                neighbors (list(Neighbor)): A list of the nearest neighbor items sorted by distance
-                                            to the original item that the query was performed on.
+                neighbors (list(Neighbor)): A list of the nearest neighbor items sorted by 
+                                            distance to the original item that the query 
+                                            was performed on.
         """
         if not is_embedding:
             item = self.model.predict({self.model_dict_key: item})
@@ -121,7 +123,8 @@ class Indexer(object):
 
     def save(self, index_dir):
         """ Store an indexer on the disk
-            index_dir (string): The path to the directory where the indexer should be saved.
+            index_dir (string): The path to the directory where the indexer 
+                                should be saved.
         """
         if not os.path.exists(index_dir):
             os.makedirs(index_dir)
@@ -129,12 +132,12 @@ class Indexer(object):
         # Save the index
         self.index.saveIndex(os.path.join(index_dir, "index"), True)
 
-        # Save the examples dataset
+        # Save the examples
         examples_path = os.path.join(index_dir, "examples.jsonl")
         dataset_examples  = self.dataset_examples[self.model_dict_key]
         write_json_lines(examples_path, dataset_examples)
 
-        # Save the dataset labels
+        # Save the labels
         labels_path = os.path.join(index_dir, "labels.jsonl")
         dataset_labels = self.dataset_labels
         write_json_lines(labels_path, dataset_labels)
@@ -145,7 +148,8 @@ class Indexer(object):
         write_json_lines(original_examples_path, dataset_original_examples)
         
         # Save the thresholds
-        write_json_lines_dict(os.path.join(index_dir, "thresholds.jsonl"), self.thresholds)
+        thresholds_path = os.path.join(index_dir, "thresholds.jsonl")
+        write_json_lines_dict(thresholds_path, self.thresholds)
 
         # Save the model
         self.model.save(os.path.join(index_dir, "model.h5"))
@@ -158,7 +162,8 @@ class Indexer(object):
             Args:
                 path (string): The path that the indexer should be loaded from disk.
                                This directory should contain a tf.similarity model, dataset and 
-                               label files in jsonl format, a NMSLib index, and a thresholds dictionary.
+                               label files in jsonl format, a NMSLib index, and a 
+                               thresholds dictionary.
         """
         indexer = cls(dataset_examples_path=os.path.join(path, "examples.jsonl"), 
                       dataset_original_path=os.path.join(path, "original_examples.jsonl"), 
@@ -177,7 +182,7 @@ class Indexer(object):
             Args:
                 example (np.array): The item to be added to the index.
                 label (integer): The label corresponding to the item.
-                original_example (object): The original data point if different from example.d
+                original_example (object): The original data point if different from example.
                                            Defaults to None.
         """
         # Add the example to the dataset examples, dataset labels, and original dataset,
@@ -196,7 +201,7 @@ class Indexer(object):
     def remove(self, id):
         """ Remove an item from the index
             Args:
-                id (int): The index of the item in the dataset to be removed added to the index.
+                id (int): The index of the item in the dataset to be removed from the index.
         """
         # Delete the item from the dataset examples, original dataset and the dataset labels,
         # and rebuild the index

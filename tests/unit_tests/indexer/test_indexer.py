@@ -25,7 +25,8 @@ import math
 import nmslib
 import jsonlines
 from tensorflow_similarity.indexer.indexer import Indexer
-from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, write_json_lines)
+from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, 
+                                                 write_json_lines)
 
 
 def set_up():
@@ -60,6 +61,7 @@ def set_up():
                       thresholds=thresholds)
 
     return indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir
+
 
 def delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir):
     """ Delete temporary files/directories that were generated as part of testing
@@ -172,12 +174,12 @@ def test_find():
     """ Test case that asserts that the indexer correctly
         finds the most similar embeddings and their distances
     """
-    # Load the dataset from the test_data_set directory
-    data_set = np.asarray(read_json_lines(os.path.abspath("test_data_set/data.json")))
-
     dataset_examples_path = os.path.abspath("test_data_set/data.json")
     dataset_labels_path = os.path.abspath("test_data_set/labels.json")
     model_path = os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5")
+
+    # Load the dataset from the test_data_set directory
+    data_set = np.asarray(read_json_lines(dataset_examples_path))
 
     # Build an indexer and find the 20 nearest neighbors of the first 
     # embedding in the dataset
@@ -198,6 +200,7 @@ def test_find():
 
     assert(np.isclose(index_dists, dists).all())
     assert((index_ids == ids).all())
+
 
 def test_save():
     """ Test case that asserts that the indexer is correctly
@@ -222,23 +225,28 @@ def test_save():
     saved_index.createIndex()
 
     # Load the saved model
-    saved_model = tf.keras.models.load_model(os.path.join(os.path.abspath(temp_dir), "model.h5"))
+    saved_model_path = os.path.join(os.path.abspath(temp_dir), "model.h5")
+    saved_model = tf.keras.models.load_model(saved_model_path)
 
     # Generate a datapoint and use the loaded model to produce an embedding for it
     num = np.random.randint(1000, size=(1, 400))
     neighbors = indexer.find(num, 10)
+    embedding = saved_model.predict({'text': num})
 
     # Query the loaded index for the 10 nearest neighbors of the embedding
-    temp_ids, temp_dists = saved_index.knnQuery(saved_model.predict({'text': num}), 10)
+    temp_ids, temp_dists = saved_index.knnQuery(embedding, 10)
 
     # Query the index for the 10 nearest neighbors of embedding
     index_dists = np.asarray([neighbor.distance for neighbor in neighbors])
     index_ids = np.asarray([neighbor.id for neighbor in neighbors])
+
+    indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
+    indexer_dataset_labels = indexer.dataset_labels
     
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
-    assert((saved_examples == indexer.dataset_examples[indexer.model_dict_key]).all())
-    assert((saved_labels == indexer.dataset_labels).all())
+    assert((saved_examples == indexer_dataset_examples).all())
+    assert((saved_labels == indexer_dataset_labels).all())
     assert((temp_ids == index_ids).all())
     assert((temp_dists == index_dists).all())
 
