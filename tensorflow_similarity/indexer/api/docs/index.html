@@ -1,0 +1,553 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Tf.Similarity Indexer API</title>
+    <style type="text/css">
+      body {
+      	font-family: Trebuchet MS, sans-serif;
+      	font-size: 15px;
+      	color: #444;
+      	margin-right: 24px;
+      }
+      
+      h1	{
+      	font-size: 25px;
+      }
+      h2	{
+      	font-size: 20px;
+      }
+      h3	{
+      	font-size: 16px;
+      	font-weight: bold;
+      }
+      hr	{
+      	height: 1px;
+      	border: 0;
+      	color: #ddd;
+      	background-color: #ddd;
+      }
+      
+      .app-desc {
+        clear: both;
+        margin-left: 20px;
+      }
+      .param-name {
+        width: 100%;
+      }
+      .license-info {
+        margin-left: 20px;
+      }
+      
+      .license-url {
+        margin-left: 20px;
+      }
+      
+      .model {
+        margin: 0 0 0px 20px;
+      }
+      
+      .method {
+        margin-left: 20px;
+      }
+      
+      .method-notes	{
+      	margin: 10px 0 20px 0;
+      	font-size: 90%;
+      	color: #555;
+      }
+      
+      pre {
+        padding: 10px;
+        margin-bottom: 2px;
+      }
+      
+      .http-method {
+       text-transform: uppercase;
+      }
+      
+      pre.get {
+        background-color: #0f6ab4;
+      }
+      
+      pre.post {
+        background-color: #10a54a;
+      }
+      
+      pre.put {
+        background-color: #c5862b;
+      }
+      
+      pre.delete {
+        background-color: #a41e22;
+      }
+      
+      .huge	{
+      	color: #fff;
+      }
+      
+      pre.example {
+        background-color: #f3f3f3;
+        padding: 10px;
+        border: 1px solid #ddd;
+      }
+      
+      code {
+        white-space: pre;
+      }
+      
+      .nickname {
+        font-weight: bold;
+      }
+      
+      .method-path {
+        font-size: 1.5em;
+        background-color: #0f6ab4;
+      }
+      
+      .up {
+        float:right;
+      }
+      
+      .parameter {
+        width: 500px;
+      }
+      
+      .param {
+        width: 500px;
+        padding: 10px 0 0 20px;
+        font-weight: bold;
+      }
+      
+      .param-desc {
+        width: 700px;
+        padding: 0 0 0 20px;
+        color: #777;
+      }
+      
+      .param-type {
+        font-style: italic;
+      }
+      
+      .param-enum-header {
+      width: 700px;
+      padding: 0 0 0 60px;
+      color: #777;
+      font-weight: bold;
+      }
+      
+      .param-enum {
+      width: 700px;
+      padding: 0 0 0 80px;
+      color: #777;
+      font-style: italic;
+      }
+      
+      .field-label {
+        padding: 0;
+        margin: 0;
+        clear: both;
+      }
+      
+      .field-items	{
+      	padding: 0 0 15px 0;
+      	margin-bottom: 15px;
+      }
+      
+      .return-type {
+        clear: both;
+        padding-bottom: 10px;
+      }
+      
+      .param-header {
+        font-weight: bold;
+      }
+      
+      .method-tags {
+        text-align: right;
+      }
+      
+      .method-tag {
+        background: none repeat scroll 0% 0% #24A600;
+        border-radius: 3px;
+        padding: 2px 10px;
+        margin: 2px;
+        color: #FFF;
+        display: inline-block;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+  <h1>Tf.Similarity Indexer API</h1>
+    <div class="app-desc">API for Tensorflow Similarity Indexer</div>
+
+  <h2><a name="__Methods">Methods</a></h2>
+  [ Jump to <a href="#__Models">Models</a> ]
+
+  <h3>Table of Contents </h3>
+  <div class="method-summary"></div>
+  <h4><a href="#Default">Default</a></h4>
+  <ul>
+  <li><a href="#addPost"><code><span class="http-method">post</span> /add</code></a></li>
+  <li><a href="#deleteDelete"><code><span class="http-method">delete</span> /delete</code></a></li>
+  <li><a href="#infoGet"><code><span class="http-method">get</span> /info</code></a></li>
+  <li><a href="#lookupEmbeddingsGet"><code><span class="http-method">get</span> /lookupEmbeddings</code></a></li>
+  <li><a href="#lookupItemsGet"><code><span class="http-method">get</span> /lookupItems</code></a></li>
+  <li><a href="#metricsGet"><code><span class="http-method">get</span> /metrics</code></a></li>
+  </ul>
+
+  <h1><a name="Default">Default</a></h1>
+  <div class="method"><a name="addPost"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="post"><code class="huge"><span class="http-method">post</span> /add</code></pre></div>
+    <div class="method-summary">add item(s) to the index (<span class="nickname">addPost</span>)</div>
+    <div class="method-notes">By passing in an array of items, you can add them to the indexer</div>
+
+
+
+
+
+    <h3 class="field-label">Query parameters</h3>
+    <div class="field-items">
+      <div class="param">items (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; array of items that should be added to the index </div>    </div>  <!-- field-items -->
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      
+      array[Integer]
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>[ 45, 46, 47 ]</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">201</h4>
+    item(s) created
+        
+    <h4 class="field-label">400</h4>
+    invalid input, object invalid
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="deleteDelete"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="delete"><code class="huge"><span class="http-method">delete</span> /delete</code></pre></div>
+    <div class="method-summary">delete item(s) from the index (<span class="nickname">deleteDelete</span>)</div>
+    <div class="method-notes">By passing in an array of ids, you can delete the corresponding items from the indexer</div>
+
+
+
+
+
+    <h3 class="field-label">Query parameters</h3>
+    <div class="field-items">
+      <div class="param">ids (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; the indeces of the items in the dataset that should be removed </div>    </div>  <!-- field-items -->
+
+
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    item(s) deleted
+        <a href="#"></a>
+    <h4 class="field-label">400</h4>
+    items do not exist
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="infoGet"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /info</code></pre></div>
+    <div class="method-summary">get information about the indexer (<span class="nickname">infoGet</span>)</div>
+    <div class="method-notes">Get detailed information about the indexer</div>
+
+
+
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#Info">Info</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "number_embeddings" : 60000,
+  "embedding_size" : 18,
+  "serving_directory" : "/MNIST"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    got indexer information
+        <a href="#Info">Info</a>
+    <h4 class="field-label">404</h4>
+    bad request
+        <a href="#"></a>
+    <h4 class="field-label">500</h4>
+    internal server error
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="lookupEmbeddingsGet"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /lookupEmbeddings</code></pre></div>
+    <div class="method-summary">searches for the nearest neighbors (<span class="nickname">lookupEmbeddingsGet</span>)</div>
+    <div class="method-notes">By passing in a list of embeddings, you can search for
+the nearest neighbors and their associated data in the index</div>
+
+
+
+
+
+    <h3 class="field-label">Query parameters</h3>
+    <div class="field-items">
+      <div class="param">items (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; array of embeddings for which to find the nearest neighbors </div>      <div class="param">num_neighbors (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; number of neighbors that should be returned for each embedding </div>    </div>  <!-- field-items -->
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      array[<a href="#Neighbor">Neighbor</a>]
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>[ {
+  "data" : [ 6.027456183070403, 6.027456183070403 ],
+  "distance" : 1.4658129805029452,
+  "id" : 0,
+  "label" : 5
+}, {
+  "data" : [ 4.027456183070403, 3.027456183070403 ],
+  "distance" : 1.8954684,
+  "id" : 5,
+  "label" : 5
+} ]</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    found nearest neighbors
+        
+    <h4 class="field-label">404</h4>
+    bad request
+        <a href="#"></a>
+    <h4 class="field-label">500</h4>
+    internal server error
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="lookupItemsGet"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /lookupItems</code></pre></div>
+    <div class="method-summary">searches for the nearest neighbors (<span class="nickname">lookupItemsGet</span>)</div>
+    <div class="method-notes">By passing in a list of items, you can search for
+the nearest neighbors and their associated data in the index</div>
+
+
+
+
+
+    <h3 class="field-label">Query parameters</h3>
+    <div class="field-items">
+      <div class="param">items (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; array of items for which to find the nearest neighbors format: binary</div>      <div class="param">num_neighbors (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; number of neighbors that should be returned for each item </div>    </div>  <!-- field-items -->
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      array[<a href="#Neighbor">Neighbor</a>]
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>[ {
+  "data" : [ 6.027456183070403, 6.027456183070403 ],
+  "distance" : 1.4658129805029452,
+  "id" : 0,
+  "label" : 5
+}, {
+  "data" : [ 4.027456183070403, 3.027456183070403 ],
+  "distance" : 1.8954684,
+  "id" : 5,
+  "label" : 5
+} ]</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    found nearest neighbors
+        
+    <h4 class="field-label">404</h4>
+    bad request
+        <a href="#"></a>
+    <h4 class="field-label">500</h4>
+    internal server error
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="metricsGet"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /metrics</code></pre></div>
+    <div class="method-summary">get performance metrics for the indexer (<span class="nickname">metricsGet</span>)</div>
+    <div class="method-notes">Get performance metrics from the indexer</div>
+
+
+
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#Metrics">Metrics</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "average_time" : 0.8008281904610115,
+  "number_lookups" : 527
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    got indexer performance metrics
+        <a href="#Metrics">Metrics</a>
+    <h4 class="field-label">404</h4>
+    bad request
+        <a href="#"></a>
+    <h4 class="field-label">500</h4>
+    internal server error
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+
+  <h2><a name="__Models">Models</a></h2>
+  [ Jump to <a href="#__Methods">Methods</a> ]
+
+  <h3>Table of Contents</h3>
+  <ol>
+    <li><a href="#Info"><code>Info</code></a></li>
+    <li><a href="#Item"><code>Item</code></a></li>
+    <li><a href="#Metrics"><code>Metrics</code></a></li>
+    <li><a href="#Neighbor"><code>Neighbor</code></a></li>
+  </ol>
+
+  <div class="model">
+    <h3><a name="Info"><code>Info</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">number_embeddings </div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span> The number of embeddings in the index </div>
+          <div class="param-desc"><span class="param-type">example: 60000</span></div>
+<div class="param">serving_directory </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span> The directory that is being served by the indexer </div>
+          <div class="param-desc"><span class="param-type">example: /MNIST</span></div>
+<div class="param">embedding_size (optional)</div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span> The size of the embeddings stored in the indexer </div>
+          <div class="param-desc"><span class="param-type">example: 18</span></div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="Item"><code>Item</code></a> <a class="up" href="#__Models">Up</a></h3>
+    <div class='model-description'>An Item contains an example, its label and the original example if different from example</div>
+    <div class="field-items">
+      <div class="param">example </div><div class="param-desc"><span class="param-type"><a href="#BigDecimal">array[BigDecimal]</a></span> example that should be added to the index </div>
+          <div class="param-desc"><span class="param-type">example: [1,12,435,9,234,2]</span></div>
+<div class="param">label </div><div class="param-desc"><span class="param-type"><a href="#BigDecimal">BigDecimal</a></span> label associated with the example </div>
+          <div class="param-desc"><span class="param-type">example: 12</span></div>
+<div class="param">original_example (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">array[String]</a></span> The original data if different from example format: bytes</div>
+          <div class="param-desc"><span class="param-type">example: [&quot;&lt;START&gt;&quot;,&quot;This&quot;,&quot;is&quot;,&quot;an&quot;,&quot;example&quot;,&quot;&lt;STOP&gt;&quot;]</span></div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="Metrics"><code>Metrics</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">number_lookups </div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span> The number of lookups that were performed by the indexer </div>
+          <div class="param-desc"><span class="param-type">example: 527</span></div>
+<div class="param">average_time </div><div class="param-desc"><span class="param-type"><a href="#BigDecimal">BigDecimal</a></span> The average time to query the index </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="Neighbor"><code>Neighbor</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">id </div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span> The index of the item in the dataset </div>
+<div class="param">data </div><div class="param-desc"><span class="param-type"><a href="#BigDecimal">array[BigDecimal]</a></span> The index of the item in the dataset </div>
+<div class="param">distance </div><div class="param-desc"><span class="param-type"><a href="#BigDecimal">BigDecimal</a></span> The distance between the datapoints in embedded space </div>
+<div class="param">label </div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span> The label of the item </div>
+    </div>  <!-- field-items -->
+  </div>
+  </body>
+</html>
