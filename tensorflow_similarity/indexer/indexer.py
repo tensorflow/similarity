@@ -16,8 +16,10 @@ import nmslib
 import tensorflow as tf
 import numpy as np
 import os
+import time
 import json
 import collections
+import time
 from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, write_json_lines, 
                                                  write_json_lines_dict)
 
@@ -48,6 +50,12 @@ class Indexer(object):
                             Defaults to "cosinesimil".
             thresholds (dict): A dictionary mapping likeliness labels to thresholds. Defaults to None.
                                i.e. {.001: "very likely", .01: "likely", .1: "possible", .2: "unlikely"}
+
+        Attributes:
+            num_embeddings (int): The number of embeddings stored by the indexer.
+            embedding_size (int): The size of the embeddings stored by the indexer.
+            num_lookups (int): The number of lookups performed by the indexer.
+            lookup_time (float): The running amount of time it took to perform lookups.
     """
 
     def __init__(
@@ -64,13 +72,15 @@ class Indexer(object):
         self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path, 
                                                                            dataset_labels_path, 
                                                                            self.model_dict_key)
+        self.num_embeddings = len(self.dataset_labels)
+
         self.index = nmslib.init(method='hnsw', space=space)
 
         if dataset_original_path is not None:
             self.dataset_original = np.asarray(read_json_lines(dataset_original_path))
         else:
             self.dataset_original = self.dataset_examples[self.model_dict_key]
-
+        
         if thresholds is not None:
             self.thresholds = thresholds
         else:
@@ -86,9 +96,12 @@ class Indexer(object):
         """
         # Compute the embeddings for the dataset examples and add them to the index
         embeddings = self.model.predict(self.dataset_examples)
+        self.embedding_size = len(embeddings[0])
         self.index.addDataPointBatch(embeddings)
         print_progess = verbose > 0
         self.index.createIndex(print_progress=print_progess)
+        self.num_lookups = 0
+        self.lookup_time = 0;
 
 
     def find(self, items, num_neighbors, is_embedding=False):
@@ -110,16 +123,21 @@ class Indexer(object):
             items = self.model.predict({self.model_dict_key: items})
 
         # Query the index
+        start_time = time.time()
         neighbors = self.index.knnQueryBatch(items, num_neighbors)
-
+        query_time = time.time() - start_time
+        
+        self.lookup_time = self.lookup_time + query_time
+    
         output = []
         for (ids, distances) in neighbors:
             query_neighbors = []
             for id, distance in zip(ids, distances):
+                self.num_lookups = self.num_lookups + 1
                 neighbor = Neighbor(id=id, 
                                     data=self.dataset_original[id], 
                                     distance=distance, 
-                                    label= self.dataset_labels[id])
+                                    label=self.dataset_labels[id])
                 query_neighbors.append(neighbor)
             output.append(query_neighbors)
             
