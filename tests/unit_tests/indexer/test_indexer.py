@@ -189,6 +189,8 @@ def test_single_embedding_find():
                       model_path)
     indexer.index.addDataPointBatch(data_set)
     indexer.index.createIndex()
+    indexer.lookup_time = 0
+    indexer.num_lookups = 0
     neighbors = indexer.find(np.asarray([data_set[0]]), 20, True)[0]
     
     # Get the ids and distances for the queried nearest neighbors 
@@ -312,12 +314,12 @@ def test_add():
     indexer.build()
 
     # Generate a datapoint and add it to the dataset examples and dataset labels
-    num = np.random.randint(1000, size=(1, 400))
-    examples = np.concatenate((examples, num))
+    num = np.random.randint(1000, size=(400))
+    examples = np.concatenate((examples, np.asarray([num])))
     labels = np.append(labels, 0)
     
     # Add the datapoint to the indexer
-    indexer.add(num, 0)
+    indexer.add([num], [0])
     
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 

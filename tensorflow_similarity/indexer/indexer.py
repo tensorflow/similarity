@@ -205,26 +205,39 @@ class Indexer(object):
         return indexer
 
     
-    def add(self, example, label, original_example=None):
-        """ Add an item to the index
+    def add(self, examples, labels, original_examples=None):
+        """ Add item(s) to the index
         
             Args:
-                example (np.array): The item to be added to the index.
-                label (integer): The label corresponding to the item.
-                original_example (object): The original data point if different from example.
+                example (list(np.array)): A list of the item to be added to the index.
+                label (integer): A list of the label corresponding to the item.
+                original_example (object): A list of the original data point if different from example.
                                            Defaults to None.
+            Returns:
+                ids (list(int)): A list of the ids of the items added to the index
         """
-        # Add the example to the dataset examples, dataset labels, and original dataset,
-        # and rebuild the index
-        dataset_examples = np.concatenate((self.dataset_examples[self.model_dict_key], example))
-        self.dataset_examples = {self.model_dict_key: dataset_examples}
-        self.dataset_labels = np.append(self.dataset_labels, label)
-        if original_example:
-            self.dataset_original = np.concatenate((self.dataset_original, original_example))
-        else:
-            self.dataset_original = np.concatenate((self.dataset_original, example))
+        if not original_examples:
+            original_examples = [None] * len(labels)
+
+        ids = []
+
+        for example, label, original_example in zip(examples, labels, original_examples):
+            # Add the example to the dataset examples, dataset labels, and original dataset,
+            # and rebuild the index
+            if example.shape == self.dataset_examples[self.model_dict_key][0].shape:
+                example = np.asarray([example])
+            dataset_examples = np.concatenate((self.dataset_examples[self.model_dict_key], example))
+            self.dataset_examples = {self.model_dict_key: dataset_examples}
+            self.dataset_labels = np.append(self.dataset_labels, label)
+            if original_example:
+                self.dataset_original = np.concatenate((self.dataset_original, original_example))
+            else:
+                self.dataset_original = np.concatenate((self.dataset_original, example))
+            ids.append(len(self.dataset_labels) - 1)
 
         self.build()
+
+        return ids
 
 
     def remove(self, id):
