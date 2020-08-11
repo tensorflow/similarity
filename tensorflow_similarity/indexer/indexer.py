@@ -209,9 +209,9 @@ class Indexer(object):
         """ Add item(s) to the index
         
             Args:
-                example (list(np.array)): A list of the item to be added to the index.
-                label (integer): A list of the label corresponding to the item.
-                original_example (object): A list of the original data point if different from example.
+                example (list(np.array)): A list of the items to be added to the index.
+                label (integer): A list of the labels corresponding to the items.
+                original_example (object): A list of the original data points if different from examples.
                                            Defaults to None.
             Returns:
                 ids (list(int)): A list of the ids of the items added to the index

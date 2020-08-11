@@ -8,15 +8,12 @@ import numpy as np
 
 app = FastAPI()
 
-with open(os.path.abspath("../config.json"), 'r') as config_file:
-        config = json.load(config_file)
-
 indexer = Indexer.load("../bundle")
 indexer.build()
 
 class Neighbor(BaseModel):
     id: int
-    data: List[Any]
+    data: Any
     distance: float
     label: int
 
@@ -28,6 +25,7 @@ class Item(BaseModel):
 class LookupItem(BaseModel):
     num_neighbors: int
     embeddings: List[List[float]]
+
 
 @app.post("/lookupEmbeddings")
 def lookup_embeddings(item: LookupItem):
@@ -50,15 +48,15 @@ def lookup_embeddings(item: LookupItem):
     return response
 
 
-@app.post("/lookup", response_model=Neighbor)
+@app.post("/lookup")
 def lookup(item: LookupItem):
-    neighbors = indexer.find(items=item.embeddings,
+    neighbors = indexer.find(items=np.asarray(item.embeddings),
                              num_neighbors=item.num_neighbors, 
                              is_embedding=False)
     response = []
     for neighbor_item in neighbors[0]:
         id = np.asscalar(neighbor_item.id)
-        data = np.asscalar(neighbor_item.data)
+        data = neighbor_item.data
         distance = np.asscalar(neighbor_item.distance)
         label = np.asscalar(neighbor_item.label)
 
@@ -67,6 +65,7 @@ def lookup(item: LookupItem):
                          "distance": distance, 
                          "label": label})
     return response
+
 
 @app.get("/info")
 def info():
@@ -85,12 +84,19 @@ def metrics():
     if num_lookups > 0:
         avg_query_time = indexer.lookup_time / num_lookups
     else:
-        avg_query_time = 0
+        avg_query_time = indexer.lookup_time
 
     return {"number_lookups": num_lookups,
             "average_time": avg_query_time}
 
-@app.post("/add")
+
+@app.post("/add", response_model=List[int])
 def add(item: Item):
     ids = indexer.add(np.asarray(item.examples), item.labels, item.original_examples)
     return ids
+
+
+@app.delete("/delete")
+def delete(id: int):
+    indexer.remove(id)
+    return {id}
