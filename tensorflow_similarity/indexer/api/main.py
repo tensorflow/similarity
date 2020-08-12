@@ -8,19 +8,16 @@ import numpy as np
 
 app = FastAPI()
 
-indexer = Indexer.load("../bundle")
+indexer_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../../../', 'tests/unit_tests/indexer/api/bundle'))
+indexer = Indexer.load(indexer_path)
 indexer.build()
 
-class Neighbor(BaseModel):
-    id: int
-    data: Any
-    distance: float
-    label: int
 
 class Item(BaseModel):
     examples: List[List[float]]
     labels: List[int]
     original_examples: Optional[List[List[Any]]] = None
+
 
 class LookupItem(BaseModel):
     num_neighbors: int
@@ -29,6 +26,9 @@ class LookupItem(BaseModel):
 
 @app.post("/lookupEmbeddings")
 def lookup_embeddings(item: LookupItem):
+    """ Find the nearest neighbors for the embeddings
+        received in the request
+    """
     neighbors = indexer.find(items=item.embeddings,
                              num_neighbors=item.num_neighbors, 
                              is_embedding=True)
@@ -36,20 +36,23 @@ def lookup_embeddings(item: LookupItem):
     for neighbor_list in neighbors:
         for neighbor_item in neighbor_list:
             id = np.asscalar(neighbor_item.id)
-            data = np.asscalar(neighbor_item.data)
+            data = neighbor_item.data
             distance = np.asscalar(neighbor_item.distance)
             label = np.asscalar(neighbor_item.label)
 
             response.append({"id": id, 
-                            "data": data, 
-                            "distance": distance, 
-                            "label": label})
+                             "data": data, 
+                             "distance": distance, 
+                             "label": label})
 
     return response
 
 
 @app.post("/lookup")
 def lookup(item: LookupItem):
+    """ Find the nearest neighbors for the datapoints
+        received in the request
+    """
     neighbors = indexer.find(items=np.asarray(item.embeddings),
                              num_neighbors=item.num_neighbors, 
                              is_embedding=False)
@@ -69,18 +72,23 @@ def lookup(item: LookupItem):
 
 @app.get("/info")
 def info():
+    """ Get information about the indexer
+    """
     num_embeddings = indexer.num_embeddings
     serving_directory = None
     embedding_size = indexer.embedding_size
 
     return {"number_embeddings": num_embeddings, 
-            "serving_directory": serving_directory,
+            "serving_directory": indexer_path,
             "embedding_size": embedding_size}
 
 
 @app.get("/metrics")
 def metrics():
+    """ Get performance metrics from the indexer
+    """
     num_lookups = indexer.num_lookups
+
     if num_lookups > 0:
         avg_query_time = indexer.lookup_time / num_lookups
     else:
@@ -92,11 +100,18 @@ def metrics():
 
 @app.post("/add", response_model=List[int])
 def add(item: Item):
-    ids = indexer.add(np.asarray(item.examples), item.labels, item.original_examples)
+    """ Add item(s) to the index
+    """
+    ids = indexer.add(np.asarray(item.examples),
+                      item.labels, 
+                      item.original_examples)
+
     return ids
 
 
 @app.delete("/delete")
 def delete(id: int):
+    """ Delete an item from the indexer
+    """
     indexer.remove(id)
     return {id}
