@@ -242,6 +242,7 @@ class Indexer(object):
 
     def remove(self, id):
         """ Remove an item from the index
+
             Args:
                 id (int): The index of the item in the dataset to be removed from the index.
         """
@@ -254,6 +255,35 @@ class Indexer(object):
         self.build()
 
 
+    def get_info(self):
+        """ Get information about the data stored by the indexer
+
+            Returns:
+                tuple(
+                    num_embeddings (int):The number of embeddings stored by the indexer.
+                    embedding_size (int): The size of the embeddings stored by the indexer. 
+                )
+
+        """
+        return (self.num_embeddings, self.embedding_size)
+
+
+    def get_metrics(self):
+        """ Get performance metrics from the indexer
+
+            Returns:
+                tuple (
+
+                )
+        """
+        if self.num_lookups > 0:
+            avg_query_time = self.lookup_time / self.num_lookups
+        else:
+            avg_query_time = self.lookup_time
+
+        return (self.num_lookups, avg_query_time)
+
+        
     def compute_thresholds(self):
         """ Compute thresholds for similarity using R Precision.
         """

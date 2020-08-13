@@ -14,14 +14,14 @@ indexer.build()
 
 
 class Item(BaseModel):
-    examples: List[List[float]]
+    examples: List[List[Any]]
     labels: List[int]
     original_examples: Optional[List[List[Any]]] = None
 
 
 class LookupItem(BaseModel):
     num_neighbors: int
-    embeddings: List[List[float]]
+    embeddings: List[List[Any]]
 
 
 @app.post("/lookupEmbeddings")
@@ -36,10 +36,9 @@ def lookup_embeddings(item: LookupItem):
     for neighbor_list in neighbors:
         for neighbor_item in neighbor_list:
             id = np.asscalar(neighbor_item.id)
-            data = neighbor_item.data
+            data = neighbor_item.data.tolist()
             distance = np.asscalar(neighbor_item.distance)
             label = np.asscalar(neighbor_item.label)
-
             response.append({"id": id, 
                              "data": data, 
                              "distance": distance, 
@@ -57,26 +56,27 @@ def lookup(item: LookupItem):
                              num_neighbors=item.num_neighbors, 
                              is_embedding=False)
     response = []
-    for neighbor_item in neighbors[0]:
-        id = np.asscalar(neighbor_item.id)
-        data = neighbor_item.data
-        distance = np.asscalar(neighbor_item.distance)
-        label = np.asscalar(neighbor_item.label)
+    for neighbor_list in neighbors:
+        for neighbor_item in neighbor_list:
+            id = np.asscalar(neighbor_item.id)
+            data = neighbor_item.data.tolist()
+            distance = np.asscalar(neighbor_item.distance)
+            label = np.asscalar(neighbor_item.label)
 
-        response.append({"id": id, 
-                         "data": data, 
-                         "distance": distance, 
-                         "label": label})
+            response.append({"id": id, 
+                             "data": data, 
+                             "distance": distance, 
+                             "label": label})
+
     return response
+
 
 
 @app.get("/info")
 def info():
     """ Get information about the indexer
     """
-    num_embeddings = indexer.num_embeddings
-    serving_directory = None
-    embedding_size = indexer.embedding_size
+    (num_embeddings, embedding_size) = indexer.get_info()
 
     return {"number_embeddings": num_embeddings, 
             "serving_directory": indexer_path,
@@ -87,12 +87,7 @@ def info():
 def metrics():
     """ Get performance metrics from the indexer
     """
-    num_lookups = indexer.num_lookups
-
-    if num_lookups > 0:
-        avg_query_time = indexer.lookup_time / num_lookups
-    else:
-        avg_query_time = indexer.lookup_time
+    (num_lookups, avg_query_time) = indexer.get_metrics()
 
     return {"number_lookups": num_lookups,
             "average_time": avg_query_time}
@@ -109,7 +104,7 @@ def add(item: Item):
     return ids
 
 
-@app.delete("/delete")
+@app.delete("/delete/{id}")
 def delete(id: int):
     """ Delete an item from the indexer
     """
