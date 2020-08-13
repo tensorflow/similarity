@@ -8,7 +8,7 @@ import numpy as np
 
 app = FastAPI()
 
-indexer_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../../../', 'tests/unit_tests/indexer/api/bundle'))
+indexer_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../', 'bundle'))
 indexer = Indexer.load(indexer_path)
 indexer.build()
 
