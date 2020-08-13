@@ -8,8 +8,8 @@ import numpy as np
 
 app = FastAPI()
 
-indexer_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../', 'bundle'))
-indexer = Indexer.load(indexer_path)
+bundle_path = os.path.abspath(os.path.join(__file__, '../../', 'bundle'))
+indexer = Indexer.load(bundle_path)
 indexer.build()
 
 
@@ -33,16 +33,22 @@ def lookup_embeddings(item: LookupItem):
                              num_neighbors=item.num_neighbors, 
                              is_embedding=True)
     response = []
+
     for neighbor_list in neighbors:
         for neighbor_item in neighbor_list:
+            # Convert neighbor item to a JSON serializable dictionary
+            # and append it to the response
             id = np.asscalar(neighbor_item.id)
             data = neighbor_item.data.tolist()
             distance = np.asscalar(neighbor_item.distance)
             label = np.asscalar(neighbor_item.label)
-            response.append({"id": id, 
-                             "data": data, 
-                             "distance": distance, 
-                             "label": label})
+            
+            response.append({
+                "id": id, 
+                "data": data, 
+                "distance": distance, 
+                "label": label
+            })
 
     return response
 
@@ -56,20 +62,24 @@ def lookup(item: LookupItem):
                              num_neighbors=item.num_neighbors, 
                              is_embedding=False)
     response = []
+
     for neighbor_list in neighbors:
         for neighbor_item in neighbor_list:
+            # Convert neighbor item to a JSON serializable dictionary
+            # and append it to the response
             id = np.asscalar(neighbor_item.id)
             data = neighbor_item.data.tolist()
             distance = np.asscalar(neighbor_item.distance)
             label = np.asscalar(neighbor_item.label)
 
-            response.append({"id": id, 
-                             "data": data, 
-                             "distance": distance, 
-                             "label": label})
+            response.append({
+                "id": id, 
+                "data": data, 
+                "distance": distance, 
+                "label": label
+            })
 
     return response
-
 
 
 @app.get("/info")
@@ -78,9 +88,11 @@ def info():
     """
     (num_embeddings, embedding_size) = indexer.get_info()
 
-    return {"number_embeddings": num_embeddings, 
-            "serving_directory": indexer_path,
-            "embedding_size": embedding_size}
+    return {
+        "number_embeddings": num_embeddings, 
+        "serving_directory": bundle_path,
+        "embedding_size": embedding_size
+    }
 
 
 @app.get("/metrics")
@@ -89,8 +101,10 @@ def metrics():
     """
     (num_lookups, avg_query_time) = indexer.get_metrics()
 
-    return {"number_lookups": num_lookups,
-            "average_time": avg_query_time}
+    return {
+        "number_lookups": num_lookups,
+        "average_time": avg_query_time
+    }
 
 
 @app.post("/add", response_model=List[int])

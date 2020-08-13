@@ -369,3 +369,46 @@ def test_compute_threhsolds():
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
     assert(indexer.thresholds[.1] == "possible")
+
+
+def test_get_info():
+    """ Test case that asserts that the indexer correctly
+        returns information about itself.
+    """
+    # Build an indexer and get information about embedding size 
+    # and number of embeddigns
+    indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
+    indexer.build()
+    (num_embeddings, embeddings_size) = indexer.get_info()
+
+    delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
+
+    assert(num_embeddings == len(examples))
+    assert(embeddings_size == 4)
+
+
+def test_get_metrics():
+    """ Test case that asserts that the indexer correctly
+        returns performance metrics.
+    """
+    # Build an indexer and get performance metrics
+    indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
+    indexer.build()
+    (num_lookups, avg_query_time) = indexer.get_metrics()
+
+    delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
+
+    assert(num_lookups == 0)
+    assert(avg_query_time == 0)
+
+    # Generate multiple examples and query the indexer for the nearest neighbors
+    examples = np.random.randint(1000, size=(25, 400))
+    _ = indexer.find(items=examples, 
+                     num_neighbors=20, 
+                     is_embedding=False)
+
+    # Get performance metrics
+    (num_lookups, avg_query_time) = indexer.get_metrics()
+
+    assert(num_lookups == 25)
+    assert(avg_query_time > 0)

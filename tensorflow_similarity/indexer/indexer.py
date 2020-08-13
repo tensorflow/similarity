@@ -55,7 +55,7 @@ class Indexer(object):
             num_embeddings (int): The number of embeddings stored by the indexer.
             embedding_size (int): The size of the embeddings stored by the indexer.
             num_lookups (int): The number of lookups performed by the indexer.
-            lookup_time (float): The running amount of time it took to perform lookups.
+            lookup_time (float): The cumulative amount of time it took to perform lookups.
     """
 
     def __init__(
@@ -133,13 +133,13 @@ class Indexer(object):
         for (ids, distances) in neighbors:
             query_neighbors = []
             for id, distance in zip(ids, distances):
-                self.num_lookups = self.num_lookups + 1
                 neighbor = Neighbor(id=id, 
                                     data=self.dataset_original[id], 
                                     distance=distance, 
                                     label=self.dataset_labels[id])
                 query_neighbors.append(neighbor)
             output.append(query_neighbors)
+            self.num_lookups = self.num_lookups + 1
             
         return output
 
@@ -259,11 +259,8 @@ class Indexer(object):
         """ Get information about the data stored by the indexer
 
             Returns:
-                tuple(
-                    num_embeddings (int):The number of embeddings stored by the indexer.
-                    embedding_size (int): The size of the embeddings stored by the indexer. 
-                )
-
+                (int, int): A tuple of the number of embeddings stored by the indexer and 
+                            the size of the embeddings stored by the indexer. 
         """
         return (self.num_embeddings, self.embedding_size)
 
@@ -272,9 +269,8 @@ class Indexer(object):
         """ Get performance metrics from the indexer
 
             Returns:
-                tuple (
-
-                )
+                (int, int): A tuple of the number of lookups performed by the indexer and the 
+                            average time taken per query 
         """
         if self.num_lookups > 0:
             avg_query_time = self.lookup_time / self.num_lookups
@@ -283,7 +279,7 @@ class Indexer(object):
 
         return (self.num_lookups, avg_query_time)
 
-        
+
     def compute_thresholds(self):
         """ Compute thresholds for similarity using R Precision.
         """

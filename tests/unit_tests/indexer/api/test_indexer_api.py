@@ -7,20 +7,32 @@ from mock import patch
 import collections
 import json
 
-Neighbor = collections.namedtuple("Neighbor", ["id", 
-                                               "data", 
-                                               "distance", 
-                                               "label"])
+
 client = TestClient(app)
+
+Neighbor = collections.namedtuple("Neighbor", 
+                                  ["id", 
+                                   "data", 
+                                   "distance", 
+                                   "label"])
+
+neighbor_id = np.int32(1)
+neighbor_data = np.asarray([0])
+neighbor_distance = np.float32(.234)
+neighbor_label = np.int64(0)
+neighbor_mock = [Neighbor(id=neighbor_id, 
+                          data=neighbor_data, 
+                          distance=neighbor_distance, 
+                          label=neighbor_label)]
 
 
 class IndexerTestCase(unittest.TestCase):
 
-    @patch.object(Indexer, 'find', return_value=[[Neighbor(id=np.int32(1), 
-                                                           data=np.asarray([0]), 
-                                                           distance=np.float32(.234), 
-                                                           label=np.int64(0))]])
+    @patch.object(Indexer, 'find', return_value=[neighbor_mock])
     def test_lookup_embeddings(self, Indexer):
+        """ Test case that asserts that the API correctly performs a lookup
+            of the nearest neighbors for a list of embeddings
+        """
         # Generate embeddings
         embeddings = np.random.uniform(low=-1.0, high=0.99, size=(2,4))
         embedding_list = embeddings.tolist()
@@ -52,11 +64,11 @@ class IndexerTestCase(unittest.TestCase):
         assert(neighbor == response_neighbor)
 
 
-    @patch.object(Indexer, 'find', return_value=[[Neighbor(id=np.int32(1), 
-                                                           data=np.asarray([0]), 
-                                                           distance=np.float32(.234), 
-                                                           label=np.int64(0))]])
+    @patch.object(Indexer, 'find', return_value=[neighbor_mock])
     def test_lookup(self, Indexer):
+        """ Test case that asserts that the API correctly performs a lookup
+            of the nearest neighbors for a list of examples
+        """
         # Generate embeddings
         embeddings = np.random.randint(1000, size=(2,28))
         embedding_list = embeddings.tolist()
@@ -90,7 +102,10 @@ class IndexerTestCase(unittest.TestCase):
 
     @patch.object(Indexer, 'get_info', return_value=(1234, 10))
     def test_info(self, Indexer):
-        # Query the API for information abou the indexer
+        """ Test case that asserts that the API correctly returns
+            information about the indexer
+        """
+        # Query the API for information about the indexer
         response = client.get("/info")
         response_json = response.json()
 
@@ -100,6 +115,10 @@ class IndexerTestCase(unittest.TestCase):
     
     @patch.object(Indexer, 'get_metrics', return_value=(12000, 0.00231))
     def test_metrics(self, Indexer):
+        """ Test case that asserts that the API correctly returns
+            indexer performance metrics 
+        """
+        # Query the API for indexer performance metrics
         response = client.get("/metrics")
         response_json = response.json()
 
@@ -109,11 +128,16 @@ class IndexerTestCase(unittest.TestCase):
 
     @patch.object(Indexer, 'add', return_value=[0,1,2,3])
     def test_add(self, Indexer):
+        """ Test case that asserts that the API correctly adds 
+            items to the indexer 
+        """
+        # Add items to the indexer
         response = client.post(
             "/add",
-            json={"examples": [[0],[1],[2],[3]],
-                  "labels": [0, 1, 2, 3]
-                  }
+            json={
+                "examples": [[0],[1],[2],[3]],
+                "labels": [0, 1, 2, 3]
+            }
         )
         response_json = response.json()
         response_ids = np.asarray(response_json)
@@ -123,6 +147,10 @@ class IndexerTestCase(unittest.TestCase):
 
     @patch.object(Indexer, 'remove', return_value=None)
     def test_remove(self, Indexer):
+        """ Test case that asserts that the API correctly removes 
+            items to the indexer 
+        """
+        # Delete the first item in the indexer
         response = client.delete("/delete/0")
 
         assert(response.status_code == 200)
