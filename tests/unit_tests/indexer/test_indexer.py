@@ -373,7 +373,7 @@ def test_compute_threhsolds():
 
 def test_get_info():
     """ Test case that asserts that the indexer correctly
-        returns information about itself.
+        returns information about the data it stores.
     """
     # Build an indexer and get information about embedding size 
     # and number of embeddigns

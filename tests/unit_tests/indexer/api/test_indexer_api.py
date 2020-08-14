@@ -103,7 +103,7 @@ class IndexerTestCase(unittest.TestCase):
     @patch.object(Indexer, 'get_info', return_value=(1234, 10))
     def test_info(self, Indexer):
         """ Test case that asserts that the API correctly returns
-            information about the indexer
+            information about the data stored by the indexer
         """
         # Query the API for information about the indexer
         response = client.get("/info")
