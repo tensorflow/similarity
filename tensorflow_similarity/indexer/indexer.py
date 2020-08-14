@@ -19,7 +19,6 @@ import os
 import time
 import json
 import collections
-import time
 from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, write_json_lines, 
                                                  write_json_lines_dict)
 

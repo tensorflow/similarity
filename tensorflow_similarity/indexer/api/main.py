@@ -1,9 +1,8 @@
 from typing import Optional, List, Any
-from fastapi import FastAPI, Query
+from fastapi import FastAPI
 from pydantic import BaseModel
 from tensorflow_similarity.indexer.indexer import Indexer
 import os
-import json
 import numpy as np
 
 app = FastAPI()
@@ -30,7 +29,7 @@ def lookup_embeddings(item: LookupItem):
         received in the request
     """
     neighbors = indexer.find(items=item.embeddings,
-                             num_neighbors=item.num_neighbors, 
+                             num_neighbors=item.num_neighbors,
                              is_embedding=True)
     response = []
 
@@ -42,11 +41,11 @@ def lookup_embeddings(item: LookupItem):
             data = neighbor_item.data.tolist()
             distance = np.asscalar(neighbor_item.distance)
             label = np.asscalar(neighbor_item.label)
-            
+
             response.append({
-                "id": id, 
-                "data": data, 
-                "distance": distance, 
+                "id": id,
+                "data": data,
+                "distance": distance,
                 "label": label
             })
 
@@ -59,7 +58,7 @@ def lookup(item: LookupItem):
         received in the request
     """
     neighbors = indexer.find(items=np.asarray(item.embeddings),
-                             num_neighbors=item.num_neighbors, 
+                             num_neighbors=item.num_neighbors,
                              is_embedding=False)
     response = []
 
@@ -73,9 +72,9 @@ def lookup(item: LookupItem):
             label = np.asscalar(neighbor_item.label)
 
             response.append({
-                "id": id, 
-                "data": data, 
-                "distance": distance, 
+                "id": id,
+                "data": data,
+                "distance": distance,
                 "label": label
             })
 
@@ -89,7 +88,7 @@ def info():
     (num_embeddings, embedding_size) = indexer.get_info()
 
     return {
-        "number_embeddings": num_embeddings, 
+        "number_embeddings": num_embeddings,
         "serving_directory": bundle_path,
         "embedding_size": embedding_size
     }
@@ -112,7 +111,7 @@ def add(item: Item):
     """ Add item(s) to the index
     """
     ids = indexer.add(np.asarray(item.examples),
-                      item.labels, 
+                      item.labels,
                       item.original_examples)
 
     return ids
