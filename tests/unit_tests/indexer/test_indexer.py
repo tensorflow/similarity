@@ -412,4 +412,4 @@ def test_get_metrics():
     (num_lookups, avg_query_time) = indexer.get_metrics()
 
     assert(num_lookups == 25)
-    assert(avg_query_time > 0)
+    assert(avg_query_time >= 0)

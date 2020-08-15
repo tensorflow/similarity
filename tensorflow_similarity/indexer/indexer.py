@@ -17,14 +17,15 @@ import tensorflow as tf
 import numpy as np
 import os
 import time
-import json
 import collections
-from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, write_json_lines, 
+from tensorflow_similarity.indexer.utils import (load_packaged_dataset,
+                                                 read_json_lines,
+                                                 write_json_lines,
                                                  write_json_lines_dict)
 
 # Neighbor has the distance from the queried point to the item, the index
-# of that item in the dataset, the label of the item and the data in the dataset 
-# associated with the item.
+# of that item in the dataset, the label of the item and the data in the
+# dataset associated with the item.
 Neighbor = collections.namedtuple("Neighbor", ["id", "data", "distance", "label"])
 
 
@@ -55,13 +56,16 @@ class Indexer(object):
             embedding_size (int): The size of the embeddings stored by the indexer.
             num_lookups (int): The number of lookups performed by the indexer.
             lookup_time (float): The cumulative amount of time it took to perform lookups.
+            space (string): The space (a space is a combination of data and the distance) to use in the indexer
+                            for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md.
+                            Defaults to "cosinesimil".
     """
 
     def __init__(
         self, 
-        dataset_examples_path, 
-        dataset_labels_path, 
-        model_path, 
+        dataset_examples_path,
+        dataset_labels_path,
+        model_path,
         dataset_original_path=None,
         space="cosinesimil", 
         thresholds=None
@@ -72,8 +76,8 @@ class Indexer(object):
                                                                            dataset_labels_path, 
                                                                            self.model_dict_key)
         self.num_embeddings = len(self.dataset_labels)
-
-        self.index = nmslib.init(method='hnsw', space=space)
+        self.space = space
+        self.index = nmslib.init(method='hnsw', space=self.space)
 
         if dataset_original_path is not None:
             self.dataset_original = np.asarray(read_json_lines(dataset_original_path))
@@ -86,17 +90,24 @@ class Indexer(object):
             self.thresholds = dict()
 
 
-    def build(self, verbose=0):
+    def build(self, verbose=0, rebuild_index=False, loaded_index=False):
         """ build an index from a dataset 
 
             Args:
                 verbose (int): Verbosity mode (0 = silent, 1 = progress bar).
                                Defaults to 0.
+                rebuild_index (bool): Whether to rebuild the index. Defaults to False.
+                loaded_index (bool): Whether the index was loaded from disk.
         """
         # Compute the embeddings for the dataset examples and add them to the index
-        embeddings = self.model.predict(self.dataset_examples)
-        self.embedding_size = len(embeddings[0])
-        self.index.addDataPointBatch(embeddings)
+        if rebuild_index:
+            self.index = nmslib.init(method='hnsw', space=self.space)
+
+        if not loaded_index:
+            embeddings = self.model.predict(self.dataset_examples)
+            self.embedding_size = len(embeddings[0])
+            self.index.addDataPointBatch(embeddings)
+
         print_progess = verbose > 0
         self.index.createIndex(print_progress=print_progess)
         self.num_lookups = 0
@@ -132,14 +143,14 @@ class Indexer(object):
         for (ids, distances) in neighbors:
             query_neighbors = []
             for id, distance in zip(ids, distances):
-                neighbor = Neighbor(id=id, 
-                                    data=self.dataset_original[id], 
-                                    distance=distance, 
+                neighbor = Neighbor(id=id,
+                                    data=self.dataset_original[id],
+                                    distance=distance,
                                     label=self.dataset_labels[id])
                 query_neighbors.append(neighbor)
             output.append(query_neighbors)
             self.num_lookups = self.num_lookups + 1
-            
+
         return output
 
 
@@ -168,7 +179,7 @@ class Indexer(object):
         original_examples_path = os.path.join(index_dir, "original_examples.jsonl")
         dataset_original_examples = self.dataset_original
         write_json_lines(original_examples_path, dataset_original_examples)
-        
+
         # Save the thresholds
         thresholds_path = os.path.join(index_dir, "thresholds.jsonl")
         write_json_lines_dict(thresholds_path, self.thresholds)
@@ -183,8 +194,8 @@ class Indexer(object):
 
             Args:
                 path (string): The path that the indexer should be loaded from disk.
-                               This directory should contain a tf.similarity model, dataset and 
-                               label files in jsonl format, a NMSLib index, and a 
+                               This directory should contain a tf.similarity model, dataset and
+                               label files in jsonl format, a NMSLib index, and a
                                thresholds dictionary.
         """
         dataset_examples_path = os.path.join(path, "examples.jsonl")
@@ -193,20 +204,21 @@ class Indexer(object):
         model_path = os.path.join(path, "model.h5")
         thresholds = read_json_lines(os.path.join(path, "thresholds.jsonl"))[0]
 
-        indexer = cls(dataset_examples_path=dataset_examples_path, 
-                      dataset_original_path=dataset_original_path, 
-                      dataset_labels_path=dataset_labels_path, 
-                      model_path=model_path, 
+        indexer = cls(dataset_examples_path=dataset_examples_path,
+                      dataset_original_path=dataset_original_path,
+                      dataset_labels_path=dataset_labels_path,
+                      model_path=model_path,
                       thresholds=thresholds)
         indexer.index.loadIndex(os.path.join(path, "index"), True)
         indexer.index.createIndex()
+        indexer.build(loaded_index=True)
 
         return indexer
 
-    
+
     def add(self, examples, labels, original_examples=None):
         """ Add item(s) to the index
-        
+
             Args:
                 example (list(np.array)): A list of the items to be added to the index.
                 label (integer): A list of the labels corresponding to the items.
@@ -234,16 +246,17 @@ class Indexer(object):
                 self.dataset_original = np.concatenate((self.dataset_original, example))
             ids.append(len(self.dataset_labels) - 1)
 
-        self.build()
+        self.build(rebuild_index=True)
 
         return ids
 
 
-    def remove(self, id):
+    def remove(self, id, rebuild_index=True):
         """ Remove an item from the index
 
             Args:
                 id (int): The index of the item in the dataset to be removed from the index.
+                rebuild_index (bool): Whether to rebuild the index after deleting items from it.
         """
         # Delete the item from the dataset examples, original dataset and the dataset labels,
         # and rebuild the index
@@ -251,15 +264,15 @@ class Indexer(object):
         self.dataset_examples = {self.model_dict_key: dataset_examples}
         self.dataset_original = np.delete(self.dataset_original, id, 0)
         self.dataset_labels = np.delete(self.dataset_labels, id)
-        self.build()
+        self.build(rebuild_index=True)
 
 
     def get_info(self):
         """ Get information about the data stored by the indexer
 
             Returns:
-                (int, int): A tuple of the number of embeddings stored by the indexer and 
-                            the size of the embeddings stored by the indexer. 
+                (int, int): A tuple of the number of embeddings stored by the indexer and
+                            the size of the embeddings stored by the indexer.
         """
         return (self.num_embeddings, self.embedding_size)
 
@@ -268,8 +281,8 @@ class Indexer(object):
         """ Get performance metrics from the indexer
 
             Returns:
-                (int, int): A tuple of the number of lookups performed by the indexer and the 
-                            average time taken per query 
+                (int, int): A tuple of the number of lookups performed by the indexer and the
+                            average time taken per query
         """
         if self.num_lookups > 0:
             avg_query_time = self.lookup_time / self.num_lookups
@@ -284,6 +297,6 @@ class Indexer(object):
         """
         # Currently the thresholds are placeholder values, in the future the indexer
         # will use R precision to calculate thresholds
-        self.thresholds = {.001: "very likely", .01: "likely", .1: "possible", .2: "unlikely"} 
-        
+        self.thresholds = {.001: "very likely", .01: "likely", .1: "possible", .2: "unlikely"}
+
         # TODO compute thresholds

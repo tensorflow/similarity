@@ -15,6 +15,7 @@
 import os
 import json
 import argparse
+import numpy as np
 from tensorflow_similarity.indexer.indexer import Indexer
 
 def arg_is_valid_dir(parser, arg):

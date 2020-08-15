@@ -59,7 +59,7 @@ class IndexerTestCase(unittest.TestCase):
                                      label=label,
                                      distance=distance)
 
-        neighbor = Neighbor(id=np.int32(1),
+        neighbor = Neighbor(id=response_neighbor.id,
                             data=np.asarray([0]),
                             distance=np.float32(0.234),
                             label=np.int64(0))
@@ -94,7 +94,7 @@ class IndexerTestCase(unittest.TestCase):
                                      label=label,
                                      distance=distance)
 
-        neighbor = Neighbor(id=np.int32(1),
+        neighbor = Neighbor(id=response_neighbor.id,
                             data=np.asarray([0]),
                             distance=np.float32(.234),
                             label=np.int64(0))
@@ -149,6 +149,6 @@ class IndexerTestCase(unittest.TestCase):
             items to the indexer
         """
         # Delete the first item in the indexer
-        response = client.delete("/delete/0")
+        response = client.delete("/delete")
 
         assert(response.status_code == 200)
