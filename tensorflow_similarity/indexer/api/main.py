@@ -61,6 +61,8 @@ def lookup_embeddings(item: LookupItem):
             data_key = tuple(neighbor_item.data.flatten().tolist())
 
             if not data_key in data_uuid_map:
+                # Generate UUID, map items data to the UUID and 
+                # map the UUID to the items index in the dataset
                 generated_uuid = uuid.uuid1()
                 data_uuid_map[data_key] = generated_uuid
                 uuid_id_map[generated_uuid] = id
@@ -73,7 +75,6 @@ def lookup_embeddings(item: LookupItem):
                 "distance": distance,
                 "label": label
             })
-    #print(data_uuid_map, uuid_id_map)
 
     return response
 
@@ -97,9 +98,12 @@ def lookup(item: LookupItem):
             distance = np.asscalar(neighbor_item.distance)
             label = np.asscalar(neighbor_item.label)
 
+            # Convert data to a hashable key
             data_key = tuple(neighbor_item.data.flatten().tolist())
 
             if not data_key in data_uuid_map:
+                # Generate UUID, map items data to the UUID and 
+                # map the UUID to the items index in the dataset
                 generated_uuid = uuid.uuid1()
                 data_uuid_map[data_key] = generated_uuid
                 uuid_id_map[generated_uuid] = id
@@ -112,8 +116,6 @@ def lookup(item: LookupItem):
                 "distance": distance,
                 "label": label
             })
-        
-    #print(data_uuid_map, uuid_id_map)
 
     return response
 
@@ -147,40 +149,66 @@ def metrics():
 def add(item: Item):
     """ Add item(s) to the index
     """
+    # Add the items to the indexer
     ids = indexer.add(np.asarray(item.examples),
                       item.labels,
                       item.original_examples)
 
     for id in ids:
+        # Generate a UUID for item
         generated_uuid = uuid.uuid1()
-        data_key = tuple(indexer.dataset_original[id].flatten().tolist())
-        data_uuid_map[data_key] = generated_uuid
-        uuid_id_map[generated_uuid] = id
 
-    #print(data_uuid_map, uuid_id_map)
+        # Get the data associated with the item in the dataset
+        # and convert it to a hashable key
+        data = indexer.dataset_original[id]
+        data_key = tuple(data.flatten().tolist())
+
+        # Map the data to the UUID
+        data_uuid_map[data_key] = generated_uuid
+
+        # Map the UUID to the items index in the dataset
+        uuid_id_map[generated_uuid] = id
 
     return ids
 
 
 @app.delete("/delete")
-def delete(ids: List[int]):
+def remove(ids: List[str]):
     """ Delete an item from the indexer
     """
+    indices_deleted = []
+    items_deleted = 0
+    rebuild_index = False
+
     for item_uuid in ids:
-        id = uuid_id_map[item_uuid]
+        # Get the item from 
+        uuid_hex = uuid.UUID(item_uuid)
+        id = uuid_id_map[uuid_hex] - items_deleted
         data = indexer.dataset_original[id]
+        indices_deleted.append(id)
 
-        data_key = tuple(indexer.dataset_original[id].flatten().tolist())
+        # Get the data associated with the item in the dataset
+        # and convert it to a hashable key
+        data = indexer.dataset_original[id]
+        data_key = tuple(data.flatten().tolist())
+        
+        # Delete item uuid from maps
         data_uuid_map.pop(data_key)
-        uuid_id_map.pop(uuid)
-        indexer.remove(id)
+        uuid_id_map.pop(uuid_hex)
+        items_deleted = items_deleted + 1
 
+        if items_deleted == len(ids):
+            rebuild_index = True
+
+        # Remove the item from the indexer
+        indexer.remove(id, rebuild_index=rebuild_index)
+        
+    # Update the indices of the items in the maps to account 
+    # for deleted indices
     for item_uuid, id in uuid_id_map.items():
-        for deleted_id in ids:
+        for deleted_id in indices_deleted:
             if id > deleted_id:
                 id = id - 1
         uuid_id_map[item_uuid] = id
 
-    #print(data_uuid_map, uuid_id_map)
-
-    return {ids}
+    return {tuple(ids)}
