@@ -56,9 +56,6 @@ class Indexer(object):
             embedding_size (int): The size of the embeddings stored by the indexer.
             num_lookups (int): The number of lookups performed by the indexer.
             lookup_time (float): The cumulative amount of time it took to perform lookups.
-            space (string): The space (a space is a combination of data and the distance) to use in the indexer
-                            for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md.
-                            Defaults to "cosinesimil".
     """
 
     def __init__(
@@ -98,7 +95,7 @@ class Indexer(object):
                                Defaults to 0.
                 rebuild_index (bool): Whether to rebuild the index. Defaults to False.
                 loaded_index (bool): Whether the index was loaded from disk.
-                                     Defaults to False
+                                     Defaults to False.
         """
         # Compute the embeddings for the dataset examples and add them to the index
         if rebuild_index:
@@ -120,7 +117,7 @@ class Indexer(object):
 
             Args:
                 items (np.array): The items for which a query of the most similar items should
-                                 be performed
+                                  be performed
                 num_neighbors (int): The number of neighbors that should be returned
                 is_embedding (bool): Whether or not the item is already in embedding form.
                                      Defaults to False.

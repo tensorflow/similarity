@@ -22,6 +22,8 @@ Neighbor = collections.namedtuple("Neighbor",
 class IndexerTestCase(unittest.TestCase):
 
     def generate_mock():
+        """ Generate a neighbor for mocking
+        """
         neighbor_id = np.int32(1)
         neighbor_data = np.asarray([0])
         neighbor_distance = np.float32(.234)
@@ -105,6 +107,7 @@ class IndexerTestCase(unittest.TestCase):
 
         assert(neighbor == response_neighbor)
 
+
     @patch.object(Indexer, 'get_info', return_value=(1234, 10))
     def test_info(self, Indexer):
         """ Test case that asserts that the API correctly returns
@@ -153,7 +156,7 @@ class IndexerTestCase(unittest.TestCase):
     @patch.object(Indexer, 'remove', return_value=[0])
     def test_remove(self, Indexer):
         """ Test case that asserts that the API correctly removes
-            items to the indexer
+            items from the indexer
         """
         # Generate mock for uuid_id map
         uuids = [uuid.UUID('3dc13b90-e0ae-11ea-8b23-00163ee9c8c6'), 
