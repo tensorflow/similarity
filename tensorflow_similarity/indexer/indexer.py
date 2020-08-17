@@ -35,15 +35,15 @@ class Indexer(object):
         in metric space.
 
         Args:
-            dataset_examples_path (string): The path to the json lines file containing the dataset that 
+            dataset_examples_path (string): The path to the json lines file containing the dataset that
                                             should be indexed and is ingestible by the model.
             dataset_labels_path (string): The path to the json lines file containing the labels for the dataset
             model_path (string): The path to the model that should be used to calculate embeddings
-            dataset_original_path (string): The path to the json lines file containing the original dataset. 
-                                            The original dataset should be used for datasets where the original 
-                                            data is not ingestible by the model or the raw data differs from the 
-                                            dataset examples. The original dataset is used to visualize datapoints 
-                                            for datasets where the original data cannot be reconstructed from the 
+            dataset_original_path (string): The path to the json lines file containing the original dataset.
+                                            The original dataset should be used for datasets where the original
+                                            data is not ingestible by the model or the raw data differs from the
+                                            dataset examples. The original dataset is used to visualize datapoints
+                                            for datasets where the original data cannot be reconstructed from the
                                             data ingested by the model such as text datasets. Defaults to None.
             space (string): The space (a space is a combination of data and the distance) to use in the indexer
                             for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md.
@@ -62,18 +62,18 @@ class Indexer(object):
     """
 
     def __init__(
-        self, 
+        self,
         dataset_examples_path,
         dataset_labels_path,
         model_path,
         dataset_original_path=None,
-        space="cosinesimil", 
+        space="cosinesimil",
         thresholds=None
     ):
         self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
         self.model_dict_key = self.model.layers[0].name
-        self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path, 
-                                                                           dataset_labels_path, 
+        self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path,
+                                                                           dataset_labels_path,
                                                                            self.model_dict_key)
         self.num_embeddings = len(self.dataset_labels)
         self.space = space
@@ -83,7 +83,7 @@ class Indexer(object):
             self.dataset_original = np.asarray(read_json_lines(dataset_original_path))
         else:
             self.dataset_original = self.dataset_examples[self.model_dict_key]
-        
+
         if thresholds is not None:
             self.thresholds = thresholds
         else:
@@ -91,13 +91,14 @@ class Indexer(object):
 
 
     def build(self, verbose=0, rebuild_index=False, loaded_index=False):
-        """ build an index from a dataset 
+        """ build an index from a dataset
 
             Args:
                 verbose (int): Verbosity mode (0 = silent, 1 = progress bar).
                                Defaults to 0.
                 rebuild_index (bool): Whether to rebuild the index. Defaults to False.
                 loaded_index (bool): Whether the index was loaded from disk.
+                                     Defaults to False
         """
         # Compute the embeddings for the dataset examples and add them to the index
         if rebuild_index:
@@ -111,14 +112,14 @@ class Indexer(object):
         print_progess = verbose > 0
         self.index.createIndex(print_progress=print_progess)
         self.num_lookups = 0
-        self.lookup_time = 0;
+        self.lookup_time = 0
 
 
     def find(self, items, num_neighbors, is_embedding=False):
         """ find the closest data points and their associated data in the index
 
             Args:
-                items (np.array): The items for which a query of the most similar items should 
+                items (np.array): The items for which a query of the most similar items should
                                  be performed
                 num_neighbors (int): The number of neighbors that should be returned
                 is_embedding (bool): Whether or not the item is already in embedding form.
@@ -136,9 +137,9 @@ class Indexer(object):
         start_time = time.time()
         neighbors = self.index.knnQueryBatch(items, num_neighbors)
         query_time = time.time() - start_time
-        
+
         self.lookup_time = self.lookup_time + query_time
-    
+
         output = []
         for (ids, distances) in neighbors:
             query_neighbors = []
@@ -156,7 +157,7 @@ class Indexer(object):
 
     def save(self, index_dir):
         """ Store an indexer on the disk
-            index_dir (string): The path to the directory where the indexer 
+            index_dir (string): The path to the directory where the indexer
                                 should be saved.
         """
         if not os.path.exists(index_dir):
@@ -257,6 +258,7 @@ class Indexer(object):
             Args:
                 id (int): The index of the item in the dataset to be removed from the index.
                 rebuild_index (bool): Whether to rebuild the index after deleting items from it.
+                                      Defaults to True
         """
         # Delete the item from the dataset examples, original dataset and the dataset labels,
         # and rebuild the index
@@ -264,7 +266,7 @@ class Indexer(object):
         self.dataset_examples = {self.model_dict_key: dataset_examples}
         self.dataset_original = np.delete(self.dataset_original, id, 0)
         self.dataset_labels = np.delete(self.dataset_labels, id)
-        self.build(rebuild_index=True)
+        self.build(rebuild_index=rebuild_index)
 
 
     def get_info(self):

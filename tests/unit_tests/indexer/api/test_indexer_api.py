@@ -1,11 +1,13 @@
 from fastapi.testclient import TestClient
 from tensorflow_similarity.indexer.api.main import app
+import tensorflow_similarity.indexer.api.main as api
 import numpy as np
 from tensorflow_similarity.indexer.indexer import Indexer
 import unittest
 from mock import patch
 import collections
 import json
+import uuid
 
 
 client = TestClient(app)
@@ -30,6 +32,7 @@ class IndexerTestCase(unittest.TestCase):
                                   label=neighbor_label)]
 
         return neighbor_mock
+
 
     @patch.object(Indexer, 'find', return_value=[generate_mock()])
     def test_lookup_embeddings(self, Indexer):
@@ -65,6 +68,7 @@ class IndexerTestCase(unittest.TestCase):
                             label=np.int64(0))
 
         assert(neighbor == response_neighbor)
+
 
     @patch.object(Indexer, 'find', return_value=[generate_mock()])
     def test_lookup(self, Indexer):
@@ -113,6 +117,7 @@ class IndexerTestCase(unittest.TestCase):
         assert(response_json["number_embeddings"] == 1234)
         assert(response_json["embedding_size"] == 10)
 
+
     @patch.object(Indexer, 'get_metrics', return_value=(12000, 0.00231))
     def test_metrics(self, Indexer):
         """ Test case that asserts that the API correctly returns
@@ -124,6 +129,7 @@ class IndexerTestCase(unittest.TestCase):
 
         assert(response_json["number_lookups"] == 12000)
         assert(response_json["average_time"] == 0.00231)
+
 
     @patch.object(Indexer, 'add', return_value=[0, 1, 2, 3])
     def test_add(self, Indexer):
@@ -143,13 +149,25 @@ class IndexerTestCase(unittest.TestCase):
 
         assert((response_ids == np.asarray([0, 1, 2, 3])).all())
 
-#    @patch.object(Indexer, 'remove', return_value=[0])
-#    def test_remove(self, Indexer):
-#        """ Test case that asserts that the API correctly removes
-#            items to the indexer
-#        """
-#        app.uuid_map['str'] = 0
-#        # Delete the first item in the indexer
-#        response = client.delete("/delete", data=json.dumps(['str']))
-#
-#        assert(response.status_code == 200)
+
+    @patch.object(Indexer, 'remove', return_value=[0])
+    def test_remove(self, Indexer):
+        """ Test case that asserts that the API correctly removes
+            items to the indexer
+        """
+        # Generate mock for uuid_id map
+        uuids = [uuid.UUID('3dc13b90-e0ae-11ea-8b23-00163ee9c8c6'), 
+                 uuid.UUID('3dc13b90-e0ae-11ea-8b23-00163eb9c8c6')]
+        ids = [0, 1]
+        uuid_id_map = {uuid_str: id for uuid_str, id in zip(uuids, ids)}
+
+        api_mock = patch.object(api, 'uuid_id_map', uuid_id_map)
+
+        # Delete the item from the indexer
+        with api_mock:
+            request_data = json.dumps([str(uuids[0])])
+            response = client.delete("/delete", data=request_data)
+
+            assert(uuids[0] not in api.uuid_id_map)
+            assert(api.uuid_id_map[uuids[1]] == ids[1] - 1)
+            assert(response.status_code == 200)

@@ -52,12 +52,12 @@ def lookup_embeddings(item: LookupItem):
     for neighbor_list in neighbors:
         for neighbor_item in neighbor_list:
             # Convert neighbor item to a JSON serializable dictionary
-            # and append it to the response
             id = np.asscalar(neighbor_item.id)
             data = neighbor_item.data.tolist()
             distance = np.asscalar(neighbor_item.distance)
             label = np.asscalar(neighbor_item.label)
             
+            # Convert data to a hashable key
             data_key = tuple(neighbor_item.data.flatten().tolist())
 
             if not data_key in data_uuid_map:
@@ -92,7 +92,6 @@ def lookup(item: LookupItem):
     for neighbor_list in neighbors:
         for neighbor_item in neighbor_list:
             # Convert neighbor item to a JSON serializable dictionary
-            # and append it to the response
             id = np.asscalar(neighbor_item.id)
             data = neighbor_item.data.tolist()
             distance = np.asscalar(neighbor_item.distance)
@@ -181,10 +180,9 @@ def remove(ids: List[str]):
     rebuild_index = False
 
     for item_uuid in ids:
-        # Get the item from 
+        # Get the items index 
         uuid_hex = uuid.UUID(item_uuid)
         id = uuid_id_map[uuid_hex] - items_deleted
-        data = indexer.dataset_original[id]
         indices_deleted.append(id)
 
         # Get the data associated with the item in the dataset
