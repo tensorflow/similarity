@@ -250,7 +250,7 @@ class Indexer(object):
 
 
     def remove(self, ids):
-        """ Remove an item from the index
+        """ Remove item(s) from the index
 
             Args:
                 ids (int): A list of indeces of the items in the dataset to be removed from the index.
