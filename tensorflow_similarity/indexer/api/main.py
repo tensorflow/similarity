@@ -177,7 +177,9 @@ def remove(ids: List[str]):
     """
     indices_deleted = []
     items_deleted = 0
-    rebuild_index = False
+    
+    # Remove the item from the indexer
+    indexer.remove(ids)
 
     for item_uuid in ids:
         # Get the items index 
@@ -194,12 +196,6 @@ def remove(ids: List[str]):
         data_uuid_map.pop(data_key)
         uuid_id_map.pop(uuid_hex)
         items_deleted = items_deleted + 1
-
-        if items_deleted == len(ids):
-            rebuild_index = True
-
-        # Remove the item from the indexer
-        indexer.remove(id, rebuild_index=rebuild_index)
         
     # Update the indices of the items in the maps to account 
     # for deleted indices

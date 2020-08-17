@@ -249,21 +249,19 @@ class Indexer(object):
         return ids
 
 
-    def remove(self, id, rebuild_index=True):
+    def remove(self, ids):
         """ Remove an item from the index
 
             Args:
-                id (int): The index of the item in the dataset to be removed from the index.
-                rebuild_index (bool): Whether to rebuild the index after deleting items from it.
-                                      Defaults to True
+                ids (int): A list of indeces of the items in the dataset to be removed from the index.
         """
         # Delete the item from the dataset examples, original dataset and the dataset labels,
         # and rebuild the index
-        dataset_examples = np.delete(self.dataset_examples[self.model_dict_key], id, 0)
+        dataset_examples = np.delete(self.dataset_examples[self.model_dict_key], tuple(ids), 0)
         self.dataset_examples = {self.model_dict_key: dataset_examples}
-        self.dataset_original = np.delete(self.dataset_original, id, 0)
-        self.dataset_labels = np.delete(self.dataset_labels, id)
-        self.build(rebuild_index=rebuild_index)
+        self.dataset_original = np.delete(self.dataset_original, tuple(ids), 0)
+        self.dataset_labels = np.delete(self.dataset_labels, tuple(ids))
+        self.build(rebuild_index=True)
 
 
     def get_info(self):

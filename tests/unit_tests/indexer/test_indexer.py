@@ -342,7 +342,7 @@ def test_remove():
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
     # Remove the first datapoint in the dataset
-    indexer.remove(0)
+    indexer.remove([0])
     indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
     indexer_dataset_labels = indexer.dataset_labels
 
@@ -350,7 +350,7 @@ def test_remove():
     assert((indexer_dataset_labels == labels[1:]).all())
 
     # Remove the last datapoint in the dataset
-    indexer.remove(len(indexer.dataset_labels) - 1)
+    indexer.remove([len(indexer.dataset_labels) - 1])
     indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
     indexer_dataset_labels = indexer.dataset_labels
 
