@@ -116,8 +116,8 @@ class Indexer(object):
         """ find the closest data points and their associated data in the index
 
             Args:
-                items (np.array): The items for which a query of the most similar items should
-                                  be performed
+                items (list): The items for which a query of the most similar items should
+                              be performed
                 num_neighbors (int): The number of neighbors that should be returned
                 is_embedding (bool): Whether or not the item is already in embedding form.
                                      Defaults to False.
@@ -127,6 +127,8 @@ class Indexer(object):
                                                sorted by distance for each item that the
                                                query was performed on.
         """
+        items = np.asarray(items)
+
         if not is_embedding:
             items = self.model.predict({self.model_dict_key: items})
 

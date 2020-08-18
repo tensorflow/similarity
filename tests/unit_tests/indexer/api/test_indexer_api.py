@@ -137,8 +137,8 @@ class IndexerTestCase(unittest.TestCase):
         response = client.get("/metrics")
         response_json = response.json()
 
-        assert(response_json["number_lookups"] == 12000)
-        assert(response_json["average_time"] == 0.00231)
+        assert(response_json["num_lookups"] == 12000)
+        assert(response_json["avg_query_time"] == 0.00231)
 
 
     @patch.object(Indexer, 'add', return_value=[0, 1, 2, 3])

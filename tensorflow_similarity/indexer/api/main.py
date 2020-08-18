@@ -59,14 +59,15 @@ class LookupItem(BaseModel):
         attributes:
             num_neighbors (int): Number of neighbors that should be returned.
             data (list(list(any))): The data for which a query of the most
-                                    similar items should be performed.
+                                    similar items should be performed. Either
+                                    a list of embeddings or a list of examples.
     """
     num_neighbors: int
     data: List[List[Any]]
 
 
 def covert_neighbors_to_json(neighbors):
-    """ Convert a list of neighbor the a json serializable dictionary
+    """ Convert a list of neighbor the a json serializable list of dictionary
 
         args:
             neighbors list(list(Neighbor)): List of nearest neighbor item lists
@@ -130,7 +131,7 @@ def lookup(items: LookupItem):
     """ Find the nearest neighbors within the target data set
         for the datapoints received in the request
     """
-    neighbors = indexer.find(items=np.asarray(items.data),
+    neighbors = indexer.find(items=items.data,
                              num_neighbors=items.num_neighbors,
                              is_embedding=False)
 
@@ -144,12 +145,9 @@ def info():
     """ Get information about the indexer
     """
     info = indexer.get_info()
+    info["serving_directory"] = bundle_path
 
-    return {
-        "num_embeddings": info["num_embeddings"],
-        "serving_directory": bundle_path,
-        "embedding_size": info["embedding_size"]
-    }
+    return info
 
 
 @app.get("/metrics")
@@ -158,10 +156,7 @@ def metrics():
     """
     metrics = indexer.get_metrics()
 
-    return {
-        "number_lookups": metrics["num_lookups"],
-        "average_time": metrics["avg_query_time"]
-    }
+    return metrics
 
 
 @app.post("/add", response_model=List[str])
