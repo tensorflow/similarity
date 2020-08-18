@@ -28,15 +28,44 @@ class IndexerTestCase(unittest.TestCase):
         neighbor_data = np.asarray([0])
         neighbor_distance = np.float32(.234)
         neighbor_label = np.int64(0)
-        neighbor_mock = [Neighbor(id=neighbor_id,
-                                  data=neighbor_data,
-                                  distance=neighbor_distance,
-                                  label=neighbor_label)]
+        neighbor_mock = Neighbor(id=neighbor_id,
+                                 data=neighbor_data,
+                                 distance=neighbor_distance,
+                                 label=neighbor_label)
 
-        return neighbor_mock
+        return [[neighbor_mock, neighbor_mock]]
 
 
-    @patch.object(Indexer, 'find', return_value=[generate_mock()])
+    def convert_response_to_neighbor(self, response):
+        """ Convert a response to a list neighbor namedtuple
+        """
+        neighbors = []
+        response_neighbors = []
+
+        for response_list in response.json():
+            for response_item in response_list:
+                id = response_item['id']
+                label = response_item['label']
+                data = response_item['data']
+                distance = response_item['distance']
+
+                response_neighbor = Neighbor(id=id,
+                                            data=data,
+                                            label=label,
+                                            distance=distance)
+
+                neighbor = Neighbor(id=response_neighbor.id,
+                                    data=np.asarray([0]),
+                                    distance=np.float32(0.234),
+                                    label=np.int64(0))
+
+                response_neighbors.append(response_neighbor)
+                neighbors.append(neighbor)
+
+        return neighbors, response_neighbors
+
+
+    @patch.object(Indexer, 'find', return_value=generate_mock())
     def test_lookup_embeddings(self, Indexer):
         """ Test case that asserts that the API correctly performs a lookup
             of the nearest neighbors for a list of embeddings
@@ -44,35 +73,23 @@ class IndexerTestCase(unittest.TestCase):
         # Generate embeddings
         embeddings = np.random.uniform(low=-1.0, high=0.99, size=(2, 4))
         embedding_list = embeddings.tolist()
-        num_neighbors = 1
+        num_neighbors = 2
 
         # Query the API for the nearest neighbors of the embeddings
         response = client.post(
             "/lookupEmbeddings",
-            json={"num_neighbors": num_neighbors, "embeddings": embedding_list}
+            json={"num_neighbors": num_neighbors, "data": embedding_list}
         )
 
-        # Convert the response to a namedtuple
-        response_item = response.json()[0]
-        id = response_item['id']
-        label = response_item['label']
-        data = response_item['data']
-        distance = response_item['distance']
+        # Convert the response to a list of neighbor namedtuples
+        neighbors, response_neighbors = self.convert_response_to_neighbor(response)
+        neighbors = np.asarray(neighbors)
+        response_neighbors = np.asarray(response_neighbors)
 
-        response_neighbor = Neighbor(id=id,
-                                     data=data,
-                                     label=label,
-                                     distance=distance)
-
-        neighbor = Neighbor(id=response_neighbor.id,
-                            data=np.asarray([0]),
-                            distance=np.float32(0.234),
-                            label=np.int64(0))
-
-        assert(neighbor == response_neighbor)
+        assert((neighbors == response_neighbors).all())
 
 
-    @patch.object(Indexer, 'find', return_value=[generate_mock()])
+    @patch.object(Indexer, 'find', return_value=generate_mock())
     def test_lookup(self, Indexer):
         """ Test case that asserts that the API correctly performs a lookup
             of the nearest neighbors for a list of examples
@@ -80,35 +97,24 @@ class IndexerTestCase(unittest.TestCase):
         # Generate embeddings
         embeddings = np.random.randint(1000, size=(2, 28))
         embedding_list = embeddings.tolist()
-        num_neighbors = 1
+        num_neighbors = 2
 
         # Query the API for the nearest neighbors of the embeddings
         response = client.post(
             "/lookup",
-            json={"num_neighbors": num_neighbors, "embeddings": embedding_list}
+            json={"num_neighbors": num_neighbors, "data": embedding_list}
         )
 
-        # Convert the response to a namedtuple
-        response_item = response.json()[0]
-        id = response_item['id']
-        label = response_item['label']
-        data = response_item['data']
-        distance = response_item['distance']
+        # Convert the response to a list of neighbor namedtuples
+        neighbors, response_neighbors = self.convert_response_to_neighbor(response)
+        neighbors = np.asarray(neighbors)
+        response_neighbors = np.asarray(response_neighbors)
 
-        response_neighbor = Neighbor(id=id,
-                                     data=data,
-                                     label=label,
-                                     distance=distance)
-
-        neighbor = Neighbor(id=response_neighbor.id,
-                            data=np.asarray([0]),
-                            distance=np.float32(.234),
-                            label=np.int64(0))
-
-        assert(neighbor == response_neighbor)
+        assert((neighbors == response_neighbors).all())
 
 
-    @patch.object(Indexer, 'get_info', return_value=(1234, 10))
+    @patch.object(Indexer, 'get_info', return_value={"num_embeddings": 1234, 
+                                                     "embedding_size": 10})
     def test_info(self, Indexer):
         """ Test case that asserts that the API correctly returns
             information about the data stored by the indexer
@@ -117,11 +123,12 @@ class IndexerTestCase(unittest.TestCase):
         response = client.get("/info")
         response_json = response.json()
 
-        assert(response_json["number_embeddings"] == 1234)
+        assert(response_json["num_embeddings"] == 1234)
         assert(response_json["embedding_size"] == 10)
 
 
-    @patch.object(Indexer, 'get_metrics', return_value=(12000, 0.00231))
+    @patch.object(Indexer, 'get_metrics', return_value={"num_lookups": 12000, 
+                                                        "avg_query_time": 0.00231})
     def test_metrics(self, Indexer):
         """ Test case that asserts that the API correctly returns
             indexer performance metrics
@@ -139,18 +146,21 @@ class IndexerTestCase(unittest.TestCase):
         """ Test case that asserts that the API correctly adds
             items to the indexer
         """
-        # Add items to the indexer
-        response = client.post(
-            "/add",
-            json={
-                "examples": [[0], [1], [2], [3]],
-                "labels": [0, 1, 2, 3]
-            }
-        )
-        response_json = response.json()
-        response_ids = np.asarray(response_json)
+        uuid_mock = patch.object(uuid, 'uuid1', return_value="1234")
 
-        assert((response_ids == np.asarray([0, 1, 2, 3])).all())
+        # Add items to the indexer
+        with uuid_mock:
+            response = client.post(
+                "/add",
+                json={
+                    "examples": [[0], [1], [2], [3]],
+                    "labels": [0, 1, 2, 3]
+                }
+            )
+            response_json = response.json()
+            response_ids = np.asarray(response_json)
+
+            assert((response_ids == np.asarray(["1234"] * 4)).all())
 
 
     @patch.object(Indexer, 'remove', return_value=[0])

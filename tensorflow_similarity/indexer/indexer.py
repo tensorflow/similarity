@@ -268,25 +268,31 @@ class Indexer(object):
         """ Get information about the data stored by the indexer
 
             Returns:
-                (int, int): A tuple of the number of embeddings stored by the indexer and
-                            the size of the embeddings stored by the indexer.
+                dict: A dict containing the number of embeddings stored by the indexer and
+                      the size of the embeddings stored by the indexer.
         """
-        return (self.num_embeddings, self.embedding_size)
+        return {
+            "num_embeddings": self.num_embeddings,
+            "embedding_size": self.embedding_size
+        }
 
 
     def get_metrics(self):
         """ Get performance metrics from the indexer
 
             Returns:
-                (int, int): A tuple of the number of lookups performed by the indexer and the
-                            average time taken per query
+                dict: A dict containing the number of lookups performed by the indexer and the
+                      average time taken per query
         """
         if self.num_lookups > 0:
             avg_query_time = self.lookup_time / self.num_lookups
         else:
             avg_query_time = self.lookup_time
 
-        return (self.num_lookups, avg_query_time)
+        return {
+            "num_lookups": self.num_lookups,
+            "avg_query_time": avg_query_time
+        }
 
 
     def compute_thresholds(self):

@@ -380,12 +380,14 @@ def test_get_info():
     # and number of embeddigns
     indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
     indexer.build()
-    (num_embeddings, embeddings_size) = indexer.get_info()
+    info = indexer.get_info()
+    num_embeddings = info["num_embeddings"] 
+    embedding_size = info["embedding_size"]
 
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
     assert(num_embeddings == len(examples))
-    assert(embeddings_size == 4)
+    assert(embedding_size == 4)
 
 
 def test_get_metrics():
@@ -395,7 +397,9 @@ def test_get_metrics():
     # Build an indexer and get performance metrics
     indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
     indexer.build()
-    (num_lookups, avg_query_time) = indexer.get_metrics()
+    metrics = indexer.get_metrics()
+    avg_query_time = metrics["avg_query_time"]
+    num_lookups = metrics["num_lookups"]
 
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
@@ -409,7 +413,9 @@ def test_get_metrics():
                      is_embedding=False)
 
     # Get performance metrics
-    (num_lookups, avg_query_time) = indexer.get_metrics()
+    metrics = indexer.get_metrics()
+    avg_query_time = metrics["avg_query_time"]
+    num_lookups = metrics["num_lookups"]
 
     assert(num_lookups == 25)
     assert(avg_query_time >= 0)
