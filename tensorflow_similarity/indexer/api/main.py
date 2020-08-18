@@ -66,12 +66,15 @@ class LookupItem(BaseModel):
 
 
 def covert_neighbors_to_json(neighbors):
-    """ Convert a list of neighbor the a json serializable dctionary
+    """ Convert a list of neighbor the a json serializable dictionary
 
         args:
             neighbors list(list(Neighbor)): List of nearest neighbor item lists
                                             sorted by distance for each item
                                             that the query was performed on.
+
+        returns:
+            reponse (json): A JSON serializable list of nearest neighbors.
     """
     response = []
 
@@ -191,12 +194,12 @@ def add(item: Item):
 
 
 @app.delete("/delete")
-def remove(ids: List[str]):
+def remove(uuids: List[str]):
     """ Delete item(s) from the indexer
     """
     indices_deleted = []
 
-    for item_uuid in ids:
+    for item_uuid in uuids:
         # Get the items index
         uuid_hex = uuid.UUID(item_uuid)
         id = uuid_id_map[uuid_hex]
@@ -222,4 +225,4 @@ def remove(ids: List[str]):
                 id = id - 1
         uuid_id_map[item_uuid] = id
 
-    return ids
+    return uuids
