@@ -37,7 +37,7 @@ class IndexerTestCase(unittest.TestCase):
 
 
     def convert_response_to_neighbor(self, response):
-        """ Convert a response to a list neighbor namedtuple
+        """ Convert a response to a list of neighbor namedtuple
         """
         neighbors = []
         response_neighbors = []
@@ -119,12 +119,17 @@ class IndexerTestCase(unittest.TestCase):
         """ Test case that asserts that the API correctly returns
             information about the data stored by the indexer
         """
+        bundle_path = 'bundle'
+        api_mock = patch.object(api, 'bundle_path', bundle_path)
+        
         # Query the API for information about the indexer
-        response = client.get("/info")
-        response_json = response.json()
+        with api_mock:
+            response = client.get("/info")
+            response_json = response.json()
 
-        assert(response_json["num_embeddings"] == 1234)
-        assert(response_json["embedding_size"] == 10)
+            assert(response_json["num_embeddings"] == 1234)
+            assert(response_json["embedding_size"] == 10)
+            assert(response_json["serving_directory"] == bundle_path)
 
 
     @patch.object(Indexer, 'get_metrics', return_value={"num_lookups": 12000, 
