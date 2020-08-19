@@ -25,7 +25,8 @@ import math
 import nmslib
 import jsonlines
 from tensorflow_similarity.indexer.indexer import Indexer
-from tensorflow_similarity.indexer.utils import (load_packaged_dataset, read_json_lines, 
+from tensorflow_similarity.indexer.utils import (load_packaged_dataset,
+                                                 read_json_lines,
                                                  write_json_lines)
 
 
@@ -53,10 +54,10 @@ def set_up():
     dataset_labels_path = os.path.abspath(tmp_file_labels)
     model_path = os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5")
     index_dir = temp_dir
-    thresholds = {"likely":1}
+    thresholds = {"likely": 1}
 
-    indexer = Indexer(dataset_examples_path, 
-                      dataset_labels_path, 
+    indexer = Indexer(dataset_examples_path,
+                      dataset_labels_path,
                       model_path,
                       thresholds=thresholds)
 
@@ -83,7 +84,7 @@ def test_read_json_lines():
     with jsonlines.open(tmp_file, mode='w') as writer:
         for data_point in arr:
             writer.write(data_point)
-    
+
     decoded_arr = read_json_lines(tmp_file)
     os.remove(tmp_file)
 
@@ -107,7 +108,7 @@ def test_write_json_lines():
     os.remove(tmp_file)
 
     # Generate dataset examples
-    data = np.random.rand(400,50)
+    data = np.random.rand(400, 50)
     _, tmp_file = tempfile.mkstemp()
     write_json_lines(tmp_file, data.tolist())
 
@@ -143,8 +144,8 @@ def test_load_packaged_dataset():
             writer.write(data_point.tolist())
 
     # Load dataset as packaged dataset from examples temp file and labels temp file
-    packaged_examples, packaged_labels = load_packaged_dataset(os.path.abspath(tmp_file_examples), 
-                                                               os.path.abspath(tmp_file_labels), 
+    packaged_examples, packaged_labels = load_packaged_dataset(os.path.abspath(tmp_file_examples),
+                                                               os.path.abspath(tmp_file_labels),
                                                                "test")
     os.remove(tmp_file_examples)
     os.remove(tmp_file_labels)
@@ -161,7 +162,7 @@ def test_build():
     indexer, examples, labels, tmp_file_examples, tmp_file_labels, _ = set_up()
     indexer.build()
     ids, dists = indexer.index.knnQuery(examples[0], k=10)
-    
+
     os.remove(tmp_file_examples)
     os.remove(tmp_file_labels)
 
@@ -182,16 +183,18 @@ def test_single_embedding_find():
     # Load the dataset from the test_data_set directory
     data_set = np.asarray(read_json_lines(dataset_examples_path))
 
-    # Build an indexer and find the 20 nearest neighbors of the first 
+    # Build an indexer and find the 20 nearest neighbors of the first
     # embedding in the dataset
-    indexer = Indexer(dataset_examples_path, 
-                      dataset_labels_path, 
+    indexer = Indexer(dataset_examples_path,
+                      dataset_labels_path,
                       model_path)
     indexer.index.addDataPointBatch(data_set)
     indexer.index.createIndex()
+    indexer.lookup_time = 0
+    indexer.num_lookups = 0
     neighbors = indexer.find(np.asarray([data_set[0]]), 20, True)[0]
-    
-    # Get the ids and distances for the queried nearest neighbors 
+
+    # Get the ids and distances for the queried nearest neighbors
     index_dists = np.asarray([neighbor.distance for neighbor in neighbors])
     index_ids = np.asarray([neighbor.id for neighbor in neighbors])
 
@@ -214,8 +217,8 @@ def test_multiple_examples_find():
 
     # Generate multiple examples and query the indexer for the nearest neighbors
     examples = np.random.randint(1000, size=(25, 400))
-    neighbors = indexer.find(items=examples, 
-                             num_neighbors=20, 
+    neighbors = indexer.find(items=examples,
+                             num_neighbors=20,
                              is_embedding=False)
 
     delete_temp_files(tmp_file_examples, tmp_file_labels, tmp_dir)
@@ -227,7 +230,7 @@ def test_multiple_examples_find():
                 neighbors_sorted = False
 
     assert(neighbors_sorted)
-    
+
 
 def test_save():
     """ Test case that asserts that the indexer is correctly
@@ -241,7 +244,7 @@ def test_save():
     # Load the saved dataset examples
     saved_examples_path = os.path.abspath(os.path.join(temp_dir, "examples.jsonl"))
     saved_examples = np.asarray(read_json_lines(saved_examples_path))
-    
+
     # Load the saved dataset labels
     saved_labels_path = os.path.abspath(os.path.join(temp_dir, "labels.jsonl"))
     saved_labels = read_json_lines(saved_labels_path)
@@ -269,7 +272,7 @@ def test_save():
 
     indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
     indexer_dataset_labels = indexer.dataset_labels
-    
+
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
     assert((saved_examples == indexer_dataset_examples).all())
@@ -289,7 +292,7 @@ def test_load():
     # Save the indexer to disk and load it
     indexer.save(index_dir=temp_dir)
     loaded_indexer = Indexer.load(os.path.abspath(temp_dir))
-    
+
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
     indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
@@ -312,18 +315,18 @@ def test_add():
     indexer.build()
 
     # Generate a datapoint and add it to the dataset examples and dataset labels
-    num = np.random.randint(1000, size=(1, 400))
-    examples = np.concatenate((examples, num))
+    num = np.random.randint(1000, size=(400))
+    examples = np.concatenate((examples, np.asarray([num])))
     labels = np.append(labels, 0)
-    
+
     # Add the datapoint to the indexer
-    indexer.add(num, 0)
-    
+    indexer.add([num], [0])
+
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
     indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
     indexer_dataset_labels = indexer.dataset_labels
-    
+
     assert((examples == indexer_dataset_examples).all())
     assert((labels == indexer_dataset_labels).all())
 
@@ -335,11 +338,11 @@ def test_remove():
     # Build an indexer
     indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
     indexer.build()
-    
+
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
     # Remove the first datapoint in the dataset
-    indexer.remove(0)
+    indexer.remove([0])
     indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
     indexer_dataset_labels = indexer.dataset_labels
 
@@ -347,7 +350,7 @@ def test_remove():
     assert((indexer_dataset_labels == labels[1:]).all())
 
     # Remove the last datapoint in the dataset
-    indexer.remove(len(indexer.dataset_labels) - 1)
+    indexer.remove([len(indexer.dataset_labels) - 1])
     indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
     indexer_dataset_labels = indexer.dataset_labels
 
@@ -363,7 +366,56 @@ def test_compute_threhsolds():
     indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
     indexer.build()
     indexer.compute_thresholds()
-    
+
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
     assert(indexer.thresholds[.1] == "possible")
+
+
+def test_get_info():
+    """ Test case that asserts that the indexer correctly
+        returns information about the data it stores.
+    """
+    # Build an indexer and get information about embedding size
+    # and number of embeddigns
+    indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
+    indexer.build()
+    info = indexer.get_info()
+    num_embeddings = info["num_embeddings"] 
+    embedding_size = info["embedding_size"]
+
+    delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
+
+    assert(num_embeddings == len(examples))
+    assert(embedding_size == 4)
+
+
+def test_get_metrics():
+    """ Test case that asserts that the indexer correctly
+        returns performance metrics.
+    """
+    # Build an indexer and get performance metrics
+    indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
+    indexer.build()
+    metrics = indexer.get_metrics()
+    avg_query_time = metrics["avg_query_time"]
+    num_lookups = metrics["num_lookups"]
+
+    delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
+
+    assert(num_lookups == 0)
+    assert(avg_query_time == 0)
+
+    # Generate multiple examples and query the indexer for the nearest neighbors
+    examples = np.random.randint(1000, size=(25, 400))
+    _ = indexer.find(items=examples,
+                     num_neighbors=20,
+                     is_embedding=False)
+
+    # Get performance metrics
+    metrics = indexer.get_metrics()
+    avg_query_time = metrics["avg_query_time"]
+    num_lookups = metrics["num_lookups"]
+
+    assert(num_lookups == 25)
+    assert(avg_query_time >= 0)
