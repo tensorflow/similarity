@@ -56,6 +56,8 @@ class Indexer(object):
             embedding_size (int): The size of the embeddings stored by the indexer.
             num_lookups (int): The number of lookups performed by the indexer.
             lookup_time (float): The cumulative amount of time it took to perform lookups.
+            class_distribution: A dictionary of class labels mapping to the number of times  
+                                the class occurs in the indexer.
     """
 
     def __init__(
@@ -85,6 +87,12 @@ class Indexer(object):
             self.thresholds = thresholds
         else:
             self.thresholds = dict()
+
+        self.class_distribution = {}
+        
+        for label in self.dataset_labels:
+            class_examples = self.class_distribution.get(label, 0) + 1
+            self.class_distribution[label] = class_examples
 
 
     def build(self, verbose=0, rebuild_index=False, loaded_index=False):
@@ -211,6 +219,8 @@ class Indexer(object):
                       thresholds=thresholds)
         indexer.index.loadIndex(os.path.join(path, "index"), True)
         indexer.index.createIndex()
+        embeddings = indexer.model.predict(indexer.dataset_examples)
+        indexer.embedding_size = len(embeddings[0])
         indexer.build(loaded_index=True)
 
         return indexer
@@ -233,8 +243,8 @@ class Indexer(object):
         ids = []
 
         for example, label, original_example in zip(examples, labels, original_examples):
-            # Add the example to the dataset examples, dataset labels, and original dataset,
-            # and rebuild the index
+            # Add the example to the dataset examples, dataset labels, the original dataset,
+            # and the class distribution, and rebuild the index
             if example.shape == self.dataset_examples[self.model_dict_key][0].shape:
                 example = np.asarray([example])
             dataset_examples = np.concatenate((self.dataset_examples[self.model_dict_key], example))
@@ -245,6 +255,8 @@ class Indexer(object):
             else:
                 self.dataset_original = np.concatenate((self.dataset_original, example))
             ids.append(len(self.dataset_labels) - 1)
+            class_examples = self.class_distribution.get(label, 0) + 1
+            self.class_distribution[label] = class_examples
 
         self.build(rebuild_index=True)
 
@@ -257,11 +269,15 @@ class Indexer(object):
             Args:
                 ids (int): A list of indeces of the items in the dataset to be removed from the index.
         """
-        # Delete the item from the dataset examples, original dataset and the dataset labels,
-        # and rebuild the index
+        # Delete the item from the dataset examples, original dataset, the dataset labels
+        # and the class distribution, and rebuild the index
         dataset_examples = np.delete(self.dataset_examples[self.model_dict_key], tuple(ids), 0)
         self.dataset_examples = {self.model_dict_key: dataset_examples}
         self.dataset_original = np.delete(self.dataset_original, tuple(ids), 0)
+        for id in ids:
+            label = self.dataset_labels[id]
+            class_examples = self.class_distribution.get(label) - 1
+            self.class_distribution[label] = class_examples
         self.dataset_labels = np.delete(self.dataset_labels, tuple(ids))
         self.build(rebuild_index=True)
 
@@ -273,9 +289,13 @@ class Indexer(object):
                 dict: A dict containing the number of embeddings stored by the indexer and
                       the size of the embeddings stored by the indexer.
         """
+        # Convert class distribution to a JSON serializable dictionary
+        class_distribution = {np.asscalar(k): v for k, v in self.class_distribution.items()}
+
         return {
             "num_embeddings": self.num_embeddings,
-            "embedding_size": self.embedding_size
+            "embedding_size": self.embedding_size,
+            "class_distribution": class_distribution
         }
 
 
