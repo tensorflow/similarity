@@ -149,7 +149,7 @@ def info():
 
     return info
 
-1
+
 @app.get("/metrics")
 def metrics():
     """ Get performance metrics from the indexer

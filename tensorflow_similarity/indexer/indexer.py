@@ -109,9 +109,10 @@ class Indexer(object):
         if rebuild_index:
             self.index = nmslib.init(method='hnsw', space=self.space)
 
+        embeddings = self.model.predict(self.dataset_examples)
+        self.embedding_size = len(embeddings[0])
+
         if not loaded_index:
-            embeddings = self.model.predict(self.dataset_examples)
-            self.embedding_size = len(embeddings[0])
             self.index.addDataPointBatch(embeddings)
 
         print_progess = verbose > 0
@@ -219,8 +220,6 @@ class Indexer(object):
                       thresholds=thresholds)
         indexer.index.loadIndex(os.path.join(path, "index"), True)
         indexer.index.createIndex()
-        embeddings = indexer.model.predict(indexer.dataset_examples)
-        indexer.embedding_size = len(embeddings[0])
         indexer.build(loaded_index=True)
 
         return indexer
@@ -257,6 +256,7 @@ class Indexer(object):
             ids.append(len(self.dataset_labels) - 1)
             class_examples = self.class_distribution.get(label, 0) + 1
             self.class_distribution[label] = class_examples
+            self.num_embeddings = self.num_embeddings + 1
 
         self.build(rebuild_index=True)
 
@@ -267,7 +267,8 @@ class Indexer(object):
         """ Remove item(s) from the index
 
             Args:
-                ids (int): A list of indeces of the items in the dataset to be removed from the index.
+                ids (list(int)): A list of indeces of the items in the dataset to be 
+                                 removed from the index.
         """
         # Delete the item from the dataset examples, original dataset, the dataset labels
         # and the class distribution, and rebuild the index
@@ -279,6 +280,7 @@ class Indexer(object):
             class_examples = self.class_distribution.get(label) - 1
             self.class_distribution[label] = class_examples
         self.dataset_labels = np.delete(self.dataset_labels, tuple(ids))
+        self.num_embeddings = self.num_embeddings - len(ids)
         self.build(rebuild_index=True)
 
 
