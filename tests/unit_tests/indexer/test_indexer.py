@@ -410,7 +410,7 @@ def test_get_info():
     class_distribution = info["class_distribution"]
 
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
-    
+
     assert(num_embeddings == len(examples))
     assert(embedding_size == 4)
     assert(class_distribution[0] == 25)
