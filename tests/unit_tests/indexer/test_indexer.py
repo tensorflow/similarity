@@ -323,7 +323,7 @@ def test_add():
     examples = np.concatenate((examples, np.asarray([num])))
     labels = np.append(labels, 0)
     
-    class_distribution[0] = class_distribution.get(0) + 1
+    class_distribution[0] = class_distribution[0] + 1
     num_embeddings = num_embeddings + 1
 
     # Add the datapoint to the indexer
@@ -360,7 +360,7 @@ def test_remove():
     indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
     indexer_dataset_labels = indexer.dataset_labels
     label = labels[0]
-    class_distribution[label] = class_distribution.get(label) - 1
+    class_distribution[label] = class_distribution[label] - 1
     num_embeddings = num_embeddings - 1
 
     assert((indexer_dataset_examples == examples[1:]).all())
@@ -373,7 +373,7 @@ def test_remove():
     indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
     indexer_dataset_labels = indexer.dataset_labels
     label = labels[len(labels) - 1]
-    class_distribution[label] = class_distribution.get(label) - 1
+    class_distribution[label] = class_distribution[label] - 1
     num_embeddings = num_embeddings - 1
 
     assert((indexer_dataset_examples == examples[1:-1]).all())

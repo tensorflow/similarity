@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import nmslib
+from collections import defaultdict
 import tensorflow as tf
 import numpy as np
 import os
@@ -273,9 +274,13 @@ class Indexer(object):
                 class_distribution (dict): A dictionary mapping labels to the number of 
                                            examples with that label in the indexer.
         """
-        # Get the counts for each class and convert them to a JSON serializable format
+        # Get the counts for each class
         classes, counts = np.unique(self.dataset_labels, return_counts=True)
-        class_distribution = dict(zip(classes.tolist(), counts.tolist()))
+        class_distribution = defaultdict(int)
+
+        # Convert to a JSON serializable dictionary
+        for label, count in zip(classes.tolist(), counts.tolist()):
+            class_distribution[label] = count
 
         return class_distribution
 
