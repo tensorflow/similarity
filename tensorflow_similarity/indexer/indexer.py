@@ -52,12 +52,9 @@ class Indexer(object):
                                i.e. {.001: "very likely", .01: "likely", .1: "possible", .2: "unlikely"}
 
         Attributes:
-            num_embeddings (int): The number of embeddings stored by the indexer.
             embedding_size (int): The size of the embeddings stored by the indexer.
             num_lookups (int): The number of lookups performed by the indexer.
             lookup_time (float): The cumulative amount of time it took to perform lookups.
-            class_distribution: A dictionary of class labels mapping to the number of times  
-                                the class occurs in the indexer.
     """
 
     def __init__(
@@ -74,7 +71,6 @@ class Indexer(object):
         self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path,
                                                                            dataset_labels_path,
                                                                            self.model_dict_key)
-        self.num_embeddings = len(self.dataset_labels)
         self.space = space
         self.index = nmslib.init(method='hnsw', space=self.space)
 
@@ -87,12 +83,6 @@ class Indexer(object):
             self.thresholds = thresholds
         else:
             self.thresholds = dict()
-
-        self.class_distribution = {}
-        
-        for label in self.dataset_labels:
-            class_examples = self.class_distribution.get(label, 0) + 1
-            self.class_distribution[label] = class_examples
 
 
     def build(self, verbose=0, rebuild_index=False, loaded_index=False):
@@ -254,9 +244,6 @@ class Indexer(object):
             else:
                 self.dataset_original = np.concatenate((self.dataset_original, example))
             ids.append(len(self.dataset_labels) - 1)
-            class_examples = self.class_distribution.get(label, 0) + 1
-            self.class_distribution[label] = class_examples
-            self.num_embeddings = self.num_embeddings + 1
 
         self.build(rebuild_index=True)
 
@@ -275,13 +262,31 @@ class Indexer(object):
         dataset_examples = np.delete(self.dataset_examples[self.model_dict_key], tuple(ids), 0)
         self.dataset_examples = {self.model_dict_key: dataset_examples}
         self.dataset_original = np.delete(self.dataset_original, tuple(ids), 0)
-        for id in ids:
-            label = self.dataset_labels[id]
-            class_examples = self.class_distribution.get(label) - 1
-            self.class_distribution[label] = class_examples
         self.dataset_labels = np.delete(self.dataset_labels, tuple(ids))
-        self.num_embeddings = self.num_embeddings - len(ids)
         self.build(rebuild_index=True)
+
+
+    def compute_class_distribution(self):
+        """ Compute how many instances of each class are stored in the indexer
+
+            Rerturns:
+                class_distribution (dict): A dictionary mapping labels to the number of 
+                                           examples with that label in the indexer.
+        """
+        # Get the counts for each class and convert them to a JSON serializable format
+        classes, counts = np.unique(self.dataset_labels, return_counts=True)
+        class_distribution = dict(zip(classes.tolist(), counts.tolist()))
+
+        return class_distribution
+
+
+    def compute_num_embeddings(self):
+        """ Compute the number of embeddings stored by the indexer
+
+            Returns:
+                (int): The number of embeddings sotred by the indexer.
+        """
+        return len(self.dataset_labels)
 
 
     def get_info(self):
@@ -291,11 +296,11 @@ class Indexer(object):
                 dict: A dict containing the number of embeddings stored by the indexer and
                       the size of the embeddings stored by the indexer.
         """
-        # Convert class distribution to a JSON serializable dictionary
-        class_distribution = {np.asscalar(k): v for k, v in self.class_distribution.items()}
+        class_distribution = self.compute_class_distribution()
+        num_embeddings = self.compute_num_embeddings()
 
         return {
-            "num_embeddings": self.num_embeddings,
+            "num_embeddings": num_embeddings,
             "embedding_size": self.embedding_size,
             "class_distribution": class_distribution
         }

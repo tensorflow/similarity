@@ -315,8 +315,8 @@ def test_add():
     indexer.build()
 
     # Get the class distribution and the number of embeddings in the indexer
-    class_distribution = indexer.class_distribution
-    num_embeddings = indexer.num_embeddings
+    class_distribution = indexer.compute_class_distribution()
+    num_embeddings = indexer.compute_num_embeddings()
 
     # Generate a datapoint and add it to the dataset examples and dataset labels
     num = np.random.randint(1000, size=(400))
@@ -333,11 +333,11 @@ def test_add():
 
     indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
     indexer_dataset_labels = indexer.dataset_labels
-    indexer_num_embeddings = indexer.num_embeddings
+    indexer_num_embeddings = indexer.compute_num_embeddings()
 
     assert((examples == indexer_dataset_examples).all())
     assert((labels == indexer_dataset_labels).all())
-    assert(class_distribution == indexer.class_distribution)
+    assert(class_distribution == indexer.compute_class_distribution())
     assert(num_embeddings == indexer_num_embeddings)
 
 
@@ -350,8 +350,8 @@ def test_remove():
     indexer.build()
 
     # Get the class distribution and the number of embeddings in the indexer
-    class_distribution = indexer.class_distribution
-    num_embeddings = indexer.num_embeddings
+    class_distribution = indexer.compute_class_distribution()
+    num_embeddings = indexer.compute_num_embeddings()
 
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
@@ -365,8 +365,8 @@ def test_remove():
 
     assert((indexer_dataset_examples == examples[1:]).all())
     assert((indexer_dataset_labels == labels[1:]).all())
-    assert(indexer.class_distribution == class_distribution)
-    assert(num_embeddings == indexer.num_embeddings)
+    assert(indexer.compute_class_distribution() == class_distribution)
+    assert(num_embeddings == indexer.compute_num_embeddings())
 
     # Remove the last datapoint in the dataset
     indexer.remove([len(indexer.dataset_labels) - 1])
@@ -378,8 +378,8 @@ def test_remove():
 
     assert((indexer_dataset_examples == examples[1:-1]).all())
     assert((indexer_dataset_labels == labels[1:-1]).all())
-    assert(indexer.class_distribution == class_distribution)
-    assert(num_embeddings == indexer.num_embeddings)
+    assert(indexer.compute_class_distribution() == class_distribution)
+    assert(num_embeddings == indexer.compute_num_embeddings())
 
 
 def test_compute_threhsolds():
