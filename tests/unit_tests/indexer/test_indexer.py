@@ -35,7 +35,7 @@ def set_up():
     """
     # Generate dataset
     examples = np.random.randint(1000, size=(50, 400))
-    labels = np.random.randint(2, size=50)
+    labels = np.asarray([0,1] * 25)
 
     # Write examples to temp file
     _, tmp_file_examples = tempfile.mkstemp()
@@ -314,10 +314,17 @@ def test_add():
     indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
     indexer.build()
 
+    # Get the class distribution and the number of embeddings in the indexer
+    class_distribution = indexer.compute_class_distribution()
+    num_embeddings = indexer.compute_num_embeddings()
+
     # Generate a datapoint and add it to the dataset examples and dataset labels
     num = np.random.randint(1000, size=(400))
     examples = np.concatenate((examples, np.asarray([num])))
     labels = np.append(labels, 0)
+    
+    class_distribution[0] = class_distribution[0] + 1
+    num_embeddings = num_embeddings + 1
 
     # Add the datapoint to the indexer
     indexer.add([num], [0])
@@ -326,9 +333,12 @@ def test_add():
 
     indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
     indexer_dataset_labels = indexer.dataset_labels
+    indexer_num_embeddings = indexer.compute_num_embeddings()
 
     assert((examples == indexer_dataset_examples).all())
     assert((labels == indexer_dataset_labels).all())
+    assert(class_distribution == indexer.compute_class_distribution())
+    assert(num_embeddings == indexer_num_embeddings)
 
 
 def test_remove():
@@ -339,23 +349,37 @@ def test_remove():
     indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
     indexer.build()
 
+    # Get the class distribution and the number of embeddings in the indexer
+    class_distribution = indexer.compute_class_distribution()
+    num_embeddings = indexer.compute_num_embeddings()
+
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
     # Remove the first datapoint in the dataset
     indexer.remove([0])
     indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
     indexer_dataset_labels = indexer.dataset_labels
+    label = labels[0]
+    class_distribution[label] = class_distribution[label] - 1
+    num_embeddings = num_embeddings - 1
 
     assert((indexer_dataset_examples == examples[1:]).all())
     assert((indexer_dataset_labels == labels[1:]).all())
+    assert(indexer.compute_class_distribution() == class_distribution)
+    assert(num_embeddings == indexer.compute_num_embeddings())
 
     # Remove the last datapoint in the dataset
     indexer.remove([len(indexer.dataset_labels) - 1])
     indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
     indexer_dataset_labels = indexer.dataset_labels
+    label = labels[len(labels) - 1]
+    class_distribution[label] = class_distribution[label] - 1
+    num_embeddings = num_embeddings - 1
 
     assert((indexer_dataset_examples == examples[1:-1]).all())
     assert((indexer_dataset_labels == labels[1:-1]).all())
+    assert(indexer.compute_class_distribution() == class_distribution)
+    assert(num_embeddings == indexer.compute_num_embeddings())
 
 
 def test_compute_threhsolds():
@@ -383,11 +407,14 @@ def test_get_info():
     info = indexer.get_info()
     num_embeddings = info["num_embeddings"] 
     embedding_size = info["embedding_size"]
+    class_distribution = info["class_distribution"]
 
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
     assert(num_embeddings == len(examples))
     assert(embedding_size == 4)
+    assert(class_distribution[0] == 25)
+    assert(class_distribution[1] == 25)
 
 
 def test_get_metrics():
