@@ -114,13 +114,19 @@ class IndexerTestCase(unittest.TestCase):
 
 
     @patch.object(Indexer, 'get_info', return_value={"num_embeddings": 1234, 
-                                                     "embedding_size": 10})
+                                                     "embedding_size": 10,
+                                                     "class_distribution": {
+                                                         '0': 617,
+                                                         '1': 300,
+                                                         '2': 317
+                                                     }})
     def test_info(self, Indexer):
         """ Test case that asserts that the API correctly returns
             information about the data stored by the indexer
         """
         bundle_path = 'bundle'
         api_mock = patch.object(api, 'bundle_path', bundle_path)
+        class_distribution = {'0': 617, '1': 300, '2': 317}
         
         # Query the API for information about the indexer
         with api_mock:
@@ -130,6 +136,7 @@ class IndexerTestCase(unittest.TestCase):
             assert(response_json["num_embeddings"] == 1234)
             assert(response_json["embedding_size"] == 10)
             assert(response_json["serving_directory"] == bundle_path)
+            assert(response_json["class_distribution"] == class_distribution)
 
 
     @patch.object(Indexer, 'get_metrics', return_value={"num_lookups": 12000, 

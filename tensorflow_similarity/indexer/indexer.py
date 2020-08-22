@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import nmslib
+from collections import defaultdict
 import tensorflow as tf
 import numpy as np
 import os
@@ -52,7 +53,6 @@ class Indexer(object):
                                i.e. {.001: "very likely", .01: "likely", .1: "possible", .2: "unlikely"}
 
         Attributes:
-            num_embeddings (int): The number of embeddings stored by the indexer.
             embedding_size (int): The size of the embeddings stored by the indexer.
             num_lookups (int): The number of lookups performed by the indexer.
             lookup_time (float): The cumulative amount of time it took to perform lookups.
@@ -72,7 +72,6 @@ class Indexer(object):
         self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path,
                                                                            dataset_labels_path,
                                                                            self.model_dict_key)
-        self.num_embeddings = len(self.dataset_labels)
         self.space = space
         self.index = nmslib.init(method='hnsw', space=self.space)
 
@@ -101,9 +100,10 @@ class Indexer(object):
         if rebuild_index:
             self.index = nmslib.init(method='hnsw', space=self.space)
 
+        embeddings = self.model.predict(self.dataset_examples)
+        self.embedding_size = len(embeddings[0])
+
         if not loaded_index:
-            embeddings = self.model.predict(self.dataset_examples)
-            self.embedding_size = len(embeddings[0])
             self.index.addDataPointBatch(embeddings)
 
         print_progess = verbose > 0
@@ -233,8 +233,8 @@ class Indexer(object):
         ids = []
 
         for example, label, original_example in zip(examples, labels, original_examples):
-            # Add the example to the dataset examples, dataset labels, and original dataset,
-            # and rebuild the index
+            # Add the example to the dataset examples, dataset labels, the original dataset,
+            # and the class distribution, and rebuild the index
             if example.shape == self.dataset_examples[self.model_dict_key][0].shape:
                 example = np.asarray([example])
             dataset_examples = np.concatenate((self.dataset_examples[self.model_dict_key], example))
@@ -255,15 +255,43 @@ class Indexer(object):
         """ Remove item(s) from the index
 
             Args:
-                ids (int): A list of indeces of the items in the dataset to be removed from the index.
+                ids (list(int)): A list of indeces of the items in the dataset to be 
+                                 removed from the index.
         """
-        # Delete the item from the dataset examples, original dataset and the dataset labels,
-        # and rebuild the index
+        # Delete the item from the dataset examples, original dataset, the dataset labels
+        # and the class distribution, and rebuild the index
         dataset_examples = np.delete(self.dataset_examples[self.model_dict_key], tuple(ids), 0)
         self.dataset_examples = {self.model_dict_key: dataset_examples}
         self.dataset_original = np.delete(self.dataset_original, tuple(ids), 0)
         self.dataset_labels = np.delete(self.dataset_labels, tuple(ids))
         self.build(rebuild_index=True)
+
+
+    def compute_class_distribution(self):
+        """ Compute how many instances of each class are stored in the indexer
+
+            Rerturns:
+                class_distribution (dict): A dictionary mapping labels to the number of 
+                                           examples with that label in the indexer.
+        """
+        # Get the counts for each class
+        classes, counts = np.unique(self.dataset_labels, return_counts=True)
+        class_distribution = defaultdict(int)
+
+        # Convert to a JSON serializable dictionary
+        for label, count in zip(classes.tolist(), counts.tolist()):
+            class_distribution[label] = count
+
+        return class_distribution
+
+
+    def compute_num_embeddings(self):
+        """ Compute the number of embeddings stored by the indexer
+
+            Returns:
+                (int): The number of embeddings sotred by the indexer.
+        """
+        return len(self.dataset_labels)
 
 
     def get_info(self):
@@ -273,9 +301,13 @@ class Indexer(object):
                 dict: A dict containing the number of embeddings stored by the indexer and
                       the size of the embeddings stored by the indexer.
         """
+        class_distribution = self.compute_class_distribution()
+        num_embeddings = self.compute_num_embeddings()
+
         return {
-            "num_embeddings": self.num_embeddings,
-            "embedding_size": self.embedding_size
+            "num_embeddings": num_embeddings,
+            "embedding_size": self.embedding_size,
+            "class_distribution": class_distribution
         }
 
 
