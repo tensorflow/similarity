@@ -16,9 +16,12 @@ import nmslib
 from collections import defaultdict
 import tensorflow as tf
 import numpy as np
+from numpy.random import default_rng
+import matplotlib.pyplot as plt
 import os
 import time
 import collections
+from tqdm.auto import tqdm
 from tensorflow_similarity.indexer.utils import (load_packaged_dataset,
                                                  read_json_lines,
                                                  write_json_lines,
@@ -335,5 +338,95 @@ class Indexer(object):
         # Currently the thresholds are placeholder values, in the future the indexer
         # will use R precision to calculate thresholds
         self.thresholds = {.001: "very likely", .01: "likely", .1: "possible", .2: "unlikely"}
+        num_samples = 100
+        rng = default_rng()
+        sample = rng.choice(len(self.dataset_labels), size=num_samples, replace=False)
+        sample.sort()
 
-        # TODO compute thresholds
+        pb = tqdm(total=num_samples ** 2, desc='Computing pairwise distances', unit='pairwise distances')
+        
+        distances = []
+        # compute pairwise distances
+        for id in sample:
+            pairwise_distances = []
+            for id_2 in sample:
+                pairwise_distances.append(self.index.getDistance(id, id_2))
+                pb.update()
+            distances.append(pairwise_distances)
+        pb.close()
+
+        distances = np.asarray(distances)
+
+        print(distances.shape)
+
+        pb = tqdm(total=num_samples ** 2, desc='Computing class matches', unit='class matches')
+
+        class_matches = []
+        
+        for x in sample:
+            for y in sample:
+                if self.dataset_labels[x] == self.dataset_labels[y]:
+                    same_class = True
+                else:
+                    same_class = False
+                class_matches.append(same_class)
+                pb.update()
+        pb.close()
+        print("Class matches:", np.sum(class_matches), 'Total:', len(class_matches))
+
+        #get all the class matching distance and sort them low to high
+        flat_distances = np.reshape(distances, (num_samples * num_samples))
+        matching_idxes = np.argwhere(class_matches)
+
+        pb = tqdm(total=len(flat_distances), desc='Computing match ratios', unit='match ratios')
+
+        match_rate = 0
+        match_rate_ratios = []
+        sorted_distance_values = []
+        for pos, idx in enumerate(np.argsort(flat_distances)):
+            distance_value = flat_distances[idx]
+
+            # remove distance with self
+            if not round(distance_value, 4):
+                continue
+
+            if idx in matching_idxes:
+                match_rate += 1
+            match_rate_ratios.append(match_rate/ (pos + 1))
+            sorted_distance_values.append(distance_value)
+            pb.update()
+        pb.close()
+        
+        print(sorted_distance_values[:10])
+
+        # plot to make sure everyting is fine
+        # ratio should be about ~10% cause 10 dims
+        plt.plot(match_rate_ratios)
+        plt.title("match ratios")
+        plt.savefig('mr.png')
+        # distance should be between >0 and 1
+        plt.title("distance values")
+        plt.plot(sorted_distance_values)
+        plt.savefig('dv.png')
+
+        current_threshold = 1
+        precision = 2  # 2 -> 0.01
+        num_ratios = len(match_rate_ratios)
+        threshold_ratios = []
+        threshold_values = []
+        for idx in range(num_ratios):
+            neg_idx = num_ratios - idx - 1
+            ratio = round(match_rate_ratios[neg_idx], precision)
+            #print(neg_idx, ratio, current_threshold)
+            # passing  the bar
+            if ratio < current_threshold:
+                current_threshold = ratio
+                threshold_ratios.append(ratio)
+                threshold_values.append(sorted_distance_values[idx])
+
+        for idx, val in enumerate(threshold_values):
+            print(idx, threshold_ratios[idx], val)
+
+        print("Num ratios", num_ratios)
+        print("match rate", match_rate)
+        print("match rate ratios", match_rate_ratios[:10])
