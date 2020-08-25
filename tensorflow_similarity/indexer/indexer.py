@@ -329,7 +329,89 @@ class Indexer(object):
             "num_lookups": self.num_lookups,
             "avg_query_time": avg_query_time
         }
-    
+
+
+    def __compute_calibration_metrics(
+        self,
+        distances,
+        matching_idxes,
+        num_total_match
+    ):
+        match_rate = 0
+        precision_scores = []
+        recall_scores = []
+        f1_scores = []
+        sorted_distance_values = []
+        count = 0
+
+        # Compute r precision, recall and f1
+        for pos, idx in enumerate(np.argsort(distances)):
+            distance_value = distances[idx]
+
+            # Remove distance with self
+            if not round(distance_value, 4):
+                continue
+                
+            count += 1
+            if idx in matching_idxes:
+                match_rate += 1
+            precision = match_rate / (count)
+            recall = match_rate / num_total_match
+            f1 = (precision * recall  / (precision + recall)) * 2
+
+            precision_scores.append(precision)
+            recall_scores.append(recall)
+            f1_scores.append(f1)
+
+            sorted_distance_values.append(distance_value)
+        
+        return precision_scores, recall_scores, f1_scores, sorted_distance_values
+
+
+    def __compute_calibration_thresholds(
+        self,
+        sorted_distances,
+        precision_scores,
+        recall_scores,
+        f1_scores
+    ):
+        thresholds = defaultdict(list)
+        rows = []
+        curr_precision = 100000
+
+        labels = {}
+        num_distances = len(sorted_distances)
+
+        # Normalize the labels and compute thresholds
+        for ridx in range(num_distances):
+            idx = num_distances - ridx - 1
+            f1 = f1_scores[idx] 
+            distance = sorted_distances[idx]  
+            
+            precision = round(precision_scores[idx], metric_rounding)
+            recall = round(recall_scores[idx], metric_rounding)
+
+            if precision != curr_precision:
+                thresholds['precision'].append(precision)
+                thresholds['recall'].append(recall)
+                thresholds['f1'].append(f1)
+                thresholds['distance'].append(distance)
+                curr_precision = precision
+
+                if precision >= very_likely_threshold:
+                    labels['very_likely'] = distance
+                elif precision >= likely_threshold:
+                    labels['likely'] = distance
+                elif precision >= possible_threshold:
+                    labels['possible'] = distance
+
+        # Compute the optimal thresholding distance
+        binary_threshold = thresholds['distance'][np.argmax(thresholds['f1'])]
+
+        for v in thresholds.values():
+            v.reverse()
+
+        return thresholds
 
     def calibrate(
         self, 
@@ -384,69 +466,12 @@ class Indexer(object):
         matching_idxes = np.argwhere(same_class)
         num_total_match = sum(same_class)
 
-        match_rate = 0
-        precision_scores = []
-        recall_scores = []
-        f1_scores = []
-        sorted_distance_values = []
-        count = 0
+        precision_scores, recall_scores, f1_scores, sorted_distances = self.__compute_calibration_metrics(distances,
+                                                                                                          matching_idxes,
+                                                                                                          num_total_match)
+    
 
-        # Compute r precision, recall and f1
-        for pos, idx in enumerate(np.argsort(distances)):
-            distance_value = distances[idx]
-
-            # Remove distance with self
-            if not round(distance_value, 4):
-                continue
-                
-            count += 1
-            if idx in matching_idxes:
-                match_rate += 1
-            precision = match_rate / (count)
-            recall = match_rate / num_total_match
-            f1 = (precision * recall  / (precision + recall)) * 2
-
-            precision_scores.append(precision)
-            recall_scores.append(recall)
-            f1_scores.append(f1)
-
-            sorted_distance_values.append(distance_value)
-
-        thresholds = defaultdict(list)
-        rows = []
-        curr_precision = 100000
-
-        labels = {}
-        num_distances = len(sorted_distance_values)
-
-        # Normalize the labels and compute thresholds
-        for ridx in range(num_distances):
-            idx = num_distances - ridx - 1
-            f1 = f1_scores[idx] 
-            distance = sorted_distance_values[idx]  
-            
-            precision = round(precision_scores[idx], metric_rounding)
-            recall = round(recall_scores[idx], metric_rounding)
-
-            if precision != curr_precision:
-                thresholds['precision'].append(precision)
-                thresholds['recall'].append(recall)
-                thresholds['f1'].append(f1)
-                thresholds['distance'].append(distance)
-                curr_precision = precision
-
-                if precision >= very_likely_threshold:
-                    labels['very_likely'] = distance
-                elif precision >= likely_threshold:
-                    labels['likely'] = distance
-                elif precision >= possible_threshold:
-                    labels['possible'] = distance
-
-        # Compute the optimal thresholding distance
-        binary_threshold = thresholds['distance'][np.argmax(thresholds['f1'])]
-
-        for v in thresholds.values():
-            v.reverse()
+        thresholds = self.__compute_calibration_thresholds()
 
         calibration = {
             "binary_threshold": binary_threshold,
