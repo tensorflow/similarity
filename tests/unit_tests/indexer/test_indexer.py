@@ -436,3 +436,25 @@ def test_get_metrics():
 
     assert(num_lookups == 25)
     assert(avg_query_time >= 0)
+
+
+def test_calibration():
+    """ Test case that asserts that the indexer correctly
+        performs calibration.
+    """
+    # Build an indexer
+    indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
+    indexer.build()
+
+    # Generate multiple examples and perform calibration
+    examples = np.random.rand(500, 28, 28)
+    labels = np.asarray([0,1] * 250)
+    thresholds = indexer.calibrate(examples, labels)['thresholds']
+    calibrated = True
+
+    for idx in range(len(thresholds['distance']) - 1):
+        if thresholds['distance'][idx] >= thresholds['distance'][idx + 1]:
+            calibrated = False
+            break
+
+    assert(calibrated)
