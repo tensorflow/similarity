@@ -54,7 +54,7 @@ class Indexer(object):
                             for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md.
                             Defaults to "cosinesimil".
             thresholds (dict): A dictionary mapping likeliness labels to thresholds. Defaults to None.
-                               i.e. {.001: "very likely", .01: "likely", .1: "possible", .2: "unlikely"}
+                               i.e. {.001: "very likely", .01: "likely", .1: "possible"}
 
         Attributes:
             embedding_size (int): The size of the embeddings stored by the indexer.
@@ -331,8 +331,32 @@ class Indexer(object):
         }
     
 
-    def calibrate(self, examples, labels):
-        """ Calibrate indexer and compute thresholds for similarity
+    def calibrate(
+        self, 
+        examples, 
+        labels, 
+        very_likely_threshold=0.9, 
+        likely_threshold=0.8,
+        possible_threshold=0.7, 
+        metric_rounding=2
+    ):
+        """ Calibrate indexer and compute threshold distances for similarity
+
+            Args:
+                examples (np.ndarray): The examples that calibration should be
+                                       performed on.
+                labels (np.ndarray): The labels corresponding to the examples.
+                very_likely_threshold (float): The threshold for which items should be
+                                     considered very likely to be similar.
+                                     Should be between 0 and 1. Defaults to 0.9.
+                likely_threshold (float): The threshold for which items should be considered 
+                                likely to be similar. Should be between 0 and 1. 
+                                Defaults to 0.9.
+                possible_threshold (float): The threshold for which items should be considered
+                                  to possibly be similar. Should be between 0 and 1.
+                                  Defaults to 0.1.
+                metric_rounding (int): The number of decimals to use when rounding 
+                                       computed metrics. Defaults to 2.
         """
         distances = []
         same_class = []
@@ -378,9 +402,9 @@ class Indexer(object):
             count += 1
             if idx in matching_idxes:
                 match_rate += 1
-            precision = match_rate/ (count)
-            recall = match_rate/ num_total_match
-            f1 = (precision * recall  / (precision + recall)) * 2 
+            precision = match_rate / (count)
+            recall = match_rate / num_total_match
+            f1 = (precision * recall  / (precision + recall)) * 2
 
             precision_scores.append(precision)
             recall_scores.append(recall)
@@ -388,15 +412,11 @@ class Indexer(object):
 
             sorted_distance_values.append(distance_value)
 
-        metric_rounding = 2
         thresholds = defaultdict(list)
         rows = []
         curr_precision = 100000
 
         labels = {}
-        very_likely = 0.9
-        likely = 0.8
-        possible = 0.7
         num_distances = len(sorted_distance_values)
 
         # Normalize the labels and compute thresholds
@@ -415,11 +435,11 @@ class Indexer(object):
                 thresholds['distance'].append(distance)
                 curr_precision = precision
 
-                if precision >= very_likely:
+                if precision >= very_likely_threshold:
                     labels['very_likely'] = distance
-                elif precision >= likely:
+                elif precision >= likely_threshold:
                     labels['likely'] = distance
-                elif precision >= possible:
+                elif precision >= possible_threshold:
                     labels['possible'] = distance
 
         # Compute the optimal thresholding distance
