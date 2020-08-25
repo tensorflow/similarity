@@ -17,7 +17,7 @@ import numpy as np
 import jsonlines
 from collections.abc import Iterable
 
-def load_packaged_dataset(dataset, dataset_labels, dict_key):
+def load_packaged_dataset(dataset, dataset_labels,):
     """ load a dataset from json lines files
     
         Args:
@@ -26,15 +26,14 @@ def load_packaged_dataset(dataset, dataset_labels, dict_key):
             dict_key (string): The dictionary key of the dict that must be passed to the model
 
         Returns:
-            packaged_x (dict): A dict containting the datasets encoded as np arrays
+            data_x (np.ndarray): The examples in the datasets encoded as np arrays
             data_y (np.ndarray): The labels for the dataset encoded as np arrays
 
     """
     data_x = np.asarray(read_json_lines(dataset))
     data_y = np.asarray(read_json_lines(dataset_labels)).flatten()
-    packaged_x = {dict_key: data_x}
 
-    return packaged_x, data_y
+    return data_x, data_y
 
 
 def read_json_lines(file):

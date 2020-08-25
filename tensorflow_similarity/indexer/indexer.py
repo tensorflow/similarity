@@ -15,6 +15,7 @@
 import nmslib
 from collections import defaultdict
 import tensorflow as tf
+from tensorflow_addons.losses import TripletHardLoss
 import numpy as np
 from numpy.random import default_rng
 import matplotlib.pyplot as plt
@@ -70,18 +71,16 @@ class Indexer(object):
         space="cosinesimil",
         thresholds=None
     ):
-        self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf})
-        self.model_dict_key = self.model.layers[0].name
+        self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf, 'TripletHardLoss': TripletHardLoss})
         self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path,
-                                                                           dataset_labels_path,
-                                                                           self.model_dict_key)
+                                                                           dataset_labels_path)
         self.space = space
         self.index = nmslib.init(method='hnsw', space=self.space)
 
         if dataset_original_path is not None:
             self.dataset_original = np.asarray(read_json_lines(dataset_original_path))
         else:
-            self.dataset_original = self.dataset_examples[self.model_dict_key]
+            self.dataset_original = self.dataset_examples
 
         if thresholds is not None:
             self.thresholds = thresholds
@@ -133,7 +132,7 @@ class Indexer(object):
         items = np.asarray(items)
 
         if not is_embedding:
-            items = self.model.predict({self.model_dict_key: items})
+            items = self.model.predict(items)
 
         # Query the index
         start_time = time.time()
@@ -170,7 +169,7 @@ class Indexer(object):
 
         # Save the examples
         examples_path = os.path.join(index_dir, "examples.jsonl")
-        dataset_examples  = self.dataset_examples[self.model_dict_key]
+        dataset_examples  = self.dataset_examples
         write_json_lines(examples_path, dataset_examples)
 
         # Save the labels
@@ -188,7 +187,7 @@ class Indexer(object):
         write_json_lines_dict(thresholds_path, self.thresholds)
 
         # Save the model
-        self.model.save(os.path.join(index_dir, "model.h5"))
+        self.model.save(os.path.join(index_dir, "model"), save_format="tf2")
 
 
     @classmethod
@@ -204,7 +203,7 @@ class Indexer(object):
         dataset_examples_path = os.path.join(path, "examples.jsonl")
         dataset_original_path = os.path.join(path, "original_examples.jsonl")
         dataset_labels_path = os.path.join(path, "labels.jsonl")
-        model_path = os.path.join(path, "model.h5")
+        model_path = os.path.join(path, "model")
         thresholds = read_json_lines(os.path.join(path, "thresholds.jsonl"))[0]
 
         indexer = cls(dataset_examples_path=dataset_examples_path,
@@ -238,10 +237,10 @@ class Indexer(object):
         for example, label, original_example in zip(examples, labels, original_examples):
             # Add the example to the dataset examples, dataset labels, the original dataset,
             # and the class distribution, and rebuild the index
-            if example.shape == self.dataset_examples[self.model_dict_key][0].shape:
+            if example.shape == self.dataset_examples[0].shape:
                 example = np.asarray([example])
-            dataset_examples = np.concatenate((self.dataset_examples[self.model_dict_key], example))
-            self.dataset_examples = {self.model_dict_key: dataset_examples}
+            dataset_examples = np.concatenate((self.dataset_examples, example))
+            self.dataset_examples =  dataset_examples
             self.dataset_labels = np.append(self.dataset_labels, label)
             if original_example:
                 self.dataset_original = np.concatenate((self.dataset_original, original_example))
@@ -263,8 +262,8 @@ class Indexer(object):
         """
         # Delete the item from the dataset examples, original dataset, the dataset labels
         # and the class distribution, and rebuild the index
-        dataset_examples = np.delete(self.dataset_examples[self.model_dict_key], tuple(ids), 0)
-        self.dataset_examples = {self.model_dict_key: dataset_examples}
+        dataset_examples = np.delete(self.dataset_examples, tuple(ids), 0)
+        self.dataset_examples = dataset_examples
         self.dataset_original = np.delete(self.dataset_original, tuple(ids), 0)
         self.dataset_labels = np.delete(self.dataset_labels, tuple(ids))
         self.build(rebuild_index=True)
@@ -330,103 +329,109 @@ class Indexer(object):
             "num_lookups": self.num_lookups,
             "avg_query_time": avg_query_time
         }
+    
 
-
-    def compute_thresholds(self):
-        """ Compute thresholds for similarity using R Precision.
+    def calibrate(self, examples, labels):
+        """ Calibrate indexer and compute thresholds for similarity
         """
-        # Currently the thresholds are placeholder values, in the future the indexer
-        # will use R precision to calculate thresholds
-        self.thresholds = {.001: "very likely", .01: "likely", .1: "possible", .2: "unlikely"}
-        num_samples = 100
-        rng = default_rng()
-        sample = rng.choice(len(self.dataset_labels), size=num_samples, replace=False)
-        sample.sort()
-
-        pb = tqdm(total=num_samples ** 2, desc='Computing pairwise distances', unit='pairwise distances')
-        
         distances = []
-        # compute pairwise distances
-        for id in sample:
-            pairwise_distances = []
-            for id_2 in sample:
-                pairwise_distances.append(self.index.getDistance(id, id_2))
-                pb.update()
-            distances.append(pairwise_distances)
-        pb.close()
+        same_class = []
+        label_idx = 0
+        progress_bar = tqdm(total=len(examples) * 10,
+                            desc='Computing class matches',
+                            unit='class matches')
 
-        distances = np.asarray(distances)
+        # Query the index for the nearest neighbors
+        neighbors = self.find(examples, num_neighbors=10, is_embedding=False)
 
-        print(distances.shape)
-
-        pb = tqdm(total=num_samples ** 2, desc='Computing class matches', unit='class matches')
-
-        class_matches = []
-        
-        for x in sample:
-            for y in sample:
-                if self.dataset_labels[x] == self.dataset_labels[y]:
-                    same_class = True
+        # Compute class matches and distances
+        for neighbor_list in neighbors:
+            for neighbor in neighbor_list:
+                if neighbor.label == labels[label_idx]:
+                    same_class.append(True)
                 else:
-                    same_class = False
-                class_matches.append(same_class)
-                pb.update()
-        pb.close()
-        print("Class matches:", np.sum(class_matches), 'Total:', len(class_matches))
-
-        #get all the class matching distance and sort them low to high
-        flat_distances = np.reshape(distances, (num_samples * num_samples))
-        matching_idxes = np.argwhere(class_matches)
-
-        pb = tqdm(total=len(flat_distances), desc='Computing match ratios', unit='match ratios')
+                    same_class.append(False)
+                distances.append(neighbor.distance)
+                progress_bar.update()
+            label_idx += 1
+        progress_bar.close()
+        
+        # Find the indeces of all matches and the total number of matches
+        matching_idxes = np.argwhere(same_class)
+        num_total_match = sum(same_class)
 
         match_rate = 0
-        match_rate_ratios = []
+        precision_scores = []
+        recall_scores = []
+        f1_scores = []
         sorted_distance_values = []
-        for pos, idx in enumerate(np.argsort(flat_distances)):
-            distance_value = flat_distances[idx]
+        count = 0
 
-            # remove distance with self
+        # Compute r precision, recall and f1
+        for pos, idx in enumerate(np.argsort(distances)):
+            distance_value = distances[idx]
+
+            # Remove distance with self
             if not round(distance_value, 4):
                 continue
-
+                
+            count += 1
             if idx in matching_idxes:
                 match_rate += 1
-            match_rate_ratios.append(match_rate/ (pos + 1))
+            precision = match_rate/ (count)
+            recall = match_rate/ num_total_match
+            f1 = (precision * recall  / (precision + recall)) * 2 
+
+            precision_scores.append(precision)
+            recall_scores.append(recall)
+            f1_scores.append(f1)
+
             sorted_distance_values.append(distance_value)
-            pb.update()
-        pb.close()
-        
-        print(sorted_distance_values[:10])
 
-        # plot to make sure everyting is fine
-        # ratio should be about ~10% cause 10 dims
-        plt.plot(match_rate_ratios)
-        plt.title("match ratios")
-        plt.savefig('mr.png')
-        # distance should be between >0 and 1
-        plt.title("distance values")
-        plt.plot(sorted_distance_values)
-        plt.savefig('dv.png')
+        metric_rounding = 2
+        thresholds = defaultdict(list)
+        rows = []
+        curr_precision = 100000
 
-        current_threshold = 1
-        precision = 2  # 2 -> 0.01
-        num_ratios = len(match_rate_ratios)
-        threshold_ratios = []
-        threshold_values = []
-        for idx in range(num_ratios):
-            neg_idx = num_ratios - idx - 1
-            ratio = round(match_rate_ratios[neg_idx], precision)
-            #print(neg_idx, ratio, current_threshold)
-            # passing  the bar
-            if ratio < current_threshold:
-                current_threshold = ratio
-                threshold_ratios.append(ratio)
-                threshold_values.append(sorted_distance_values[idx])
+        labels = {}
+        very_likely = 0.9
+        likely = 0.8
+        possible = 0.7
+        num_distances = len(sorted_distance_values)
 
-        for idx, val in enumerate(threshold_values):
-            print(idx, threshold_ratios[idx], val)
+        # Normalize the labels and compute thresholds
+        for ridx in range(num_distances):
+            idx = num_distances - ridx - 1
+            f1 = f1_scores[idx] 
+            distance = sorted_distance_values[idx]  
+            
+            precision = round(precision_scores[idx], metric_rounding)
+            recall = round(recall_scores[idx], metric_rounding)
 
-        print("Num ratios", num_ratios)
-        print("match rate", match_rate)
-        print("match rate ratios", match_rate_ratios[:10])
+            if precision != curr_precision:
+                thresholds['precision'].append(precision)
+                thresholds['recall'].append(recall)
+                thresholds['f1'].append(f1)
+                thresholds['distance'].append(distance)
+                curr_precision = precision
+
+                if precision >= very_likely:
+                    labels['very_likely'] = distance
+                elif precision >= likely:
+                    labels['likely'] = distance
+                elif precision >= possible:
+                    labels['possible'] = distance
+
+        # Compute the optimal thresholding distance
+        binary_threshold = thresholds['distance'][np.argmax(thresholds['f1'])]
+
+        for v in thresholds.values():
+            v.reverse()
+
+        calibration = {
+            "binary_threshold": binary_threshold,
+            "thresholds": thresholds,
+            "labels": labels
+        }
+
+        return calibration

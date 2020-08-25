@@ -24,6 +24,7 @@ import json
 import math
 import nmslib
 import jsonlines
+from tensorflow_addons.losses import TripletHardLoss
 from tensorflow_similarity.indexer.indexer import Indexer
 from tensorflow_similarity.indexer.utils import (load_packaged_dataset,
                                                  read_json_lines,
@@ -34,7 +35,7 @@ def set_up():
     """" Generate an indexer and a dataset
     """
     # Generate dataset
-    examples = np.random.randint(1000, size=(50, 400))
+    examples = np.random.rand(50, 28, 28)
     labels = np.asarray([0,1] * 25)
 
     # Write examples to temp file
@@ -52,7 +53,7 @@ def set_up():
 
     dataset_examples_path = os.path.abspath(tmp_file_examples)
     dataset_labels_path = os.path.abspath(tmp_file_labels)
-    model_path = os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5")
+    model_path = os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/MNIST_model")
     index_dir = temp_dir
     thresholds = {"likely": 1}
 
@@ -145,13 +146,12 @@ def test_load_packaged_dataset():
 
     # Load dataset as packaged dataset from examples temp file and labels temp file
     packaged_examples, packaged_labels = load_packaged_dataset(os.path.abspath(tmp_file_examples),
-                                                               os.path.abspath(tmp_file_labels),
-                                                               "test")
+                                                               os.path.abspath(tmp_file_labels))
     os.remove(tmp_file_examples)
     os.remove(tmp_file_labels)
 
     assert((labels == packaged_labels).all())
-    assert((examples == packaged_examples["test"]).all())
+    assert((examples == packaged_examples).all())
 
 
 def test_build():
@@ -178,7 +178,7 @@ def test_single_embedding_find():
     """
     dataset_examples_path = os.path.abspath("test_data_set/data.json")
     dataset_labels_path = os.path.abspath("test_data_set/labels.json")
-    model_path = os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/IMDB_model.h5")
+    model_path = os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/MNIST_model")
 
     # Load the dataset from the test_data_set directory
     data_set = np.asarray(read_json_lines(dataset_examples_path))
@@ -192,15 +192,15 @@ def test_single_embedding_find():
     indexer.index.createIndex()
     indexer.lookup_time = 0
     indexer.num_lookups = 0
-    neighbors = indexer.find(np.asarray([data_set[0]]), 20, True)[0]
+    neighbors = indexer.find(np.asarray([data_set[0]]), 10, True)[0]
 
     # Get the ids and distances for the queried nearest neighbors
     index_dists = np.asarray([neighbor.distance for neighbor in neighbors])
     index_ids = np.asarray([neighbor.id for neighbor in neighbors])
 
     # Get the ids and distances for the 20 closest embeddings in the dataset
-    dists = np.asarray([(spatial.distance.cosine(i, data_set[0])) for i in data_set[:20]])
-    ids = np.arange(20)
+    dists = np.asarray([(spatial.distance.cosine(i, data_set[0])) for i in data_set[:10]])
+    ids = np.arange(10)
 
     assert(np.isclose(index_dists, dists).all())
     assert((index_ids == ids).all())
@@ -216,7 +216,7 @@ def test_multiple_examples_find():
     indexer.build()
 
     # Generate multiple examples and query the indexer for the nearest neighbors
-    examples = np.random.randint(1000, size=(25, 400))
+    examples = np.random.rand(1000, 28, 28)
     neighbors = indexer.find(items=examples,
                              num_neighbors=20,
                              is_embedding=False)
@@ -255,13 +255,17 @@ def test_save():
     saved_index.createIndex()
 
     # Load the saved model
-    saved_model_path = os.path.join(os.path.abspath(temp_dir), "model.h5")
-    saved_model = tf.keras.models.load_model(saved_model_path)
+    saved_model_path = os.path.join(os.path.abspath(temp_dir), "model")
+    saved_model = tf.keras.models.load_model(saved_model_path, 
+                                             custom_objects={
+                                                'tf': tf, 
+                                                'TripletHardLoss': TripletHardLoss
+                                             })
 
     # Generate a datapoint and use the loaded model to produce an embedding for it
-    num = np.random.randint(1000, size=(1, 400))
+    num = np.random.randint(1000, size=(1, 28, 28))
     neighbors = indexer.find(num, 10)[0]
-    embedding = saved_model.predict({'text': num})
+    embedding = saved_model.predict(num)
 
     # Query the loaded index for the 10 nearest neighbors of the embedding
     temp_ids, temp_dists = saved_index.knnQuery(embedding, 10)
@@ -270,7 +274,7 @@ def test_save():
     index_dists = np.asarray([neighbor.distance for neighbor in neighbors])
     index_ids = np.asarray([neighbor.id for neighbor in neighbors])
 
-    indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
+    indexer_dataset_examples = indexer.dataset_examples
     indexer_dataset_labels = indexer.dataset_labels
 
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
@@ -295,8 +299,8 @@ def test_load():
 
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
-    indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
-    loaded_indexer_dataset_examples = loaded_indexer.dataset_examples[loaded_indexer.model_dict_key]
+    indexer_dataset_examples = indexer.dataset_examples
+    loaded_indexer_dataset_examples = loaded_indexer.dataset_examples
 
     indexer_dataset_labels = indexer.dataset_labels
     loaded_indexer_dataset_labels = loaded_indexer.dataset_labels
@@ -319,7 +323,7 @@ def test_add():
     num_embeddings = indexer.compute_num_embeddings()
 
     # Generate a datapoint and add it to the dataset examples and dataset labels
-    num = np.random.randint(1000, size=(400))
+    num = np.random.rand(28, 28)
     examples = np.concatenate((examples, np.asarray([num])))
     labels = np.append(labels, 0)
     
@@ -331,7 +335,7 @@ def test_add():
 
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
-    indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
+    indexer_dataset_examples = indexer.dataset_examples
     indexer_dataset_labels = indexer.dataset_labels
     indexer_num_embeddings = indexer.compute_num_embeddings()
 
@@ -357,7 +361,7 @@ def test_remove():
 
     # Remove the first datapoint in the dataset
     indexer.remove([0])
-    indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
+    indexer_dataset_examples = indexer.dataset_examples
     indexer_dataset_labels = indexer.dataset_labels
     label = labels[0]
     class_distribution[label] = class_distribution[label] - 1
@@ -370,7 +374,7 @@ def test_remove():
 
     # Remove the last datapoint in the dataset
     indexer.remove([len(indexer.dataset_labels) - 1])
-    indexer_dataset_examples = indexer.dataset_examples[indexer.model_dict_key]
+    indexer_dataset_examples = indexer.dataset_examples
     indexer_dataset_labels = indexer.dataset_labels
     label = labels[len(labels) - 1]
     class_distribution[label] = class_distribution[label] - 1
@@ -380,20 +384,6 @@ def test_remove():
     assert((indexer_dataset_labels == labels[1:-1]).all())
     assert(indexer.compute_class_distribution() == class_distribution)
     assert(num_embeddings == indexer.compute_num_embeddings())
-
-
-def test_compute_threhsolds():
-    """ Test case that asserts that the indexer correctly
-        computes the thresholds for similarity
-    """
-    # Build an indexer and compute the thresholds for similarity
-    indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = set_up()
-    indexer.build()
-    indexer.compute_thresholds()
-
-    delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
-
-    assert(indexer.thresholds[.1] == "possible")
 
 
 def test_get_info():
@@ -412,7 +402,7 @@ def test_get_info():
     delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
     assert(num_embeddings == len(examples))
-    assert(embedding_size == 4)
+    assert(embedding_size == 16)
     assert(class_distribution[0] == 25)
     assert(class_distribution[1] == 25)
 
@@ -434,7 +424,7 @@ def test_get_metrics():
     assert(avg_query_time == 0)
 
     # Generate multiple examples and query the indexer for the nearest neighbors
-    examples = np.random.randint(1000, size=(25, 400))
+    examples = np.random.rand(25, 28, 28)
     _ = indexer.find(items=examples,
                      num_neighbors=20,
                      is_embedding=False)
