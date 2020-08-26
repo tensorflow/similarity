@@ -183,7 +183,7 @@ def test_single_embedding_find():
     # Load the dataset from the test_data_set directory
     data_set = np.asarray(read_json_lines(dataset_examples_path))
 
-    # Build an indexer and find the 20 nearest neighbors of the first
+    # Build an indexer and find the 10 nearest neighbors of the first
     # embedding in the dataset
     indexer = Indexer(dataset_examples_path,
                       dataset_labels_path,
@@ -198,7 +198,7 @@ def test_single_embedding_find():
     index_dists = np.asarray([neighbor.distance for neighbor in neighbors])
     index_ids = np.asarray([neighbor.id for neighbor in neighbors])
 
-    # Get the ids and distances for the 20 closest embeddings in the dataset
+    # Get the ids and distances for the 10 closest embeddings in the dataset
     dists = np.asarray([(spatial.distance.cosine(i, data_set[0])) for i in data_set[:10]])
     ids = np.arange(10)
 
