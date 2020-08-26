@@ -353,7 +353,7 @@ class Indexer(object):
                                                 point in sorted_distances.
                 recall_scores (list(float)): A list containing the recall at each point 
                                              in sorted_distances.
-                f1_scores (list(float)): A list containing the f1 scoreat each point in 
+                f1_scores (list(float)): A list containing the f1 score at each point in 
                                          sorted_distances.
                 sorted_distance_values (list(float)): A list of distances between nearest 
                                                       neighbors and calibration examples 
@@ -413,7 +413,7 @@ class Indexer(object):
                                                 point in sorted_distances.
                 recall_scores (list(float)): A list containing the recall at each point 
                                              in sorted_distances.
-                f1_scores (list(float)): A list containing the f1 scoreat each point in 
+                f1_scores (list(float)): A list containing the f1 score at each point in 
                                          sorted_distances.
                 metric_rounding (int): The number of decimals to use when rounding 
                                        computed metrics.
@@ -427,7 +427,7 @@ class Indexer(object):
             Returns:
                 thresholds (dict): A dict containing a list of thresholds, as well as 
                                    precision, recall and f1 scores at each threshold.
-                labels (dict): A dict containing similarity label mapping to their 
+                labels (dict): A dict containing similarity labels mapping to their 
                                corresponding distance threshold.
                 binary_threshold (float): The saddle point of the F1 curve. This 
                                           thresholds splits the calibration results
@@ -451,8 +451,8 @@ class Indexer(object):
             precision = round(precision_scores[idx], metric_rounding)
             recall = round(recall_scores[idx], metric_rounding)
 
+            # Perform threshold binning
             if precision != curr_precision:
-                # Perform threshold binning
                 thresholds['precision'].append(precision)
                 thresholds['recall'].append(recall)
                 thresholds['f1'].append(f1)
@@ -515,7 +515,7 @@ class Indexer(object):
                             unit='class matches')
 
         # Query the index for the nearest neighbors
-        neighbors = self.find(examples, num_neighbors=10, is_embedding=False)
+        neighbors = self.find(examples, num_neighbors=10)
 
         # Compute class matches and distances for all nearest neighbors
         for neighbor_list in neighbors:

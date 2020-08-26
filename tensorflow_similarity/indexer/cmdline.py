@@ -16,7 +16,6 @@ import os
 import json
 import argparse
 from tensorflow_similarity.indexer.indexer import Indexer
-import tensorflow as tf
 
 def arg_is_valid_dir(parser, arg):
     if not os.path.exists(arg):
@@ -42,12 +41,7 @@ def main():
                       dataset_original_path=indexer_config.get("original"),
                       space=indexer_config.get("space", "cosinesimil"))
     indexer.build(verbose=indexer_config.get("verbose", 1))
-    #indexer.save(indexer_config.get("save_dir"))
-    
-    _, (x_test, y_test) = tf.keras.datasets.mnist.load_data()
-    x_test = tf.constant(x_test / 255.0).numpy()
-
-    indexer.calibrate(x_test[5000:], y_test[5000:])
+    indexer.save(indexer_config.get("save_dir"))
 
 if __name__ == "__main__":
     main()
