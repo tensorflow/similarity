@@ -448,11 +448,12 @@ def test_calibration():
 
     # Perform calibration
     thresholds = indexer.calibrate(examples, labels)['thresholds']
-    calibrated = True
+    threshold_distances = thresholds['distance']
+    thresholds_precision = thresholds['precision']
+    thresholds_recall = thresholds['recall']
+    thresholds_f1 = thresholds['f1']
 
-    for idx in range(len(thresholds['distance']) - 1):
-        if thresholds['distance'][idx] > thresholds['distance'][idx + 1]:
-            calibrated = False
-            break
-
-    assert(calibrated)
+    assert(np.all(np.diff(threshold_distances) >= 0))
+    assert(len(thresholds_precision) == len(threshold_distances))
+    assert(len(thresholds_recall) == len(threshold_distances))
+    assert(len(thresholds_f1) == len(threshold_distances))

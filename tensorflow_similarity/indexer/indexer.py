@@ -19,6 +19,7 @@ from tensorflow_addons.losses import TripletHardLoss
 import numpy as np
 from numpy.random import default_rng
 import matplotlib.pyplot as plt
+import itertools
 import os
 import time
 import collections
@@ -334,7 +335,7 @@ class Indexer(object):
     def __compute_calibration_metrics(
         self,
         distances,
-        matching_idxes,
+        class_matches,
         num_total_match
     ):
         """ Calculate calibration Precision at R, Recall and F1
@@ -342,9 +343,9 @@ class Indexer(object):
             Args:
                 distances (np.ndarray): The distances between calibration examples 
                                         and their nearest neighbors.
-                matching_idxes (np.ndarray): The indices in the calibration examples
-                                             where the classes of the nearest neighbors 
-                                             match.
+                class_matches (np.ndarray): A list of bool indicating whether the nearest
+                                            neighbors for each calibration example is the
+                                            same class.
                 num_total_match (int): The total number of nearest neighbors that belong
                                        to the same class.
 
@@ -355,9 +356,6 @@ class Indexer(object):
                                              in sorted_distances.
                 f1_scores (list(float)): A list containing the f1 score at each point in 
                                          sorted_distances.
-                sorted_distance_values (list(float)): A list of distances between nearest 
-                                                      neighbors and calibration examples 
-                                                      sorted in ascending order.
         """
         match_rate = 0
         precision_scores = []
@@ -365,32 +363,27 @@ class Indexer(object):
         f1_scores = []
         sorted_distance_values = []
         count = 0
+        distances_argsort = np.argsort(distances)
 
         # Compute r precision, recall and f1
-        for pos, idx in enumerate(np.argsort(distances)):
+        for pos, (idx, class_match) in enumerate(zip(distances_argsort, class_matches)):
             distance_value = distances[idx]
-
-            # Remove distance with self
-            if not round(distance_value, 4):
-                continue
-                
             count += 1
-            if idx in matching_idxes:
+
+            if class_match:
                 match_rate += 1
-            
+        
             # Calculate precision at pos, recall at pos,
             # and f1 at pos
-            precision = match_rate / (count)
+            precision = match_rate / count
             recall = match_rate / num_total_match
             f1 = (precision * recall  / (precision + recall)) * 2
 
             precision_scores.append(precision)
             recall_scores.append(recall)
             f1_scores.append(f1)
-
-            sorted_distance_values.append(distance_value)
         
-        return precision_scores, recall_scores, f1_scores, sorted_distance_values
+        return precision_scores, recall_scores, f1_scores
 
 
     def __compute_calibration_thresholds(
@@ -399,7 +392,7 @@ class Indexer(object):
         precision_scores,
         recall_scores,
         f1_scores,
-        metric_rounding,
+        decimals,
         very_likely_threshold,
         likely_threshold,
         possible_threshold
@@ -415,8 +408,7 @@ class Indexer(object):
                                              in sorted_distances.
                 f1_scores (list(float)): A list containing the f1 score at each point in 
                                          sorted_distances.
-                metric_rounding (int): The number of decimals to use when rounding 
-                                       computed metrics.
+                decimals (int): The number of decimals to use when rounding computed metrics.
                 very_likely_threshold (float): The threshold at which items should be
                                                considered very likely to be similar.
                 likely_threshold (float): The threshold at which items should be considered 
@@ -439,17 +431,16 @@ class Indexer(object):
         curr_precision = 1.1
 
         labels = {}
-        num_distances = len(sorted_distances)
+        num_distances = len(sorted_distances) - 1
 
         # Normalize the labels and compute thresholds
-        for ridx in range(num_distances):
-            idx = num_distances - ridx - 1
+        for idx in range(num_distances, -1, -1):
             f1 = f1_scores[idx] 
             distance = sorted_distances[idx]  
             
             # Round precision and recall
-            precision = round(precision_scores[idx], metric_rounding)
-            recall = round(recall_scores[idx], metric_rounding)
+            precision = round(precision_scores[idx], decimals)
+            recall = round(recall_scores[idx], decimals)
 
             # Perform threshold binning
             if precision != curr_precision:
@@ -467,9 +458,12 @@ class Indexer(object):
                 elif precision >= possible_threshold:
                     labels['possible'] = distance
 
-        # Compute the optimal thresholding distance
+        # Compute the optimal thresholding distance which is the 
+        # saddle point on the f1 curve
         binary_threshold = thresholds['distance'][np.argmax(thresholds['f1'])]
 
+        # Reverse the metrics and distnaces in thresholds since they are currently in 
+        # ascending order 0.01, 0.02,... -> 0.99, 0.98,...
         for v in thresholds.values():
             v.reverse()
 
@@ -483,7 +477,8 @@ class Indexer(object):
         very_likely_threshold=0.9, 
         likely_threshold=0.8,
         possible_threshold=0.7, 
-        metric_rounding=2
+        decimals=2,
+        num_neighbors=10,
     ):
         """ Calibrate indexer and compute threshold distances for similarity.
 
@@ -491,59 +486,57 @@ class Indexer(object):
                 examples (np.ndarray): The examples that calibration should be
                                        performed on.
                 labels (np.ndarray): The labels corresponding to the examples.
-                very_likely_threshold (float): The threshold for which items should be
+                very_likely_threshold (float): The precision at which items should be
                                                considered very likely to be similar.
                                                Should be between 0 and 1. Defaults to 0.9.
-                likely_threshold (float): The threshold for which items should be considered 
+                likely_threshold (float): The precision at which items should be considered 
                                           likely to be similar. Should be between 0 and 1. 
-                                          Defaults to 0.9.
-                possible_threshold (float): The threshold for which items should be considered
+                                          Defaults to 0.8.
+                possible_threshold (float): The precision at which items should be considered
                                             to possibly be similar. Should be between 0 and 1.
-                                            Defaults to 0.1.
-                metric_rounding (int): The number of decimals to use when rounding 
-                                       computed metrics. Defaults to 2.
+                                            Defaults to 0.7.
+                decimals (int): The number of decimals to use when rounding computed metrics.
+                                Defaults to 2.
+                num_neighbors (int): The number of neighbors that should be used for calibration.
+                                     Defaults to 10.
 
             Returns:
-                calibration (dict): A dictionary containing similarity thresholds, the binary
-                                    threshold, and the similarity labels and distances.
+                calibration (dict): A dictionary containing a dictionary of distance, f1 scores,
+                                    precision scores and recall scores at each threshold, the 
+                                    binary threshold, and a dictionary of the labeled similarity
+                                    thresholds and their distances.
         """
-        distances = []
-        same_class = []
-        label_idx = 0
-        progress_bar = tqdm(total=len(examples) * 10,
-                            desc='Computing class matches',
-                            unit='class matches')
-
         # Query the index for the nearest neighbors
-        neighbors = self.find(examples, num_neighbors=10)
+        neighbors = self.find(examples, num_neighbors=num_neighbors)
+        flatten = itertools.chain.from_iterable
+        flattened_neighbors = list(flatten(neighbors))
 
-        # Compute class matches and distances for all nearest neighbors
-        for neighbor_list in neighbors:
-            for neighbor in neighbor_list:
-                if neighbor.label == labels[label_idx]:
-                    same_class.append(True)
-                else:
-                    same_class.append(False)
-                distances.append(neighbor.distance)
-                progress_bar.update()
-            label_idx += 1
-        progress_bar.close()
+        # Get distances for all nearest neighbors
+        distances = list(map(lambda neighbor: neighbor.distance, flattened_neighbors))
+        sorted_distances = sorted(distances)
+
+        # Get labels for all nearest neighbors
+        neighbor_labels = list(map(lambda neighbor: neighbor.label, flattened_neighbors))
+
+        # Get the nearest neighbors where the label is correct
+        true_labels = np.repeat(labels, num_neighbors)
+        class_matches = true_labels == neighbor_labels
         
         # Find the indeces of all matches and the total number of matches
-        matching_idxes = np.argwhere(same_class)
-        num_total_match = sum(same_class)
+        #matching_idxes = np.argwhere(class_matches)
+        num_total_match = sum(class_matches)
 
         #  Compute r precision, f1 and recall for all neighbors
-        precision_scores, recall_scores, f1_scores, sorted_distances = self.__compute_calibration_metrics(distances,
-                                                                                                          matching_idxes,
-                                                                                                          num_total_match)
+        precision_scores, recall_scores, f1_scores = self.__compute_calibration_metrics(distances,
+                                                                                        class_matches,
+                                                                                        num_total_match)
     
         # Compute similarity thresholds and normalize labels
         thresholds, labels, binary_threshold = self.__compute_calibration_thresholds(sorted_distances,
                                                                                      precision_scores,
                                                                                      recall_scores,
                                                                                      f1_scores,
-                                                                                     metric_rounding,
+                                                                                     decimals,
                                                                                      very_likely_threshold,
                                                                                      likely_threshold,
                                                                                      possible_threshold)
