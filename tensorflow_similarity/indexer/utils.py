@@ -17,7 +17,7 @@ import numpy as np
 import jsonlines
 from collections.abc import Iterable
 
-def load_packaged_dataset(dataset, dataset_labels,):
+def load_packaged_dataset(dataset, dataset_labels):
     """ load a dataset from json lines files
     
         Args:
