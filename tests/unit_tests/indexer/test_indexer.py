@@ -38,22 +38,28 @@ Neighbor = collections.namedtuple("Neighbor",
                                    "data",
                                    "distance",
                                    "label"])
-num_calibration_neighbors = 5
-num_calibration_examples = 4
+NUM_CALIBRATION_NEIGHBORS = 5
+NUM_CALIBRATION_EXAMPLES = 4
+
+
 class IndexerTestCase(unittest.TestCase):
 
     def generate_mock(self):
         """ Generate a list of neighbors for mocking
         """
         neighbors = []
-        for i in range(num_calibration_examples):
+        for i in range(NUM_CALIBRATION_EXAMPLES):
             neighbor_list = []
-            for j in range(num_calibration_neighbors):
+            for j in range(NUM_CALIBRATION_NEIGHBORS):
+                # id and data do not matter for calibration
                 neighbor_id = np.int32(j)
                 neighbor_data = np.asarray([i, j])
+                # Generate increasing distances for each nearest
+                # neighbor list
                 neighbor_distance = np.float32(.234 + j / 25)
 
-                if j < 4:
+                # Generate 1 incorrect label
+                if j < NUM_CALIBRATION_EXAMPLES:
                     neighbor_label = np.int64(i + 1)
                 else:
                     neighbor_label = np.int64(i)
@@ -62,7 +68,9 @@ class IndexerTestCase(unittest.TestCase):
                                         data=neighbor_data,
                                         distance=neighbor_distance,
                                         label=neighbor_label)
+
                 neighbor_list.append(neighbor_mock)
+
             neighbors.append(neighbor_list)
 
         return neighbors
@@ -490,7 +498,9 @@ class IndexerTestCase(unittest.TestCase):
 
         # Build an indexer and perform calibration
         with patch.object(Indexer, "find", return_value=self.generate_mock()) as indexer_find_mock:
-            calibration = indexer.calibrate(examples[:num_calibration_examples], labels[:num_calibration_examples], num_neighbors=num_calibration_neighbors)
+            calibration = indexer.calibrate(examples[:NUM_CALIBRATION_EXAMPLES],
+                                            labels[:NUM_CALIBRATION_EXAMPLES],
+                                            num_neighbors=NUM_CALIBRATION_NEIGHBORS)
 
         thresholds = calibration['thresholds']
         threshold_distances = np.asarray(thresholds['distance'])
@@ -500,10 +510,27 @@ class IndexerTestCase(unittest.TestCase):
         binary_threshold = calibration['binary_threshold']
         similarity_labels = calibration['labels']
 
-        true_precision = np.asarray([1.0, 0.8, 0.83, 0.86, 0.88, 0.89, 0.8, 0.82, 0.83, 0.85, 0.86, 0.8, 0.81, 0.82, 0.83, 0.84, 0.8])
-        true_recall = np.asarray([0.25, 0.25, 0.31, 0.38, 0.44, 0.5, 0.5, 0.56, 0.62, 0.69, 0.75, 0.75, 0.81, 0.88, 0.94, 1.0, 1.0])
-        true_f1 = np.asarray([0.4, 0.38095238095238093, 0.45454545454545453, 0.5217391304347825, 0.5833333333333334, 0.64, 0.6153846153846154, 0.6666666666666666, 0.7142857142857143, 0.7586206896551724, 0.7999999999999999, 0.7741935483870969, 0.8125, 0.8484848484848485, 0.8823529411764706, 0.9142857142857143, 0.888888888888889])
-        true_distances = np.asarray([0.234, 0.274, 0.274, 0.274, 0.274, 0.314, 0.314, 0.314, 0.314, 0.354, 0.354, 0.354, 0.354, 0.394, 0.394, 0.394, 0.394]).astype('float32')
+        true_precision = np.asarray([
+            1.0, 0.8, 0.83, 0.86, 0.88, 0.89, 0.8,
+            .82, 0.83, 0.85, 0.86, 0.8, 0.81, 0.82,
+            0.83, 0.84, 0.8])
+
+        true_recall = np.asarray([
+            0.25, 0.25, 0.31, 0.38, 0.44, 0.5, 0.5, 0.56,
+            0.62, 0.69, 0.75, 0.75, 0.81, 0.88, 0.94, 1.0, 1.0])
+
+        true_f1 = np.asarray([
+            0.4, 0.38095238095238093, 0.45454545454545453, 0.5217391304347825,
+            0.5833333333333334, 0.64, 0.6153846153846154, 0.6666666666666666,
+            0.7142857142857143, 0.7586206896551724, 0.7999999999999999,
+            0.7741935483870969, 0.8125, 0.8484848484848485, 0.8823529411764706,
+            0.9142857142857143, 0.888888888888889])
+
+        true_distances = np.asarray([
+            0.234, 0.274, 0.274, 0.274, 0.274, 0.314, 0.314,
+            0.314, 0.314, 0.354, 0.354, 0.354, 0.354, 0.394,
+            0.394, 0.394, 0.394]).astype('float32')
+
         true_similarity_labels = {
             'very_likely': np.float32(0.234),
             'likely': np.float32(0.274),
