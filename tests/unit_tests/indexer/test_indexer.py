@@ -100,12 +100,10 @@ class IndexerTestCase(unittest.TestCase):
         dataset_labels_path = os.path.abspath(tmp_file_labels)
         model_path = os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/MNIST_model")
         index_dir = temp_dir
-        thresholds = {"likely": 1}
 
         indexer = Indexer(dataset_examples_path,
                         dataset_labels_path,
-                        model_path,
-                        thresholds=thresholds)
+                        model_path)
 
         return indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir
 
@@ -352,7 +350,6 @@ class IndexerTestCase(unittest.TestCase):
 
         assert((indexer_dataset_examples == loaded_indexer_dataset_examples).all())
         assert((indexer_dataset_labels == loaded_indexer_dataset_labels).all())
-        assert(indexer.thresholds == loaded_indexer.thresholds)
 
 
     def test_add(self):
@@ -560,10 +557,10 @@ class IndexerTestCase(unittest.TestCase):
                                             num_neighbors=NUM_CALIBRATION_NEIGHBORS)
         
         distances = np.asarray(calibration['thresholds']['distance'])
-        precision = calibration['thresholds']['precision']
+        precisions = calibration['thresholds']['precision']
 
         # Compute the similarity labels
-        labels = indexer.compute_labels(precision, distances)
+        labels = indexer.compute_labels(precisions, distances)
 
         true_labels = {
             'very_likely': np.float32(0.08),
