@@ -331,10 +331,7 @@ class Indexer(object):
         }
 
 
-    def __compute_calibration_metrics(
-        self,
-        class_matches,
-    ):
+    def __compute_calibration_metrics(self, class_matches):
         """ Calculate calibration Precision at R, Recall and F1
 
             Args:
@@ -512,10 +509,10 @@ class Indexer(object):
         """ Compute similarity labels and their thresholdss
 
             Args:
-                distances (np.ndarray): A list of distances between nearest neighbors 
-                                        and calibration examples sorted in ascending order.
                 precisions (list(float)): A list containing the precisions at each 
                                           point in distances.
+                distances (np.ndarray): A list of distances between nearest neighbors 
+                                        and calibration examples sorted in ascending order.
                 very_likely_threshold (float): The precision at which items should be
                                                considered very likely to be similar.
                                                Should be between 0 and 1. Defaults to 0.9.
@@ -537,6 +534,7 @@ class Indexer(object):
         labels = {'very_likely': -1, 'likely': -1, 'possible': -1}
         curr_precision = 1.1
 
+        # Find the smallest distance in each threshold range
         for idx in range(len(distances) - 1, -1, -1):
             distance = distances[idx]
             
