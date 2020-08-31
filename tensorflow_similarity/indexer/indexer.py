@@ -518,7 +518,7 @@ class Indexer(object):
         # Get the nearest neighbors where the label is correct
         true_labels = np.repeat(labels, num_neighbors)
         class_matches = true_labels == neighbor_labels
-        
+
         # Find the indeces of all matches and the total number of matches
         num_total_match = sum(class_matches)
 
