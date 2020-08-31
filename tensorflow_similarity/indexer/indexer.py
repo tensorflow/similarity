@@ -520,8 +520,8 @@ class Indexer(object):
         for idx in range(len(distances) - 1, -1, -1):
             distance = distances[idx]
             
-            # Round precision
-            precision = round(precisions[idx], decimals)
+            # Take floor of precision to specified number of decimals
+            precision = int(precisions[idx] * (10 ** decimals)) / 10 ** decimals 
 
             # Update label threshold
             if precision != curr_precision:
