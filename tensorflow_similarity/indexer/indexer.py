@@ -53,8 +53,6 @@ class Indexer(object):
             space (string): The space (a space is a combination of data and the distance) to use in the indexer
                             for a list of available spaces see: https://github.com/nmslib/nmslib/blob/master/manual/spaces.md.
                             Defaults to "cosinesimil".
-            thresholds (dict): A dictionary mapping likeliness labels to thresholds. Defaults to None.
-                               i.e. {.001: "very likely", .01: "likely", .1: "possible"}
 
         Attributes:
             embedding_size (int): The size of the embeddings stored by the indexer.
@@ -69,7 +67,6 @@ class Indexer(object):
         model_path,
         dataset_original_path=None,
         space="cosinesimil",
-        thresholds=None
     ):
         self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf, 'TripletHardLoss': TripletHardLoss})
         self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path,
@@ -81,11 +78,6 @@ class Indexer(object):
             self.dataset_original = np.asarray(read_json_lines(dataset_original_path))
         else:
             self.dataset_original = self.dataset_examples
-
-        if thresholds is not None:
-            self.thresholds = thresholds
-        else:
-            self.thresholds = dict()
 
 
     def build(self, verbose=0, rebuild_index=False, loaded_index=False):
@@ -182,10 +174,6 @@ class Indexer(object):
         dataset_original_examples = self.dataset_original
         write_json_lines(original_examples_path, dataset_original_examples)
 
-        # Save the thresholds
-        thresholds_path = os.path.join(index_dir, "thresholds.jsonl")
-        write_json_lines_dict(thresholds_path, self.thresholds)
-
         # Save the model
         self.model.save(os.path.join(index_dir, "model"), save_format="tf2")
 
@@ -204,13 +192,11 @@ class Indexer(object):
         dataset_original_path = os.path.join(path, "original_examples.jsonl")
         dataset_labels_path = os.path.join(path, "labels.jsonl")
         model_path = os.path.join(path, "model")
-        thresholds = read_json_lines(os.path.join(path, "thresholds.jsonl"))[0]
 
         indexer = cls(dataset_examples_path=dataset_examples_path,
                       dataset_original_path=dataset_original_path,
                       dataset_labels_path=dataset_labels_path,
-                      model_path=model_path,
-                      thresholds=thresholds)
+                      model_path=model_path)
         indexer.index.loadIndex(os.path.join(path, "index"), True)
         indexer.index.createIndex()
         indexer.build(loaded_index=True)
@@ -450,6 +436,8 @@ class Indexer(object):
         num_neighbors=10,
     ):
         """ Calibrate indexer and compute threshold distances for similarity.
+            Calibration reduces multi class classification to binary classification
+            and requires a reasonably good model to work properly.
 
             Args:
                 examples (np.ndarray): The examples that calibration should be
@@ -501,9 +489,7 @@ class Indexer(object):
         self,
         precisions,
         distances,
-        very_likely_threshold=0.9, 
-        likely_threshold=0.8,
-        possible_threshold=0.7,
+        label_thresholds,
         decimals=2
     ):
         """ Compute similarity labels and their thresholdss
@@ -513,15 +499,10 @@ class Indexer(object):
                                           point in distances.
                 distances (np.ndarray): A list of distances between nearest neighbors 
                                         and calibration examples sorted in ascending order.
-                very_likely_threshold (float): The precision at which items should be
-                                               considered very likely to be similar.
-                                               Should be between 0 and 1. Defaults to 0.9.
-                likely_threshold (float): The precision at which items should be considered 
-                                          likely to be similar. Should be between 0 and 1. 
-                                          Defaults to 0.8.
-                possible_threshold (float): The precision at which items should be considered
-                                            to possibly be similar. Should be between 0 and 1.
-                                            Defaults to 0.7.
+                label_thresholds (dict): A dictionary of precisions mapping to their respective
+                                         thresholds. In the example {0.9: 'very_likely',0.8: 'likely'}
+                                         items would be considered very_likely to be similar
+                                         at precision 0.9.
                 decimals (int): The number of decimals to use when rounding computed metrics.
                                 Defaults to 2.
 
@@ -531,7 +512,8 @@ class Indexer(object):
                                there exists no distance that lies in the distance threshold
                                range for that label.
         """
-        labels = {'very_likely': -1, 'likely': -1, 'possible': -1}
+        # Initialize thresholds for all labels as -1
+        labels = {v: -1 for _, v in label_thresholds.items()}
         curr_precision = 1.1
 
         # Find the smallest distance in each threshold range
@@ -541,13 +523,16 @@ class Indexer(object):
             # Round precision
             precision = round(precisions[idx], decimals)
 
+            # Update label threshold
             if precision != curr_precision:
-                # Update label threshold
-                if precision >= very_likely_threshold:
-                    labels['very_likely'] = distance
-                elif precision >= likely_threshold:
-                    labels['likely'] = distance
-                elif precision >= possible_threshold:
-                    labels['possible'] = distance
+                # Get the highest threshold value in label_thresholds less than precision
+                max_threshold = max(k for k in label_thresholds if k <= precision)
+
+                # Get the label associated with the threshold value
+                max_threshold_label = label_thresholds[max_threshold]
+
+                # Update labels
+                labels[max_threshold_label] = distance
+                curr_precision = precision
 
         return labels
