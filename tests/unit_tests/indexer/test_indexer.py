@@ -58,7 +58,8 @@ class IndexerTestCase(unittest.TestCase):
                 # neighbor list
                 neighbor_distance = np.float32(.234 + j / 25)
 
-                # Generate 1 incorrect label
+                # Generate NUM_CALIBRATION_EXAMPLES - 1 correct labels
+                # and 1 incorrect label
                 if j < NUM_CALIBRATION_EXAMPLES:
                     neighbor_label = np.int64(i + 1)
                 else:
