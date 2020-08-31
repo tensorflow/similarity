@@ -56,7 +56,7 @@ class IndexerTestCase(unittest.TestCase):
                 neighbor_data = np.asarray([i, j])
                 # Generate increasing distances for each nearest
                 # neighbor list
-                neighbor_distance = np.float32(.234 + j / 25)
+                neighbor_distance = np.float32(i / 16 + j / 25)
 
                 # Generate NUM_CALIBRATION_EXAMPLES - 1 correct labels
                 # and 1 incorrect label
@@ -509,38 +509,66 @@ class IndexerTestCase(unittest.TestCase):
         thresholds_recall = thresholds['recall']
         thresholds_f1 = thresholds['f1']
         binary_threshold = calibration['binary_threshold']
-        similarity_labels = calibration['labels']
 
         true_precision = np.asarray([
-            1.0, 0.8, 0.83, 0.86, 0.88, 0.89, 0.8,
-            .82, 0.83, 0.85, 0.86, 0.8, 0.81, 0.82,
-            0.83, 0.84, 0.8])
+            1.0, 0.8, 0.83, 0.86, 0.88, 0.89, 0.8, 0.82,
+            0.83, 0.85, 0.86, 0.8, 0.81, 0.82, 0.83, 0.84, 0.8])
 
-        true_recall = np.asarray([
-            0.25, 0.25, 0.31, 0.38, 0.44, 0.5, 0.5, 0.56,
-            0.62, 0.69, 0.75, 0.75, 0.81, 0.88, 0.94, 1.0, 1.0])
+        true_recall = np.asarray([0.25, 0.25, 0.31, 0.38, 0.44,
+            0.5, 0.5, 0.56, 0.62, 0.69, 0.75, 0.75, 0.81, 0.88, 
+            0.94, 1.0, 1.0])
 
-        true_f1 = np.asarray([
-            0.4, 0.38095238095238093, 0.45454545454545453, 0.5217391304347825,
-            0.5833333333333334, 0.64, 0.6153846153846154, 0.6666666666666666,
-            0.7142857142857143, 0.7586206896551724, 0.7999999999999999,
-            0.7741935483870969, 0.8125, 0.8484848484848485, 0.8823529411764706,
-            0.9142857142857143, 0.888888888888889])
+        true_f1 = np.asarray([0.4, 0.38095238095238093,
+            0.45454545454545453, 0.5217391304347825,
+            0.5833333333333334, 0.64, 0.6153846153846154,
+            0.6666666666666666, 0.7142857142857143,
+            0.7586206896551724, 0.7999999999999999,
+            0.7741935483870969, 0.8125, 0.8484848484848485,
+            0.8823529411764706, 0.9142857142857143,
+            0.888888888888889])
 
-        true_distances = np.asarray([
-            0.234, 0.274, 0.274, 0.274, 0.274, 0.314, 0.314,
-            0.314, 0.314, 0.354, 0.354, 0.354, 0.354, 0.394,
-            0.394, 0.394, 0.394]).astype('float32')
+        true_distances = np.asarray([0.08, 0.1025, 0.12,
+            0.125, 0.1425, 0.16, 0.165, 0.1825, 0.1875,
+            0.205, 0.2225, 0.2275, 0.245, 0.2675, 0.285,
+            0.3075, 0.3475]).astype('float32')
 
-        true_similarity_labels = {
-            'very_likely': np.float32(0.234),
-            'likely': np.float32(0.274),
-            'possible': -1
-        }
-
-        assert(binary_threshold == np.float32(0.394))
+        assert(binary_threshold == np.float32(0.3075))
         assert((thresholds_precision == true_precision).all())
         assert((thresholds_recall == true_recall).all())
         assert((thresholds_f1 == true_f1).all())
         assert((threshold_distances == true_distances).all())
-        assert(true_similarity_labels == similarity_labels)
+
+
+    def test_compute_labels(self):
+        """ Test case that asserts that the indexer correctly
+            computes similarity labels.
+        """
+        dataset_examples_path = os.path.abspath("test_data_set/data.json")
+        dataset_labels_path = os.path.abspath("test_data_set/labels.json")
+        model_path = os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/MNIST_model")
+        indexer = Indexer(dataset_examples_path,
+                        dataset_labels_path,
+                        model_path)
+
+        # Load the dataset from the test_data_set directory
+        examples, labels = load_packaged_dataset(dataset_examples_path, dataset_labels_path)
+
+        # Build an indexer and perform calibration
+        with patch.object(Indexer, "find", return_value=self.generate_mock()) as indexer_find_mock:
+            calibration = indexer.calibrate(examples[:NUM_CALIBRATION_EXAMPLES],
+                                            labels[:NUM_CALIBRATION_EXAMPLES],
+                                            num_neighbors=NUM_CALIBRATION_NEIGHBORS)
+        
+        distances = np.asarray(calibration['thresholds']['distance'])
+        precision = calibration['thresholds']['precision']
+
+        # Compute the similarity labels
+        labels = indexer.compute_labels(precision, distances)
+
+        true_labels = {
+            'very_likely': np.float32(0.08),
+            'likely': np.float32(0.1025),
+            'possible': -1
+        }
+
+        assert(labels == true_labels)

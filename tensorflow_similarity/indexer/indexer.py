@@ -23,7 +23,6 @@ import itertools
 import os
 import time
 import collections
-from tqdm.auto import tqdm
 from tensorflow_similarity.indexer.utils import (load_packaged_dataset,
                                                  read_json_lines,
                                                  write_json_lines,
@@ -335,7 +334,6 @@ class Indexer(object):
     def __compute_calibration_metrics(
         self,
         class_matches,
-        num_total_match
     ):
         """ Calculate calibration Precision at R, Recall and F1
 
@@ -343,8 +341,6 @@ class Indexer(object):
                 class_matches (np.ndarray): A list of bool indicating whether the nearest
                                             neighbors for each calibration example is the
                                             same class.
-                num_total_match (int): The total number of nearest neighbors that belong
-                                       to the same class.
 
             Returns:
                 precision_scores (list(float)): A list containing the precisions at each 
@@ -354,23 +350,26 @@ class Indexer(object):
                 f1_scores (list(float)): A list containing the f1 score at each point in 
                                          sorted_distances.
         """
-        match_rate = 0
+        correct_matches = 0
         precision_scores = []
         recall_scores = []
         f1_scores = []
         count = 0
+
+        # Find the total number of matches
+        num_total_match = sum(class_matches)
 
         # Compute r precision, recall and f1
         for class_match in class_matches:
             count += 1
 
             if class_match:
-                match_rate += 1
+                correct_matches += 1
         
             # Calculate precision at pos, recall at pos,
             # and f1 at pos
-            precision = match_rate / count
-            recall = match_rate / num_total_match
+            precision = correct_matches / count
+            recall = correct_matches / num_total_match
             f1 = (precision * recall  / (precision + recall)) * 2
 
             precision_scores.append(precision)
@@ -386,10 +385,7 @@ class Indexer(object):
         precision_scores,
         recall_scores,
         f1_scores,
-        decimals,
-        very_likely_threshold,
-        likely_threshold,
-        possible_threshold
+        decimals
     ):
         """ Calculate thresholds and normalized similarity labels
 
@@ -403,18 +399,10 @@ class Indexer(object):
                 f1_scores (list(float)): A list containing the f1 score at each point in 
                                          sorted_distances.
                 decimals (int): The number of decimals to use when rounding computed metrics.
-                very_likely_threshold (float): The precision at which items should be
-                                               considered very likely to be similar.
-                likely_threshold (float): The precision at which items should be considered 
-                                          likely to be similar.
-                possible_threshold (float): The precision at which items should be considered
-                                            to possibly be similar.
 
             Returns:
                 thresholds (dict): A dict containing a list of thresholds, as well as 
                                    precision, recall and f1 scores at each threshold.
-                labels (dict): A dict containing similarity labels mapping to their 
-                               corresponding distance threshold.
                 binary_threshold (float): The saddle point of the F1 curve. This 
                                           thresholds splits the calibration results
                                           into the same class and not the same class.
@@ -423,8 +411,6 @@ class Indexer(object):
         thresholds = defaultdict(list)
         rows = []
         curr_precision = 1.1
-
-        labels = {'very_likely': -1, 'likely': -1, 'possible': -1}
         num_distances = len(sorted_distances)
 
         # Normalize the labels and compute thresholds
@@ -446,14 +432,6 @@ class Indexer(object):
                 thresholds['distance'].append(distance)
                 curr_precision = precision
 
-                # Update label threshold
-                if precision >= very_likely_threshold:
-                    labels['very_likely'] = distance
-                elif precision >= likely_threshold:
-                    labels['likely'] = distance
-                elif precision >= possible_threshold:
-                    labels['possible'] = distance
-
         # Compute the optimal thresholding distance which is the 
         # saddle point on the f1 curve
         binary_threshold = thresholds['distance'][np.argmax(thresholds['f1'])]
@@ -464,16 +442,13 @@ class Indexer(object):
         for v in thresholds.values():
             v.reverse()
 
-        return thresholds, labels, binary_threshold
+        return thresholds, binary_threshold
 
 
     def calibrate(
         self, 
         examples, 
         labels, 
-        very_likely_threshold=0.9, 
-        likely_threshold=0.8,
-        possible_threshold=0.7, 
         decimals=2,
         num_neighbors=10,
     ):
@@ -483,25 +458,13 @@ class Indexer(object):
                 examples (np.ndarray): The examples that calibration should be
                                        performed on.
                 labels (np.ndarray): The labels corresponding to the examples.
-                very_likely_threshold (float): The precision at which items should be
-                                               considered very likely to be similar.
-                                               Should be between 0 and 1. Defaults to 0.9.
-                likely_threshold (float): The precision at which items should be considered 
-                                          likely to be similar. Should be between 0 and 1. 
-                                          Defaults to 0.8.
-                possible_threshold (float): The precision at which items should be considered
-                                            to possibly be similar. Should be between 0 and 1.
-                                            Defaults to 0.7.
-                decimals (int): The number of decimals to use when rounding computed metrics.
-                                Defaults to 2.
                 num_neighbors (int): The number of neighbors that should be used for calibration.
                                      Defaults to 10.
 
             Returns:
                 calibration (dict): A dictionary containing a dictionary of distance, f1 scores,
-                                    precision scores and recall scores at each threshold, the 
-                                    binary threshold, and a dictionary of the labeled similarity
-                                    thresholds and their distances.
+                                    precision scores and recall scores at each threshold, and the 
+                                    binary threshold.
         """
         # Query the index for the nearest neighbors
         neighbors = self.find(examples, num_neighbors=num_neighbors)
@@ -519,27 +482,74 @@ class Indexer(object):
         true_labels = np.repeat(labels, num_neighbors)
         class_matches = true_labels == neighbor_labels
 
-        # Find the indeces of all matches and the total number of matches
-        num_total_match = sum(class_matches)
-
         #  Compute r precision, f1 and recall for all neighbors
-        precision_scores, recall_scores, f1_scores = self.__compute_calibration_metrics(class_matches,
-                                                                                        num_total_match)
+        precision_scores, recall_scores, f1_scores = self.__compute_calibration_metrics(class_matches)
     
         # Compute similarity thresholds and normalize labels
-        thresholds, labels, binary_threshold = self.__compute_calibration_thresholds(sorted_distances,
+        thresholds, binary_threshold = self.__compute_calibration_thresholds(sorted_distances,
                                                                                      precision_scores,
                                                                                      recall_scores,
                                                                                      f1_scores,
-                                                                                     decimals,
-                                                                                     very_likely_threshold,
-                                                                                     likely_threshold,
-                                                                                     possible_threshold)
+                                                                                     decimals)
 
         calibration = {
             "binary_threshold": binary_threshold,
             "thresholds": thresholds,
-            "labels": labels
         }
 
         return calibration
+
+
+    def compute_labels(
+        self,
+        precisions,
+        distances,
+        very_likely_threshold=0.9, 
+        likely_threshold=0.8,
+        possible_threshold=0.7,
+        decimals=2
+    ):
+        """ Compute similarity labels and their thresholdss
+
+            Args:
+                distances (np.ndarray): A list of distances between nearest neighbors 
+                                        and calibration examples sorted in ascending order.
+                precisions (list(float)): A list containing the precisions at each 
+                                          point in distances.
+                very_likely_threshold (float): The precision at which items should be
+                                               considered very likely to be similar.
+                                               Should be between 0 and 1. Defaults to 0.9.
+                likely_threshold (float): The precision at which items should be considered 
+                                          likely to be similar. Should be between 0 and 1. 
+                                          Defaults to 0.8.
+                possible_threshold (float): The precision at which items should be considered
+                                            to possibly be similar. Should be between 0 and 1.
+                                            Defaults to 0.7.
+                decimals (int): The number of decimals to use when rounding computed metrics.
+                                Defaults to 2.
+
+            Returns:
+                labels (dict): A dict containing similarity labels mapping to their 
+                               corresponding distance threshold. If the a label maps to -1
+                               there exists no distance that lies in the distance threshold
+                               range for that label.
+        """
+        labels = {'very_likely': -1, 'likely': -1, 'possible': -1}
+        curr_precision = 1.1
+
+        for idx in range(len(distances) - 1, -1, -1):
+            distance = distances[idx]
+            
+            # Round precision
+            precision = round(precisions[idx], decimals)
+
+            if precision != curr_precision:
+                # Update label threshold
+                if precision >= very_likely_threshold:
+                    labels['very_likely'] = distance
+                elif precision >= likely_threshold:
+                    labels['likely'] = distance
+                elif precision >= possible_threshold:
+                    labels['possible'] = distance
+
+        return labels
