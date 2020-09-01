@@ -26,8 +26,10 @@ flask
 h5py
 imageio
 imgaug
+jsonlines
 keras-tuner
 matplotlib==3.1.0
+nmslib
 opencv-python
 pillow
 scipy
