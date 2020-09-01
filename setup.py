@@ -28,7 +28,7 @@ imageio
 imgaug
 jsonlines
 keras-tuner
-matplotlib
+matplotlib==3.1.0
 nmslib
 opencv-python
 pillow
