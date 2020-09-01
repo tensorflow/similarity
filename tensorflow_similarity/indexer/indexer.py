@@ -490,9 +490,8 @@ class Indexer(object):
         precisions,
         distances,
         label_thresholds,
-        decimals=2
     ):
-        """ Compute similarity labels and their thresholdss
+        """ Compute similarity labels and their thresholds
 
             Args:
                 precisions (list(float)): A list containing the precisions at each 
@@ -503,8 +502,6 @@ class Indexer(object):
                                          thresholds. In the example {0.9: 'very_likely',0.8: 'likely'}
                                          items would be considered very_likely to be similar
                                          at precision 0.9.
-                decimals (int): The number of decimals to use when rounding computed metrics.
-                                Defaults to 2.
 
             Returns:
                 labels (dict): A dict containing similarity labels mapping to their 
@@ -512,25 +509,24 @@ class Indexer(object):
                                there exists no distance that lies in the distance threshold
                                range for that label.
         """
-        # Initialize thresholds for all labels as -1
-        labels = {v: -1 for _, v in label_thresholds.items()}
-        curr_precision = 1.1
+        labels = {}
+        last_idx = -1
 
-        # Find the smallest distance in each threshold range
-        for idx in range(len(distances) - 1, -1, -1):
-            distance = distances[idx]
-            precision = precisions[idx] 
+        for threshold, label in label_thresholds.items():
+            # Get a list of bool where the precision is greater than or 
+            # equal to the threshold
+            precision_mask = np.asarray(precisions) >= threshold
 
-            # Update label threshold
-            if precision != curr_precision:
-                # Get the highest threshold value in label_thresholds less than precision
-                max_threshold = max(k for k in label_thresholds if k <= precision)
-
-                # Get the label associated with the threshold value
-                max_threshold_label = label_thresholds[max_threshold]
-
-                # Update labels
-                labels[max_threshold_label] = distance
-                curr_precision = precision
+            # Find the biggest index where precision is greater than or
+            # equal to the threshold
+            reversed_precision_mask = precision_mask[::-1]
+            max_threshold_idx = len(precision_mask) - np.argmax(reversed_precision_mask) - 1
+            
+            # Update labels with the label and distance if the threshold is valid
+            if precision_mask[max_threshold_idx] and max_threshold_idx > last_idx:
+                labels[label] = distances[max_threshold_idx]
+                last_idx = max_threshold_idx
+            else: 
+                labels[label] = -1
 
         return labels

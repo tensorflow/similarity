@@ -569,7 +569,7 @@ class IndexerTestCase(unittest.TestCase):
 
         true_labels = {
             'very_likely': np.float32(0.08),
-            'likely': np.float32(0.1025),
+            'likely': np.float32(0.3475),
             'possible': -1
         }
 
