@@ -519,9 +519,7 @@ class Indexer(object):
         # Find the smallest distance in each threshold range
         for idx in range(len(distances) - 1, -1, -1):
             distance = distances[idx]
-            
-            # Take floor of precision to specified number of decimals
-            precision = int(precisions[idx] * (10 ** decimals)) / 10 ** decimals 
+            precision = precisions[idx] 
 
             # Update label threshold
             if precision != curr_precision:
