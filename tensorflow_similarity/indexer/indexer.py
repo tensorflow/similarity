@@ -31,7 +31,8 @@ from tensorflow_similarity.indexer.utils import (load_packaged_dataset,
 # Neighbor has the distance from the queried point to the item, the index
 # of that item in the dataset, the label of the item and the data in the
 # dataset associated with the item.
-Neighbor = collections.namedtuple("Neighbor", ["id", "data", "distance", "label"])
+Neighbor = collections.namedtuple("Neighbor",
+                                  ["id", "data", "distance", "label"])
 
 
 class Indexer(object):
@@ -59,7 +60,6 @@ class Indexer(object):
             num_lookups (int): The number of lookups performed by the indexer.
             lookup_time (float): The cumulative amount of time it took to perform lookups.
     """
-
     def __init__(
         self,
         dataset_examples_path,
@@ -68,17 +68,23 @@ class Indexer(object):
         dataset_original_path=None,
         space="cosinesimil",
     ):
-        self.model = tf.keras.models.load_model(model_path, custom_objects={'tf': tf, 'TripletHardLoss': TripletHardLoss})
-        self.dataset_examples, self.dataset_labels = load_packaged_dataset(dataset_examples_path,
-                                                                           dataset_labels_path)
+        self.model = tf.keras.models.load_model(model_path,
+                                                custom_objects={
+                                                    'tf':
+                                                    tf,
+                                                    'TripletHardLoss':
+                                                    TripletHardLoss
+                                                })
+        self.dataset_examples, self.dataset_labels = load_packaged_dataset(
+            dataset_examples_path, dataset_labels_path)
         self.space = space
         self.index = nmslib.init(method='hnsw', space=self.space)
 
         if dataset_original_path is not None:
-            self.dataset_original = np.asarray(read_json_lines(dataset_original_path))
+            self.dataset_original = np.asarray(
+                read_json_lines(dataset_original_path))
         else:
             self.dataset_original = self.dataset_examples
-
 
     def build(self, verbose=0, rebuild_index=False, loaded_index=False):
         """ build an index from a dataset
@@ -104,7 +110,6 @@ class Indexer(object):
         self.index.createIndex(print_progress=print_progess)
         self.num_lookups = 0
         self.lookup_time = 0
-
 
     def find(self, items, num_neighbors, is_embedding=False):
         """ find the closest data points and their associated data in the index
@@ -147,7 +152,6 @@ class Indexer(object):
 
         return output
 
-
     def save(self, index_dir):
         """ Store an indexer on the disk
             index_dir (string): The path to the directory where the indexer
@@ -161,7 +165,7 @@ class Indexer(object):
 
         # Save the examples
         examples_path = os.path.join(index_dir, "examples.jsonl")
-        dataset_examples  = self.dataset_examples
+        dataset_examples = self.dataset_examples
         write_json_lines(examples_path, dataset_examples)
 
         # Save the labels
@@ -170,13 +174,13 @@ class Indexer(object):
         write_json_lines(labels_path, dataset_labels)
 
         # Save the original dataset
-        original_examples_path = os.path.join(index_dir, "original_examples.jsonl")
+        original_examples_path = os.path.join(index_dir,
+                                              "original_examples.jsonl")
         dataset_original_examples = self.dataset_original
         write_json_lines(original_examples_path, dataset_original_examples)
 
         # Save the model
         self.model.save(os.path.join(index_dir, "model"), save_format="tf2")
-
 
     @classmethod
     def load(cls, path):
@@ -203,7 +207,6 @@ class Indexer(object):
 
         return indexer
 
-
     def add(self, examples, labels, original_examples=None):
         """ Add item(s) to the index
 
@@ -220,30 +223,32 @@ class Indexer(object):
 
         ids = []
 
-        for example, label, original_example in zip(examples, labels, original_examples):
+        for example, label, original_example in zip(examples, labels,
+                                                    original_examples):
             # Add the example to the dataset examples, dataset labels, the original dataset,
             # and the class distribution, and rebuild the index
             if example.shape == self.dataset_examples[0].shape:
                 example = np.asarray([example])
             dataset_examples = np.concatenate((self.dataset_examples, example))
-            self.dataset_examples =  dataset_examples
+            self.dataset_examples = dataset_examples
             self.dataset_labels = np.append(self.dataset_labels, label)
             if original_example:
-                self.dataset_original = np.concatenate((self.dataset_original, original_example))
+                self.dataset_original = np.concatenate(
+                    (self.dataset_original, original_example))
             else:
-                self.dataset_original = np.concatenate((self.dataset_original, example))
+                self.dataset_original = np.concatenate(
+                    (self.dataset_original, example))
             ids.append(len(self.dataset_labels) - 1)
 
         self.build(rebuild_index=True)
 
         return ids
 
-
     def remove(self, ids):
         """ Remove item(s) from the index
 
             Args:
-                ids (list(int)): A list of indeces of the items in the dataset to be 
+                ids (list(int)): A list of indeces of the items in the dataset to be
                                  removed from the index.
         """
         # Delete the item from the dataset examples, original dataset, the dataset labels
@@ -254,12 +259,11 @@ class Indexer(object):
         self.dataset_labels = np.delete(self.dataset_labels, tuple(ids))
         self.build(rebuild_index=True)
 
-
     def compute_class_distribution(self):
         """ Compute how many instances of each class are stored in the indexer
 
             Rerturns:
-                class_distribution (dict): A dictionary mapping labels to the number of 
+                class_distribution (dict): A dictionary mapping labels to the number of
                                            examples with that label in the indexer.
         """
         # Get the counts for each class
@@ -272,7 +276,6 @@ class Indexer(object):
 
         return class_distribution
 
-
     def compute_num_embeddings(self):
         """ Compute the number of embeddings stored by the indexer
 
@@ -280,7 +283,6 @@ class Indexer(object):
                 (int): The number of embeddings sotred by the indexer.
         """
         return len(self.dataset_labels)
-
 
     def get_info(self):
         """ Get information about the data stored by the indexer
@@ -297,7 +299,6 @@ class Indexer(object):
             "embedding_size": self.embedding_size,
             "class_distribution": class_distribution
         }
-
 
     def get_metrics(self):
         """ Get performance metrics from the indexer
@@ -316,7 +317,6 @@ class Indexer(object):
             "avg_query_time": avg_query_time
         }
 
-
     def __compute_calibration_metrics(self, class_matches):
         """ Calculate calibration Precision at R, Recall and F1
 
@@ -326,11 +326,11 @@ class Indexer(object):
                                             same class.
 
             Returns:
-                precision_scores (list(float)): A list containing the precisions at each 
+                precision_scores (list(float)): A list containing the precisions at each
                                                 point in sorted_distances.
-                recall_scores (list(float)): A list containing the recall at each point 
+                recall_scores (list(float)): A list containing the recall at each point
                                              in sorted_distances.
-                f1_scores (list(float)): A list containing the f1 score at each point in 
+                f1_scores (list(float)): A list containing the f1 score at each point in
                                          sorted_distances.
         """
         correct_matches = 0
@@ -348,45 +348,39 @@ class Indexer(object):
 
             if class_match:
                 correct_matches += 1
-        
+
             # Calculate precision at pos, recall at pos,
             # and f1 at pos
             precision = correct_matches / count
             recall = correct_matches / num_total_match
-            f1 = (precision * recall  / (precision + recall)) * 2
+            f1 = (precision * recall / (precision + recall)) * 2
 
             precision_scores.append(precision)
             recall_scores.append(recall)
             f1_scores.append(f1)
-        
+
         return precision_scores, recall_scores, f1_scores
 
-
-    def __compute_calibration_thresholds(
-        self,
-        sorted_distances,
-        precision_scores,
-        recall_scores,
-        f1_scores,
-        decimals
-    ):
+    def __compute_calibration_thresholds(self, sorted_distances,
+                                         precision_scores, recall_scores,
+                                         f1_scores, decimals):
         """ Calculate thresholds and normalized similarity labels
 
             Args:
-                sorted_distances (np.ndarray): A list of distances between nearest neighbors 
+                sorted_distances (np.ndarray): A list of distances between nearest neighbors
                                                and calibration examples sorted in ascending order.
-                precision_scores (list(float)): A list containing the precisions at each 
+                precision_scores (list(float)): A list containing the precisions at each
                                                 point in sorted_distances.
-                recall_scores (list(float)): A list containing the recall at each point 
+                recall_scores (list(float)): A list containing the recall at each point
                                              in sorted_distances.
-                f1_scores (list(float)): A list containing the f1 score at each point in 
+                f1_scores (list(float)): A list containing the f1 score at each point in
                                          sorted_distances.
                 decimals (int): The number of decimals to use when rounding computed metrics.
 
             Returns:
-                thresholds (dict): A dict containing a list of thresholds, as well as 
+                thresholds (dict): A dict containing a list of thresholds, as well as
                                    precision, recall and f1 scores at each threshold.
-                binary_threshold (float): The saddle point of the F1 curve. This 
+                binary_threshold (float): The saddle point of the F1 curve. This
                                           thresholds splits the calibration results
                                           into the same class and not the same class.
 
@@ -402,7 +396,7 @@ class Indexer(object):
             # precision for precise boundary computations
             f1 = f1_scores[idx]
             distance = sorted_distances[idx]
-            
+
             # Round precision and recall
             precision = round(precision_scores[idx], decimals)
             recall = round(recall_scores[idx], decimals)
@@ -415,11 +409,11 @@ class Indexer(object):
                 thresholds['distance'].append(distance)
                 curr_precision = precision
 
-        # Compute the optimal thresholding distance which is the 
+        # Compute the optimal thresholding distance which is the
         # saddle point on the f1 curve
         binary_threshold = thresholds['distance'][np.argmax(thresholds['f1'])]
 
-        # Reverse the metrics and distances in thresholds since they are currently in 
+        # Reverse the metrics and distances in thresholds since they are currently in
         # ascending order 0.01, 0.02,... -> 0.99, 0.98,... so the best thresholds
         # appear first
         for v in thresholds.values():
@@ -427,11 +421,10 @@ class Indexer(object):
 
         return thresholds, binary_threshold
 
-
     def calibrate(
-        self, 
-        examples, 
-        labels, 
+        self,
+        examples,
+        labels,
         decimals=2,
         num_neighbors=10,
     ):
@@ -448,7 +441,7 @@ class Indexer(object):
 
             Returns:
                 calibration (dict): A dictionary containing a dictionary of distance, f1 scores,
-                                    precision scores and recall scores at each threshold, and the 
+                                    precision scores and recall scores at each threshold, and the
                                     binary threshold.
         """
         # Query the index for the nearest neighbors
@@ -457,25 +450,26 @@ class Indexer(object):
         flattened_neighbors = list(flatten(neighbors))
 
         # Get distances for all nearest neighbors
-        distances = list(map(lambda neighbor: neighbor.distance, flattened_neighbors))
+        distances = list(
+            map(lambda neighbor: neighbor.distance, flattened_neighbors))
         sorted_distances = sorted(distances)
 
         # Get labels for all nearest neighbors
-        neighbor_labels = list(map(lambda neighbor: neighbor.label, flattened_neighbors))
+        neighbor_labels = list(
+            map(lambda neighbor: neighbor.label, flattened_neighbors))
 
         # Get the nearest neighbors where the label is correct
         true_labels = np.repeat(labels, num_neighbors)
         class_matches = true_labels == neighbor_labels
 
         #  Compute r precision, f1 and recall for all neighbors
-        precision_scores, recall_scores, f1_scores = self.__compute_calibration_metrics(class_matches)
-    
+        precision_scores, recall_scores, f1_scores = self.__compute_calibration_metrics(
+            class_matches)
+
         # Compute similarity thresholds and normalize labels
-        thresholds, binary_threshold = self.__compute_calibration_thresholds(sorted_distances,
-                                                                                     precision_scores,
-                                                                                     recall_scores,
-                                                                                     f1_scores,
-                                                                                     decimals)
+        thresholds, binary_threshold = self.__compute_calibration_thresholds(
+            sorted_distances, precision_scores, recall_scores, f1_scores,
+            decimals)
 
         calibration = {
             "binary_threshold": binary_threshold,
@@ -483,7 +477,6 @@ class Indexer(object):
         }
 
         return calibration
-
 
     def compute_labels(
         self,
@@ -494,9 +487,9 @@ class Indexer(object):
         """ Compute similarity labels and their thresholds
 
             Args:
-                precisions (list(float)): A list containing the precisions at each 
+                precisions (list(float)): A list containing the precisions at each
                                           point in distances.
-                distances (np.ndarray): A list of distances between nearest neighbors 
+                distances (np.ndarray): A list of distances between nearest neighbors
                                         and calibration examples sorted in ascending order.
                 label_thresholds (dict): A dictionary of precisions mapping to their respective
                                          thresholds. In the example {0.9: 'very_likely',0.8: 'likely'}
@@ -504,7 +497,7 @@ class Indexer(object):
                                          at precision 0.9.
 
             Returns:
-                labels (dict): A dict containing similarity labels mapping to their 
+                labels (dict): A dict containing similarity labels mapping to their
                                corresponding distance threshold. If the a label maps to -1
                                there exists no distance that lies in the distance threshold
                                range for that label.
@@ -513,20 +506,22 @@ class Indexer(object):
         last_idx = -1
 
         for threshold, label in label_thresholds.items():
-            # Get a list of bool where the precision is greater than or 
+            # Get a list of bool where the precision is greater than or
             # equal to the threshold
             precision_mask = np.asarray(precisions) >= threshold
 
             # Find the biggest index where precision is greater than or
             # equal to the threshold
             reversed_precision_mask = precision_mask[::-1]
-            max_threshold_idx = len(precision_mask) - np.argmax(reversed_precision_mask) - 1
-            
+            max_threshold_idx = len(precision_mask) - np.argmax(
+                reversed_precision_mask) - 1
+
             # Update labels with the label and distance if the threshold is valid
-            if precision_mask[max_threshold_idx] and max_threshold_idx > last_idx:
+            if precision_mask[
+                    max_threshold_idx] and max_threshold_idx > last_idx:
                 labels[label] = distances[max_threshold_idx]
                 last_idx = max_threshold_idx
-            else: 
+            else:
                 labels[label] = -1
 
         return labels

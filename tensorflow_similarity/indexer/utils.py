@@ -17,9 +17,10 @@ import numpy as np
 import jsonlines
 from collections.abc import Iterable
 
+
 def load_packaged_dataset(dataset, dataset_labels):
     """ load a dataset from json lines files
-    
+
         Args:
             dataset (string): The path to the json lines file containing the dataset that should be loaded
             dataset_labels (string): The path to the json lines file containing the labels that should be loaded
@@ -38,7 +39,7 @@ def load_packaged_dataset(dataset, dataset_labels):
 
 def read_json_lines(file):
     """ read a json lines file
-        
+
         Args:
             file (string): The path to the json lines file to be read
 
@@ -49,7 +50,7 @@ def read_json_lines(file):
     with open(file) as f:
         for line in f:
             data.append(json.loads(line))
-            
+
     return data
 
 
@@ -68,6 +69,7 @@ def write_json_lines(file, data):
             writer.write_all(data)
         else:
             writer.write(data)
+
 
 def write_json_lines_dict(file, data):
     """ write a dict to a json lines file
