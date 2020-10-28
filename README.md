@@ -2,7 +2,7 @@
 
 tf.Similarity allows you to write a simple Keras model to embed a single item, and transforms the model into a Triplet Loss (e.g. FaceNet) or Quadruplet Loss model. It also support "multi-headed" training through the concept of "auxillary tasks".  It is aimed to make writing Similarity models easy (it's easy to write a Triplet Loss model - but it's also hard to write Triplet Loss model correctly, and even harder to debug it when it it's broken).
 
-Triplet Loss is can be hard to get right, and there can be a lot of bumps in the road if you implement it from scratch. We aim to get the infrastructure right, so the user can focus more on their models and data, and less on the infrastructure for learning. 
+Triplet Loss is can be hard to get right, and there can be a lot of bumps in the road if you implement it from scratch. We aim to get the infrastructure right, so the user can focus more on their models and data, and less on the infrastructure for learning.
 
 ## Getting Started
 
@@ -16,9 +16,9 @@ Head over to `tensorflow-similarity/experiments` to find tutorials on using Tens
 
 ## Terminology
 
-Similarity Model - A Similarity model is trained by comparing tuples of input examples, instead of trying to predict classes for single input examples. 
+Similarity Model - A Similarity model is trained by comparing tuples of input examples, instead of trying to predict classes for single input examples.
 
-Tower Model or Embedding Model - A Tower (or Embedding) model is a user defined model which takes one example as input, and produces an embedding vector. 
+Tower Model or Embedding Model - A Tower (or Embedding) model is a user defined model which takes one example as input, and produces an embedding vector.
 
 Tower - Within a Similarity model, there are multiple "Towers" consisting of a single input example, Embedding model, and output embedding.  These towers then feed into some Main Task specific logic
 

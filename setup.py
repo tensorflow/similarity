@@ -12,61 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Moirai setup script."""
-
 from setuptools import find_packages
 from setuptools import setup
+from time import time
 
-__version__ = '0.1000017'
+long_description = open("README.md").read()
+version = '0.2.0r%s' % int(time())
 
-REQUIREMENTS = """
-absl-py
-confusable_homoglyphs
-flask
-h5py
-imageio
-imgaug
-jsonlines
-keras-tuner
-matplotlib==3.1.0
-nmslib
-opencv-python
-pillow
-scipy
-seaborn
-sklearn
-tabulate
-tensorboard
-tensorflow-plot
-termcolor
-tqdm
-uuid
-""".splitlines()
-
-# Do not require already-installed packages, this avoid replacing system-wide
-# installed and optimized packages with local ones.
-try:
-    import numpy as _
-except ImportError:
-    REQUIREMENTS.append('numpy')
-
-try:
-    import pandas as _
-except ImportError:
-    REQUIREMENTS.append('pandas')
-
-try:
-    import tensorflow as _
-except ImportError:
-    REQUIREMENTS.append('tensorflow>=2.0.0')
-
-print(find_packages())
-
-setup(
-    name='tensorflow-similarity',
-    version=__version__,
-    description='Tensorflow Similarity: triplet loss and beyond in Keras.',
-    author='The tensorflow similarity authors',
-    packages=find_packages(),
-    install_requires=REQUIREMENTS,
-)
+setup(name="tensorflow_similarity",
+      version=version,
+      description="Single shot and metric learning for humans",
+      long_description=long_description,
+      author='Tensorflow Similarity authors',
+      author_email='tensorflow_similarity@google.com',
+      url='https://github.com/google/scaaml',
+      license='Apache License 2.0',
+      install_requires=[
+          'colorama', 'termcolor', 'tqdm', 'pandas', 'numpy', 'tabulate',
+          'matplotlib', 'Pillow', 'tensorflow>=2.2.0', 'pycm', "chipwhisperer"
+      ],
+      classifiers=[
+          'Development Status :: 5 - Production/Stable',
+          'Environment :: Console', 'Framework :: Jupyter',
+          'License :: OSI Approved :: Apache Software License',
+          'Intended Audience :: Science/Research',
+          'Programming Language :: Python :: 3',
+          'Topic :: Scientific/Engineering :: Artificial Intelligence'
+      ],
+      packages=find_packages())
