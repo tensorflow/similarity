@@ -1,0 +1,11 @@
+colorama
+termcolor
+tqdm
+pandas
+numpy
+tabulate
+matplotlib
+Pillow
+tensorflow>=2.2.0
+pycm
+chipwhisperer
