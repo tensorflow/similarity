@@ -3,8 +3,9 @@ import tensorflow as tf
 
 def pairwise_cosine(embeddings, axis=1):
     tensor = tf.nn.l2_normalize(embeddings, axis=axis)
-    distance = 1 - tf.matmul(tensor, tensor, transpose_b=True)
-    return distance
+    distances = 1 - tf.matmul(tensor, tensor, transpose_b=True)
+    distances = tf.maximum(distances, 0.0)
+    return distances
 
 
 def pairwise_snr():
