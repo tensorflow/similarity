@@ -34,16 +34,12 @@ from tensorflow_similarity.indexer.utils import (load_packaged_dataset,
                                                  write_json_lines)
 
 Neighbor = collections.namedtuple("Neighbor",
-                                  ["id",
-                                   "data",
-                                   "distance",
-                                   "label"])
+                                  ["id", "data", "distance", "label"])
 NUM_CALIBRATION_NEIGHBORS = 5
 NUM_CALIBRATION_EXAMPLES = 4
 
 
 class IndexerTestCase(unittest.TestCase):
-
     def generate_mock(self):
         """ Generate a list of neighbors for mocking
         """
@@ -66,9 +62,9 @@ class IndexerTestCase(unittest.TestCase):
                     neighbor_label = np.int64(i)
 
                 neighbor_mock = Neighbor(id=neighbor_id,
-                                        data=neighbor_data,
-                                        distance=neighbor_distance,
-                                        label=neighbor_label)
+                                         data=neighbor_data,
+                                         distance=neighbor_distance,
+                                         label=neighbor_label)
 
                 neighbor_list.append(neighbor_mock)
 
@@ -81,7 +77,7 @@ class IndexerTestCase(unittest.TestCase):
         """
         # Generate dataset
         examples = np.random.rand(50, 28, 28)
-        labels = np.asarray([0,1] * 25)
+        labels = np.asarray([0, 1] * 25)
 
         # Write examples to temp file
         _, tmp_file_examples = tempfile.mkstemp()
@@ -98,15 +94,18 @@ class IndexerTestCase(unittest.TestCase):
 
         dataset_examples_path = os.path.abspath(tmp_file_examples)
         dataset_labels_path = os.path.abspath(tmp_file_labels)
-        model_path = os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/MNIST_model")
-        index_dir = temp_dir
+        model_path = os.path.abspath(
+            "../../../tensorflow_similarity/serving/www/saved_models/MNIST_model"
+        )
 
-        indexer = Indexer(dataset_examples_path,
-                        dataset_labels_path,
-                        model_path)
+        indexer = Indexer(dataset_examples_path, dataset_labels_path,
+                          model_path)
 
-        return indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir
-
+        res = [
+            indexer, examples, labels, tmp_file_examples, tmp_file_labels,
+            temp_dir
+        ]
+        return res
 
     def delete_temp_files(self, tmp_file_examples, tmp_file_labels, temp_dir):
         """ Delete temporary files/directories that were generated as part of testing
@@ -114,7 +113,6 @@ class IndexerTestCase(unittest.TestCase):
         shutil.rmtree(temp_dir)
         os.remove(tmp_file_examples)
         os.remove(tmp_file_labels)
-
 
     def test_read_json_lines(self):
         """ Test case that asserts whether json lines reader util
@@ -132,15 +130,14 @@ class IndexerTestCase(unittest.TestCase):
         decoded_arr = read_json_lines(tmp_file)
         os.remove(tmp_file)
 
-        assert(arr == decoded_arr)
-
+        assert (arr == decoded_arr)
 
     def test_write_json_lines(self):
         """ Test case that asserts whether json lines writer util
             writes json lines files correctly
         """
         # Generate dataset labels
-        data = np.random.rand(400,)
+        data = np.random.rand(400, )
         _, tmp_file = tempfile.mkstemp()
         write_json_lines(tmp_file, data)
 
@@ -163,9 +160,8 @@ class IndexerTestCase(unittest.TestCase):
                 temp_data.append(json.loads(line))
         os.remove(tmp_file)
 
-        assert((data == temp_data).all())
-        assert((data == temp_data).all())
-
+        assert ((data == temp_data).all())
+        assert ((data == temp_data).all())
 
     def test_load_packaged_dataset(self):
         """ Test case that asserts whether the data set loading util
@@ -173,7 +169,7 @@ class IndexerTestCase(unittest.TestCase):
         """
         # Generate dataset
         examples = np.random.rand(400, 50)
-        labels = np.random.rand(400,)
+        labels = np.random.rand(400, )
 
         # Write dataset examples to temp file
         _, tmp_file_examples = tempfile.mkstemp()
@@ -187,32 +183,33 @@ class IndexerTestCase(unittest.TestCase):
             for data_point in labels:
                 writer.write(data_point.tolist())
 
-        # Load dataset as packaged dataset from examples temp file and labels temp file
-        packaged_examples, packaged_labels = load_packaged_dataset(os.path.abspath(tmp_file_examples),
-                                                                os.path.abspath(tmp_file_labels))
+        # Load dataset as packaged dataset from examples temp file and labels
+        # temp file
+        packaged_examples, packaged_labels = load_packaged_dataset(
+            os.path.abspath(tmp_file_examples),
+            os.path.abspath(tmp_file_labels))
         os.remove(tmp_file_examples)
         os.remove(tmp_file_labels)
 
-        assert((labels == packaged_labels).all())
-        assert((examples == packaged_examples).all())
-
+        assert ((labels == packaged_labels).all())
+        assert ((examples == packaged_examples).all())
 
     def test_build(self):
         """ Test case that asserts that the indexer correctly
             builds an index from a dataset
         """
         # Build an indexer and query it for 10 nearest neighbors
-        indexer, examples, labels, tmp_file_examples, tmp_file_labels, _ = self.set_up()
+        indexer, examples, labels, tmp_file_examples, tmp_file_labels, _ = self.set_up(
+        )
         indexer.build()
         ids, dists = indexer.index.knnQuery(examples[0], k=10)
 
         os.remove(tmp_file_examples)
         os.remove(tmp_file_labels)
 
-        assert(isinstance(indexer.index, nmslib.dist.FloatIndex))
-        assert(isinstance(ids, np.ndarray))
-        assert(isinstance(dists, np.ndarray))
-
+        assert (isinstance(indexer.index, nmslib.dist.FloatIndex))
+        assert (isinstance(ids, np.ndarray))
+        assert (isinstance(dists, np.ndarray))
 
     def test_single_embedding_find(self):
         """ Test case that asserts that the indexer correctly
@@ -221,16 +218,17 @@ class IndexerTestCase(unittest.TestCase):
         """
         dataset_examples_path = os.path.abspath("test_data_set/data.json")
         dataset_labels_path = os.path.abspath("test_data_set/labels.json")
-        model_path = os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/MNIST_model")
+        model_path = os.path.abspath(
+            "../../../tensorflow_similarity/serving/www/saved_models/MNIST_model"
+        )
 
         # Load the dataset from the test_data_set directory
         data_set = np.asarray(read_json_lines(dataset_examples_path))
 
         # Build an indexer and find the 10 nearest neighbors of the first
         # embedding in the dataset
-        indexer = Indexer(dataset_examples_path,
-                        dataset_labels_path,
-                        model_path)
+        indexer = Indexer(dataset_examples_path, dataset_labels_path,
+                          model_path)
         indexer.index.addDataPointBatch(data_set)
         indexer.index.createIndex()
         indexer.lookup_time = 0
@@ -242,12 +240,12 @@ class IndexerTestCase(unittest.TestCase):
         index_ids = np.asarray([neighbor.id for neighbor in neighbors])
 
         # Get the ids and distances for the 10 closest embeddings in the dataset
-        dists = np.asarray([(spatial.distance.cosine(i, data_set[0])) for i in data_set[:10]])
+        dists = np.asarray([(spatial.distance.cosine(i, data_set[0]))
+                            for i in data_set[:10]])
         ids = np.arange(10)
 
-        assert(np.isclose(index_dists, dists).all())
-        assert((index_ids == ids).all())
-
+        assert (np.isclose(index_dists, dists).all())
+        assert ((index_ids == ids).all())
 
     def test_multiple_examples_find(self):
         """ Test case that asserts that the indexer correctly
@@ -255,14 +253,15 @@ class IndexerTestCase(unittest.TestCase):
             for multiple items that are not in embedding form
         """
         # Build an in indexer
-        indexer, examples, labels, tmp_file_examples, tmp_file_labels, tmp_dir = self.set_up()
+        indexer, examples, labels, tmp_file_examples, tmp_file_labels, tmp_dir = self.set_up(
+        )
         indexer.build()
 
         # Generate multiple examples and query the indexer for the nearest neighbors
         examples = np.random.rand(1000, 28, 28)
         neighbors = indexer.find(items=examples,
-                                num_neighbors=20,
-                                is_embedding=False)
+                                 num_neighbors=20,
+                                 is_embedding=False)
 
         self.delete_temp_files(tmp_file_examples, tmp_file_labels, tmp_dir)
 
@@ -272,40 +271,46 @@ class IndexerTestCase(unittest.TestCase):
                 if neighbor_list[i].distance > neighbor_list[i + 1].distance:
                     neighbors_sorted = False
 
-        assert(neighbors_sorted)
-
+        assert (neighbors_sorted)
 
     def test_save(self):
         """ Test case that asserts that the indexer is correctly
             saved to the disk
         """
         # Build an indexer and save it to disk
-        indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = self.set_up()
+        indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = self.set_up(
+        )
         indexer.build()
         indexer.save(index_dir=temp_dir)
 
         # Load the saved dataset examples
-        saved_examples_path = os.path.abspath(os.path.join(temp_dir, "examples.jsonl"))
+        saved_examples_path = os.path.abspath(
+            os.path.join(temp_dir, "examples.jsonl"))
         saved_examples = np.asarray(read_json_lines(saved_examples_path))
 
         # Load the saved dataset labels
-        saved_labels_path = os.path.abspath(os.path.join(temp_dir, "labels.jsonl"))
+        saved_labels_path = os.path.abspath(
+            os.path.join(temp_dir, "labels.jsonl"))
         saved_labels = read_json_lines(saved_labels_path)
 
         # Load the saved index
         saved_index = nmslib.init(method='hnsw', space="cosinesimil")
-        saved_index.loadIndex(os.path.abspath(os.path.join(temp_dir, "index")), True)
+        saved_index.loadIndex(os.path.abspath(os.path.join(temp_dir, "index")),
+                              True)
         saved_index.createIndex()
 
         # Load the saved model
         saved_model_path = os.path.join(os.path.abspath(temp_dir), "model")
-        saved_model = tf.keras.models.load_model(saved_model_path, 
-                                                custom_objects={
-                                                    'tf': tf, 
-                                                    'TripletHardLoss': TripletHardLoss
-                                                })
+        saved_model = tf.keras.models.load_model(saved_model_path,
+                                                 custom_objects={
+                                                     'tf':
+                                                     tf,
+                                                     'TripletHardLoss':
+                                                     TripletHardLoss
+                                                 })
 
-        # Generate a datapoint and use the loaded model to produce an embedding for it
+        # Generate a datapoint and use the loaded model to produce an
+        # embedding for it
         num = np.random.randint(1000, size=(1, 28, 28))
         neighbors = indexer.find(num, 10)[0]
         embedding = saved_model.predict(num)
@@ -322,18 +327,18 @@ class IndexerTestCase(unittest.TestCase):
 
         self.delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
-        assert((saved_examples == indexer_dataset_examples).all())
-        assert((saved_labels == indexer_dataset_labels).all())
-        assert((temp_ids == index_ids).all())
-        assert((temp_dists == index_dists).all())
-
+        assert ((saved_examples == indexer_dataset_examples).all())
+        assert ((saved_labels == indexer_dataset_labels).all())
+        assert ((temp_ids == index_ids).all())
+        assert ((temp_dists == index_dists).all())
 
     def test_load(self):
         """ Test case that asserts that a saved indexer correctly
             loads from the disk
         """
         # Build an indexer
-        indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = self.set_up()
+        indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = self.set_up(
+        )
         indexer.build()
 
         # Save the indexer to disk and load it
@@ -348,16 +353,18 @@ class IndexerTestCase(unittest.TestCase):
         indexer_dataset_labels = indexer.dataset_labels
         loaded_indexer_dataset_labels = loaded_indexer.dataset_labels
 
-        assert((indexer_dataset_examples == loaded_indexer_dataset_examples).all())
-        assert((indexer_dataset_labels == loaded_indexer_dataset_labels).all())
-
+        assert ((
+            indexer_dataset_examples == loaded_indexer_dataset_examples).all())
+        assert ((
+            indexer_dataset_labels == loaded_indexer_dataset_labels).all())
 
     def test_add(self):
         """ Test case that asserts that the indexer correctly
             adds new items to the index
         """
         # Build an indexer
-        indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = self.set_up()
+        indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = self.set_up(
+        )
         indexer.build()
 
         # Get the class distribution and the number of embeddings in the indexer
@@ -368,7 +375,7 @@ class IndexerTestCase(unittest.TestCase):
         num = np.random.rand(28, 28)
         examples = np.concatenate((examples, np.asarray([num])))
         labels = np.append(labels, 0)
-        
+
         class_distribution[0] = class_distribution[0] + 1
         num_embeddings = num_embeddings + 1
 
@@ -381,18 +388,18 @@ class IndexerTestCase(unittest.TestCase):
         indexer_dataset_labels = indexer.dataset_labels
         indexer_num_embeddings = indexer.compute_num_embeddings()
 
-        assert((examples == indexer_dataset_examples).all())
-        assert((labels == indexer_dataset_labels).all())
-        assert(class_distribution == indexer.compute_class_distribution())
-        assert(num_embeddings == indexer_num_embeddings)
-
+        assert ((examples == indexer_dataset_examples).all())
+        assert ((labels == indexer_dataset_labels).all())
+        assert (class_distribution == indexer.compute_class_distribution())
+        assert (num_embeddings == indexer_num_embeddings)
 
     def test_remove(self):
         """ Test case that asserts that the indexer correctly
             removes items from the indexer
         """
         # Build an indexer
-        indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = self.set_up()
+        indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = self.set_up(
+        )
         indexer.build()
 
         # Get the class distribution and the number of embeddings in the indexer
@@ -409,10 +416,10 @@ class IndexerTestCase(unittest.TestCase):
         class_distribution[label] = class_distribution[label] - 1
         num_embeddings = num_embeddings - 1
 
-        assert((indexer_dataset_examples == examples[1:]).all())
-        assert((indexer_dataset_labels == labels[1:]).all())
-        assert(indexer.compute_class_distribution() == class_distribution)
-        assert(num_embeddings == indexer.compute_num_embeddings())
+        assert ((indexer_dataset_examples == examples[1:]).all())
+        assert ((indexer_dataset_labels == labels[1:]).all())
+        assert (indexer.compute_class_distribution() == class_distribution)
+        assert (num_embeddings == indexer.compute_num_embeddings())
 
         # Remove the last datapoint in the dataset
         indexer.remove([len(indexer.dataset_labels) - 1])
@@ -422,11 +429,10 @@ class IndexerTestCase(unittest.TestCase):
         class_distribution[label] = class_distribution[label] - 1
         num_embeddings = num_embeddings - 1
 
-        assert((indexer_dataset_examples == examples[1:-1]).all())
-        assert((indexer_dataset_labels == labels[1:-1]).all())
-        assert(indexer.compute_class_distribution() == class_distribution)
-        assert(num_embeddings == indexer.compute_num_embeddings())
-
+        assert ((indexer_dataset_examples == examples[1:-1]).all())
+        assert ((indexer_dataset_labels == labels[1:-1]).all())
+        assert (indexer.compute_class_distribution() == class_distribution)
+        assert (num_embeddings == indexer.compute_num_embeddings())
 
     def test_get_info(self):
         """ Test case that asserts that the indexer correctly
@@ -434,27 +440,28 @@ class IndexerTestCase(unittest.TestCase):
         """
         # Build an indexer and get information about embedding size
         # and number of embeddigns
-        indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = self.set_up()
+        indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = self.set_up(
+        )
         indexer.build()
         info = indexer.get_info()
-        num_embeddings = info["num_embeddings"] 
+        num_embeddings = info["num_embeddings"]
         embedding_size = info["embedding_size"]
         class_distribution = info["class_distribution"]
 
         self.delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
-        assert(num_embeddings == len(examples))
-        assert(embedding_size == 16)
-        assert(class_distribution[0] == 25)
-        assert(class_distribution[1] == 25)
-
+        assert (num_embeddings == len(examples))
+        assert (embedding_size == 16)
+        assert (class_distribution[0] == 25)
+        assert (class_distribution[1] == 25)
 
     def test_get_metrics(self):
         """ Test case that asserts that the indexer correctly
             returns performance metrics.
         """
         # Build an indexer and get performance metrics
-        indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = self.set_up()
+        indexer, examples, labels, tmp_file_examples, tmp_file_labels, temp_dir = self.set_up(
+        )
         indexer.build()
         metrics = indexer.get_metrics()
         avg_query_time = metrics["avg_query_time"]
@@ -462,23 +469,20 @@ class IndexerTestCase(unittest.TestCase):
 
         self.delete_temp_files(tmp_file_examples, tmp_file_labels, temp_dir)
 
-        assert(num_lookups == 0)
-        assert(avg_query_time == 0)
+        assert (num_lookups == 0)
+        assert (avg_query_time == 0)
 
         # Generate multiple examples and query the indexer for the nearest neighbors
         examples = np.random.rand(25, 28, 28)
-        _ = indexer.find(items=examples,
-                        num_neighbors=20,
-                        is_embedding=False)
+        _ = indexer.find(items=examples, num_neighbors=20, is_embedding=False)
 
         # Get performance metrics
         metrics = indexer.get_metrics()
         avg_query_time = metrics["avg_query_time"]
         num_lookups = metrics["num_lookups"]
 
-        assert(num_lookups == 25)
-        assert(avg_query_time >= 0)
-
+        assert (num_lookups == 25)
+        assert (avg_query_time >= 0)
 
     def test_calibration(self):
         """ Test case that asserts that the indexer correctly
@@ -486,19 +490,24 @@ class IndexerTestCase(unittest.TestCase):
         """
         dataset_examples_path = os.path.abspath("test_data_set/data.json")
         dataset_labels_path = os.path.abspath("test_data_set/labels.json")
-        model_path = os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/MNIST_model")
-        indexer = Indexer(dataset_examples_path,
-                          dataset_labels_path,
+        model_path = os.path.abspath(
+            "../../../tensorflow_similarity/serving/www/saved_models/MNIST_model"
+        )
+        indexer = Indexer(dataset_examples_path, dataset_labels_path,
                           model_path)
 
         # Load the dataset from the test_data_set directory
-        examples, labels = load_packaged_dataset(dataset_examples_path, dataset_labels_path)
+        examples, labels = load_packaged_dataset(dataset_examples_path,
+                                                 dataset_labels_path)
 
         # Build an indexer and perform calibration
-        with patch.object(Indexer, "find", return_value=self.generate_mock()) as indexer_find_mock:
-            calibration = indexer.calibrate(examples[:NUM_CALIBRATION_EXAMPLES],
-                                            labels[:NUM_CALIBRATION_EXAMPLES],
-                                            num_neighbors=NUM_CALIBRATION_NEIGHBORS)
+        with patch.object(
+                Indexer, "find",
+                return_value=self.generate_mock()) as indexer_find_mock:
+            calibration = indexer.calibrate(
+                examples[:NUM_CALIBRATION_EXAMPLES],
+                labels[:NUM_CALIBRATION_EXAMPLES],
+                num_neighbors=NUM_CALIBRATION_NEIGHBORS)
 
         thresholds = calibration['thresholds']
         threshold_distances = np.asarray(thresholds['distance'])
@@ -508,33 +517,33 @@ class IndexerTestCase(unittest.TestCase):
         binary_threshold = calibration['binary_threshold']
 
         true_precision = np.asarray([
-            1.0, 0.8, 0.83, 0.86, 0.88, 0.89, 0.8, 0.82,
-            0.83, 0.85, 0.86, 0.8, 0.81, 0.82, 0.83, 0.84, 0.8])
+            1.0, 0.8, 0.83, 0.86, 0.88, 0.89, 0.8, 0.82, 0.83, 0.85, 0.86, 0.8,
+            0.81, 0.82, 0.83, 0.84, 0.8
+        ])
 
-        true_recall = np.asarray([0.25, 0.25, 0.31, 0.38, 0.44,
-            0.5, 0.5, 0.56, 0.62, 0.69, 0.75, 0.75, 0.81, 0.88, 
-            0.94, 1.0, 1.0])
+        true_recall = np.asarray([
+            0.25, 0.25, 0.31, 0.38, 0.44, 0.5, 0.5, 0.56, 0.62, 0.69, 0.75,
+            0.75, 0.81, 0.88, 0.94, 1.0, 1.0
+        ])
 
-        true_f1 = np.asarray([0.4, 0.38095238095238093,
-            0.45454545454545453, 0.5217391304347825,
-            0.5833333333333334, 0.64, 0.6153846153846154,
-            0.6666666666666666, 0.7142857142857143,
-            0.7586206896551724, 0.7999999999999999,
-            0.7741935483870969, 0.8125, 0.8484848484848485,
-            0.8823529411764706, 0.9142857142857143,
-            0.888888888888889])
+        true_f1 = np.asarray([
+            0.4, 0.38095238095238093, 0.45454545454545453, 0.5217391304347825,
+            0.5833333333333334, 0.64, 0.6153846153846154, 0.6666666666666666,
+            0.7142857142857143, 0.7586206896551724, 0.7999999999999999,
+            0.7741935483870969, 0.8125, 0.8484848484848485, 0.8823529411764706,
+            0.9142857142857143, 0.888888888888889
+        ])
 
-        true_distances = np.asarray([0.08, 0.1025, 0.12,
-            0.125, 0.1425, 0.16, 0.165, 0.1825, 0.1875,
-            0.205, 0.2225, 0.2275, 0.245, 0.2675, 0.285,
-            0.3075, 0.3475]).astype('float32')
+        true_distances = np.asarray([
+            0.08, 0.1025, 0.12, 0.125, 0.1425, 0.16, 0.165, 0.1825, 0.1875,
+            0.205, 0.2225, 0.2275, 0.245, 0.2675, 0.285, 0.3075, 0.3475
+        ]).astype('float32')
 
-        assert(binary_threshold == np.float32(0.3075))
-        assert((thresholds_precision == true_precision).all())
-        assert((thresholds_recall == true_recall).all())
-        assert((thresholds_f1 == true_f1).all())
-        assert((threshold_distances == true_distances).all())
-
+        assert (binary_threshold == np.float32(0.3075))
+        assert ((thresholds_precision == true_precision).all())
+        assert ((thresholds_recall == true_recall).all())
+        assert ((thresholds_f1 == true_f1).all())
+        assert ((threshold_distances == true_distances).all())
 
     def test_compute_labels(self):
         """ Test case that asserts that the indexer correctly
@@ -542,30 +551,32 @@ class IndexerTestCase(unittest.TestCase):
         """
         dataset_examples_path = os.path.abspath("test_data_set/data.json")
         dataset_labels_path = os.path.abspath("test_data_set/labels.json")
-        model_path = os.path.abspath("../../../tensorflow_similarity/serving/www/saved_models/MNIST_model")
-        indexer = Indexer(dataset_examples_path,
-                        dataset_labels_path,
-                        model_path)
+        model_path = os.path.abspath(
+            "../../../tensorflow_similarity/serving/www/saved_models/MNIST_model"
+        )
+        indexer = Indexer(dataset_examples_path, dataset_labels_path,
+                          model_path)
 
         # Load the dataset from the test_data_set directory
-        examples, labels = load_packaged_dataset(dataset_examples_path, dataset_labels_path)
+        examples, labels = load_packaged_dataset(dataset_examples_path,
+                                                 dataset_labels_path)
 
         # Build an indexer and perform calibration
-        with patch.object(Indexer, "find", return_value=self.generate_mock()) as indexer_find_mock:
-            calibration = indexer.calibrate(examples[:NUM_CALIBRATION_EXAMPLES],
-                                            labels[:NUM_CALIBRATION_EXAMPLES],
-                                            num_neighbors=NUM_CALIBRATION_NEIGHBORS)
-        
+        with patch.object(
+                Indexer, "find",
+                return_value=self.generate_mock()) as indexer_find_mock:
+            calibration = indexer.calibrate(
+                examples[:NUM_CALIBRATION_EXAMPLES],
+                labels[:NUM_CALIBRATION_EXAMPLES],
+                num_neighbors=NUM_CALIBRATION_NEIGHBORS)
+
         distances = np.asarray(calibration['thresholds']['distance'])
         precisions = calibration['thresholds']['precision']
-        label_thresholds = {
-            0.9: 'very_likely',
-            0.8: 'likely',
-            0.7: 'possible'
-        }
+        label_thresholds = {0.9: 'very_likely', 0.8: 'likely', 0.7: 'possible'}
 
         # Compute the similarity labels
-        labels = indexer.compute_labels(precisions, distances, label_thresholds)
+        labels = indexer.compute_labels(precisions, distances,
+                                        label_thresholds)
 
         true_labels = {
             'very_likely': np.float32(0.08),
@@ -573,4 +584,4 @@ class IndexerTestCase(unittest.TestCase):
             'possible': -1
         }
 
-        assert(labels == true_labels)
+        assert (labels == true_labels)
