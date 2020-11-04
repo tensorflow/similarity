@@ -20,6 +20,8 @@ from .metrics import pairwise_cosine
 def _masked_maximum(distances, mask, dim=1):
     """Computes the maximum values over masked pairwise distances.
 
+    We need to use this formula to make sure all values are >=0.
+
     Args:
       distances (Tensor): 2-D float `Tensor` of [n, n] pairwise distances
       mask (Tensor): 2-D Boolean `Tensor` of [n, n] valid distance size.
@@ -53,7 +55,9 @@ def _masked_minimum(data, mask, dim=1):
 
 
 def _build_masks(labels, batch_size):
+    # same class mask
     positive_mask = tf.math.equal(labels, tf.transpose(labels))
+    # not the same class
     negative_mask = tf.math.logical_not(positive_mask)
 
     # masks are treated as float32 moving forward
@@ -65,8 +69,8 @@ def _build_masks(labels, batch_size):
     positive_mask = positive_mask - tf.cast(diag, tf.float32)
     return positive_mask, negative_mask
 
-#@tf.keras.utils.register_keras_serializable(package="Similarity")
-# @tf.function
+@tf.keras.utils.register_keras_serializable(package="Similarity")
+@tf.function
 def triplet_loss(labels, embeddings, distance='cosine',
                  positive_mining_strategy='hard',
                  negative_mining_strategy='hard',
@@ -75,16 +79,12 @@ def triplet_loss(labels, embeddings, distance='cosine',
 
     DEBUG = 0
     # [Label]
-    # if not labels.shape[0]:
-    #     return 0.0
+    # ! do not remove this code. It is actually needed for specific situation
+    # Reshape label tensor to [batch_size, 1] if not already in that format.
+    labels = tf.reshape(labels, (labels.shape[0], 1))
+    batch_size = tf.size(labels)
 
-    batch_size = labels.shape[0]
 
-    labels = tf.expand_dims(labels, axis=1)
-
-    embeddings = tf.cast(embeddings, tf.dtypes.float32)
-    # [masks]
-    positive_mask, negative_mask = _build_masks(labels, batch_size)
 
     # print(embeddings)
     # [distances]
@@ -93,6 +93,10 @@ def triplet_loss(labels, embeddings, distance='cosine',
         pairwise_distances = pairwise_cosine(embeddings)
     else:
         raise ValueError('Invalid distance')
+
+    # [masks]
+    positive_mask, negative_mask = _build_masks(labels, batch_size)
+
 
     # print(pairwise_distances)
     # [Positive distances computation]
@@ -161,10 +165,8 @@ def triplet_loss(labels, embeddings, distance='cosine',
         # tf.cast(positive_distances, tf.float64)
         # tf.cast(negative_distances, tf.float64)
         # tf.cast(margin, tf.float64)
-
         triplet_loss = tf.math.subtract(positive_distances, negative_distances)
         triplet_loss = tf.math.add(triplet_loss, margin)
-
         triplet_loss = tf.maximum(triplet_loss, 0.0)  # numeric stability
     # print(negative_distances)
 
@@ -246,7 +248,7 @@ class TripletLoss(LossFunctionWrapper):
         # Ensure users knows its one or the other
         if margin != 1.0 and soft_margin:
             raise ValueError('Margin value is not used when soft_margin is\
-                 set to True'                                                                                                                                                 )
+                set to True')
 
         super().__init__(triplet_loss,
                          name=name,

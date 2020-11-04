@@ -1,8 +1,45 @@
 import tensorflow as tf
+import numpy as np
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.losses import _masked_maximum, _masked_minimum
 from tensorflow_similarity.losses import _build_masks
 
+
+def triplet_hard_loss_np(labels, embedding, margin, dist_func, soft=False):
+
+    num_data = embedding.shape[0]
+    # Reshape labels to compute adjacency matrix.
+    labels_reshaped = np.reshape(labels.astype(np.float32), (labels.shape[0], 1))
+
+    adjacency = np.equal(labels_reshaped, labels_reshaped.T)
+    pdist_matrix = dist_func(embedding)
+    loss_np = 0.0
+    for i in range(num_data):
+        pos_distances = []
+        neg_distances = []
+        for j in range(num_data):
+            if adjacency[i][j] == 0:
+                neg_distances.append(pdist_matrix[i][j])
+            if adjacency[i][j] > 0.0 and i != j:
+                pos_distances.append(pdist_matrix[i][j])
+
+        # if there are no positive pairs, distance is 0
+        if len(pos_distances) == 0:
+            pos_distances.append(0)
+
+        # Sort by distance.
+        neg_distances.sort()
+        min_neg_distance = neg_distances[0]
+        pos_distances.sort(reverse=True)
+        max_pos_distance = pos_distances[0]
+
+        if soft:
+            loss_np += np.log1p(np.exp(max_pos_distance - min_neg_distance))
+        else:
+            loss_np += np.maximum(0.0, max_pos_distance - min_neg_distance + margin)
+
+    loss_np /= num_data
+    return loss_np
 
 def test_masked_maximum():
     distances = tf.constant([[1.0, 2.0, 3.0, 0.0], [4.0, 2.0, 1.0, 0.0]], dtype=tf.float32)

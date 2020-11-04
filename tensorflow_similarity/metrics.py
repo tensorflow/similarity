@@ -1,6 +1,7 @@
 import tensorflow as tf
 
 
+@tf.function
 def pairwise_cosine(embeddings, axis=1):
     tensor = tf.nn.l2_normalize(embeddings, axis=axis)
     distances = 1 - tf.matmul(tensor, tensor, transpose_b=True)
