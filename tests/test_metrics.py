@@ -1,6 +1,23 @@
 import tensorflow as tf
+import numpy as np
 from tensorflow_similarity.metrics import pairwise_cosine
 
+
+def angular_distance_np(feature):
+    """Computes the angular distance matrix in numpy.
+    Args:
+      feature: 2-D numpy array of size [number of data, feature dimension]
+    Returns:
+      angular_distances: 2-D numpy array of size
+        [number of data, number of data].
+    """
+
+    # l2-normalize all features
+    normed = feature / np.linalg.norm(feature, ord=2, axis=1, keepdims=True)
+    cosine_similarity = normed @ normed.T
+    inverse_cos_sim = 1 - cosine_similarity
+
+    return inverse_cos_sim
 
 def test_cosine_same():
     a = tf.convert_to_tensor([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
