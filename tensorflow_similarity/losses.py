@@ -73,34 +73,45 @@ def _build_masks(labels, batch_size):
 @tf.function
 def triplet_loss(labels, embeddings, distance='cosine',
                  positive_mining_strategy='hard',
-                 negative_mining_strategy='hard',
+                 negative_mining_strategy='semi-hard',
                  soft_margin=False,
                  margin=1.0):
+    """Triplet loss computations
 
-    DEBUG = 0
+    Args:
+        labels (list(int)): labels associted with the embed
+        embeddings ([type]): [description]
+        distance (str, optional): [description]. Defaults to 'cosine'.
+        positive_mining_strategy (str, optional): [description]. Defaults to 'hard'.
+        negative_mining_strategy (str, optional): [description]. Defaults to 'semi-hard'.
+        soft_margin (bool, optional): [description]. Defaults to False.
+        margin (float, optional): [description]. Defaults to 1.0.
+
+    Raises:
+        ValueError: [description]
+        ValueError: [description]
+
+    Returns:
+        [type]: [description]
+    """
+
     # [Label]
     # ! do not remove this code. It is actually needed for specific situation
     # Reshape label tensor to [batch_size, 1] if not already in that format.
     labels = tf.reshape(labels, (labels.shape[0], 1))
     batch_size = tf.size(labels)
 
-
-
-    # print(embeddings)
     # [distances]
-    # comptute pairwise distance > [batch_size, batch_size]
     if distance == 'cosine':
         pairwise_distances = pairwise_cosine(embeddings)
     else:
-        raise ValueError('Invalid distance')
+        # user supplied distance function
+        pairwise_distances = distance(embeddings)
 
     # [masks]
     positive_mask, negative_mask = _build_masks(labels, batch_size)
 
-
-    # print(pairwise_distances)
-    # [Positive distances computation]
-    # select positive distance based of mining strategy
+    # [Positivie distance computation]
     if positive_mining_strategy == 'hard':
         positive_distances = _masked_maximum(pairwise_distances, positive_mask)
     elif positive_mining_strategy == 'easy':
@@ -108,82 +119,48 @@ def triplet_loss(labels, embeddings, distance='cosine',
     else:
         raise ValueError('Invalid positive mining strategy')
 
-
-    # print('[positive]')
-    # print(positive_distances)
-
     # [Negative distances computation]
-
-    # select distance based of mining strategy
     if negative_mining_strategy == 'hard':
         # find the *non-zero* minimal distance between negative labels
         negative_distances = _masked_minimum(pairwise_distances, negative_mask)
     elif negative_mining_strategy == 'semi-hard':
+        # find the minimal distance between negative label gt than max distance
+        # between positive labels
         # find max value of positive distance
         max_positive = _masked_maximum(pairwise_distances, positive_mask)
-        # max_positive = tf.reduce_max(max_positive)
-
-        # print('max positive', max_positive)
 
         # select distance that are above the max positive distance
         greater_distances = tf.math.greater(pairwise_distances, max_positive)
-        # print('greater distance')
-        # print(tf.cast(greater_distances, tf.int32))
 
         # combine with negative mask: keep negative value if greater,
         # zero otherwise
         empty = tf.cast(tf.zeros((batch_size, batch_size)), tf.dtypes.float32)
         semi_hard_mask = tf.where(greater_distances, negative_mask, empty)
-        # print(tf.cast(semi_hard_mask, tf.int32))
-
-        # print('diff hard vs not hard')
-        # print(tf.cast(negative_mask - semi_hard_mask, tf.int32))
 
         # find the  minimal distance between negative labels above threshold
         negative_distances = _masked_minimum(pairwise_distances,
                                              semi_hard_mask)
-        # else:
-        #     negative_distances = _masked_minimum(pairwise_distances,
-        #                                          negative_mask)
+
     elif negative_mining_strategy == 'easy':
         # find the maximal distance between negative labels
         negative_distances = _masked_maximum(pairwise_distances, negative_mask)
     else:
         raise ValueError('Invalid negative mining strategy')
 
-    # print('[negative]')
-    # print(negative_distances)
-
-    # print('diff')
-    # print(negative_distances - positive_distances)
-
     # [Triplet loss computation]
     if soft_margin:
         triplet_loss = tf.math.exp(positive_distances - negative_distances)
         triplet_loss = tf.math.log1p(triplet_loss)
     else:
-        # tf.cast(positive_distances, tf.float64)
-        # tf.cast(negative_distances, tf.float64)
-        # tf.cast(margin, tf.float64)
         triplet_loss = tf.math.subtract(positive_distances, negative_distances)
         triplet_loss = tf.math.add(triplet_loss, margin)
         triplet_loss = tf.maximum(triplet_loss, 0.0)  # numeric stability
-    # print(negative_distances)
 
-    if DEBUG:
-        print('tpl\n', triplet_loss)
-
-    # if triplet_loss.shape[0] and triplet_loss.shape[0] > 1:
-    #     num_positives = tf.math.reduce_sum(positive_mask)
-    #     # print(num_positives)
-    #     triplet_loss = tf.truediv(tf.reduce_sum(triplet_loss), num_positives)
-    #     return tf.maximum(triplet_loss, 0.0)
-    # else:
     triplet_loss = tf.reduce_mean(triplet_loss)
     return triplet_loss
 
 
-# @tf.keras.utils.register_keras_serializable(package="Similarity")
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 class TripletLoss(LossFunctionWrapper):
     """Computes the triplet loss in an online fashion.
 
@@ -218,10 +195,11 @@ class TripletLoss(LossFunctionWrapper):
 
             positive_mining_strategy (str, optional): What mining strategy to
             use to select embedding from the same class. Defaults to 'hard'.
+            available: {'easy', 'hard'}
 
             negative_mining_strategy (str, optional): What mining strategy to
             use for select the embedding from the differents class.
-            Defaults to 'hard'.
+            Defaults to 'semi-hard'. Available: {'hard', 'semi-hard', 'easy'}
 
             soft_margin (bool, optional): [description]. Defaults to True.
             Use a soft margin instad of an explict one.
