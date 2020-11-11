@@ -14,7 +14,7 @@
 # ==============================================================================
 import tensorflow as tf
 from tensorflow_addons.utils.keras_utils import LossFunctionWrapper
-from .metrics import pairwise_cosine
+from .metrics import metric_name_canonializer, pairwise_cosine
 
 
 def _masked_maximum(distances, mask, dim=1):
@@ -213,9 +213,10 @@ class TripletLoss(LossFunctionWrapper):
             name (str, optional): Loss name. Defaults to None.
         """
 
-        # user checks
-        if distance not in ['cosine']:
-            raise ValueError('Invalid distance')
+        # distance canonicalization
+        distance = metric_name_canonializer(distance)
+
+        # sanity checks
 
         if positive_mining_strategy not in ['easy', 'hard']:
             raise ValueError('Invalid positive mining strategy')

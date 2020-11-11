@@ -28,8 +28,7 @@ setup(name="tensorflow_similarity",
       url='https://github.com/google/scaaml',
       license='Apache License 2.0',
       install_requires=[
-          'colorama', 'termcolor', 'tqdm', 'pandas', 'numpy', 'tabulate',
-          'matplotlib', 'Pillow', 'tensorflow>=2.2.0', 'pycm', "chipwhisperer"
+          'numpy', 'tabulate', 'nmslib', 'tensorflow>=2.2.0', 'tqdm'
       ],
       classifiers=[
           'Development Status :: 5 - Production/Stable',
