@@ -83,7 +83,7 @@ def test_triplet_loss():
     tpl = TripletLoss()
     # y_true, y_preds
     loss = tpl(y_true, y_preds)
-    assert loss > 1
+    assert loss > 0.9
 
 
 def test_triplet_loss_easy():
@@ -106,8 +106,7 @@ def test_triplet_loss_semi_hard():
     # y_preds: embedding
     y_preds = tf.random.uniform((num_inputs, 16), 0, 1)
     tpl = TripletLoss(positive_mining_strategy='easy',
-                      negative_mining_strategy='semi-hard',
-                      reducer='sum')
+                      negative_mining_strategy='semi-hard')
     # y_true, y_preds
     loss = tpl(y_true, y_preds)
     assert loss
