@@ -1,5 +1,6 @@
 from tensorflow_similarity.mappers import MemoryMapper
 
+
 def test_memory_mapper():
     a = {'d': 1}
     b = {'d': 2}
@@ -21,3 +22,6 @@ def test_memory_mapper():
     assert mapper.get(a_idx) == a
     assert mapper.get(b_idx) == b
     assert mapper.get(a2_idx) == a
+
+    # check reference counting
+    assert mapper.size() == 3
