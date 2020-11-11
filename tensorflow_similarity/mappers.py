@@ -1,8 +1,11 @@
 class MemoryMapper():
 
     def __init__(self):
-        self.num_references = 0
-        self.htable = {}  # potentially use an array if we don't include a del.
+
+        # We are using an array for scalability and speed.
+        # Makes del a massive pain but its infrequent
+        self.htable = []
+        self.num_items = 0
 
     def add(self, data):
         """Add a value to the mapper
@@ -13,9 +16,9 @@ class MemoryMapper():
         Returns:
             int: associated id
         """
-        idx = self.num_references
-        self.htable[idx] = data
-        self.num_references += 1
+        idx = self.num_items
+        self.htable.append(data)
+        self.num_items += 1
         return idx
 
     def get(self, idx):
@@ -29,6 +32,10 @@ class MemoryMapper():
         """
         return self.htable[idx]
 
+    def size(self):
+        "Number of elements in the mapper"
+        return self.num_items
+
     def delete(self, idx):
         """Remove point from the mapper"""
-        del self.data[idx]
+        raise NotImplementedError
