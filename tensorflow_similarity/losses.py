@@ -69,7 +69,7 @@ def _build_masks(labels, batch_size):
     positive_mask = positive_mask - tf.cast(diag, tf.float32)
     return positive_mask, negative_mask
 
-@tf.keras.utils.register_keras_serializable(package="Similarity")
+# @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
 def triplet_loss(labels, embeddings, distance='cosine',
                  positive_mining_strategy='hard',
@@ -82,8 +82,10 @@ def triplet_loss(labels, embeddings, distance='cosine',
         labels (list(int)): labels associted with the embed
         embeddings ([type]): [description]
         distance (str, optional): [description]. Defaults to 'cosine'.
-        positive_mining_strategy (str, optional): [description]. Defaults to 'hard'.
-        negative_mining_strategy (str, optional): [description]. Defaults to 'semi-hard'.
+        positive_mining_strategy (str, optional): [description].
+        Defaults to 'hard'.
+        negative_mining_strategy (str, optional): [description].
+        Defaults to 'semi-hard'.
         soft_margin (bool, optional): [description]. Defaults to False.
         margin (float, optional): [description]. Defaults to 1.0.
 
@@ -96,9 +98,10 @@ def triplet_loss(labels, embeddings, distance='cosine',
     """
 
     # [Label]
-    # ! do not remove this code. It is actually needed for specific situation
+    # ! Weirdness to be investigated
+    # do not remove this code. It is actually needed for specific situation
     # Reshape label tensor to [batch_size, 1] if not already in that format.
-    labels = tf.reshape(labels, (labels.shape[0], 1))
+    # labels = tf.reshape(labels, (labels.shape[0], 1))
     batch_size = tf.size(labels)
 
     # [distances]
@@ -215,7 +218,7 @@ class TripletLoss(LossFunctionWrapper):
 
         # distance canonicalization
         distance = metric_name_canonializer(distance)
-
+        self.distance = distance
         # sanity checks
 
         if positive_mining_strategy not in ['easy', 'hard']:
