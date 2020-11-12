@@ -69,7 +69,7 @@ def _build_masks(labels, batch_size):
     positive_mask = positive_mask - tf.cast(diag, tf.float32)
     return positive_mask, negative_mask
 
-# @tf.keras.utils.register_keras_serializable(package="Similarity")
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
 def triplet_loss(labels, embeddings, distance='cosine',
                  positive_mining_strategy='hard',
