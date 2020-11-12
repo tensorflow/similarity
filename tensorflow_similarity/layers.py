@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Layer
 from tensorflow.keras import layers
+# from tensorflow.keras.layers.Inputsec ###
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -14,6 +15,8 @@ class MetricEmbedding(Layer):
         self.size = size
         self.dense = layers.Dense(size)
         super(MetricEmbedding, self).__init__()
+        # FIXME: enforce the shape
+        # self.input_spec = rank2
 
     def call(self, inputs):
         x = self.dense(inputs)

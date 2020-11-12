@@ -5,8 +5,6 @@ from time import time
 from collections import defaultdict
 from collections import deque
 from tabulate import tabulate
-
-from .metrics import metric_name_canonializer
 from .mappers import MemoryMapper
 from tqdm.auto import tqdm
 import numpy as np
@@ -16,35 +14,43 @@ class Indexer():
 
     def __init__(self,
                  distance='cosine',
-                 metadata={},
                  mapper='memory',
-                 method='hnsw',
+                 matcher='hnsw',
                  stat_buffer_size=100):
 
-        self.metadata = metadata
-
-        # translate metric name to nmslib distance
-        self.distance = metric_name_canonializer(distance)
-        if self.distance == 'cosine':
+        if distance == 'cosine':
             self.space_name = 'cosinesimil'
         else:
             raise ValueError('Unsupported metric space')
 
+        # internal structure naming
+        self.matcher_method = matcher
+        self.mapper_type = mapper
+
+        # stats configuration
+        self.stat_buffer_size = stat_buffer_size
+
+        # initialize internal structures
+        self._init_structures()
+
+    def reset(self):
+        "Reinitialize the indexer"
+        self._init_structures()
+
+    def _init_structures(self):
+        "(re)intialize internal storage structure"
+
+        self.matcher = nmslib.init(method=self.matcher_method, space=self.space_name)
+
         # mapper id > data
-        if mapper == 'memory':
+        if self.mapper_type == 'memory':
             self.mapper = MemoryMapper()
         else:
-            self.mapper = mapper
-
-        # fast ANN index
-        # FIXME: rename matcher
-        self.index = nmslib.init(method=method, space=self.space_name)
+            self.mapper = self.mapper_type
 
         # stats
         self._stats = defaultdict(int)
-        self.stat_buffer_size = stat_buffer_size
-        # bound timing buffers
-        self.lookup_timings = deque([], maxlen=self.stat_buffer_size)
+        self._lookup_timings_buffer = deque([], maxlen=self.stat_buffer_size)
 
     def add(self, embedding, label=None, data=None, build=True, verbose=1):
         """ Add a single embedding to the indexer
@@ -71,7 +77,7 @@ class Indexer():
         # add index to the embedding
         # !the order of parameters between addDataPoint and addDataPointBatch
         # !are inverted
-        self.index.addDataPoint(idx, embedding)
+        self.matcher.addDataPoint(idx, embedding)
 
         if build:
             self.build(verbose=verbose)
@@ -124,7 +130,7 @@ class Indexer():
                 pb.update(1)
 
         # add point to the index
-        self.index.addDataPointBatch(batch, batch_idxs)
+        self.matcher.addDataPointBatch(batch, batch_idxs)
 
         if verbose:
             pb.close()
@@ -136,12 +142,12 @@ class Indexer():
         """Build the index this is need to take into account the new points
         """
         show = True if verbose else False
-        self.index.createIndex(print_progress=show)
+        self.matcher.createIndex(print_progress=show)
         self._stats['query_time'] = 0
         self._stats['query'] = 0
         self.lookup_timing = deque([], maxlen=self.stat_buffer_size)
 
-    def lookup(self, embedding, k=5):
+    def single_lookup(self, embedding, k=5):
         """Find the k closest match of a given embedding
 
         Args:
@@ -153,18 +159,18 @@ class Indexer():
 
         results = []
         start = time()
-        idxs, distances = self.index.knnQuery(embedding, k=k)
+        idxs, distances = self.matcher.knnQuery(embedding, k=k)
         for i, idx in enumerate(idxs):
             data = self.mapper.get(idx)
             data['distance'] = distances[i]
             results.append(data)
         lookup_time = time() - start
-        self.lookup_timings.append(lookup_time)
+        self._lookup_timings_buffer.append(lookup_time)
         self._stats['num_lookups'] += 1
 
         return results
 
-    def batch_lookup(self, embedding, k=5):
+    def batch_lookup(self, embedding, k=5, threads=4):
         """Find the k closest match of a batch of embeddings
 
         Args:
@@ -172,9 +178,31 @@ class Indexer():
             k (int, optional): [description]. Defaults to 5.
             threads (int, optional). Defaults to 4
         Returns
-            list: list of k nearest matched embeddings.
+            list(list): list of k nearest matched embeddings.
         """
-        raise NotImplementedError('WIP')
+
+        results = []
+        start = time()
+        matches = self.matcher.knnQueryBatch(embedding,
+                                             k=k,
+                                             num_threads=threads)
+
+        for elt in matches:
+            idxs, distances = elt
+            elt_results = []
+            for i, idx in enumerate(idxs):
+                data = self.mapper.get(idx)
+                data['distance'] = distances[i]
+                elt_results.append(data)
+            results.append(elt_results)
+        lookup_time = time() - start
+
+        elt_lookup_time = lookup_time / len(results)
+        for _ in range(len(results)):
+            self._lookup_timings_buffer.append(elt_lookup_time)
+        self._stats['num_lookups'] += len(results)
+
+        return results
 
     def save(self):
         raise NotImplementedError('WIP')
@@ -206,7 +234,12 @@ class Indexer():
 
         # query performance - make sure we don't count unused buffer
         max_idx = min(stats['num_lookups'], self.stat_buffer_size)
-        lookup_timings = list(self.lookup_timings)[:max_idx]
+        lookup_timings = list(self._lookup_timings_buffer)[:max_idx]
+
+        # ensure we never have an empty list
+        lookup_timings = lookup_timings if list(lookup_timings) else [0]
+
+        # compute stats
         stats['query_performance'] = {
             'min': np.min(lookup_timings),
             'max': np.max(lookup_timings),
