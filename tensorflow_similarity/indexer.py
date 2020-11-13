@@ -2,13 +2,16 @@
 
 import nmslib
 from time import time
+import numpy as np
 from collections import defaultdict
 from collections import deque
 from tabulate import tabulate
-from .mappers import MemoryMapper
 from tqdm.auto import tqdm
-import numpy as np
 
+from .mappers import MemoryMapper
+from .metrics import cosine
+from operator import itemgetter
+import tensorflow as tf
 
 class Indexer():
 
@@ -170,7 +173,7 @@ class Indexer():
 
         return results
 
-    def batch_lookup(self, embedding, k=5, threads=4):
+    def batch_lookup(self, embeddings, k=5, threads=4):
         """Find the k closest match of a batch of embeddings
 
         Args:
@@ -181,22 +184,38 @@ class Indexer():
             list(list): list of k nearest matched embeddings.
         """
 
+        print('Unreliable method -- Distances are innacurate:%s' % int(time()))
         results = []
         start = time()
-        matches = self.matcher.knnQueryBatch(embedding,
+        matches = self.matcher.knnQueryBatch(embeddings,
                                              k=k,
                                              num_threads=threads)
+        for emb_idx, res in enumerate(matches):
+            elt_idxs, _ = res
 
-        for elt in matches:
-            idxs, distances = elt
-            elt_results = []
-            for i, idx in enumerate(idxs):
-                data = self.mapper.get(idx)
-                data['distance'] = distances[i]
-                elt_results.append(data)
-            results.append(elt_results)
+            ngbs = []
+            for i, e_idx in enumerate(elt_idxs):
+                data = self.mapper.get(e_idx)
+                ngbs.append(data)
+
+            ngb_embs = tf.constant([n['embedding'] for n in ngbs])
+            #print(ngb_embs.shape)
+            emb = tf.expand_dims(embeddings[emb_idx], axis=0)
+            #print(emb.shape)
+            distances = cosine(emb, ngb_embs)[0]
+
+
+            for idx in range(k):
+                #FIXME numerical stability
+                ngbs[idx]['distance'] = float(distances[idx])
+
+            # ngbs = sorted(ngbs, key=itemgetter('distance'))
+
+            results.append(ngbs)
+
         lookup_time = time() - start
 
+        # stats
         elt_lookup_time = lookup_time / len(results)
         for _ in range(len(results)):
             self._lookup_timings_buffer.append(elt_lookup_time)
@@ -220,6 +239,9 @@ class Indexer():
 
     def load(self):
         raise NotImplementedError('WIP')
+
+    def _build_result(target_embbing, neighboors):
+        pass
 
     def _store_data(self, embedding, label, data):
         "store data using mapper and assign it an id"

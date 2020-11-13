@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from tensorflow_similarity.metrics import pairwise_cosine
+from tensorflow_similarity.metrics import pairwise_cosine, cosine
 
 
 def angular_distance_np(feature):
@@ -19,7 +19,9 @@ def angular_distance_np(feature):
 
     return inverse_cos_sim
 
+
 def test_cosine_same():
+    # pairwise
     a = tf.convert_to_tensor([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
     vals = pairwise_cosine(a)
     assert tf.round(tf.reduce_sum(vals)) == 0
@@ -36,3 +38,9 @@ def test_cosine_vals():
     vals = pairwise_cosine(a)
     assert vals[0][0] == 0
     assert vals[0][1] == 0.31861484
+
+
+def test_direct_cosine():
+    a = tf.constant([[0.1, 0.3, 0.2]])
+    b = tf.constant([[0.0, 0.1, 0.5]])
+    assert cosine(a, b) == 0.31861484
