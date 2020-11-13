@@ -28,6 +28,15 @@ def pairwise_cosine(embeddings, axis=1):
     return distances
 
 
+@tf.function
+def cosine(a, b, axis=-1):
+    t1 = tf.nn.l2_normalize(a, axis=axis)
+    t2 = tf.nn.l2_normalize(b, axis=axis)
+    distances = 1 - tf.matmul(t1, t2, transpose_b=True)
+    distances = tf.maximum(distances, 0.0)
+    return distances
+
+
 def pairwise_snr():
     """ Signal to Noise pairwise distance
 
