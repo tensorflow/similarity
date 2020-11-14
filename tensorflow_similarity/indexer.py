@@ -13,6 +13,7 @@ from .metrics import cosine
 from operator import itemgetter
 import tensorflow as tf
 
+
 class Indexer():
 
     def __init__(self,
@@ -43,7 +44,8 @@ class Indexer():
     def _init_structures(self):
         "(re)intialize internal storage structure"
 
-        self.matcher = nmslib.init(method=self.matcher_method, space=self.space_name)
+        self.matcher = nmslib.init(method=self.matcher_method,
+                                   space=self.space_name)
 
         # mapper id > data
         if self.mapper_type == 'memory':
