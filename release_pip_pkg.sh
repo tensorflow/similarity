@@ -15,6 +15,6 @@
 # limitations under the License.
 
 rm -rf dist/
-python update_version.py
+# python update_version.py
 python setup.py sdist
 twine upload -r google dist/* #--verbose
