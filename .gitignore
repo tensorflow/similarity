@@ -2,9 +2,12 @@ tmp.py
 tensorflow_similarity.egg-info/
 logs/
 .vscode/
+release_pip_pkg.sh
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+
 *$py.class
 *.prof
 # C extensions
