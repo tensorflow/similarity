@@ -28,7 +28,8 @@ setup(name="tensorflow_similarity",
       url='https://github.com/google/scaaml',
       license='Apache License 2.0',
       install_requires=[
-          'numpy', 'tabulate', 'nmslib', 'tensorflow>=2.2.0', 'tqdm'
+          'numpy', 'tabulate', 'nmslib', 'tensorflow>=2.2.0', 'tqdm',
+          'matplotlib'
       ],
       classifiers=[
           'Development Status :: 5 - Production/Stable',
