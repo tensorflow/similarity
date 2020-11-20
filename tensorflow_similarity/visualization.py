@@ -16,7 +16,7 @@ def viz_neigbors_imgs(target_data,
     plt.imshow(target_data, cmap=cmap)
     plt.xticks([])
     plt.yticks([])
-    plt.title('target lbl:%d' % target_label)
+    plt.title('class %d' % target_label)
     plt_idx += 1
 
     for nbg in neighbors:

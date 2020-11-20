@@ -7,7 +7,7 @@ from tensorflow.keras.models import Model
 from tensorflow_similarity.indexer import Indexer
 
 from .distances import metric_name_canonializer
-from .metrics import precision, accuracy
+from .metrics import precision, f1_score
 
 
 class SimilarityModel(Model):
@@ -172,9 +172,9 @@ class SimilarityModel(Model):
             count += 1
             if dist_idx in matching_idxes:
                 match_rate += 1
-            precision = match_rate / (count)
-            recall = float(match_rate / positive_matches)
-            f1 = (precision * recall / (precision + recall)) * 2
+            precision = match_rate / count
+            recall = float(match_rate / positive_matches)  # not standard
+            f1 = f1_score(precision, recall)
 
             precision_scores.append(precision)
             recall_scores.append(recall)
@@ -192,7 +192,7 @@ class SimilarityModel(Model):
         curr = 100000
 
         # FIXME make it user configurable
-        # normalized labels
+        # normalized cutpoint
         cutpoints = {}
         very_likely = 0.99
         likely = 0.9
@@ -219,17 +219,17 @@ class SimilarityModel(Model):
                 thresholds['distance'].append(distance)
                 curr = precision
                 if precision >= very_likely:
-                    cutpoints['very_likely'] = distance
+                    cutpoints['very_likely'] = float(distance)
                 elif precision >= likely:
-                    cutpoints['likely'] = distance
+                    cutpoints['likely'] = float(distance)
                 elif precision >= optimistic:
-                    cutpoints['optimistic'] = distance
+                    cutpoints['optimistic'] = float(distance)
             if verbose:
                 pb.update()
         pb.close()
 
-        cutpoints['optimal'] = thresholds['distance'][tf.math.argmax(
-            thresholds['f1'])]
+        cutpoints['optimal'] = float(thresholds['distance'][tf.math.argmax(
+            thresholds['f1'])])
 
         for v in thresholds.values():
             v.reverse()
@@ -244,17 +244,17 @@ class SimilarityModel(Model):
 
         return self.calibration
 
-    def match(self, x, threshold='optimal', no_match_class=-1, verbose=0):
+    def match(self, x, cutpoint='optimal', no_match_class=-1, verbose=0):
         """Match a set of examples against the calibrated index
 
         For the match function to work, the index must be calibrated using
         calibrate().
 
         Args:
-            x (tensor): input to be matched against the index
+            x (tensor): examples to be matched against the index.
             cutpoint (str, optional): What calibration threshold to use.
-            Defaults to 'optimal' which is the optimal F1 threshold computed with
-            calibrate().
+            Defaults to 'optimal' which is the optimal F1 threshold computed
+            with calibrate().
             no_match_class (int, optional): What class value to assign when
             there is no match. Defaults to -1.
 
@@ -262,31 +262,41 @@ class SimilarityModel(Model):
 
         Returns:
             list(int): Return which class matches for each supplied example.
-        """
-        matches = []
 
+        Notes:
+            This function matches all the cutpoints at once internally as there
+            is little performance downside to do so and allows to do the
+            evaluation in a single go.
+
+        """
         # basic checks
         if not self.calibration:
             raise ValueError('Model uncalibrated: run model.calibration()')
 
-        if threshold not in self.calibration['cutpoints']:
+        if cutpoint not in self.calibration['cutpoints'] and cutpoint != 'all':
             msg = 'Unknonw cutpoint: %s - available %s' % (
-                threshold, self.calibration['cutpoints'])
+                cutpoint, self.calibration['cutpoints'])
             raise ValueError(msg)
 
-        # FIXME batch lookup
+        # get embeddings
         embeddings = self.predict(x)
 
+        # FIXME batch lookup
         if verbose:
             pb = tqdm(total=len(embeddings), desc='Matching up embeddings')
 
-        for idx in range(len(x)):
+        matches = defaultdict(list)
+        for idx in range(len(embeddings)):
             knn = self._index.single_lookup(embeddings[idx], k=1)
             distance = knn[0]['distance']
-            if distance < self.calibration['cutpoints'][threshold]:
-                matches.append(knn[0]['label'])
-            else:
-                matches.append(no_match_class)
+
+            # compute match for each cutoff points
+            for name, cut_distance in self.calibration['cutpoints'].items():
+                if distance < cut_distance:
+                    # ! don't remove the cast, otherwise eval get very slow.
+                    matches[name].append(int(knn[0]['label']))
+                else:
+                    matches[name].append(no_match_class)
 
             if verbose:
                 pb.update()
@@ -294,59 +304,98 @@ class SimilarityModel(Model):
         if verbose:
             pb.close()
 
-        return matches
+        if cutpoint == 'all':  # returns all the cutpoints for eval purpose.
+            return matches
+        else:  # normal match behavior
+            return matches[cutpoint]
 
-    def evaluate_index(self, x, y, verbose=1):
+    def evaluate_index(self, x, y,  no_match_class=-1, verbose=1):
+        """Evaluate model matching accuracy on a given dataset.
+
+        Args:
+            x (tensor): Examples to be matched against the index.
+            y (tensor): [description]
+
+            no_match_class (int, optional):  What class value to assign when
+            there is no match. Defaults to -1.
+
+            verbose (int, optional): Display results if set to 1 otherwise
+            results are returned silently. Defaults to 1.
+
+        Returns:
+            dict: evaluation metrics
+        """
 
         results = defaultdict(int)
-        matches = self.match(x, verbose=verbose)
-        y_pred = []
+        matches = self.match(x,
+                             verbose=verbose,
+                             cutpoint='all',
+                             no_match_class=no_match_class)
 
-        # restrict to < threshold
-        y_thresholded = []
-        y_pred_thresholded = []
+        num_examples = len(x)
+        cutpoints = list(self.calibration['cutpoints'].keys())
+        y_pred = defaultdict(list)
+        y_true = defaultdict(list)
+
         if verbose:
-            pb = tqdm(total=len(matches), desc='Computing')
+            pb = tqdm(total=num_examples, desc='Computing')
 
-        for idx, match in enumerate(matches):
-            val = y[idx]
-            match = int(match)  # needed or its going to be horribly slow
-            y_pred.append(match)
-            if match > 0:
-                y_thresholded.append(val)
-                y_pred_thresholded.append(match)
-                results['matched'] += 1
-            else:
-                results['unknown'] += 1
+        for idx in range(num_examples):
+            val = int(y[idx])
+
+            y_true['no_cutpoint'].append(val)
+            y_pred['no_cutpoint'].append(matches['optimal'][idx])
+
+            for cutpoint in cutpoints:
+                pred = matches[cutpoint][idx]
+                if pred != no_match_class:
+                    y_true[cutpoint].append(val)
+                    y_pred[cutpoint].append(pred)
 
             if verbose:
                 pb.update()
         pb.close()
 
-        total = len(matches)
-        threshold_recall = results['matched'] / total
+        # computing metrics
+        results = defaultdict(dict)
+        METRICS_FN = [['precision', precision]]
 
-        METRICS_FN = [['accuracy', accuracy], ['precision', precision]]
+        if verbose:
+            pb = tqdm(total=len(METRICS_FN) + 2, desc="computing metrics")
 
-        # thresholded metrics
-        metrics = {}
-        metrics['cutpoint'] = {
-            'recall': threshold_recall,
-        }
-        metrics['full'] = {'recall': 1}
+        # standardized metric
+        for m in METRICS_FN:
+            for cutpoint in cutpoints:
+                tval = float(m[1](y_true[cutpoint], y_pred[cutpoint]))
+                results[cutpoint][m[0]] = tval
 
-        rows = [['recall', round(threshold_recall, 5), 1]]
-        for m in tqdm(METRICS_FN, desc="Computing metrics"):
-            # thresholded
-            tval = float(m[1](y_thresholded, y_pred_thresholded))
-            metrics['cutpoint'][m[0]] = tval
+            if verbose:
+                pb.update()
 
-            # full
-            fval = float(m[1](y, y_pred))
-            metrics['full'][m[0]] = fval
+        # Recall
+        for cutpoint in cutpoints:
+            results[cutpoint]['recall'] = len(y_pred[cutpoint]) / num_examples
+        if verbose:
+            pb.update()
 
-            rows.append([m[0], round(tval, 5), round(fval, 5)])
+        # F1
+        for cutpoint in cutpoints:
+            results[cutpoint]['f1'] = f1_score(results[cutpoint]['precision'],
+                                               results[cutpoint]['recall'])
+        if verbose:
+            pb.update()
 
-        print(tabulate(rows, headers=['metric', 'cutpoint <', 'all']))
+        if verbose:
+            pb.close()
 
-        return metrics
+        # display results if verbose
+        if verbose:
+            rows = []
+            for metric_name in results['optimal'].keys():
+                row = [metric_name]
+                for cutpoint in cutpoints:
+                    row.append(results[cutpoint][metric_name])
+                rows.append(row)
+            print(tabulate(rows, headers=['metric'] + cutpoints))
+
+        return results

@@ -34,8 +34,27 @@ def accuracy(y_true, y_pred):
     return tp / len(y_true)
 
 
-@tf.function
 def precision(y_true, y_pred):
     tp = true_positives(y_true, y_pred)
     fp = false_positives(y_true, y_pred)
     return (tp / (tp + fp))
+
+
+def recall(y_true, y_pred):
+    tp = true_positives(y_true, y_pred)
+    return (tp / len(y_true))
+
+
+def f1_score(precision, recall):
+    """Compute the F1 score, also known as balanced F-score or F-measure
+
+    https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html
+
+    Args:
+        precision (float): Precision metric
+        recall (float): Precision metric
+
+    Returns:
+        float: f1 score
+    """
+    return 2 * (precision * recall) / (precision + recall)
