@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from tensorflow_similarity.metrics import pairwise_cosine, cosine
+from tensorflow_similarity.distances import pairwise_cosine, cosine
 
 
 def angular_distance_np(feature):
