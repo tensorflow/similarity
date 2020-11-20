@@ -6,14 +6,14 @@ import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow_similarity.indexer import Indexer
 
-from .metrics import metric_name_canonializer
+from .distances import metric_name_canonializer
+from .metrics import precision, accuracy
 
 
 class SimilarityModel(Model):
     """Sub-classing Keras.Model to allow access to the forward pass values for
     efficient metric-learning.
     """
-
     def train_step(self, data):
         # Unpack the data. Its structure depends on your model and
         # on what you pass to `fit()`.
@@ -75,8 +75,10 @@ class SimilarityModel(Model):
             try:
                 self.distance = metric_loss.distance
             except:  # noqa
-                raise ValueError("distance='auto' only works if the first loss\
-                     is a metric loss"                                                                                                                                                                                                                                    )
+                msg = "distance='auto' only works if the first loss is a\
+                       metric loss"
+
+                raise ValueError(msg)
         else:
             self.distance = metric_name_canonializer(distance)
 
@@ -121,16 +123,18 @@ class SimilarityModel(Model):
 
         # getting the NN distance and testing if they are of the same class
         if verbose:
-            pb = tqdm(total=len(x),
-                      desc='Finding NN')
+            pb = tqdm(total=len(x), desc='Finding NN')
 
         distances = []
         class_matches = []
+
+        # FIXME: batch_lookup
+        embeddings = self.predict(x)
         for idx in range(len(x)):
-            embs = self.single_lookup(x[idx], k=k)
-            for emb in embs:
-                distances.append(emb['distance'])
-                same_class = 1 if emb['label'] == y[idx] else 0
+            knn = self._index.single_lookup(embeddings[idx], k=k)
+            for nn in knn:
+                distances.append(nn['distance'])
+                same_class = 1 if nn['label'] == y[idx] else 0
                 class_matches.append(same_class)
 
             if verbose:
@@ -141,7 +145,7 @@ class SimilarityModel(Model):
         matching_idxes = [int(x) for x in tf.where(class_matches)]
 
         if verbose:
-            print("num positive matches %d/%s" %
+            print("num positive matches %d/%s\n" %
                   (positive_matches, total_matches))
 
         # compute the PR curve
@@ -152,12 +156,12 @@ class SimilarityModel(Model):
         sorted_distance_values = []
         count = 0
 
-
         if verbose:
             pb = tqdm(total=len(distances), desc='computing scores')
 
         idxs = list(tf.argsort(distances))
         for dist_idx in idxs:
+            dist_idx = int(dist_idx)  # needed for speed
             distance_value = distances[dist_idx]
 
             # print(distance_value)
@@ -189,10 +193,10 @@ class SimilarityModel(Model):
 
         # FIXME make it user configurable
         # normalized labels
-        labels = {}
-        very_likely = 0.9
-        likely = 0.8
-        possible = 0.7
+        cutpoints = {}
+        very_likely = 0.99
+        likely = 0.9
+        optimistic = 0.5
 
         num_distances = len(sorted_distance_values)
         if verbose:
@@ -215,29 +219,134 @@ class SimilarityModel(Model):
                 thresholds['distance'].append(distance)
                 curr = precision
                 if precision >= very_likely:
-                    labels['very_likely'] = distance
+                    cutpoints['very_likely'] = distance
                 elif precision >= likely:
-                    labels['likely'] = distance
-                elif precision >= possible:
-                    labels['possible'] = distance
+                    cutpoints['likely'] = distance
+                elif precision >= optimistic:
+                    cutpoints['optimistic'] = distance
             if verbose:
                 pb.update()
+        pb.close()
 
-        labels['match'] = thresholds['distance'][tf.math.argmax(
+        cutpoints['optimal'] = thresholds['distance'][tf.math.argmax(
             thresholds['f1'])]
 
         for v in thresholds.values():
             v.reverse()
 
-        self.calibration = {
-            "thresholds": thresholds,
-            "labels": labels
-        }
+        self.calibration = {"thresholds": thresholds, "cutpoints": cutpoints}
 
         if verbose:
             rows = []
-            for k, v in self.calibration['labels'].items():
+            for k, v in self.calibration['cutpoints'].items():
                 rows.append([k, v])
-            print(tabulate(rows, headers=['label', 'distance']))
+            print(tabulate(rows, headers=['cutpoint', 'distance']))
 
         return self.calibration
+
+    def match(self, x, threshold='optimal', no_match_class=-1, verbose=0):
+        """Match a set of examples against the calibrated index
+
+        For the match function to work, the index must be calibrated using
+        calibrate().
+
+        Args:
+            x (tensor): input to be matched against the index
+            cutpoint (str, optional): What calibration threshold to use.
+            Defaults to 'optimal' which is the optimal F1 threshold computed with
+            calibrate().
+            no_match_class (int, optional): What class value to assign when
+            there is no match. Defaults to -1.
+
+            verbose (int, optional). Defaults to 0.
+
+        Returns:
+            list(int): Return which class matches for each supplied example.
+        """
+        matches = []
+
+        # basic checks
+        if not self.calibration:
+            raise ValueError('Model uncalibrated: run model.calibration()')
+
+        if threshold not in self.calibration['cutpoints']:
+            msg = 'Unknonw cutpoint: %s - available %s' % (
+                threshold, self.calibration['cutpoints'])
+            raise ValueError(msg)
+
+        # FIXME batch lookup
+        embeddings = self.predict(x)
+
+        if verbose:
+            pb = tqdm(total=len(embeddings), desc='Matching up embeddings')
+
+        for idx in range(len(x)):
+            knn = self._index.single_lookup(embeddings[idx], k=1)
+            distance = knn[0]['distance']
+            if distance < self.calibration['cutpoints'][threshold]:
+                matches.append(knn[0]['label'])
+            else:
+                matches.append(no_match_class)
+
+            if verbose:
+                pb.update()
+
+        if verbose:
+            pb.close()
+
+        return matches
+
+    def evaluate_index(self, x, y, verbose=1):
+
+        results = defaultdict(int)
+        matches = self.match(x, verbose=verbose)
+        y_pred = []
+
+        # restrict to < threshold
+        y_thresholded = []
+        y_pred_thresholded = []
+        if verbose:
+            pb = tqdm(total=len(matches), desc='Computing')
+
+        for idx, match in enumerate(matches):
+            val = y[idx]
+            match = int(match)  # needed or its going to be horribly slow
+            y_pred.append(match)
+            if match > 0:
+                y_thresholded.append(val)
+                y_pred_thresholded.append(match)
+                results['matched'] += 1
+            else:
+                results['unknown'] += 1
+
+            if verbose:
+                pb.update()
+        pb.close()
+
+        total = len(matches)
+        threshold_recall = results['matched'] / total
+
+        METRICS_FN = [['accuracy', accuracy], ['precision', precision]]
+
+        # thresholded metrics
+        metrics = {}
+        metrics['cutpoint'] = {
+            'recall': threshold_recall,
+        }
+        metrics['full'] = {'recall': 1}
+
+        rows = [['recall', round(threshold_recall, 5), 1]]
+        for m in tqdm(METRICS_FN, desc="Computing metrics"):
+            # thresholded
+            tval = float(m[1](y_thresholded, y_pred_thresholded))
+            metrics['cutpoint'][m[0]] = tval
+
+            # full
+            fval = float(m[1](y, y_pred))
+            metrics['full'][m[0]] = fval
+
+            rows.append([m[0], round(tval, 5), round(fval, 5)])
+
+        print(tabulate(rows, headers=['metric', 'cutpoint <', 'all']))
+
+        return metrics

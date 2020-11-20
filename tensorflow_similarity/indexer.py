@@ -9,7 +9,7 @@ from tabulate import tabulate
 from tqdm.auto import tqdm
 
 from .mappers import MemoryMapper
-from .metrics import cosine
+from .distances import cosine
 from operator import itemgetter
 import tensorflow as tf
 
@@ -201,14 +201,13 @@ class Indexer():
                 ngbs.append(data)
 
             ngb_embs = tf.constant([n['embedding'] for n in ngbs])
-            #print(ngb_embs.shape)
+            # print(ngb_embs.shape)
             emb = tf.expand_dims(embeddings[emb_idx], axis=0)
-            #print(emb.shape)
+            # print(emb.shape)
             distances = cosine(emb, ngb_embs)[0]
 
-
             for idx in range(k):
-                #FIXME numerical stability
+                # FIXME numerical stability
                 ngbs[idx]['distance'] = float(distances[idx])
 
             # ngbs = sorted(ngbs, key=itemgetter('distance'))
@@ -241,9 +240,6 @@ class Indexer():
 
     def load(self):
         raise NotImplementedError('WIP')
-
-    def _build_result(target_embbing, neighboors):
-        pass
 
     def _store_data(self, embedding, label, data):
         "store data using mapper and assign it an id"

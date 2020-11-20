@@ -1,47 +1,41 @@
 import tensorflow as tf
 
 
-def metric_name_canonializer(metric_name):
-    """Normalize metric name as each have various names in the litterature
+def true_positives(y_true, y_pred):
+    """Calculates the number of true positives.
 
     Args:
-        metric_name (str): name of the metric to canonialize.
+        y_true (list(int)): array if class as int.
+        y_pred (list(int)): array of class as int
+
+    Returns:
+        int: num true positives
     """
-    metric_name = metric_name.lower().strip()
+    tp = tf.cast(tf.math.equal(y_true, y_pred), 'int32')
+    return tf.cast(tf.reduce_sum(tp), 'float32')
 
-    mapping = {
-        "l2": 'cosine',
-        'cosine': 'cosine'
-    }
 
-    if metric_name not in mapping:
-        raise ValueError('Metric not supported by the framework')
+def false_positives(y_true, y_pred):
+    """Calculates the number of false positives.
 
-    return mapping[metric_name]
+    Args:
+        y_true (list(int)): array if class as int.
+        y_pred (list(int)): array of class as int
+
+    Returns:
+        int: num true positives
+    """
+    tp = tf.cast(tf.math.not_equal(y_true, y_pred), 'int32')
+    return tf.cast(tf.reduce_sum(tp), 'float32')
+
+
+def accuracy(y_true, y_pred):
+    tp = true_positives(y_true, y_pred)
+    return tp / len(y_true)
 
 
 @tf.function
-def pairwise_cosine(embeddings, axis=1):
-    tensor = tf.nn.l2_normalize(embeddings, axis=axis)
-    distances = 1 - tf.matmul(tensor, tensor, transpose_b=True)
-    distances = tf.maximum(distances, 0.0)
-    return distances
-
-
-@tf.function
-def cosine(a, b, axis=-1):
-    t1 = tf.nn.l2_normalize(a, axis=axis)
-    t2 = tf.nn.l2_normalize(b, axis=axis)
-    distances = 1 - tf.matmul(t1, t2, transpose_b=True)
-    distances = tf.maximum(distances, 0.0)
-    return distances
-
-
-def pairwise_snr():
-    """ Signal to Noise pairwise distance
-
-    Proposed in:
-    Signal-to-Noise Ratio: A Robust Distance Metric for Deep Metric Learning
-    https://openaccess.thecvf.com/content_CVPR_2019/papers/Yuan_Signal-To-Noise_Ratio_A_Robust_Distance_Metric_for_Deep_Metric_Learning_CVPR_2019_paper.pdf
-    """
-    pass
+def precision(y_true, y_pred):
+    tp = true_positives(y_true, y_pred)
+    fp = false_positives(y_true, y_pred)
+    return (tp / (tp + fp))

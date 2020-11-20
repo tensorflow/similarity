@@ -14,7 +14,19 @@
 # ==============================================================================
 import tensorflow as tf
 from tensorflow_addons.utils.keras_utils import LossFunctionWrapper
-from .metrics import metric_name_canonializer, pairwise_cosine
+from .distances import metric_name_canonializer, pairwise_cosine
+
+"""
+References
+- Original paper:
+FaceNet: A Unified Embedding for Face Recognition and Clustering
+https://arxiv.org/abs/1503.03832
+
+- Mining strategies:
+https://openaccess.thecvf.com/content_WACV_2020/papers/Xuan_Improved_Embeddings_with_Easy_Positive_Triplet_Mining_WACV_2020_paper.pdf
+
+- https://arxiv.org/pdf/1712.07682.pdf
+"""
 
 
 def _masked_maximum(distances, mask, dim=1):
