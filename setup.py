@@ -17,9 +17,9 @@ from setuptools import setup
 from time import time
 
 long_description = open("README.md").read()
-version = '0.3.0r%s' % int(time())
+version = '0.11.2r%s' % int(time())
 
-setup(name="tensorflow_similarity",
+setup(name="tensorflow_similarity_alpha",
       version=version,
       description="Single shot and metric learning for humans",
       long_description=long_description,
