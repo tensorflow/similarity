@@ -1,5 +1,9 @@
 # Tensorflow Similarity releases notes
 
+## 0.4.2
+
+
+
 ## 0.4.1
 
 Initial fully functional alpha release based on the new core engine that

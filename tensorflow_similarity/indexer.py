@@ -10,7 +10,6 @@ from tqdm.auto import tqdm
 
 from .mappers import MemoryMapper
 from .distances import cosine
-from operator import itemgetter
 import tensorflow as tf
 
 
