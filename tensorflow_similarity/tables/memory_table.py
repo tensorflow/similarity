@@ -88,9 +88,16 @@ class MemoryTable(Table):
             data.append(d)
         return embeddings, labels, data
 
+    def dump(self):
+        """Returns all the elements in the index
+
+        This is needed to rebuild the indexer on reload.
+        """
+        return self.embeddings, self.labels, self.data
+
     def size(self):
         "Number of record in the mapper"
-        return self.num_items + 1
+        return self.num_items
 
     def save(self, path, compression=True):
         """Serializes index on disk
@@ -122,38 +129,10 @@ class MemoryTable(Table):
         self.embeddings = data['embeddings']
         self.labels = data['labels']
         self.data = data['data']
+
+        # ! Code assume the counter is one ahead
         self.num_items = len(self.embeddings)
         print("loaded %d records from %s" % (self.size(), path))
-
-    def to_arrow(self):
-        """Returns index data as an arrow table
-
-        Returns:
-            pyarrow.Table: index data
-        """
-        # create arrow table
-        data = [
-            pa.array(self.embeddings),
-            pa.array(self.labels),
-            pa.array(self.data)
-        ]
-        table = pa.Table.from_arrays(data,
-                                     names=['embedding', 'label', 'data'])
-        return table
-
-    def to_panda(self):
-        """Returns index data as panda dataframe
-
-        Returns:
-            pandas.DataFrame: index data as pandas dataframe
-        """
-        # create arrow table
-        data = {
-            "embeddings": self.embeddings,
-            "labels": self.labels,
-            "data": self.data
-        }
-        return pd.DataFrame.from_dict(data)
 
     def _make_fname(self, path, check_file_exit=False):
         p = Path(path)

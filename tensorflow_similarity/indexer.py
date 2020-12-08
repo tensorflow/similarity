@@ -1,34 +1,54 @@
 "Index embedding to allow distance based lookup"
 
+import json
 import nmslib
 from time import time
 import numpy as np
 from collections import defaultdict
 from collections import deque
 from tabulate import tabulate
-from tqdm.auto import tqdm
-
-from .mappers import MemoryMapper
-from .distances import cosine
+from pathlib import Path
 import tensorflow as tf
+
+from .matchers import NMSLibMatcher
+from .tables import MemoryTable
 
 
 class Indexer():
+    # semantic sugar for the order of the returned data
+    EMBEDDINGS = 0
+    DISTANCES = 1
+    LABELS = 2
+    DATA = 3
 
     def __init__(self,
                  distance='cosine',
-                 mapper='memory',
-                 matcher='hnsw',
-                 stat_buffer_size=100):
+                 table='memory',
+                 match_algorithm='nmslib_hnsw',
+                 stat_buffer_size=1000):
+        """Index embeddings to make them searchable via KNN
 
-        if distance == 'cosine':
-            self.space_name = 'cosinesimil'
-        else:
-            raise ValueError('Unsupported metric space')
+        Args:
+            distance (str, optional): Distance type used in the embeedings.
+            Defaults to 'cosine'.
+
+            table (str, optional): How to store the index records.
+            Defaults to 'memory'.
+
+            matcher (str, optional): What algorithm to use to perfom KNN
+            search. Defaults to 'hnsw'.
+
+            stat_buffer_size (int, optional): Size of the sliding windows
+            buffer used to computer index performance. Defaults to 1000.
+
+        Raises:
+            ValueError: [description]
+        """
+        self.distance = distance  # needed for save()/load()
 
         # internal structure naming
-        self.matcher_method = matcher
-        self.mapper_type = mapper
+        self.match_algorithm = match_algorithm
+        self.table_type = table
 
         # stats configuration
         self.stat_buffer_size = stat_buffer_size
@@ -43,14 +63,16 @@ class Indexer():
     def _init_structures(self):
         "(re)intialize internal storage structure"
 
-        self.matcher = nmslib.init(method=self.matcher_method,
-                                   space=self.space_name)
+        if self.match_algorithm == 'nmslib_hnsw':
+            self.matcher = NMSLibMatcher(self.distance, self.match_algorithm)
+        else:
+            raise ValueError('Unknown matching_algorithm')
 
         # mapper id > data
-        if self.mapper_type == 'memory':
-            self.mapper = MemoryMapper()
+        if self.table_type == 'memory':
+            self.table = MemoryTable()
         else:
-            self.mapper = self.mapper_type
+            raise ValueError("Unknown table type")
 
         # stats
         self._stats = defaultdict(int)
@@ -76,7 +98,7 @@ class Indexer():
             Defaults to 1.
         """
         # store data and get its id
-        idx = self._store_data(embedding, label, data)
+        idx = self.table.add(embedding, label, data)
 
         # add index to the embedding
         # !the order of parameters between addDataPoint and addDataPointBatch
@@ -110,36 +132,18 @@ class Indexer():
         """
 
         # store points
-        batch = []
-        batch_idxs = []
-
         if verbose:
-            pb = tqdm(total=len(embeddings),
-                      desc='Storing embeddings',
-                      unit='embedings')
-
-        for idx in range(len(embeddings)):
-            emb = embeddings[idx]
-            lbl = labels[idx] if not isinstance(labels, type(None)) else None
-            dta = data[idx] if not isinstance(data, type(None)) else None
-
-            # store the point
-            idx = self._store_data(emb, lbl, dta)
-
-            # build batch
-            batch.append(emb)
-            batch_idxs.append(idx)
-
-            if verbose:
-                pb.update(1)
+            print('Storing')
+        embeddings_idx = self.table.batch_add(embeddings, labels, data)
 
         # add point to the index
-        self.matcher.addDataPointBatch(batch, batch_idxs)
-
         if verbose:
-            pb.close()
+            print('Indexing')
+        self.matcher.addDataPointBatch(embeddings, embeddings_idx)
 
         if build:
+            if verbose:
+                print('Building')
             self.build(verbose=verbose)
 
     def build(self, verbose=1):
@@ -158,21 +162,17 @@ class Indexer():
             embedding ([type]): [description]
             k (int, optional): [description]. Defaults to 5.
         Returns
-            list: list of k nearest matched embeddings.
+            list(lists): embeddings, distances, labels, data
         """
-
-        results = []
         start = time()
         idxs, distances = self.matcher.knnQuery(embedding, k=k)
-        for i, idx in enumerate(idxs):
-            data = self.mapper.get(idx)
-            data['distance'] = distances[i]
-            results.append(data)
+        embeddings, labels, data = self.table.batch_get(idxs)
+
         lookup_time = time() - start
         self._lookup_timings_buffer.append(lookup_time)
         self._stats['num_lookups'] += 1
 
-        return results
+        return embeddings, distances, labels, data
 
     def batch_lookup(self, embeddings, k=5, threads=4):
         """Find the k closest match of a batch of embeddings
@@ -186,69 +186,93 @@ class Indexer():
         """
 
         print('Unreliable method -- Distances are innacurate:%s' % int(time()))
-        results = []
-        start = time()
-        matches = self.matcher.knnQueryBatch(embeddings,
-                                             k=k,
-                                             num_threads=threads)
-        for emb_idx, res in enumerate(matches):
-            elt_idxs, _ = res
+        # results = []
+        # start = time()
+        # matches = self.matcher.knnQueryBatch(embeddings,
+        #                                      k=k,
+        #                                      num_threads=threads)
+        # for emb_idx, res in enumerate(matches):
+        #     elt_idxs, _ = res
 
-            ngbs = []
-            for i, e_idx in enumerate(elt_idxs):
-                data = self.mapper.get(e_idx)
-                ngbs.append(data)
+        #     ngbs = []
+        #     for i, e_idx in enumerate(elt_idxs):
+        #         data = self.mapper.get(e_idx)
+        #         ngbs.append(data)
 
-            ngb_embs = tf.constant([n['embedding'] for n in ngbs])
-            # print(ngb_embs.shape)
-            emb = tf.expand_dims(embeddings[emb_idx], axis=0)
-            # print(emb.shape)
-            distances = cosine(emb, ngb_embs)[0]
+        #     ngb_embs = tf.constant([n['embedding'] for n in ngbs])
+        #     # print(ngb_embs.shape)
+        #     emb = tf.expand_dims(embeddings[emb_idx], axis=0)
+        #     # print(emb.shape)
+        #     distances = cosine(emb, ngb_embs)[0]
 
-            for idx in range(k):
-                # FIXME numerical stability
-                ngbs[idx]['distance'] = float(distances[idx])
+        #     for idx in range(k):
+        #         # FIXME numerical stability
+        #         ngbs[idx]['distance'] = float(distances[idx])
 
-            # ngbs = sorted(ngbs, key=itemgetter('distance'))
+        #     # ngbs = sorted(ngbs, key=itemgetter('distance'))
 
-            results.append(ngbs)
+        #     results.append(ngbs)
 
-        lookup_time = time() - start
+        # lookup_time = time() - start
 
-        # stats
-        elt_lookup_time = lookup_time / len(results)
-        for _ in range(len(results)):
-            self._lookup_timings_buffer.append(elt_lookup_time)
-        self._stats['num_lookups'] += len(results)
+        # # stats
+        # elt_lookup_time = lookup_time / len(results)
+        # for _ in range(len(results)):
+        #     self._lookup_timings_buffer.append(elt_lookup_time)
+        # self._stats['num_lookups'] += len(results)
 
-        return results
+        # return results
 
-    def save(self):
-        raise NotImplementedError('WIP')
-        info = {
-            'distance': self.distance,
-            'space_name': self.space_name,
-            'batch_size': self.batch_size,
-            'metadata': self.metadata
+    def save(self, path, compression=True):
+        """Save the index to disk
+
+        Args:
+            path (str): directory where to save the index
+            compression (bool, optional): Store index data compressed.
+            Defaults to True.
+        """
+        # saving metadata
+        metadata = {
+            "distance": self.distance,
+            "table": self.table_type,
+            "matcher": self.matcher_method,
+            "stat_buffer_size": self.stat_buffer_size
         }
 
-        # serialize index
-        # serialize mapping
+        metadata_fname = self.__make_metadata_fname(path)
+        tf.io.write_file(metadata_fname, json.dumps(metadata))
 
-        return info
+        self.table.save(path, compression=compression)
 
-    def load(self):
+    def load(self, path, verbose=1):
+        # recreate the index from metadata
+        metadata_fname = self.__make_metadata_fname(path)
+        md = json.loads(tf.io.read_file(metadata_fname))
+        index = Indexer(distance=md['distance'],
+                        table=md['table'],
+                        match_algorithm=md['matcher'],
+                        stat_buffer_size=md['stat_buffer_size'])
+
+        # reload the table
+        if verbose:
+            print("Loading index data")
+        index.table.load(path)
+
+        # rebuild the index
+        if verbose:
+            print('Rebuilding index')
+
+
         raise NotImplementedError('WIP')
 
-    def _store_data(self, embedding, label, data):
-        "store data using mapper and assign it an id"
-        data = {"embedding": embedding, 'label': label, 'data': data}
-        return self.mapper.add(data)
+    def size(self):
+        "Return the index size"
+        return self.table.size()
 
     def stats(self):
         """return index statistics"""
         stats = self._stats
-        stats['num_items'] = self.mapper.size()
+        stats['size'] = self.table.size()
         stats['stat_buffer_size'] = self.stat_buffer_size
 
         # query performance - make sure we don't count unused buffer
@@ -284,3 +308,6 @@ class Indexer():
         for k, v in stats['query_performance'].items():
             rows.append([k, v])
         print(tabulate(rows))
+
+    def __make_metadata_fname(path):
+        return str(Path(path) / 'index_metadata.json')
