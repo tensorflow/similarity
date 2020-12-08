@@ -83,8 +83,8 @@ class SimilarityModel(Model):
             self.distance = metric_name_canonializer(distance)
 
         self._index = Indexer(distance=self.distance,
-                              mapper=mapper,
-                              matcher=matcher,
+                              table=mapper,
+                              match_algorithm=matcher,
                               stat_buffer_size=stat_buffer_size)
 
         # call underlying keras method

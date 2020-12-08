@@ -48,7 +48,7 @@ class Table(ABC):
             idx (int): record_id to lookup
 
         Returns:
-            record: record associated with the record_id
+            list: data associated with the record_id
         """
         pass
 
@@ -57,10 +57,16 @@ class Table(ABC):
         """Get records from the table
 
         Args:
-            idx (int): record_id to lookup
+            idxs (int): record ids to lookup
 
         Returns:
-            list(records): record associated with the record_id
+            list(lists): data associated with the record ids
+        """
+        pass
+
+    @abstractmethod
+    def dump(self):
+        """Dump all the records available in the index
         """
         pass
 
