@@ -10,7 +10,7 @@ on:
     branches: [ master ]
 
 jobs:
-  deploy:
+  install:
 
     runs-on: ubuntu-latest
 
@@ -20,11 +20,11 @@ jobs:
       uses: actions/setup-python@v2
       with:
         #TF don't work with 3.9 
-        python-version: '3.8'
+        python-version: '3.8.x'
     
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools
         pip install setuptools wheel twine
         pip install -U nmslib
         pip install -U tensorflow==2.4.0rc4
