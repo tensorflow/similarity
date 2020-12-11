@@ -17,7 +17,7 @@ from setuptools import setup
 from time import time
 
 long_description = open("README.md").read()
-version = '0.11.2r%s' % int(time())
+version = '0.15.2r%s' % int(time())
 
 setup(name="tensorflow_similarity_alpha",
       version=version,
@@ -25,7 +25,7 @@ setup(name="tensorflow_similarity_alpha",
       long_description=long_description,
       author='Tensorflow Similarity authors',
       author_email='tensorflow_similarity@google.com',
-      url='https://github.com/google/scaaml',
+      url='https://github.com/tensorflow/similarity',
       license='Apache License 2.0',
       install_requires=[
           'numpy', 'tabulate', 'nmslib', 'tensorflow>=2.2.0', 'tqdm',

@@ -1,11 +1,8 @@
 from tabulate import tabulate
-from tensorflow.python.ops.numpy_ops.np_math_ops import positive
 from tqdm.auto import tqdm
 from .evaluator import Evaluator
 from collections import defaultdict
 import tensorflow as tf
-
-from tensorflow_similarity.metrics import precision, recall, f1_score
 
 
 class MemoryEvaluator(Evaluator):

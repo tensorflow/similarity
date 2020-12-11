@@ -29,6 +29,7 @@ def test_indexer_basic_flow():
     assert list(matches[indexer.EMBEDDINGS][0]) == list(embs[0])
     assert stats['num_lookups'] == 1
 
+
 def test_indexer_as_dict():
 
     target = np.array([1, 1, 2], dtype='float32')
