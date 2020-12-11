@@ -23,14 +23,14 @@ class Matcher(ABC):
         pass
 
     @abstractmethod
-    def batch_add(self,  embeddings, embeddings_idx, build=True, verbose=1):
+    def batch_add(self,  embeddings, idxs, build=True, verbose=1):
         """Add a set of record to the table
 
         Args:
             embedding (tensor): Record embedding as computed
             by the model.
 
-            idx (int): Embedding id in the index table. Used to lookup
+            idxs (int): Embedding id in the index table. Used to lookup
             associated metadata.
 
             build (bool, optional): Rebuild the index after the addition.

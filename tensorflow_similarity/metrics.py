@@ -45,8 +45,26 @@ def recall(y_true, y_pred):
     return (tp / len(y_true))
 
 
-def f1_score(precision, recall):
+def f1_score(y_true, y_preds):
     """Compute the F1 score, also known as balanced F-score or F-measure
+
+  https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html
+
+    Args:
+        y_true (1D tensor(int)): ground truth.
+        y_pred (1D tensor(int)): Estimated targets as returned by a classifier.
+
+    Returns:
+        float: f1 score
+    """
+    pr = precision(y_true, y_preds)
+    re = recall(y_true, y_preds)
+    return 2 * (pr * re) / (pr + re)
+
+
+def fast_f1_score(precision, recall):
+    """Compute the F1 score, also known as balanced F-score or F-measure
+    when precision and recall are already computed
 
     https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html
 

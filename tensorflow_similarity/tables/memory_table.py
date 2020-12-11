@@ -53,8 +53,8 @@ class MemoryTable(Table):
         """
         idxs = []
         for idx, embedding in enumerate(embeddings):
-            label = labels[idx] if labels else None
-            rec_data = data[idx] if data else None
+            label = None if labels is None else labels[idx]
+            rec_data = None if data is None  else data[idx]
             idxs.append(self.add(embedding, label, rec_data))
         return idxs
 
@@ -87,13 +87,6 @@ class MemoryTable(Table):
             labels.append(l)
             data.append(d)
         return embeddings, labels, data
-
-    def dump(self):
-        """Returns all the elements in the index
-
-        This is needed to rebuild the indexer on reload.
-        """
-        return self.embeddings, self.labels, self.data
 
     def size(self):
         "Number of record in the mapper"

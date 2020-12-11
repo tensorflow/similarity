@@ -35,6 +35,20 @@ def test_in_memory_store_and_retrieve():
         assert dt == records[idx][2]
 
 
+def test_batch_add():
+    embs = np.array([[0.1, 0.2], [0.2, 0.3]])
+    lbls = np.array([1, 2])
+    data = np.array([[0, 0, 0], [1, 1, 1]])
+
+    index_table = MemoryTable()
+    idxs = index_table.batch_add(embs, lbls, data)
+    for idx in idxs:
+        emb, lbl, dt = index_table.get(idx)
+        assert np.array_equal(emb, embs[idx])
+        assert np.array_equal(lbl, lbls[idx])
+        assert np.array_equal(dt, data[idx])
+
+
 def test_save_and_reload(tmp_path):
     records = [
         [[0.1, 0.2], 1, [0, 0, 0]],
@@ -56,19 +70,3 @@ def test_save_and_reload(tmp_path):
         assert np.array_equal(emb, records[idx][0])
         assert np.array_equal(lbl, records[idx][1])
         assert np.array_equal(dt, records[idx][2])
-
-
-def test_dump():
-    records = [
-        [[0.1, 0.2], 1, [0, 0, 0]],
-        [[0.2, 0.3], 2, [0, 0, 0]]
-    ]
-    index_table, idxs = build_table(records)
-
-    dump = index_table.dump()
-    assert len(dump) == 3  # emb, labels, data
-    assert len(dump[0]) == 2
-    for idx in range(len(records)):
-        assert list(records[idx][0]) == list(dump[0][idx])
-        assert records[idx][1] == dump[1][idx]
-        assert list(records[idx][2]) == list(dump[2][idx])

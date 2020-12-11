@@ -1,7 +1,6 @@
 "Index embedding to allow distance based lookup"
 
 import json
-import nmslib
 from time import time
 import numpy as np
 from collections import defaultdict
@@ -9,9 +8,11 @@ from collections import deque
 from tabulate import tabulate
 from pathlib import Path
 import tensorflow as tf
+from tqdm.auto import tqdm
 
 from .matchers import NMSLibMatcher
 from .tables import MemoryTable
+from .evaluators import MemoryEvaluator
 
 
 class Indexer():
@@ -25,6 +26,7 @@ class Indexer():
                  distance='cosine',
                  table='memory',
                  match_algorithm='nmslib_hnsw',
+                 evaluator="memory",
                  stat_buffer_size=1000):
         """Index embeddings to make them searchable via KNN
 
@@ -49,9 +51,13 @@ class Indexer():
         # internal structure naming
         self.match_algorithm = match_algorithm
         self.table_type = table
+        self.evaluator_type = evaluator
 
         # stats configuration
         self.stat_buffer_size = stat_buffer_size
+
+        # calibrations scores
+        self.calibration = None
 
         # initialize internal structures
         self._init_structures()
@@ -68,11 +74,17 @@ class Indexer():
         else:
             raise ValueError('Unknown matching_algorithm')
 
-        # mapper id > data
+        # mapper from id to record data
         if self.table_type == 'memory':
             self.table = MemoryTable()
         else:
             raise ValueError("Unknown table type")
+
+        # index score normalizer
+        if self.evaluator_type == 'memory':
+            self.evaluator = MemoryEvaluator()
+        else:
+            raise ValueError("Unknown scorer type")
 
         # stats
         self._stats = defaultdict(int)
@@ -101,12 +113,7 @@ class Indexer():
         idx = self.table.add(embedding, label, data)
 
         # add index to the embedding
-        # !the order of parameters between addDataPoint and addDataPointBatch
-        # !are inverted
-        self.matcher.addDataPoint(idx, embedding)
-
-        if build:
-            self.build(verbose=verbose)
+        self.matcher.add(embedding, idx, build=build, verbose=verbose)
 
     def batch_add(self,
                   embeddings,
@@ -133,48 +140,47 @@ class Indexer():
 
         # store points
         if verbose:
-            print('Storing')
-        embeddings_idx = self.table.batch_add(embeddings, labels, data)
+            print('|-Storing data points in index table')
+        idxs = self.table.batch_add(embeddings, labels, data)
 
-        # add point to the index
-        if verbose:
-            print('Indexing')
-        self.matcher.addDataPointBatch(embeddings, embeddings_idx)
+        self.matcher.batch_add(embeddings, idxs, build=build, verbose=verbose)
 
-        if build:
-            if verbose:
-                print('Building')
-            self.build(verbose=verbose)
-
-    def build(self, verbose=1):
-        """Build the index this is need to take into account the new points
-        """
-        show = True if verbose else False
-        self.matcher.createIndex(print_progress=show)
-        self._stats['query_time'] = 0
-        self._stats['query'] = 0
-        self.lookup_timing = deque([], maxlen=self.stat_buffer_size)
-
-    def single_lookup(self, embedding, k=5):
+    def single_lookup(self, embedding, k=5, as_dict=True):
         """Find the k closest match of a given embedding
 
         Args:
             embedding ([type]): [description]
             k (int, optional): [description]. Defaults to 5.
+            as_dict(bool): return data as a dictionary. If False return as
+            list(lists). Default to True.
         Returns
-            list(lists): embeddings, distances, labels, data
+            if as_dict:
+                list(dicts): [{"embedding", "distance", "label", "data"}]
+            else:
+                list(lists): embeddings, distances, labels, data
         """
         start = time()
-        idxs, distances = self.matcher.knnQuery(embedding, k=k)
+        idxs, distances = self.matcher.lookup(embedding, k=k)
         embeddings, labels, data = self.table.batch_get(idxs)
 
         lookup_time = time() - start
         self._lookup_timings_buffer.append(lookup_time)
         self._stats['num_lookups'] += 1
 
-        return embeddings, distances, labels, data
+        if as_dict:
+            results = []
+            for i in range(len(embeddings)):
+                results.append({
+                    "embedding": embeddings[i],
+                    "distance": distances[i],
+                    "label": labels[i],
+                    "data": data[i]
+                })
+            return results
+        else:
+            return embeddings, distances, labels, data
 
-    def batch_lookup(self, embeddings, k=5, threads=4):
+    def _batch_lookup(self, embeddings, k=5, threads=4):
         """Find the k closest match of a batch of embeddings
 
         Args:
@@ -223,6 +229,97 @@ class Indexer():
 
         # return results
 
+    # evaluation related functionm
+
+    def is_calibrated(self):
+        "Is the index calibrated?"
+        return self.evaluator.is_calibrated()
+
+    def calibrate(self, embeddings, y, k, targets, verbose=1):
+        # FIXME: batch_lookup
+        y_true = []
+        labels = []
+        distances = []
+
+        num_examples = len(y)
+
+        # getting the NN distance and labels
+        if verbose:
+            pb = tqdm(total=num_examples, desc='Finding NN')
+
+        for idx in range(num_examples):
+
+            # FIXME use bulk_lookup
+            knn = self.single_lookup(embeddings[idx], k=k)
+
+            for nn in knn:
+                # !don't remove the casts or later code will be very slow.
+                distances.append(float(nn['distance']))
+                y_true.append(int(y[idx]))
+                labels.append(int(nn['label']))
+
+            if verbose:
+                pb.update()
+
+        if verbose:
+            pb.close()
+
+        return self.evaluator.calibrate(y_true,
+                                        labels,
+                                        distances,
+                                        targets,
+                                        verbose=verbose)
+
+    def match(self, embeddings, no_match_label=-1, verbose=1):
+        """Match embeddings against the various cutpoints thresholds
+
+        Args:
+            embeddings (tensors): embeddings
+
+            labels(list(int)): the labels associated with the embeddings.
+
+            no_match_label (int, optional): What label value to assign when
+            there is no match. Defaults to -1.
+
+            verbose (int): display progression. Default to 1.
+
+        Notes:
+            1. its up to the model code to decide which of the cutpoints to
+            use / show to the users. The evaluator returns all of them as there
+            are little performance downside and makes code clearer and simpler.
+
+            2. the function is responsible to return the list of class matched
+            to allows implementation to use additional criterias if they choose
+            to.
+
+        Returns:
+            dict:{cutpoint: list(bool)}
+        """
+        if verbose:
+            pb = tqdm(total=len(embeddings), desc='looking up embeddings')
+
+        distances = []
+        labels = []
+        for idx in range(len(embeddings)):
+
+            # FIXME batch lookup
+            knn = self.single_lookup(embeddings[idx], k=1)
+
+            # ! don't remove casts, otherwise eval get very slow.
+            distances.append(float(knn[0]['distance']))
+            labels.append(int(knn[0]['label']))
+
+            if verbose:
+                pb.update()
+
+        if verbose:
+            pb.close()
+
+        return self.evaluator.match(distances,
+                                    labels,
+                                    no_match_label=no_match_label,
+                                    verbose=verbose)
+
     def save(self, path, compression=True):
         """Save the index to disk
 
@@ -231,39 +328,54 @@ class Indexer():
             compression (bool, optional): Store index data compressed.
             Defaults to True.
         """
+        path = str(path)
         # saving metadata
         metadata = {
             "distance": self.distance,
             "table": self.table_type,
-            "matcher": self.matcher_method,
-            "stat_buffer_size": self.stat_buffer_size
+            "evaluator": self.evaluator_type,
+            "match_algorithm": self.match_algorithm,
+            "stat_buffer_size": self.stat_buffer_size,
+            "calibration": self.calibration
         }
 
+        metadata['evaluator_config'] = self.evaluator.to_config()
         metadata_fname = self.__make_metadata_fname(path)
         tf.io.write_file(metadata_fname, json.dumps(metadata))
 
         self.table.save(path, compression=compression)
+        self.matcher.save(path)
 
-    def load(self, path, verbose=1):
+    @staticmethod
+    def load(path, verbose=1):
+        path = str(path)
         # recreate the index from metadata
-        metadata_fname = self.__make_metadata_fname(path)
-        md = json.loads(tf.io.read_file(metadata_fname))
+        metadata_fname = Indexer.__make_metadata_fname(path)
+        metadata = tf.io.read_file(metadata_fname)
+        metadata = tf.keras.backend.eval(metadata)
+        md = json.loads(metadata)
         index = Indexer(distance=md['distance'],
                         table=md['table'],
-                        match_algorithm=md['matcher'],
+                        evaluator=md['evaluator'],
+                        match_algorithm=md['match_algorithm'],
                         stat_buffer_size=md['stat_buffer_size'])
 
-        # reload the table
+        # reload evaluator calibration if they exist
+        if md['evaluator_config']:
+            print("Loading evaluator calibration data")
+            index.evaluator = index.evaluator.from_config(
+                md['evaluator_config'])
+
+        # reload the tables
         if verbose:
             print("Loading index data")
         index.table.load(path)
 
         # rebuild the index
         if verbose:
-            print('Rebuilding index')
-
-
-        raise NotImplementedError('WIP')
+            print('Loading index matcher')
+        index.matcher.load(path)
+        return index
 
     def size(self):
         "Return the index size"
@@ -294,20 +406,27 @@ class Indexer():
 
     def print_stats(self):
         "display statistics in terminal friendly fashion"
+        # compute statistics
         stats = self.stats()
 
-        rows = []
-        for k, v in stats.items():
-            if not isinstance(v, dict):
-                rows.append([k, v])
-        print('[Index statistics]')
+        # info
+        print('[Info]')
+        rows = [
+            ['distance', self.distance],
+            ['index table', self.table_type],
+            ['matching algorithm', self.match_algorithm],
+            ['evaluator', self.evaluator_type],
+            ['index size', self.size()]
+        ]
         print(tabulate(rows))
+        print('\n')
 
-        print('\n[Query performance]')
-        rows = []
+        print('\n[Performance]')
+        rows = [['num lookups', stats['num_lookups']]]
         for k, v in stats['query_performance'].items():
             rows.append([k, v])
         print(tabulate(rows))
 
+    @staticmethod
     def __make_metadata_fname(path):
         return str(Path(path) / 'index_metadata.json')

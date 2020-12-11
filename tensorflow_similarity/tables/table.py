@@ -65,12 +65,6 @@ class Table(ABC):
         pass
 
     @abstractmethod
-    def dump(self):
-        """Dump all the records available in the index
-        """
-        pass
-
-    @abstractmethod
     def size(self):
         "Number of record in the table"
         pass

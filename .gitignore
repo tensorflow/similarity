@@ -1,6 +1,7 @@
 tmp.py
 tensorflow_similarity.egg-info/
 logs/
+models/
 .vscode/
 release.sh
 

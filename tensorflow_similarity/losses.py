@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import tensorflow as tf
+from .utils import is_tensor_or_variable
 from .distances import metric_name_canonializer, pairwise_cosine
 
 """
@@ -79,6 +80,7 @@ def _build_masks(labels, batch_size):
     diag = tf.linalg.diag(tf.ones(batch_size))
     positive_mask = positive_mask - tf.cast(diag, tf.float32)
     return positive_mask, negative_mask
+
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
@@ -178,21 +180,18 @@ class LossFunctionWrapper(tf.keras.losses.Loss):
     """Wraps a loss function in the `Loss` class."""
 
     def __init__(
-        self, fn, reduction=tf.keras.losses.Reduction.AUTO, name=None, **kwargs
+        self,
+        fn,
+        reduction=tf.keras.losses.Reduction.AUTO,
+        name=None,
+        **kwargs
     ):
         """Initializes `LossFunctionWrapper` class.
         Args:
           fn: The loss function to wrap, with signature `fn(y_true, y_pred,
             **kwargs)`.
           reduction: (Optional) Type of `tf.keras.losses.Reduction` to apply to
-            loss. Default value is `AUTO`. `AUTO` indicates that the reduction
-            option will be determined by the usage context. For almost all cases
-            this defaults to `SUM_OVER_BATCH_SIZE`. When used with
-            `tf.distribute.Strategy`, outside of built-in training loops such as
-            `tf.keras` `compile` and `fit`, using `AUTO` or `SUM_OVER_BATCH_SIZE`
-            will raise an error. Please see this custom training [tutorial](
-              https://www.tensorflow.org/tutorials/distribute/custom_training)
-            for more details.
+            loss. Default value is `AUTO`.
           name: (Optional) name for the loss.
           **kwargs: The keyword arguments that are passed on to `fn`.
         """
@@ -213,9 +212,17 @@ class LossFunctionWrapper(tf.keras.losses.Loss):
     def get_config(self):
         config = {}
         for k, v in iter(self._fn_kwargs.items()):
-            config[k] = tf.keras.backend.eval(v) if is_tensor_or_variable(v) else v
-        base_config = super().get_config()
-        return {**base_config, **config}
+            if is_tensor_or_variable(v):
+                config[k] = tf.keras.backend.eval(v)
+            else:
+                config[k] = v
+        config['name'] = self.name
+
+        # FIXME: seems we can't pass reduction why? its not
+        # technically needed for now but some other loss might need it
+        # config['reduction'] = self.reduction
+
+        return config
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
