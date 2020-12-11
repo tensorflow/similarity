@@ -1,6 +1,3 @@
-# This workflows will upload a Python Package using Twine when a release is created
-# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
-
 name: Package
 
 on:
@@ -47,5 +44,5 @@ jobs:
     - name: Build and publish
       run: |
         python setup.py sdist bdist_wheel
-        twine upload --repository-url "${{ secrets.PRIVATE_REPO }}" -u ${{ PRIVATE_USERNAME }} -p ${{ PRIVATE_PASSWORD }} dist/* --verbose
+        twine upload --repository-url "${{ secrets.PRIVATE_REPO }}" -u ${{ secrets.PRIVATE_USERNAME }} -p ${{ secrets.PRIVATE_PASSWORD }} dist/* --verbose
         # twine upload dist/*
