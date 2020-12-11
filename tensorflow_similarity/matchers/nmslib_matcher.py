@@ -28,18 +28,20 @@ class NMSLibMatcher(Matcher):
         if build:
             self._build(verbose=verbose)
 
-    def batch_add(self, embeddings, embeddings_idx, build=True, verbose=1):
+    def batch_add(self, embeddings, idxs, build=True, verbose=1):
+
+        # !addDataPoint and addDataPointBAtch have inverted parameters
         if verbose:
-            print('Indexing')
-        self.matcher.addDataPointBatch(embeddings, embeddings_idx)
+            print('|-Adding embeddings to fast NN matcher index.')
+        self._matcher.addDataPointBatch(embeddings, idxs)
 
         if build:
             if verbose:
-                print('Building')
-            self.build(verbose=verbose)
+                print('|-Optimizing NN matcher index.')
+            self._build()
 
     def lookup(self, embedding, k=5):
-        distances, idxs = self._matcher.knnQuery(embedding, k=k)
+        idxs, distances = self._matcher.knnQuery(embedding, k=k)
         return idxs, distances
 
     def batch_lookup(self, embeddings, k=5):
@@ -51,6 +53,7 @@ class NMSLibMatcher(Matcher):
             dist, idxs = self._matcher.knnQuery(emb, k=k)
             batch_idxs.append(idxs)
             batch_distances.append(dist)
+
         return batch_idxs, batch_distances
 
     def save(self, path):

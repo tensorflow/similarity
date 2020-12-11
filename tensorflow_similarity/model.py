@@ -1,19 +1,33 @@
 from collections import defaultdict
 from tqdm.auto import tqdm
 from tabulate import tabulate
+from pathlib import Path
 
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow_similarity.indexer import Indexer
 
 from .distances import metric_name_canonializer
-from .metrics import precision, f1_score
+from .metrics import precision, f1_score, recall
 
 
+CALIBRATION_ACCURACY_TARGETS = {
+    "very_likely": 0.99,
+    "likely": 0.9,
+    "optimistic": 0.5
+}
+
+
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 class SimilarityModel(Model):
     """Sub-classing Keras.Model to allow access to the forward pass values for
     efficient metric-learning.
     """
+
+    def __init__(self, *args, **kwargs):
+        super(SimilarityModel, self).__init__(*args, **kwargs)
+        self._index = None  # index reference
+
     def train_step(self, data):
         # Unpack the data. Its structure depends on your model and
         # on what you pass to `fit()`.
@@ -54,16 +68,13 @@ class SimilarityModel(Model):
                 metrics=None,
                 distance_metrics=None,
                 loss_weights=None,
-                mapper='memory',
-                matcher='hnsw',
-                stat_buffer_size=100,
+                table='memory',
+                matcher='nmslib_hnsw',
+                stat_buffer_size=1000,
                 weighted_metrics=None,
                 run_eagerly=None,
                 **kwargs):
         "Configures the model for training"
-
-        # init calibration
-        self.calibration = None
 
         # Fetching the distance used from the first loss if auto
         if distance == 'auto':
@@ -73,17 +84,18 @@ class SimilarityModel(Model):
                 metric_loss = loss
 
             try:
-                self.distance = metric_loss.distance
+                distance = metric_loss.distance
             except:  # noqa
                 msg = "distance='auto' only works if the first loss is a\
                        metric loss"
 
                 raise ValueError(msg)
         else:
-            self.distance = metric_name_canonializer(distance)
+            distance = metric_name_canonializer(distance)
 
-        self._index = Indexer(distance=self.distance,
-                              table=mapper,
+        # init index
+        self._index = Indexer(distance=distance,
+                              table=table,
                               match_algorithm=matcher,
                               stat_buffer_size=stat_buffer_size)
 
@@ -97,13 +109,12 @@ class SimilarityModel(Model):
                         **kwargs)
 
     def index(self, x, y=None, store_data=True, build=True, verbose=1):
+        if verbose:
+            print('[Indexing %d points]' % len(x))
+            print('|-Computing embeddings')
         embeddings = self.predict(x)
         data = x if store_data else None
         self._index.batch_add(embeddings, y, data, build=build, verbose=1)
-
-    def index_reset(self):
-        "Reinitialize the index"
-        self._index.reset()
 
     def _lookup(self, x, k=5, threads=4):
         print("THIS FUNCTION RETURN BOGUS DISTANCES")
@@ -118,133 +129,21 @@ class SimilarityModel(Model):
     def index_summary(self):
         self._index.print_stats()
 
-    def calibrate(self, x, y, k=2, verbose=1):
-        # FIXME: use bulk lookup when it will be fixed
+    def calibrate(self, x, y,
+                  targets=CALIBRATION_ACCURACY_TARGETS,
+                  k=2, verbose=1):
 
-        # getting the NN distance and testing if they are of the same class
-        if verbose:
-            pb = tqdm(total=len(x), desc='Finding NN')
-
-        distances = []
-        class_matches = []
-
-        # FIXME: batch_lookup
+        # predict
         embeddings = self.predict(x)
-        for idx in range(len(x)):
-            knn = self._index.single_lookup(embeddings[idx], k=k)
-            for nn in knn:
-                distances.append(nn['distance'])
-                same_class = 1 if nn['label'] == y[idx] else 0
-                class_matches.append(same_class)
 
-            if verbose:
-                pb.update()
+        # calibrate
+        return self._index.calibrate(embeddings,
+                                     y,
+                                     k,
+                                     targets,
+                                     verbose=verbose)
 
-        total_matches = len(class_matches)
-        positive_matches = int(tf.math.reduce_sum(class_matches))
-        matching_idxes = [int(x) for x in tf.where(class_matches)]
-
-        if verbose:
-            print("num positive matches %d/%s\n" %
-                  (positive_matches, total_matches))
-
-        # compute the PR curve
-        match_rate = 0
-        precision_scores = []
-        recall_scores = []
-        f1_scores = []
-        sorted_distance_values = []
-        count = 0
-
-        if verbose:
-            pb = tqdm(total=len(distances), desc='computing scores')
-
-        idxs = list(tf.argsort(distances))
-        for dist_idx in idxs:
-            dist_idx = int(dist_idx)  # needed for speed
-            distance_value = distances[dist_idx]
-
-            # print(distance_value)
-            # # remove distance with self
-            # if not round(distance_value, 4):
-            #     continue
-
-            count += 1
-            if dist_idx in matching_idxes:
-                match_rate += 1
-            precision = match_rate / count
-            recall = float(match_rate / positive_matches)  # not standard
-            f1 = f1_score(precision, recall)
-
-            precision_scores.append(precision)
-            recall_scores.append(recall)
-            f1_scores.append(f1)
-
-            sorted_distance_values.append(distance_value)
-
-            if verbose:
-                pb.update()
-
-        # computing normalized threshold
-        # FIXME: make it user parametrizable
-        metric_rounding = 2
-        thresholds = defaultdict(list)
-        curr = 100000
-
-        # FIXME make it user configurable
-        # normalized cutpoint
-        cutpoints = {}
-        very_likely = 0.99
-        likely = 0.9
-        optimistic = 0.5
-
-        num_distances = len(sorted_distance_values)
-        if verbose:
-            pb = tqdm(total=num_distances, desc='computing threshold')
-        for ridx in range(num_distances):
-            idx = num_distances - ridx - 1
-            # don't round f1 or distance because we need the numerical
-            # precision for precise boundary computations
-            f1 = f1_scores[idx]
-            distance = sorted_distance_values[idx]
-
-            # used for threshold binning -- should be rounded
-            precision = round(float(precision_scores[idx]), metric_rounding)
-            recall = round(float(recall_scores[idx]), metric_rounding)
-
-            if precision != curr:
-                thresholds['precision'].append(precision)
-                thresholds['recall'].append(recall)
-                thresholds['f1'].append(f1)
-                thresholds['distance'].append(distance)
-                curr = precision
-                if precision >= very_likely:
-                    cutpoints['very_likely'] = float(distance)
-                elif precision >= likely:
-                    cutpoints['likely'] = float(distance)
-                elif precision >= optimistic:
-                    cutpoints['optimistic'] = float(distance)
-            if verbose:
-                pb.update()
-        pb.close()
-
-        cutpoints['optimal'] = float(thresholds['distance'][tf.math.argmax(
-            thresholds['f1'])])
-
-        for v in thresholds.values():
-            v.reverse()
-
-        self.calibration = {"thresholds": thresholds, "cutpoints": cutpoints}
-
-        if verbose:
-            rows = []
-            for k, v in self.calibration['cutpoints'].items():
-                rows.append([k, v])
-            print(tabulate(rows, headers=['cutpoint', 'distance']))
-
-        return self.calibration
-
-    def match(self, x, cutpoint='optimal', no_match_class=-1, verbose=0):
+    def match(self, x, cutpoint='optimal', no_match_label=-1, verbose=0):
         """Match a set of examples against the calibrated index
 
         For the match function to work, the index must be calibrated using
@@ -252,10 +151,12 @@ class SimilarityModel(Model):
 
         Args:
             x (tensor): examples to be matched against the index.
+
             cutpoint (str, optional): What calibration threshold to use.
             Defaults to 'optimal' which is the optimal F1 threshold computed
             with calibrate().
-            no_match_class (int, optional): What class value to assign when
+
+            no_match_label (int, optional): What label value to assign when
             there is no match. Defaults to -1.
 
             verbose (int, optional). Defaults to 0.
@@ -270,53 +171,31 @@ class SimilarityModel(Model):
 
         """
         # basic checks
-        if not self.calibration:
-            raise ValueError('Model uncalibrated: run model.calibration()')
-
-        if cutpoint not in self.calibration['cutpoints'] and cutpoint != 'all':
-            msg = 'Unknonw cutpoint: %s - available %s' % (
-                cutpoint, self.calibration['cutpoints'])
-            raise ValueError(msg)
+        if not self._index.is_calibrated():
+            raise ValueError('Uncalibrated model: run model.calibration()')
 
         # get embeddings
         embeddings = self.predict(x)
 
-        # FIXME batch lookup
-        if verbose:
-            pb = tqdm(total=len(embeddings), desc='Matching up embeddings')
+        # matching
+        matches = self._index.match(embeddings,
+                                    no_match_label=no_match_label,
+                                    verbose=verbose)
 
-        matches = defaultdict(list)
-        for idx in range(len(embeddings)):
-            knn = self._index.single_lookup(embeddings[idx], k=1)
-            distance = knn[0]['distance']
-
-            # compute match for each cutoff points
-            for name, cut_distance in self.calibration['cutpoints'].items():
-                if distance < cut_distance:
-                    # ! don't remove the cast, otherwise eval get very slow.
-                    matches[name].append(int(knn[0]['label']))
-                else:
-                    matches[name].append(no_match_class)
-
-            if verbose:
-                pb.update()
-
-        if verbose:
-            pb.close()
-
+        # select which matches to return
         if cutpoint == 'all':  # returns all the cutpoints for eval purpose.
             return matches
-        else:  # normal match behavior
+        else:  # normal match behavior - returns a specific cut point
             return matches[cutpoint]
 
-    def evaluate_index(self, x, y,  no_match_class=-1, verbose=1):
+    def evaluate_index(self, x, y, no_match_label=-1, verbose=1):
         """Evaluate model matching accuracy on a given dataset.
 
         Args:
             x (tensor): Examples to be matched against the index.
             y (tensor): [description]
 
-            no_match_class (int, optional):  What class value to assign when
+            no_match_label (int, optional):  What class value to assign when
             there is no match. Defaults to -1.
 
             verbose (int, optional): Display results if set to 1 otherwise
@@ -325,15 +204,14 @@ class SimilarityModel(Model):
         Returns:
             dict: evaluation metrics
         """
-
-        results = defaultdict(int)
+        # match data against the index
         matches = self.match(x,
                              verbose=verbose,
-                             cutpoint='all',
-                             no_match_class=no_match_class)
+                             no_match_label=no_match_label,
+                             cutpoint='all')
 
         num_examples = len(x)
-        cutpoints = list(self.calibration['cutpoints'].keys())
+        cutpoints = sorted(list(matches.keys()))
         y_pred = defaultdict(list)
         y_true = defaultdict(list)
 
@@ -348,7 +226,7 @@ class SimilarityModel(Model):
 
             for cutpoint in cutpoints:
                 pred = matches[cutpoint][idx]
-                if pred != no_match_class:
+                if pred != no_match_label:
                     y_true[cutpoint].append(val)
                     y_pred[cutpoint].append(pred)
 
@@ -358,7 +236,8 @@ class SimilarityModel(Model):
 
         # computing metrics
         results = defaultdict(dict)
-        METRICS_FN = [['precision', precision]]
+        METRICS_FN = [['precision', precision], ['f1_score', f1_score],
+                      ['recall', recall]]
 
         if verbose:
             pb = tqdm(total=len(METRICS_FN) + 2, desc="computing metrics")
@@ -371,19 +250,6 @@ class SimilarityModel(Model):
 
             if verbose:
                 pb.update()
-
-        # Recall
-        for cutpoint in cutpoints:
-            results[cutpoint]['recall'] = len(y_pred[cutpoint]) / num_examples
-        if verbose:
-            pb.update()
-
-        # F1
-        for cutpoint in cutpoints:
-            results[cutpoint]['f1'] = f1_score(results[cutpoint]['precision'],
-                                               results[cutpoint]['recall'])
-        if verbose:
-            pb.update()
 
         if verbose:
             pb.close()
@@ -399,3 +265,47 @@ class SimilarityModel(Model):
             print(tabulate(rows, headers=['metric'] + cutpoints))
 
         return results
+
+    def reset_index(self):
+        "Reinitialize the index"
+        self._index.reset()
+
+    def load_index(self, filepath):
+        index_path = Path(filepath) / "index"
+        self._index = Indexer.load(index_path)
+
+    def save_index(self, filepath, compression=True):
+        index_path = Path(filepath) / "index"
+        self._index.save(index_path, compression=compression)
+
+    def save(self,
+             filepath,
+             save_index=True,
+             compression=True,
+             overwrite=True,
+             include_optimizer=True,
+             save_format=None,
+             signatures=None,
+             options=None,
+             save_traces=True):
+
+        # call underlying keras method to save the mode graph and its weights
+        tf.keras.models.save_model(self,
+                                   filepath,
+                                   overwrite=overwrite,
+                                   include_optimizer=include_optimizer,
+                                   save_format=save_format,
+                                   signatures=signatures,
+                                   options=options,
+                                   save_traces=save_traces)
+        if save_index:
+            self.save_index(filepath, compression=compression)
+        else:
+            print('Index not saved as save_index=False')
+
+    # @classmethod
+    # def from_config(cls, config):
+    #     print('here')
+    #     print(config)
+    #     del config['name']
+    #     return super().from_config(**config)

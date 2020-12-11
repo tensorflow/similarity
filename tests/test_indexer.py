@@ -14,7 +14,7 @@ def test_indexer_basic_flow():
     indexer.add(embs[1], label=1)
 
     # lookup
-    matches = indexer.single_lookup(target)
+    matches = indexer.single_lookup(target, as_dict=False)
 
     # check stats
     stats = indexer.stats()
@@ -29,6 +29,27 @@ def test_indexer_basic_flow():
     assert list(matches[indexer.EMBEDDINGS][0]) == list(embs[0])
     assert stats['num_lookups'] == 1
 
+def test_indexer_as_dict():
+
+    target = np.array([1, 1, 2], dtype='float32')
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
+
+    indexer = Indexer()
+
+    # index data
+    indexer.add(embs[0], label=0, data='test')
+    indexer.add(embs[1], label=1)
+
+    # lookup
+    matches = indexer.single_lookup(target)
+
+    assert isinstance(matches, list)
+    assert matches[0]['distance'] < 0.016
+
+    assert np.array_equal(matches[0]['embedding'], embs[0])
+    assert matches[0]['label'] == 0
+    assert matches[0]['data'] == 'test'
+
 
 def test_indexer_batch_add():
 
@@ -41,7 +62,7 @@ def test_indexer_batch_add():
     indexer.batch_add(embs, [0, 1], data=['test', 'test2'])
 
     # check results
-    matches = indexer.single_lookup(target)
+    matches = indexer.single_lookup(target, as_dict=False)
 
     assert indexer.size() == 2
     assert len(matches) == 4
@@ -77,7 +98,7 @@ def test_index_reset():
     indexer.add(embs[1], label=2)
 
     # lookup
-    matches = indexer.single_lookup(target)
+    matches = indexer.single_lookup(target, as_dict=False)
 
     # get stats
     stats = indexer.stats()
@@ -98,7 +119,7 @@ def test_index_reset():
     indexer.add(embs[0], label=42)
     indexer.add(embs[1], label=43)
 
-    matches = indexer.single_lookup(target)
+    matches = indexer.single_lookup(target, as_dict=False)
     stats = indexer.stats()
 
     assert len(matches) == 4

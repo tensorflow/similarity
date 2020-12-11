@@ -1,0 +1,25 @@
+import tensorflow as tf
+from tensorflow_similarity.losses import TripletLoss
+from tensorflow_similarity.layers import MetricEmbedding
+from tensorflow_similarity.model import SimilarityModel
+
+
+def test_save_and_reload(tmp_path):
+    model = SimilarityModel()
+    inputs = tf.keras.layers.Input(shape=(3,))
+    outputs = MetricEmbedding(2)(inputs)
+    model = SimilarityModel(inputs, outputs)
+    model.compile(optimizer='adam', loss=TripletLoss())
+
+    # index data
+    x = tf.constant([[1, 1, 3], [3, 1, 2]], dtype='float32')
+    y = tf.constant([1, 2])
+    model.index(x, y)
+
+    # save
+    model.save(tmp_path)
+
+    # reload
+    loaded_model = tf.keras.models.load_model(tmp_path)
+    loaded_model.load_index(tmp_path)
+    assert loaded_model._index.size() == len(y)

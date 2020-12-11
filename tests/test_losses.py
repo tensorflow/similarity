@@ -5,11 +5,21 @@ from tensorflow_similarity.losses import _masked_maximum, _masked_minimum
 from tensorflow_similarity.losses import _build_masks
 
 
+def test_triplet_loss_serialization():
+    loss = TripletLoss()
+    config = loss.get_config()
+    print(config)
+    loss2 = TripletLoss.from_config(config)
+    assert loss.name == loss2.name
+    assert loss.distance == loss2.distance
+
+
 def triplet_hard_loss_np(labels, embedding, margin, dist_func, soft=False):
 
     num_data = embedding.shape[0]
     # Reshape labels to compute adjacency matrix.
-    labels_reshaped = np.reshape(labels.astype(np.float32), (labels.shape[0], 1))
+    labels_reshaped = np.reshape(labels.astype(np.float32),
+                                 (labels.shape[0], 1))
 
     adjacency = np.equal(labels_reshaped, labels_reshaped.T)
     pdist_matrix = dist_func(embedding)
@@ -36,13 +46,16 @@ def triplet_hard_loss_np(labels, embedding, margin, dist_func, soft=False):
         if soft:
             loss_np += np.log1p(np.exp(max_pos_distance - min_neg_distance))
         else:
-            loss_np += np.maximum(0.0, max_pos_distance - min_neg_distance + margin)
+            loss_np += np.maximum(0.0,
+                                  max_pos_distance - min_neg_distance + margin)
 
     loss_np /= num_data
     return loss_np
 
+
 def test_masked_maximum():
-    distances = tf.constant([[1.0, 2.0, 3.0, 0.0], [4.0, 2.0, 1.0, 0.0]], dtype=tf.float32)
+    distances = tf.constant([[1.0, 2.0, 3.0, 0.0], [4.0, 2.0, 1.0, 0.0]],
+                            dtype=tf.float32)
     mask = tf.constant([[0, 1, 1, 1], [0, 1, 1, 1]], dtype=tf.float32)
     vals = _masked_maximum(distances, mask)
     assert vals.shape == (2, 1)
@@ -51,7 +64,8 @@ def test_masked_maximum():
 
 
 def test_masked_minimum():
-    distances = tf.constant([[1.0, 2.0, 3.0, 0.0], [4.0, 0.0, 1.0, 0.0]], dtype=tf.float32)
+    distances = tf.constant([[1.0, 2.0, 3.0, 0.0], [4.0, 0.0, 1.0, 0.0]],
+                            dtype=tf.float32)
     mask = tf.constant([[0, 1, 1, 0], [1, 0, 1, 0]], dtype=tf.float32)
     vals = _masked_minimum(distances, mask)
     print(vals)
@@ -77,7 +91,7 @@ def test_mask():
 def test_triplet_loss():
     num_inputs = 10
     # y_true: labels
-    y_true = tf.random.uniform((num_inputs,), 0, 10, dtype=tf.int32)
+    y_true = tf.random.uniform((num_inputs, ), 0, 10, dtype=tf.int32)
     # y_preds: embedding
     y_preds = tf.random.uniform((num_inputs, 20), 0, 1)
     tpl = TripletLoss()
@@ -89,7 +103,7 @@ def test_triplet_loss():
 def test_triplet_loss_easy():
     num_inputs = 10
     # y_true: labels
-    y_true = tf.random.uniform((num_inputs,), 0, 3, dtype=tf.int32)
+    y_true = tf.random.uniform((num_inputs, ), 0, 3, dtype=tf.int32)
     # y_preds: embedding
     y_preds = tf.random.uniform((num_inputs, 16), 0, 1)
     tpl = TripletLoss(positive_mining_strategy='easy',
@@ -102,11 +116,24 @@ def test_triplet_loss_easy():
 def test_triplet_loss_semi_hard():
     num_inputs = 10
     # y_true: labels
-    y_true = tf.random.uniform((num_inputs,), 0, 3, dtype=tf.int32)
+    y_true = tf.random.uniform((num_inputs, ), 0, 3, dtype=tf.int32)
     # y_preds: embedding
     y_preds = tf.random.uniform((num_inputs, 16), 0, 1)
     tpl = TripletLoss(positive_mining_strategy='easy',
                       negative_mining_strategy='semi-hard')
+    # y_true, y_preds
+    loss = tpl(y_true, y_preds)
+    assert loss
+
+
+def test_triplet_loss_hard():
+    num_inputs = 10
+    # y_true: labels
+    y_true = tf.random.uniform((num_inputs, ), 0, 3, dtype=tf.int32)
+    # y_preds: embedding
+    y_preds = tf.random.uniform((num_inputs, 16), 0, 1)
+    tpl = TripletLoss(positive_mining_strategy='hard',
+                      negative_mining_strategy='hard')
     # y_true, y_preds
     loss = tpl(y_true, y_preds)
     assert loss

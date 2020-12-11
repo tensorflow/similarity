@@ -10,7 +10,7 @@ def test_index_match():
     matcher.add(embs[0], 0)
     matcher.add(embs[1], 1)
 
-    embs, idxs = matcher.lookup(target)
+    idxs, embs = matcher.lookup(target)
 
     assert len(embs) == 2
     assert list(idxs) == [0, 1]
@@ -24,7 +24,7 @@ def test_index_save(tmp_path):
     matcher.add(embs[0], 0)
     matcher.add(embs[1], 1)
 
-    embs, idxs = matcher.lookup(target)
+    idxs, embs = matcher.lookup(target)
 
     assert len(embs) == 2
     assert list(idxs) == [0, 1]
@@ -34,6 +34,6 @@ def test_index_save(tmp_path):
     matcher2 = NMSLibMatcher()
     matcher2.load(tmp_path)
 
-    embs2, idxs2 = matcher.lookup(target)
+    idxs2, embs2 = matcher.lookup(target)
     assert len(embs2) == 2
     assert list(idxs2) == [0, 1]
