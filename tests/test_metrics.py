@@ -25,7 +25,7 @@ def test_recall():
     assert recall(y, diff) == 0
     assert recall(y, half) == 0.5
 
-    # from https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html
+    # https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html
     y_true = [0, 1, 2, 0, 1, 2]
     y_pred = [0, 2, 1, 0, 0, 1]
     assert round(float(recall(y_true, y_pred)), 2) == 0.33

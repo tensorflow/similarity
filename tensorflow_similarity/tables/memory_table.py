@@ -54,7 +54,7 @@ class MemoryTable(Table):
         idxs = []
         for idx, embedding in enumerate(embeddings):
             label = None if labels is None else labels[idx]
-            rec_data = None if data is None  else data[idx]
+            rec_data = None if data is None else data[idx]
             idxs.append(self.add(embedding, label, rec_data))
         return idxs
 

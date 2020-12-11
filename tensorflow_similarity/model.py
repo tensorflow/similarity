@@ -289,6 +289,9 @@ class SimilarityModel(Model):
              options=None,
              save_traces=True):
 
+        # save trace doesn't exist prior to 2.4 -- asking for it but not
+        # using it
+
         # call underlying keras method to save the mode graph and its weights
         tf.keras.models.save_model(self,
                                    filepath,
@@ -296,8 +299,7 @@ class SimilarityModel(Model):
                                    include_optimizer=include_optimizer,
                                    save_format=save_format,
                                    signatures=signatures,
-                                   options=options,
-                                   save_traces=save_traces)
+                                   options=options)
         if save_index:
             self.save_index(filepath, compression=compression)
         else:

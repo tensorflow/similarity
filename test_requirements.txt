@@ -1,2 +1,5 @@
 pytest
-zest.releaser[recommended]
+pytest-cov
+flake8
+twine
+perfCounters

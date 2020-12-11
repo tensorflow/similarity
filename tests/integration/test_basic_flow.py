@@ -1,14 +1,9 @@
 import tensorflow as tf
 from tensorflow.python.keras.saving.save import load_model
-import tensorflow_similarity as tfsim
-from tensorflow_similarity.utils import tf_cap_memory
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.model import SimilarityModel
 from tensorflow_similarity.sampler import MultiShotMemorySampler
-from tensorflow_similarity.sampler import select_examples
-from tensorflow_similarity.visualization import viz_neigbors_imgs
-from tensorflow_similarity.visualization import confusion_matrix
 
 
 def test_basic_flow(tmp_path):
@@ -17,7 +12,6 @@ def test_basic_flow(tmp_path):
     BATCH_SIZE = 16
     K = 5
     NUM_MATCHES = 3
-
 
     distance = 'cosine'
     positive_mining_strategy = 'hard'
@@ -67,7 +61,11 @@ def test_basic_flow(tmp_path):
 
     # evaluation
     metrics = model.evaluate_index(x, y)
-    # FIXME asserts here
+    assert 'optimistic' in metrics
+    assert 'optimal' in metrics
+    assert 0 <= metrics['optimal']['precision'] <= 1
+    assert 0 <= metrics['optimal']['recall'] <= 1
+    assert 0 <= metrics['optimal']['f1_score'] <= 1
 
     # matchings
     matches = model.match(x[:NUM_MATCHES], cutpoint='optimal')
