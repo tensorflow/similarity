@@ -25,6 +25,7 @@ jobs:
         pip install setuptools wheel twine
         pip install -U nmslib
         pip install -U tensorflow==2.4.0rc4
+        pip install -r test_requirements.txt
     
     - name: Install package
       run: |
