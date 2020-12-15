@@ -155,7 +155,8 @@ class MemoryEvaluator(Evaluator):
             dict: {cutpoint: list(bool)}
         """
         if verbose:
-            pb = tqdm(total=len(distances), desc='matching embeddings')
+            pb = tqdm(total=len(distances) * len(self.cutpoints),
+                      desc='matching embeddings')
 
         matches = defaultdict(list)
         for name, threshold in self.cutpoints.items():
@@ -166,8 +167,8 @@ class MemoryEvaluator(Evaluator):
                     label = no_match_label
                 matches[name].append(label)
 
-            if verbose:
-                pb.update()
+                if verbose:
+                    pb.update()
 
         if verbose:
             pb.close()

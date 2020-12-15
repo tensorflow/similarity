@@ -74,7 +74,7 @@ def confusion_matrix(y_pred,
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
         val = cm[i, j]
         color = "white" if val > thresh else "black"
-        txt = "%.1f" % val if val > 0.0 else "0"
+        txt = "%.2f" % val if val > 0.0 else "0"
         plt.text(j, i, txt, horizontalalignment="center", color=color)
 
     plt.tight_layout()

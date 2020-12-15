@@ -13,8 +13,7 @@ from .metrics import precision, f1_score, recall
 
 CALIBRATION_ACCURACY_TARGETS = {
     "very_likely": 0.99,
-    "likely": 0.9,
-    "optimistic": 0.5
+    "likely": 0.9
 }
 
 
@@ -54,10 +53,6 @@ class SimilarityModel(Model):
         # Update metrics (includes the metric that tracks the loss)
         self.compiled_metrics.update_state(y, y_pred)
 
-        # self.distance_metrics.update_state(distances)
-
-        # FIXME: add our custom metrics and storage of vector here
-
         # Return a dict mapping metric names to current value
         return {m.name: m.result() for m in self.metrics}
 
@@ -66,7 +61,6 @@ class SimilarityModel(Model):
                 distance='auto',
                 loss=None,
                 metrics=None,
-                distance_metrics=None,
                 loss_weights=None,
                 table='memory',
                 matcher='nmslib_hnsw',
@@ -240,7 +234,7 @@ class SimilarityModel(Model):
                       ['recall', recall]]
 
         if verbose:
-            pb = tqdm(total=len(METRICS_FN) + 2, desc="computing metrics")
+            pb = tqdm(total=len(METRICS_FN), desc="computing metrics")
 
         # standardized metric
         for m in METRICS_FN:

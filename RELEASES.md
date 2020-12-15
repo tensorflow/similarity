@@ -1,8 +1,11 @@
 # Tensorflow Similarity releases notes
 
-## 0.5
+## 0.6 - Metrics & Callbacks
 
-This release focus on a major refactor of the internal API to ensure clean decoupling and ensure the package offers streamlined API that
+## 0.5 - Save & load
+
+This release focus on a major refactor of the internal API to ensure clean
+decoupling and ensure the package offers streamlined API that
 makes it easy to extend the package to additional backend.
 
 ### New features
