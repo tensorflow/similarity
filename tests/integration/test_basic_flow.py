@@ -4,6 +4,7 @@ from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.model import SimilarityModel
 from tensorflow_similarity.sampler import MultiShotMemorySampler
+from tensorflow_similarity.distance_metrics import dist_gap, min_neg, max_pos
 
 
 def test_basic_flow(tmp_path):
@@ -37,7 +38,8 @@ def test_basic_flow(tmp_path):
         negative_mining_strategy=negative_mining_strategy)
 
     # compile
-    model.compile(optimizer='adam', loss=triplet_loss)
+    metrics = [dist_gap(distance), min_neg(distance), max_pos(distance)]
+    model.compile(optimizer='adam', metrics=metrics, loss=triplet_loss)
 
     history = model.fit(sampler,
                         validation_data=(x, y),
@@ -61,7 +63,6 @@ def test_basic_flow(tmp_path):
 
     # evaluation
     metrics = model.evaluate_index(x, y)
-    assert 'optimistic' in metrics
     assert 'optimal' in metrics
     assert 0 <= metrics['optimal']['precision'] <= 1
     assert 0 <= metrics['optimal']['recall'] <= 1

@@ -12,74 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Metric losses
+
+References
+    - Original paper: FaceNet: A Unified Embedding for Face Recognition
+    and Clustering: https://arxiv.org/abs/1503.03832
+
+    - Mining strategies:
+    https://openaccess.thecvf.com/content_WACV_2020/papers/Xuan_Improved_Embeddings_with_Easy_Positive_Triplet_Mining_WACV_2020_paper.pdf
+
+    - https://arxiv.org/pdf/1712.07682.pdf
+"""
+
 import tensorflow as tf
 from .utils import is_tensor_or_variable
 from .distances import metric_name_canonializer, pairwise_cosine
-
-"""
-References
-- Original paper:
-FaceNet: A Unified Embedding for Face Recognition and Clustering
-https://arxiv.org/abs/1503.03832
-
-- Mining strategies:
-https://openaccess.thecvf.com/content_WACV_2020/papers/Xuan_Improved_Embeddings_with_Easy_Positive_Triplet_Mining_WACV_2020_paper.pdf
-
-- https://arxiv.org/pdf/1712.07682.pdf
-"""
-
-
-def _masked_maximum(distances, mask, dim=1):
-    """Computes the maximum values over masked pairwise distances.
-
-    We need to use this formula to make sure all values are >=0.
-
-    Args:
-      distances (Tensor): 2-D float `Tensor` of [n, n] pairwise distances
-      mask (Tensor): 2-D Boolean `Tensor` of [n, n] valid distance size.
-      dim: The dimension over which to compute the maximum.
-
-    Returns:
-      Tensor: The maximum distance value
-    """
-    axis_min = tf.math.reduce_min(distances, dim, keepdims=True)
-    masked_max = tf.math.multiply(distances - axis_min, mask)
-    masked_max = tf.math.reduce_max(masked_max, dim, keepdims=True) + axis_min
-    return masked_max
-
-
-def _masked_minimum(data, mask, dim=1):
-    """Computes the mimimal values over masked pairwise distances.
-
-    Args:
-      distances (Tensor): 2-D float `Tensor` of [n, n] pairwise distances
-      mask (Tensor): 2-D Boolean `Tensor` of [n, n] valid distance size.
-      dim: The dimension over which to compute the maximum.
-
-    Returns:
-      Tensor: The minimal distance value
-    """
-    axis_max = tf.math.reduce_max(data, dim, keepdims=True)
-    masked_min = tf.math.multiply(data - axis_max, mask)
-    masked_min = tf.math.reduce_min(masked_min, dim, keepdims=True)
-    masked_min = masked_min + axis_max
-    return masked_min
-
-
-def _build_masks(labels, batch_size):
-    # same class mask
-    positive_mask = tf.math.equal(labels, tf.transpose(labels))
-    # not the same class
-    negative_mask = tf.math.logical_not(positive_mask)
-
-    # masks are treated as float32 moving forward
-    positive_mask = tf.cast(positive_mask, tf.float32)
-    negative_mask = tf.cast(negative_mask, tf.float32)
-
-    # we need to remove the diagonal from postivie mask
-    diag = tf.linalg.diag(tf.ones(batch_size))
-    positive_mask = positive_mask - tf.cast(diag, tf.float32)
-    return positive_mask, negative_mask
+from .algebra import masked_maximum, masked_minimum, build_masks
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -125,25 +73,25 @@ def triplet_loss(labels, embeddings, distance='cosine',
         pairwise_distances = distance(embeddings)
 
     # [masks]
-    positive_mask, negative_mask = _build_masks(labels, batch_size)
+    positive_mask, negative_mask = build_masks(labels, batch_size)
 
     # [Positivie distance computation]
     if positive_mining_strategy == 'hard':
-        positive_distances = _masked_maximum(pairwise_distances, positive_mask)
+        positive_distances = masked_maximum(pairwise_distances, positive_mask)
     elif positive_mining_strategy == 'easy':
-        positive_distances = _masked_minimum(pairwise_distances, positive_mask)
+        positive_distances = masked_minimum(pairwise_distances, positive_mask)
     else:
         raise ValueError('Invalid positive mining strategy')
 
     # [Negative distances computation]
     if negative_mining_strategy == 'hard':
         # find the *non-zero* minimal distance between negative labels
-        negative_distances = _masked_minimum(pairwise_distances, negative_mask)
+        negative_distances = masked_minimum(pairwise_distances, negative_mask)
     elif negative_mining_strategy == 'semi-hard':
         # find the minimal distance between negative label gt than max distance
         # between positive labels
         # find max value of positive distance
-        max_positive = _masked_maximum(pairwise_distances, positive_mask)
+        max_positive = masked_maximum(pairwise_distances, positive_mask)
 
         # select distance that are above the max positive distance
         greater_distances = tf.math.greater(pairwise_distances, max_positive)
@@ -154,12 +102,11 @@ def triplet_loss(labels, embeddings, distance='cosine',
         semi_hard_mask = tf.where(greater_distances, negative_mask, empty)
 
         # find the  minimal distance between negative labels above threshold
-        negative_distances = _masked_minimum(pairwise_distances,
-                                             semi_hard_mask)
+        negative_distances = masked_minimum(pairwise_distances, semi_hard_mask)
 
     elif negative_mining_strategy == 'easy':
         # find the maximal distance between negative labels
-        negative_distances = _masked_maximum(pairwise_distances, negative_mask)
+        negative_distances = masked_maximum(pairwise_distances, negative_mask)
     else:
         raise ValueError('Invalid negative mining strategy')
 
