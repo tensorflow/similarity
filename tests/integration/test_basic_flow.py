@@ -3,7 +3,7 @@ from tensorflow.python.keras.saving.save import load_model
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.model import SimilarityModel
-from tensorflow_similarity.sampler import MultiShotMemorySampler
+from tensorflow_similarity.samplers import MultiShotMemorySampler
 from tensorflow_similarity.distance_metrics import dist_gap, min_neg, max_pos
 
 

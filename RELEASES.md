@@ -1,6 +1,32 @@
 # Tensorflow Similarity releases notes
 
-## 0.6 - Metrics & Callbacks
+## 0.7 - Data Samplers
+
+This release focus on improving and extending data samplers.
+
+### New features
+
+- SingleShotMemorySampler is available
+
+### Major improvement
+
+- Rewrote the sampler interface to allows better customization and subclassing.
+
+## 0.6 - Distance Metrics
+
+This release add specialized distance metrics and fixes bugs
+
+### New features
+
+Distance metrics are now avialable under `tensorflow_similarity.distance_metrics`
+including:
+- `dist_gap`: distance between the maximum positive distance and the min negative distance.
+- `pos_max`: positive maximum distance
+- `neg_min`: negative minimal distance.
+
+More generally minimal, average and maximal distance for positive and negative anchors are supported.
+You can either uses the short-hand alias (e.g `neg_min`, `pos_avg`....), or use
+the underlying `DistanceMetric()` class that allows to configure all aspect of the metric.
 
 ## 0.5 - Save & load
 
