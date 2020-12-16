@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow_similarity.sampler import select_examples
+from tensorflow_similarity.samplers import select_examples
 
 
 def test_select_examples():
