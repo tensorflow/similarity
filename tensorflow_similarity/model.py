@@ -4,7 +4,6 @@ from tabulate import tabulate
 from pathlib import Path
 
 import tensorflow as tf
-from tensorflow.keras.models import Model
 from tensorflow_similarity.indexer import Indexer
 
 from .distances import metric_name_canonializer
@@ -18,7 +17,7 @@ CALIBRATION_ACCURACY_TARGETS = {
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class SimilarityModel(Model):
+class SimilarityModel(tf.keras.models.Model):
     """Sub-classing Keras.Model to allow access to the forward pass values for
     efficient metric-learning.
     """
@@ -294,7 +293,7 @@ class SimilarityModel(Model):
                                    save_format=save_format,
                                    signatures=signatures,
                                    options=options)
-        if save_index:
+        if self._index and save_index:
             self.save_index(filepath, compression=compression)
         else:
             print('Index not saved as save_index=False')
