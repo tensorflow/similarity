@@ -4,6 +4,7 @@ from tabulate import tabulate
 from pathlib import Path
 
 import tensorflow as tf
+from tensorflow.python.keras.engine import functional
 from tensorflow_similarity.indexer import Indexer
 
 from .distances import metric_name_canonializer
@@ -17,7 +18,7 @@ CALIBRATION_ACCURACY_TARGETS = {
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class SimilarityModel(tf.keras.models.Model):
+class SimilarityModel(functional.Functional):
     """Sub-classing Keras.Model to allow access to the forward pass values for
     efficient metric-learning.
     """

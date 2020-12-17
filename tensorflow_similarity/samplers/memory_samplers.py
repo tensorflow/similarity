@@ -15,13 +15,15 @@ class MultiShotMemorySampler(Sampler):
                  batch_size=32,
                  batch_per_epoch=1000,
                  augmenter=None,
-                 scheduler=None):
+                 scheduler=None,
+                 warmup=-1):
 
         super().__init__(class_per_batch,
                          batch_size=batch_size,
                          batch_per_epoch=batch_per_epoch,
                          augmenter=augmenter,
-                         scheduler=scheduler)
+                         scheduler=scheduler,
+                         warmup=warmup)
         self.x = x
         self.y = y
 
@@ -64,13 +66,15 @@ class SingleShotMemorySampler(Sampler):
                  class_per_batch,
                  batch_size=32,
                  batch_per_epoch=1000,
-                 scheduler=None):
+                 scheduler=None,
+                 warmup=-1):
 
         super().__init__(class_per_batch,
                          batch_size=batch_size,
                          batch_per_epoch=batch_per_epoch,
                          augmenter=augmenter,
-                         scheduler=scheduler)
+                         scheduler=scheduler,
+                         warmup=warmup)
         self.x = x
 
         # each element is its own class
@@ -79,15 +83,9 @@ class SingleShotMemorySampler(Sampler):
     def get_examples(self, batch_id, num_classes, example_per_class):
 
         # select example at random as one elt == one class
+        # the augmetnation is the one doing the extra example
         random.shuffle(self.idxs)
-        select_idxs = self.idxs[:num_classes]
-
-        # repeat idxs as much as needed
-        y = []
-        for _ in range(example_per_class):
-            y.extend(select_idxs)
-
-        x = tf.gather(self.x, y)
-        y = tf.constant(y, dtype='int32')
+        y = self.idxs[:num_classes]
+        x = [self.x[idx] for idx in y]
 
         return x, y

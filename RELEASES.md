@@ -7,10 +7,18 @@ This release focus on improving and extending data samplers.
 ### New features
 
 - SingleShotMemorySampler is available
+- Data samplers now support:
+  - The use of a data augmenter
+  - Having a warmup period before augmentation
 
 ### Major improvement
 
 - Rewrote the sampler interface to allows better customization and subclassing.
+
+### Major bug fixes
+
+- Fixed the issue where model couldn't be reloaded due to a bug in load_model()
+
 
 ## 0.6 - Distance Metrics
 

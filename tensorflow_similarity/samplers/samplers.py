@@ -10,7 +10,8 @@ class Sampler(Sequence):
                  batch_size=32,
                  batch_per_epoch=1000,
                  augmenter=None,
-                 scheduler=None):
+                 scheduler=None,
+                 warmup=-1):
 
         self.epoch = 0  # track epoch count
         self.class_per_batch = class_per_batch
@@ -18,6 +19,7 @@ class Sampler(Sequence):
         self.batch_per_epoch = batch_per_epoch
         self.augmenter = augmenter
         self.scheduler = scheduler
+        self.warmup = warmup
 
     @abstractmethod
     def get_examples(self, batch_id, num_classes, example_per_class):
@@ -69,7 +71,8 @@ class Sampler(Sequence):
             y = y[:self.batch_size]
 
         # perform data augmentation
-        if self.augmenter:
-            x = self.augmenter(x)
+        is_warmup = True if self.epoch > self.warmup else False
 
+        if self.augmenter:
+            x, y = self.augmenter(x, y, example_per_class, is_warmup)
         return x, y
