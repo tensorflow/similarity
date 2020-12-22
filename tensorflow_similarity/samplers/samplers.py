@@ -21,7 +21,6 @@ class Sampler(Sequence):
         self.scheduler = scheduler
         self.warmup = warmup
         self.is_warmup = True if warmup else False
-        print("Warmup:%s" % self.is_warmup)
 
     @abstractmethod
     def get_examples(self, batch_id, num_classes, example_per_class):
