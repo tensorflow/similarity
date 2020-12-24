@@ -1,22 +1,25 @@
+from typing import Optional, Tuple
+
 import random
 import tensorflow as tf
+from tensorflow.types.experimental import TensorLike
 from tqdm.auto import tqdm
 from collections import defaultdict
 
-from .samplers import Sampler
+from .samplers import Sampler, Augmenter, Scheduler
 
 
 class MultiShotMemorySampler(Sampler):
 
     def __init__(self,
-                 x,
-                 y,
-                 class_per_batch,
-                 batch_size=32,
-                 batch_per_epoch=1000,
-                 augmenter=None,
-                 scheduler=None,
-                 warmup=-1):
+                 x: TensorLike,
+                 y: TensorLike,
+                 class_per_batch: int,
+                 batch_size: int = 32,
+                 batch_per_epoch: int = 1000,
+                 augmenter: Optional[Augmenter] = None,
+                 scheduler: Optional[Scheduler] = None,
+                 warmup: int = -1) -> None:
 
         super().__init__(class_per_batch,
                          batch_size=batch_size,
@@ -39,18 +42,20 @@ class MultiShotMemorySampler(Sampler):
             cl = int(y[idx])  # need to cast tensor
             self.index_per_class[cl].append(idx)
 
-    def get_examples(self, batch_id, num_classes, example_per_class):
+    def get_examples(self,
+                     batch_id: int,
+                     num_classes: int,
+                     example_per_class: int) -> Tuple[TensorLike, TensorLike]:
+        _ = batch_id
 
         # select class at ramdom
-        random.shuffle(self.class_list)
-        class_list = self.class_list[:num_classes]
+        class_list = random.sample(self.class_list, k=num_classes)
 
         # get example for each class
         idxs = []
         for class_id in class_list:
             class_idxs = self.index_per_class[class_id]
-            random.shuffle(class_idxs)
-            idxs.extend(class_idxs[:example_per_class])
+            idxs.extend(random.sample(class_idxs, k=example_per_class))
 
         random.shuffle(idxs)
         batch_x = tf.gather(self.x, idxs[:self.batch_size])
@@ -61,13 +66,13 @@ class MultiShotMemorySampler(Sampler):
 
 class SingleShotMemorySampler(Sampler):
     def __init__(self,
-                 x,
-                 augmenter,
-                 class_per_batch,
-                 batch_size=32,
-                 batch_per_epoch=1000,
-                 scheduler=None,
-                 warmup=-1):
+                 x: TensorLike,
+                 augmenter: Augmenter,
+                 class_per_batch: int,
+                 batch_size: int = 32,
+                 batch_per_epoch: int = 1000,
+                 scheduler: Optional[Augmenter] = None,
+                 warmup: int = -1) -> None:
 
         super().__init__(class_per_batch,
                          batch_size=batch_size,
@@ -77,15 +82,16 @@ class SingleShotMemorySampler(Sampler):
                          warmup=warmup)
         self.x = x
 
-        # each element is its own class
-        self.idxs = list(range(len(x)))
-
-    def get_examples(self, batch_id, num_classes, example_per_class):
+    def get_examples(self,
+                     batch_id: int,
+                     num_classes: int,
+                     example_per_class: int) -> Tuple[TensorLike, TensorLike]:
+        _ = batch_id
+        _ = example_per_class
 
         # select example at random as one elt == one class
         # the augmetnation is the one doing the extra example
-        random.shuffle(self.idxs)
-        y = self.idxs[:num_classes]
+        y = random.sample(range(len(self.idxs)), k=num_classes)
         x = [self.x[idx] for idx in y]
 
         return x, y
