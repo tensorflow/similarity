@@ -6,7 +6,6 @@ from tensorflow_similarity.model import SimilarityModel
 
 
 def test_save_and_reload(tmp_path):
-    model = SimilarityModel()
     inputs = tf.keras.layers.Input(shape=(3,))
     outputs = MetricEmbedding(2)(inputs)
     model = SimilarityModel(inputs, outputs)
