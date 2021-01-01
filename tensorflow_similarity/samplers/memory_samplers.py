@@ -1,19 +1,20 @@
+from collections import defaultdict
+import random
 from typing import Optional, Tuple
 
-import random
 import tensorflow as tf
-from tensorflow.types.experimental import TensorLike
+from tensorflow.types import experimental as tf_types
+from .samplers import Augmenter
+from .samplers import Sampler
+from .samplers import Scheduler
 from tqdm.auto import tqdm
-from collections import defaultdict
-
-from .samplers import Sampler, Augmenter, Scheduler
 
 
 class MultiShotMemorySampler(Sampler):
 
     def __init__(self,
-                 x: TensorLike,
-                 y: TensorLike,
+                 x: tf_types.TensorLike,
+                 y: tf_types.TensorLike,
                  class_per_batch: int,
                  batch_size: int = 32,
                  batch_per_epoch: int = 1000,
@@ -45,7 +46,8 @@ class MultiShotMemorySampler(Sampler):
     def get_examples(self,
                      batch_id: int,
                      num_classes: int,
-                     example_per_class: int) -> Tuple[TensorLike, TensorLike]:
+                     example_per_class: int
+                     ) -> Tuple[tf_types.TensorLike, tf_types.TensorLike]:
         _ = batch_id
 
         # select class at ramdom
@@ -66,7 +68,7 @@ class MultiShotMemorySampler(Sampler):
 
 class SingleShotMemorySampler(Sampler):
     def __init__(self,
-                 x: TensorLike,
+                 x: tf_types.TensorLike,
                  augmenter: Augmenter,
                  class_per_batch: int,
                  batch_size: int = 32,
@@ -85,7 +87,8 @@ class SingleShotMemorySampler(Sampler):
     def get_examples(self,
                      batch_id: int,
                      num_classes: int,
-                     example_per_class: int) -> Tuple[TensorLike, TensorLike]:
+                     example_per_class: int
+                     ) -> Tuple[tf_types.TensorLike, tf_types.TensorLike]:
         _ = batch_id
         _ = example_per_class
 

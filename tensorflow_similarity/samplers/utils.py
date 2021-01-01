@@ -1,22 +1,26 @@
-import random
-import tensorflow as tf
-from tqdm.auto import tqdm
-from tensorflow.keras.utils import Sequence
 from collections import defaultdict
+import random
+from typing import Sequence, Tuple
+
+import tensorflow as tf
+from tensorflow.types import experimental as tf_types
 
 
-def select_examples(x, y, class_list, num_example_per_class):
+def select_examples(x: tf_types.TensorLike,
+                    y: tf_types.TensorLike,
+                    class_list: Sequence[int],
+                    num_example_per_class: int
+                    ) -> Tuple[tf_types.TensorLike, tf_types.TensorLike]:
     """Randomly select at most N examples per class
 
     Args:
-        x (Tensor): data
-        y (Tensor): labels
-        class_list (list(int)): list of class to sample from.
-        num_example_per_class (int): num of examples to select from EACH class.
+        x: A 2-D Tensor containing the data.
+        y: A 1-D Tensor containing the labels.
+        class_list: list of class to sample from.
+        num_example_per_class: num of examples to select from EACH class.
 
     Returns:
-        (list): x, y
-
+        A Tuple containing the subset of x and y.
     """
 
     # Mapping class to idx
@@ -30,8 +34,7 @@ def select_examples(x, y, class_list, num_example_per_class):
     idxs = []
     for class_id in class_list:
         class_idxs = index_per_class[class_id]
-        random.shuffle(class_idxs)
-        idxs.extend(class_idxs[:num_example_per_class])
+        idxs.extend(random.sample(class_idxs, num_example_per_class))
 
     random.shuffle(idxs)
     batch_x = tf.gather(x, idxs)
