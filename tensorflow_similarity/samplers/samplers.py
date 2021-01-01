@@ -1,9 +1,9 @@
+import abc
+import math
 from typing import Any, Callable, Optional, Tuple
 
-import math
 from tensorflow.keras.utils import Sequence
-from tensorflow.types.experimental import TensorLike
-from abc import abstractmethod
+from tensorflow.types import experimental as tf_types
 
 # An Augmenter is a Map TensorLike -> TensorLike. The function must
 # implement the following signature:
@@ -15,14 +15,14 @@ from abc import abstractmethod
 #   is_warmup: If True, the sampler is still in warmup phase.
 # Returns:
 #   A Tuple containing the transformed x and y tensors.
-Augmenter = (Callable[[TensorLike, TensorLike, int, bool],
-                      Tuple[TensorLike, TensorLike]])
+Augmenter = (Callable[[tf_types.TensorLike, tf_types.TensorLike, int, bool],
+                      Tuple[tf_types.TensorLike, tf_types.TensorLike]])
 
 # Not currently used.
 Scheduler = Callable[[Any], Any]
 
 
-class Sampler(Sequence):
+class Sampler(Sequence, metaclass=abc.ABCMeta):
 
     def __init__(self,
                  class_per_batch: int,
@@ -42,11 +42,12 @@ class Sampler(Sequence):
         self.is_warmup = True if warmup else False
         print("Warmup:%s" % self.is_warmup)
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_examples(self,
                      batch_id: int,
                      num_classes: int,
-                     example_per_class: int) -> Tuple[TensorLike, TensorLike]:
+                     example_per_class: int
+                     ) -> Tuple[tf_types.TensorLike, tf_types.TensorLike]:
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -79,10 +80,15 @@ class Sampler(Sequence):
             print("Warmup complete")
             self.is_warmup = False
 
-    def __getitem__(self, batch_id: int) -> Tuple[TensorLike, TensorLike]:
+    def __getitem__(self,
+                    batch_id: int
+                    ) -> Tuple[tf_types.TensorLike, tf_types.TensorLike]:
+
         return self.generate_batch(batch_id)
 
-    def generate_batch(self, batch_id: int) -> Tuple[TensorLike, TensorLike]:
+    def generate_batch(self,
+                       batch_id: int
+                       ) -> Tuple[tf_types.TensorLike, tf_types.TensorLike]:
 
         example_per_class = math.ceil(self.batch_size / self.class_per_batch)
         # ! can't have less than 2 example per class in a batch
