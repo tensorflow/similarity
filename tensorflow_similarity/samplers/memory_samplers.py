@@ -76,16 +76,29 @@ class SingleShotMemorySampler(Sampler):
                          scheduler=scheduler,
                          warmup=warmup)
         self.x = x
-
-        # each element is its own class
-        self.idxs = list(range(len(x)))
+        self.num_elts = len(x)
 
     def get_examples(self, batch_id, num_classes, example_per_class):
+        """ Select a single example at random as one elt == one class
+        the augmentation code is the generating the extra examples
 
-        # select example at random as one elt == one class
-        # the augmetnation is the one doing the extra example
-        random.shuffle(self.idxs)
-        y = self.idxs[:num_classes]
+        Args:
+            batch_id ([type]): [description]
+            num_classes ([type]): [description]
+            example_per_class ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
+
+        # note: we draw at random the class so the sampler can scale up to
+        # millions of points. Shuffling array is simply too slow
+        idxs = tf.random.uniform((num_classes, ),
+                                 minval=0,
+                                 maxval=self.num_elts,
+                                 dtype='int32')
+        # don't forget to cast for speed
+        y = [int(i) for i in idxs]
         x = [self.x[idx] for idx in y]
 
         return x, y
