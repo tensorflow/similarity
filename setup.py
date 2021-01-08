@@ -17,7 +17,8 @@ from setuptools import setup
 from time import time
 
 long_description = open("README.md").read()
-version = '0.15.3r%s' % int(time())
+MINOR_VERSION = 1
+version = '0.15.4.%d' % MINOR_VERSION
 
 setup(name="tensorflow_similarity_alpha",
       version=version,
