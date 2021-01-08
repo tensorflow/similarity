@@ -22,7 +22,7 @@ def test_indexer_basic_flow():
     assert indexer.size() == 2
 
     # check results
-    assert len(matches) == 4  # emb, dist, label, data
+    assert len(matches) == 5  # emb, dist, label, data, rank
     assert len(matches[indexer.EMBEDDINGS]) == 2
     assert matches[indexer.LABELS][0] == 0
     assert matches[indexer.DATA][0] == 'test'
@@ -66,7 +66,7 @@ def test_indexer_batch_add():
     matches = indexer.single_lookup(target, as_dict=False)
 
     assert indexer.size() == 2
-    assert len(matches) == 4
+    assert len(matches) == 5
     assert len(matches[indexer.EMBEDDINGS]) == 2
     assert matches[indexer.LABELS][0] == 0
     assert matches[indexer.DATA][0] == 'test'
@@ -105,7 +105,7 @@ def test_index_reset():
     stats = indexer.stats()
 
     # check results
-    assert len(matches) == 4
+    assert len(matches) == 5
     assert len(matches[indexer.EMBEDDINGS]) == 3
     assert matches[indexer.LABELS][0] == 0
     assert list(matches[indexer.EMBEDDINGS][0]) == list(embs[0])
@@ -123,7 +123,7 @@ def test_index_reset():
     matches = indexer.single_lookup(target, as_dict=False)
     stats = indexer.stats()
 
-    assert len(matches) == 4
+    assert len(matches) == 5
     assert len(matches[0]) == 2
     assert matches[indexer.LABELS][0] == 42
     assert list(matches[indexer.EMBEDDINGS][0]) == list(embs[0])
