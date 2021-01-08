@@ -21,6 +21,7 @@ class Indexer():
     DISTANCES = 1
     LABELS = 2
     DATA = 3
+    RANKS = 4
 
     def __init__(self,
                  distance='cosine',
@@ -157,7 +158,7 @@ class Indexer():
             if as_dict:
                 list(dicts): [{"embedding", "distance", "label", "data"}]
             else:
-                list(lists): embeddings, distances, labels, data
+                list(lists): rank, embeddings, distances, labels, data
         """
         start = time()
         idxs, distances = self.matcher.lookup(embedding, k=k)
@@ -171,6 +172,7 @@ class Indexer():
             results = []
             for i in range(len(embeddings)):
                 results.append({
+                    "rank": i + 1,
                     "embedding": embeddings[i],
                     "distance": distances[i],
                     "label": labels[i],
@@ -178,7 +180,8 @@ class Indexer():
                 })
             return results
         else:
-            return embeddings, distances, labels, data
+            ranks = [i + 1 for i in range(len(labels))]
+            return embeddings, distances, labels, data, ranks
 
     def _batch_lookup(self, embeddings, k=5, threads=4):
         """Find the k closest match of a batch of embeddings
