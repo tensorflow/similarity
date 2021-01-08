@@ -40,7 +40,6 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
         self.scheduler = scheduler
         self.warmup = warmup
         self.is_warmup = True if warmup else False
-        print("Warmup:%s" % self.is_warmup)
 
     @abc.abstractmethod
     def get_examples(self,
