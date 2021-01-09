@@ -51,13 +51,14 @@ class MultiShotMemorySampler(Sampler):
         _ = batch_id
 
         # select class at ramdom
+
         class_list = random.sample(self.class_list, k=num_classes)
 
         # get example for each class
         idxs = []
         for class_id in class_list:
             class_idxs = self.index_per_class[class_id]
-            idxs.extend(random.sample(class_idxs, k=example_per_class))
+            idxs.extend(random.choices(class_idxs, k=example_per_class))
 
         random.shuffle(idxs)
         batch_x = tf.gather(self.x, idxs[:self.batch_size])
