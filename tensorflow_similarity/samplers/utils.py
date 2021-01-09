@@ -34,7 +34,7 @@ def select_examples(x: tf_types.TensorLike,
     idxs = []
     for class_id in class_list:
         class_idxs = index_per_class[class_id]
-        idxs.extend(random.sample(class_idxs, num_example_per_class))
+        idxs.extend(random.choices(class_idxs, k=num_example_per_class))
 
     random.shuffle(idxs)
     batch_x = tf.gather(x, idxs)
