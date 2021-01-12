@@ -1,10 +1,14 @@
 from abc import ABC, abstractmethod
+from typing import List, Tuple, Optional
+from tensorflow_similarity.types import FloatTensorLike
 
 
 class Table(ABC):
 
     @abstractmethod
-    def add(self, embedding, label=None, data=None):
+    def add(self, embedding: FloatTensorLike,
+            label: Optional[int] = None,
+            data: Optional[FloatTensorLike] = None) -> int:
         """Add a record to the table
 
         Args:
@@ -21,7 +25,11 @@ class Table(ABC):
         pass
 
     @abstractmethod
-    def batch_add(self,  embeddings, labels=None, data=None):
+    def batch_add(
+            self,
+            embeddings: List[FloatTensorLike],
+            labels: List[Optional[int]] = None,
+            data: List[Optional[FloatTensorLike]] = None) -> List[int]:
         """Add a set of record to the table
 
         Args:
@@ -41,7 +49,9 @@ class Table(ABC):
         pass
 
     @abstractmethod
-    def get(self, idx):
+    def get(self, idx: int) -> Tuple[FloatTensorLike,
+                                     Optional[int],
+                                     Optional[FloatTensorLike]]:
         """Get record from the table
 
         Args:
@@ -53,7 +63,9 @@ class Table(ABC):
         pass
 
     @abstractmethod
-    def batch_get(self, idxs):
+    def batch_get(self, idxs: List[int]
+                  ) -> Tuple[List[FloatTensorLike], List[Optional[int]],
+                             List[Optional[FloatTensorLike]]]:
         """Get records from the table
 
         Args:
@@ -65,13 +77,13 @@ class Table(ABC):
         pass
 
     @abstractmethod
-    def size(self):
+    def size(self) -> int:
         "Number of record in the table"
         pass
 
     @abstractmethod
-    def save(self, path):
-        """Serializes index on disk
+    def save(self, path: str, compression: bool = True) -> None:
+        """Serializes index on disks
 
         Args:
             path (str): where to store the data
@@ -79,7 +91,7 @@ class Table(ABC):
         pass
 
     @abstractmethod
-    def load(self, path):
+    def load(self, path: str) -> None:
         """load index on disk
 
         Args:

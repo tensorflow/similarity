@@ -73,17 +73,54 @@ def test_indexer_batch_add():
     assert list(matches[indexer.EMBEDDINGS][0]) == list(embs[0])
 
 
-# def broken_feature_test_indexer_batch_lookup():
-#     NUM_ELTS = 100
-#     NUM_DIMS = 10
-#     K = 3
-#     data = np.random.randn(NUM_ELTS, NUM_DIMS).astype(np.float32)
-#     indexer = Indexer()
-#     indexer.batch_add(data)
-#     results = indexer.batch_lookup(data, k=K)
-#     indexer.stats()
-#     assert len(results) == 100
-#     assert len(results[0]) == K
+def test_multiple_add():
+
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
+
+    indexer = Indexer()
+    indexer.batch_add(embs)
+    assert indexer.size() == 2
+
+    indexer.batch_add(embs)
+    assert indexer.size() == 4
+
+    indexer.add(embs[0])
+
+
+def test_multiple_add_mix_data():
+
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
+
+    indexer = Indexer()
+    indexer.batch_add(embs)
+    assert indexer.size() == 2
+
+    indexer.batch_add(embs, data=embs)
+    assert indexer.size() == 4
+
+
+def test_reload(tmp_path):
+
+    target = np.array([1, 1, 2], dtype='float32')
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
+
+    indexer = Indexer()
+    indexer.batch_add(embs, verbose=0)
+    assert indexer.size() == 2
+
+    # save
+    path = tmp_path / "test_save_and_add/"
+    indexer.save(path)
+
+    # reload
+    indexer2 = Indexer.load(path)
+    assert indexer2.size() == 2
+
+    # add more
+    indexer2.batch_add(embs, data=embs)
+    assert indexer2.size() == 4
+
+
 
 
 def test_index_reset():
@@ -128,3 +165,15 @@ def test_index_reset():
     assert matches[indexer.LABELS][0] == 42
     assert list(matches[indexer.EMBEDDINGS][0]) == list(embs[0])
     assert stats['num_lookups'] == 1
+
+# def broken_feature_test_indexer_batch_lookup():
+#     NUM_ELTS = 100
+#     NUM_DIMS = 10
+#     K = 3
+#     data = np.random.randn(NUM_ELTS, NUM_DIMS).astype(np.float32)
+#     indexer = Indexer()
+#     indexer.batch_add(data)
+#     results = indexer.batch_lookup(data, k=K)
+#     indexer.stats()
+#     assert len(results) == 100
+#     assert len(results[0]) == K
