@@ -1,5 +1,13 @@
 # Tensorflow Similarity releases notes
 
+## 0.8 - Euclidean Distance and PN Loss
+
+This release focuses on adding support for PN Loss.
+
+### New features
+
+- `pairwise_euclidean()` is available.
+
 ## 0.7 - Data Samplers
 
 This release focus on improving and extending data samplers.
