@@ -3,11 +3,8 @@ name: Package
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
-
 jobs:
-  install:
+  publish:
 
     runs-on: ubuntu-latest
 
