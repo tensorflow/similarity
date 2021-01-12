@@ -1,0 +1,49 @@
+name: Package
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        #TF don't work with 3.9 
+        python-version: '3.8.x'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools
+        pip install setuptools wheel twine
+        pip install -U nmslib
+        pip install -U tensorflow==2.4.0rc4
+        pip install -r test_requirements.txt
+    
+    - name: Install package
+      run: |
+        python setup.py install
+        
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    - name: Test with pytest
+      run: |
+        pytest --cov=evoflow tests/
+      
+    - name: Build and publish
+      run: |
+        python setup.py sdist bdist_wheel
+        twine upload --repository-url "${{ secrets.PRIVATE_REPO }}" -u ${{ secrets.PRIVATE_USERNAME }} -p ${{ secrets.PRIVATE_PASSWORD }} dist/* --verbose
+        # twine upload dist/*
