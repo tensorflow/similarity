@@ -1,11 +1,12 @@
 import tensorflow as tf
+from tensorflow.types.experimental import TensorLike
 
 
-def metric_name_canonializer(metric_name):
-    """Normalize metric name as each have various names in the litterature
+def metric_name_canonializer(metric_name: str) -> str:
+    """Normalize metric name as each have various names in the literature
 
     Args:
-        metric_name (str): name of the metric to canonialize.
+        metric_name: name of the metric to canonicalize.
     """
     metric_name = metric_name.lower().strip()
 
@@ -21,21 +22,34 @@ def metric_name_canonializer(metric_name):
 
 
 @tf.function
-def pairwise_cosine(embeddings, axis=1):
+def pairwise_euclidean(embeddings: TensorLike) -> TensorLike:
+    squared_norm = tf.math.square(embeddings)
+    squared_norm = tf.math.reduce_sum(squared_norm, axis=1, keepdims=True)
+
+    distances = 2.0 * tf.linalg.matmul(embeddings, embeddings, transpose_b=True)
+    distances = squared_norm - distances + tf.transpose(squared_norm)
+
+    # Avoid NaN gradients when back propegating through the sqrt.
+    distances = tf.math.maximum(distances, 1e-16)
+    distances = tf.math.sqrt(distances)
+
+    return distances
+
+@tf.function
+def pairwise_cosine(embeddings: TensorLike, axis: int=1) -> TensorLike:
     tensor = tf.nn.l2_normalize(embeddings, axis=axis)
-    distances = 1 - tf.matmul(tensor, tensor, transpose_b=True)
-    distances = tf.maximum(distances, 0.0)
+    distances = 1 - tf.linalg.matmul(tensor, tensor, transpose_b=True)
+    distances = tf.math.maximum(distances, 0.0)
     return distances
 
 
 @tf.function
-def cosine(a, b, axis=-1):
+def cosine(a: TensorLike, b: TensorLike, axis: int=-1) -> TensorLike:
     t1 = tf.nn.l2_normalize(a, axis=axis)
     t2 = tf.nn.l2_normalize(b, axis=axis)
-    distances = 1 - tf.matmul(t1, t2, transpose_b=True)
-    distances = tf.maximum(distances, 0.0)
+    distances = 1 - tf.linalg.matmul(t1, t2, transpose_b=True)
+    distances = tf.math.maximum(distances, 0.0)
     return distances
-
 
 def pairwise_snr():
     """ Signal to Noise pairwise distance
