@@ -24,11 +24,11 @@ class Indexer():
     RANKS = 4
 
     def __init__(self,
-                 distance='cosine',
-                 table='memory',
-                 match_algorithm='nmslib_hnsw',
-                 evaluator="memory",
-                 stat_buffer_size=1000):
+                 distance: str = 'cosine',
+                 table: str = 'memory',
+                 match_algorithm: str = 'nmslib_hnsw',
+                 evaluator: str = 'memory',
+                 stat_buffer_size: int = 1000) -> None:
         """Index embeddings to make them searchable via KNN
 
         Args:
@@ -63,11 +63,11 @@ class Indexer():
         # initialize internal structures
         self._init_structures()
 
-    def reset(self):
+    def reset(self) -> None:
         "Reinitialize the indexer"
         self._init_structures()
 
-    def _init_structures(self):
+    def _init_structures(self) -> None:
         "(re)intialize internal storage structure"
 
         if self.match_algorithm == 'nmslib_hnsw':
