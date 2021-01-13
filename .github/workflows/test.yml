@@ -41,9 +41,3 @@ jobs:
     - name: Test with pytest
       run: |
         pytest --cov=evoflow tests/
-      
-    - name: Build and publish
-      run: |
-        python setup.py sdist bdist_wheel
-        twine upload --repository-url "${{ secrets.PRIVATE_REPO }}" -u ${{ secrets.PRIVATE_USERNAME }} -p ${{ secrets.PRIVATE_PASSWORD }} dist/* --verbose
-        # twine upload dist/*
