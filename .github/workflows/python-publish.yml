@@ -37,7 +37,7 @@ jobs:
     
     - name: Test with pytest
       run: |
-        pytest --cov=evoflow tests/
+        pytest --cov=tensorflow_similarity tests/
       
     - name: Build and publish
       run: |
