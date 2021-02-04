@@ -1,6 +1,0 @@
-pytest
-pytest-cov
-flake8
-twine
-perfCounters
-pytype

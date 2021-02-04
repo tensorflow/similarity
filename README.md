@@ -1,6 +1,6 @@
 # TensorFlow Similarity
 
-tf.Similarity allows you to write a simple Keras model to embed a single item, and transforms the model into a Triplet Loss (e.g. FaceNet) or Quadruplet Loss model. It also support "multi-headed" training through the concept of "auxillary tasks".  It is aimed to make writing Similarity models easy (it's easy to write a Triplet Loss model - but it's also hard to write Triplet Loss model correctly, and even harder to debug it when it it's broken).
+tf.Similarity allows you to write a simple Keras model to embed a single item, and transforms the model into a Triplet Loss (e.g. FaceNet) or Quadruplet Loss model. It also support "multi-headed" training through the concept of "auxiliary tasks".  It is aimed to make writing Similarity models easy (it's easy to write a Triplet Loss model - but it's also hard to write Triplet Loss model correctly, and even harder to debug it when it it's broken).
 
 Triplet Loss is can be hard to get right, and there can be a lot of bumps in the road if you implement it from scratch. We aim to get the infrastructure right, so the user can focus more on their models and data, and less on the infrastructure for learning.
 
@@ -9,6 +9,7 @@ Triplet Loss is can be hard to get right, and there can be a lot of bumps in the
 0. Install TensorFlow 2.x: `pip install tensorflow`
 1. Install TensorFlow Similarity: `pip install tensorflow-similarity`
 2. Head to our [hello world notebook](https://colab.sandbox.google.com/drive/1HRK4zLSAzGHwoM6dz2A1ygHSeVQ3VHdI#scrollTo=ST8JbEUrldut) that will shows you how to use TensorFlow Similarity on MNIST dataset.
+3. Developers can install an editable version with dev requirements using: `pip install -e ".[dev]"`
 
 ## Tutorials
 
