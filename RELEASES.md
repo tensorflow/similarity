@@ -1,6 +1,6 @@
 # Tensorflow Similarity releases notes
 
-## 0.8 - Euclidean Distance and PN Loss
+## 0.17 - Euclidean Distance and PN Loss
 
 This release focuses on adding support for PN Loss.
 

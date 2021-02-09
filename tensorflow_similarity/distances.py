@@ -22,9 +22,9 @@ def metric_name_canonializer(metric_name: str) -> str:
 
 
 @tf.function
-def pairwise_euclidean(embeddings: TensorLike) -> TensorLike:
+def pairwise_euclidean(embeddings: TensorLike, axis: int=1) -> TensorLike:
     squared_norm = tf.math.square(embeddings)
-    squared_norm = tf.math.reduce_sum(squared_norm, axis=1, keepdims=True)
+    squared_norm = tf.math.reduce_sum(squared_norm, axis=axis, keepdims=True)
 
     distances = 2.0 * tf.linalg.matmul(embeddings, embeddings, transpose_b=True)
     distances = squared_norm - distances + tf.transpose(squared_norm)
