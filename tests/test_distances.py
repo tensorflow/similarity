@@ -56,12 +56,12 @@ def test_euclidean():
 
 
 def test_euclidean_same():
-    a = tf.convert_to_tensor([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
+    a = tf.convert_to_tensor([[1.0, 1.0], [1.0, 1.0]])
     vals = pairwise_euclidean(a)
     assert tf.round(tf.reduce_sum(vals)) == 0
 
 
-def test_euclidean_oppisite():
+def test_euclidean_opposite():
     a = tf.convert_to_tensor([[0.0, 1.0], [0.0, -1.0]])
     vals = pairwise_euclidean(a)
     assert tf.reduce_all(tf.math.equal(vals, tf.constant([[1e-8, 2.0],[2.0, 1e-8]])))
