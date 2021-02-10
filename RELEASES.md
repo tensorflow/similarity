@@ -7,6 +7,8 @@ related to data vizualization.
 
 ### New features
 
+- `pairwise_euclidean()` is available.
+
 - Evaluation callback to evaluate match rate as training go added. Currently the
 callback can't report metrics in History due to a TF limitation. Working on
 finding a solution
@@ -19,7 +21,8 @@ and visualization easier.
 - Better types for tensors that distinguish float and int based tensors and
 more part of the code is typed.
 
-## 0.7.x - Data Samplers
+
+## 0.7 - Data Samplers
 
 This release focus on improving and extending data samplers.
 
