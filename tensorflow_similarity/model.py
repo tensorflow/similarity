@@ -2,11 +2,11 @@ from collections import defaultdict
 from tqdm.auto import tqdm
 from tabulate import tabulate
 from pathlib import Path
-
 import tensorflow as tf
 from tensorflow.python.keras.engine import functional
 from tensorflow_similarity.indexer import Indexer
 
+from .types import PandasDataFrame
 from .distances import metric_name_canonializer
 from .metrics import precision, f1_score, recall
 
@@ -25,7 +25,7 @@ class SimilarityModel(functional.Functional):
 
     def __init__(self, *args, **kwargs):
         super(SimilarityModel, self).__init__(*args, **kwargs)
-        self._index = None  # index reference
+        self._index: Indexer = None  # index reference
 
     def train_step(self, data):
         # Unpack the data. Its structure depends on your model and
@@ -88,10 +88,10 @@ class SimilarityModel(functional.Functional):
             distance = metric_name_canonializer(distance)
 
         # init index
-        self._index = Indexer(distance=distance,
-                              table=table,
-                              match_algorithm=matcher,
-                              stat_buffer_size=stat_buffer_size)
+        self._index: Indexer = Indexer(distance=distance,
+                                       table=table,
+                                       match_algorithm=matcher,
+                                       stat_buffer_size=stat_buffer_size)
 
         # call underlying keras method
         super().compile(optimizer=optimizer,
@@ -108,7 +108,11 @@ class SimilarityModel(functional.Functional):
             print('|-Computing embeddings')
         embeddings = self.predict(x)
         data = x if store_data else None
-        self._index.batch_add(embeddings, y, data, build=build, verbose=1)
+        self._index.batch_add(embeddings,
+                              y,
+                              data,
+                              build=build,
+                              verbose=verbose)
 
     def _lookup(self, x, k=5, threads=4):
         print("THIS FUNCTION RETURN BOGUS DISTANCES")
@@ -226,7 +230,9 @@ class SimilarityModel(functional.Functional):
 
             if verbose:
                 pb.update()
-        pb.close()
+
+        if verbose:
+            pb.close()
 
         # computing metrics
         results = defaultdict(dict)
@@ -264,6 +270,17 @@ class SimilarityModel(functional.Functional):
         "Reinitialize the index"
         self._index.reset()
 
+    def init_index(self,
+                   distance,
+                   table='memory',
+                   matcher='nmslib_hnsw',
+                   stat_buffer_size=1000):
+        "Init the index manually"
+        self._index: Indexer = Indexer(distance=distance,
+                                       table=table,
+                                       match_algorithm=matcher,
+                                       stat_buffer_size=stat_buffer_size)
+
     def load_index(self, filepath):
         index_path = Path(filepath) / "index"
         self._index = Indexer.load(index_path)
@@ -298,6 +315,18 @@ class SimilarityModel(functional.Functional):
             self.save_index(filepath, compression=compression)
         else:
             print('Index not saved as save_index=False')
+
+    def to_data_frame(self, num_items: int = 0) -> PandasDataFrame:
+        """Export data as pandas dataframe
+
+        Args:
+            num_items (int, optional): Num items to export to the dataframe.
+            Defaults to 0 (unlimited).
+
+        Returns:
+            pd.DataFrame: a pandas dataframe.
+        """
+        return self._index.to_data_frame(num_items=num_items)
 
     # @classmethod
     # def from_config(cls, config):
