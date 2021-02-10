@@ -25,11 +25,10 @@ jobs:
         pip install setuptools wheel twine
         pip install -U nmslib
         pip install -U tensorflow==2.4.0rc4
-        pip install -r test_requirements.txt
     
     - name: Install package
       run: |
-        python setup.py install
+        pip install ".[dev]"
         
     - name: Lint with flake8
       run: |
@@ -40,4 +39,4 @@ jobs:
     
     - name: Test with pytest
       run: |
-        pytest --cov=evoflow tests/
+        pytest --cov=tensorflow_similarity tests/
