@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import os
-import sys
 
 from setuptools import find_packages
 from setuptools import setup
+
 
 def read(rel_path):
     here = os.path.abspath(os.path.dirname(__file__))
@@ -29,7 +29,6 @@ def read(rel_path):
 def get_version(rel_path):
     for line in read(rel_path).splitlines():
         if line.startswith('__version__'):
-            # __version__ = "0.7.11"
             delim = '"' if '"' in line else "'"
             return line.split(delim)[1]
     raise RuntimeError("Unable to find version string.")
@@ -47,8 +46,8 @@ setup(
     url='https://github.com/tensorflow/similarity',
     license='Apache License 2.0',
     install_requires=[
-        'numpy', 'tabulate', 'nmslib', 'tensorflow>=2.2.0', 'tqdm',
-        'matplotlib', 'pyarrow'
+        'numpy', 'tabulate', 'nmslib', 'tensorflow>=2.4', 'tqdm',
+        'matplotlib', 'pandas'
     ],
     extras_require={
         "dev": [
