@@ -74,7 +74,7 @@ class SingleShotMemorySampler(Sampler):
                  class_per_batch: int,
                  batch_size: int = 32,
                  batch_per_epoch: int = 1000,
-                 scheduler: Optional[Augmenter] = None,
+                 scheduler: Optional[Scheduler] = None,
                  warmup: int = -1) -> None:
 
         super().__init__(class_per_batch,
