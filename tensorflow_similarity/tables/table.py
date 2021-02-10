@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Optional
-from tensorflow_similarity.types import FloatTensorLike
+from tensorflow_similarity.types import FloatTensorLike, PandasDataFrame
 
 
 class Table(ABC):
@@ -22,7 +22,6 @@ class Table(ABC):
         Returns:
             int: associated record id
         """
-        pass
 
     @abstractmethod
     def batch_add(
@@ -46,7 +45,6 @@ class Table(ABC):
         Returns:
             list(int): list of associated record id
         """
-        pass
 
     @abstractmethod
     def get(self, idx: int) -> Tuple[FloatTensorLike,
@@ -60,7 +58,6 @@ class Table(ABC):
         Returns:
             list: data associated with the record_id
         """
-        pass
 
     @abstractmethod
     def batch_get(self, idxs: List[int]
@@ -74,12 +71,12 @@ class Table(ABC):
         Returns:
             list(lists): data associated with the record ids
         """
-        pass
+
 
     @abstractmethod
     def size(self) -> int:
         "Number of record in the table"
-        pass
+
 
     @abstractmethod
     def save(self, path: str, compression: bool = True) -> None:
@@ -88,7 +85,7 @@ class Table(ABC):
         Args:
             path (str): where to store the data
         """
-        pass
+
 
     @abstractmethod
     def load(self, path: str) -> None:
@@ -97,4 +94,15 @@ class Table(ABC):
         Args:
             path (str): where to store the data
         """
-        pass
+
+    @abstractmethod
+    def to_data_frame(self, num_items: int = 0) -> PandasDataFrame:
+        """Export data as pandas dataframe
+
+        Args:
+            num_items (int, optional): Num items to export to the dataframe.
+            Defaults to 0 (unlimited).
+
+        Returns:
+            pd.DataFrame: a pandas dataframe.
+        """

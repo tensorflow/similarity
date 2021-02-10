@@ -2,6 +2,7 @@
 
 import json
 from time import time
+from typing import DefaultDict, Deque
 import numpy as np
 from collections import defaultdict
 from collections import deque
@@ -10,6 +11,7 @@ from pathlib import Path
 import tensorflow as tf
 from tqdm.auto import tqdm
 
+from .types import PandasDataFrame
 from .matchers import NMSLibMatcher
 from .tables import MemoryTable
 from .evaluators import MemoryEvaluator
@@ -77,19 +79,19 @@ class Indexer():
 
         # mapper from id to record data
         if self.table_type == 'memory':
-            self.table = MemoryTable()
+            self.table: MemoryTable = MemoryTable()
         else:
             raise ValueError("Unknown table type")
 
         # index score normalizer
         if self.evaluator_type == 'memory':
-            self.evaluator = MemoryEvaluator()
+            self.evaluator: MemoryEvaluator = MemoryEvaluator()
         else:
             raise ValueError("Unknown scorer type")
 
         # stats
-        self._stats = defaultdict(int)
-        self._lookup_timings_buffer = deque([], maxlen=self.stat_buffer_size)
+        self._stats: DefaultDict[str, int] = defaultdict(int)
+        self._lookup_timings_buffer: Deque = deque([], maxlen=self.stat_buffer_size)  # noqa
 
     def add(self, embedding, label=None, data=None, build=True, verbose=1):
         """ Add a single embedding to the indexer
@@ -429,6 +431,18 @@ class Indexer():
         for k, v in stats['query_performance'].items():
             rows.append([k, v])
         print(tabulate(rows))
+
+    def to_data_frame(self, num_items: int = 0) -> PandasDataFrame:
+        """Export data as pandas dataframe
+
+        Args:
+            num_items (int, optional): Num items to export to the dataframe.
+            Defaults to 0 (unlimited).
+
+        Returns:
+            pd.DataFrame: a pandas dataframe.
+        """
+        return self.table.to_data_frame(num_items)
 
     @staticmethod
     def __make_metadata_fname(path):

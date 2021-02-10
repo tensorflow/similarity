@@ -18,7 +18,7 @@ from time import time
 
 long_description = open("README.md").read()
 # version = '0.15.3r%s' % int(time())
-version = '0.17.11'
+version = '0.8.0'
 
 setup(name="tensorflow_similarity_alpha",
       version=version,
@@ -30,7 +30,7 @@ setup(name="tensorflow_similarity_alpha",
       license='Apache License 2.0',
       install_requires=[
           'numpy', 'tabulate', 'nmslib', 'tensorflow>=2.2.0', 'tqdm',
-          'matplotlib', 'pyarrow'
+          'matplotlib', 'altair', 'pandas'
       ],
       classifiers=[
           'Development Status :: 5 - Production/Stable',
