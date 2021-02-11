@@ -1,8 +1,8 @@
 import numpy as np
 from pathlib import Path
-from typing import List, Tuple, Optional
-from tensorflow_similarity.types import FloatTensorLike
-
+from tensorflow_similarity.types import FloatTensorLike, List, Tuple
+from tensorflow_similarity.types import Optional, PandasDataFrame
+import pandas as pd
 from .table import Table
 
 
@@ -148,3 +148,26 @@ class MemoryTable(Table):
         if check_file_exit and not fname.exists():
             raise ValueError("Index file not found")
         return str(fname)
+
+    def to_data_frame(self, num_items: int = 0) -> PandasDataFrame:
+        """Export data as pandas dataframe
+
+        Args:
+            num_items (int, optional): Num items to export to the dataframe.
+            Defaults to 0 (unlimited).
+
+        Returns:
+            pd.DataFrame: a pandas dataframe.
+        """
+        if not num_items:
+            num_items = self.num_items
+
+        data = {
+            "embeddings": self.embeddings[:num_items],
+            "data": self.data[:num_items],
+            "lables": self.labels[:num_items]
+        }
+
+        # forcing type from Any to PandasFrame
+        df: PandasDataFrame = pd.DataFrame.from_dict(data)
+        return df

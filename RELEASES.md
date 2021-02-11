@@ -1,12 +1,26 @@
 # Tensorflow Similarity releases notes
 
-## 0.17 - Euclidean Distance and PN Loss
+## 0.8.x - Evaluation and vizualization
 
-This release focuses on adding support for PN Loss.
+This release focus on implementing features and improvement
+related to data vizualization.
 
 ### New features
 
 - `pairwise_euclidean()` is available.
+
+- Evaluation callback to evaluate match rate as training go added. Currently the
+callback can't report metrics in History due to a TF limitation. Working on
+finding a solution
+
+- Indexer now supports the `to_pandas()` method to make data analysis
+and visualization easier.
+
+### Major improvements
+
+- Better types for tensors that distinguish float and int based tensors and
+more part of the code is typed.
+
 
 ## 0.7 - Data Samplers
 
@@ -20,7 +34,7 @@ This release focus on improving and extending data samplers.
   - The use of a data augmenter
   - Having a warmup period before augmentation
 
-### Major improvement
+### Major improvements
 
 - `single_lookup()` now returns the rank of each match.
 - Memory Samplers now scale to millions of examples without slowdown.
@@ -30,7 +44,7 @@ This release focus on improving and extending data samplers.
 
 - Fixed the issue where model couldn't be reloaded due to a bug in load_model()
 
-## 0.6 - Distance Metrics
+## 0.6.x - Distance Metrics
 
 This release add specialized distance metrics and fixes bugs
 

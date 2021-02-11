@@ -36,9 +36,9 @@ class NMSLibMatcher(Matcher):
         self._matcher.addDataPointBatch(embeddings, idxs)
 
         if build:
+            self._build()
             if verbose:
                 print('|-Optimizing NN matcher index.')
-            self._build()
 
     def lookup(self, embedding, k=5):
         idxs, distances = self._matcher.knnQuery(embedding, k=k)
@@ -58,13 +58,13 @@ class NMSLibMatcher(Matcher):
 
     def save(self, path):
         fname = self.__make_fname(path)
-        self._matcher.saveIndex(fname, save_data=False)
+        self._matcher.saveIndex(fname, save_data=True)
 
     def load(self, path):
         fname = self.__make_fname(path)
-        self._matcher.loadIndex(fname)
+        self._matcher.loadIndex(fname, load_data=True)
 
-    def _build(self, verbose=1):
+    def _build(self, verbose=0):
         """Build the index this is need to take into account the new points
         """
         show = True if verbose else False
