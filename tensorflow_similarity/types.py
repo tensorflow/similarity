@@ -14,16 +14,23 @@
 # ==============================================================================
 """Core TensorFlow types."""
 
-from typing import Union
+from typing import Iterable, Union, Optional, List, Tuple, Optional  # noqa
 import numpy as np
+
+
+class PandasDataFrame(object):
+    """Symbolic pandas frame
+    Pandas type are too loose you get an Any. We want a PandaFrame
+  """
+    pass
 
 
 class Tensor(object):
     """The base class of all dense Tensor objects.
 
   A dense tensor has a static data type (dtype), and may have a static rank and
-  shape. Tensor objects are immutable. Mutable objects may be backed by a Tensor
-  which holds the unique handle that identifies the mutable object.
+  shape. Tensor objects are immutable. Mutable objects may be backed by a
+  Tensor which holds the unique handle that identifies the mutable object.
   """
     @property
     def dtype(self):
@@ -32,6 +39,21 @@ class Tensor(object):
     @property
     def shape(self):
         pass
+
+    @property
+    def __len__(self):
+        pass
+
+    @property
+    def __iter__(self):
+        pass
+
+class IntTensor(Tensor):
+    """Integer tensor"""
+
+
+class FloatTensor(Tensor):
+    """Float tensor """
 
 
 class Symbol(Tensor):
@@ -53,9 +75,8 @@ class Value(Tensor):
         pass
 
 
-TensorLike = Union[Tensor, int, float, bool, str, complex,
-                   tuple, list, np.ndarray]
+TensorLike = Union[Tensor, list, np.ndarray]
 
-FloatTensorLike = Union[Tensor, float, np.ndarray]
+FloatTensorLike = Union[FloatTensor, list, np.ndarray]
 
-IntTensorLike = Union[Tensor, float, np.ndarray]
+IntTensorLike = Union[IntTensor, list, np.ndarray]

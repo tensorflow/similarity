@@ -37,3 +37,9 @@ def test_index_save(tmp_path):
     idxs2, embs2 = matcher.lookup(target)
     assert len(embs2) == 2
     assert list(idxs2) == [0, 1]
+
+    # add more
+    matcher2.add(np.array([3.0, 3.0, 3.0]), 3)
+    idxs3, embs3 = matcher2.lookup(target)
+    assert len(embs3) == 3
+    assert list(idxs3) == [0, 3, 1]
