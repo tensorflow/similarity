@@ -63,6 +63,4 @@ setup(
         'Programming Language :: Python :: 3',
         'Topic :: Scientific/Engineering :: Artificial Intelligence'
     ],
-    package_dir={"": "tensorflow_similarity"},
-    packages=find_packages(where="tensorflow_similarity")
-    )
+    packages=find_packages())
