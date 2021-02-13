@@ -5,9 +5,42 @@ from typing import List, Union
 
 class EvalMetric():
 
-    def __init__(self, direction: str, name: str) -> None:
-        self.name = name
+    def __init__(self,
+                 direction: str,
+                 name: str,
+                 canonical_name: str,
+                 k: int = None,
+                 distance_threshold: float = None) -> None:
+        if direction not in ['min', 'max']:
+            raise ValueError('Unknown direction - must be in {min,max}')
+        self.k = k
+        self.distance_threshold = distance_threshold
+        self.canonical_name = canonical_name
+        self.name = self._suffix_name(name, k, distance_threshold)
         self.direction = direction
+
+    def __str__(self) -> str:
+        return self.name
+
+    def __repr__(self) -> str:
+        return "%s:%s" % (self.canonical_name, self.name)
+
+    def get_config(self):
+        return {
+            "name": self.name,
+            "canonical_name": self.canonical_name,
+            "direction": self.direction,
+            "k": self.k,
+            "distance_threshold": self.distance_threshold
+        }
+
+    @staticmethod
+    def from_config(self, config):
+        metric = get_metric_from_name(config['canonical_name'])
+        metric.name = config['name']
+        metric.k = config['k']
+        metric.distance_threshold = config['distance_threshold']
+        return metric
 
     @abstractmethod
     def compute(self,
@@ -64,13 +97,17 @@ class EvalMetric():
         for idx, r in enumerate(match_ranks):
             if min_rank <= r <= max_rank and match_distances[idx] <= distance:
                 filtered_ranks.append(r)
+        if not len(filtered_ranks):
+            return [-1]
         return filtered_ranks
 
 
 class MeanRank(EvalMetric):
 
     def __init__(self, name='mean_rank') -> None:
-        super().__init__(direction='min', name=name)
+        super().__init__(direction='min',
+                         canonical_name='mean_rank',
+                         name=name)
 
     def compute(self,
                 max_k: int,
@@ -83,14 +120,16 @@ class MeanRank(EvalMetric):
                 matches_labels: List[List[int]]) -> float:
 
         # remove unmatched elements (rank 0)
-        matches = self.filter_ranks(match_ranks, match_distances, max_rank=max_k)
+        matches = self.filter_ranks(match_ranks,
+                                    match_distances,
+                                    max_rank=max_k)
         return float(tf.reduce_mean(matches))
 
 
 class MinRank(EvalMetric):
 
     def __init__(self, name='min_rank') -> None:
-        super().__init__(direction='min', name=name)
+        super().__init__(direction='min', canonical_name='min_rank', name=name)
 
     def compute(self,
                 max_k: int,
@@ -103,15 +142,16 @@ class MinRank(EvalMetric):
                 matches_labels: List[List[int]]) -> int:
 
         # remove unmatched elements (rank 0)
-        matches = self.filter_ranks(match_ranks, match_distances, max_rank=max_k)
-        print(matches)
+        matches = self.filter_ranks(match_ranks,
+                                    match_distances,
+                                    max_rank=max_k)
         return int(tf.reduce_min(matches))
 
 
 class MaxRank(EvalMetric):
 
     def __init__(self, name='max_rank') -> None:
-        super().__init__(direction='min', name=name)
+        super().__init__(direction='min', canonical_name='max_rank', name=name)
 
     def compute(self,
                 max_k: int,
@@ -124,7 +164,9 @@ class MaxRank(EvalMetric):
                 matches_labels: List[List[int]]) -> int:
 
         # remove unmatched elements (rank 0)
-        matches = self.filter_ranks(match_ranks, match_distances, max_rank=max_k)
+        matches = self.filter_ranks(match_ranks,
+                                    match_distances,
+                                    max_rank=max_k)
         return int(tf.reduce_max(matches))
 
 
@@ -137,10 +179,11 @@ class Accuracy(EvalMetric):
                  distance_threshold: float = 0.5,
                  k: int = 1,
                  name='accuracy') -> None:
-        self.k = k
-        self.distance_threshold = distance_threshold
-        name = self._suffix_name(name, k, distance_threshold)
-        super().__init__(direction='max', name=name)
+        super().__init__(direction='max',
+                         name=name,
+                         canonical_name='accuracy',
+                         k=k,
+                         distance_threshold=distance_threshold)
 
     def compute(self,
                 max_k: int,
@@ -177,10 +220,12 @@ class Precision(EvalMetric):
                  distance_threshold: float = 0.5,
                  k: int = 1,
                  name='precision') -> None:
-        self.k = k
-        self.distance_threshold = distance_threshold
-        name = self._suffix_name(name, k, distance_threshold)
-        super().__init__(direction='max', name=name)
+
+        super().__init__(direction='max',
+                         name=name,
+                         canonical_name='precision',
+                         k=k,
+                         distance_threshold=distance_threshold)
 
     def compute(self,
                 max_k: int,
@@ -212,10 +257,11 @@ class Recall(EvalMetric):
                  distance_threshold: float = 0.5,
                  k: int = 1,
                  name='recall') -> None:
-        self.k = k
-        self.distance_threshold = distance_threshold
-        name = self._suffix_name(name, k, distance_threshold)
-        super().__init__(direction='max', name=name)
+        super().__init__(direction='max',
+                         name=name,
+                         canonical_name='recall',
+                         k=k,
+                         distance_threshold=distance_threshold)
 
     def compute(self,
                 max_k: int,
@@ -252,10 +298,11 @@ class F1Score(EvalMetric):
                  distance_threshold: float = 0.5,
                  k: int = 1,
                  name='f1_score') -> None:
-        self.k = k
-        self.distance_threshold = distance_threshold
-        name = self._suffix_name(name, k, distance_threshold)
-        super().__init__(direction='max', name=name)
+        super().__init__(direction='max',
+                         name=name,
+                         canonical_name='f1_score',
+                         k=k,
+                         distance_threshold=distance_threshold)
 
     def compute(self,
                 max_k: int,
@@ -279,3 +326,53 @@ class F1Score(EvalMetric):
         recall = true_positives / len(targets_labels)
 
         return 2 * (precision * recall) / (precision + recall)
+
+
+def get_metric_from_name(metric_name) -> EvalMetric:
+    # ! Metrics must be non-instanciated.
+    METRICS_ALIASES = {
+        # accuracy
+        "accuracy": Accuracy(),
+        "acc": Accuracy(),
+        # recall
+        "recall": Recall(),
+        # precision
+        "precision": Precision(),
+        # f1 score
+        "f1_score": F1Score(),
+        "f1": F1Score(),
+        # mean rank
+        "mean_rank": MeanRank(),
+        "meanrank": MeanRank(),
+        # max rank
+        "max_rank": MaxRank(),
+        "maxrank": MaxRank(),
+        # min rank
+        "min_rank": MinRank(),
+        "minrank": MinRank(),
+    }
+    if metric_name.lower() in METRICS_ALIASES:
+        return METRICS_ALIASES[metric_name.lower()]
+    else:
+        raise ValueError('Unknown metric name:', metric_name, ' typo?')
+
+
+def build_metrics(metrics: List[Union[str, EvalMetric]]) -> List[EvalMetric]:
+    """Convert a list of mixed metrics name and object to a list
+    of EvalMetrics
+
+    Args:
+        metrics (List[Union[str, EvalMetric]]): Metric and Metric names
+
+    Returns:
+        List[EvalMetric]: Metrics objects
+    """
+    eval_metrics = []
+    for m in metrics:
+        if isinstance(m, EvalMetric):
+            eval_metrics.append(m)
+        elif isinstance(m, str):
+            eval_metrics.append(EvalMetric.get_metric_from_name(m))
+        else:
+            raise ValueError('metrics must be a str or a Evalmetric Object')
+    return eval_metrics
