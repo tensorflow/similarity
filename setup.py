@@ -37,7 +37,7 @@ def get_version(rel_path):
 long_description = read("README.md")
 
 setup(
-    name="tensorflow_similarity_alpha",
+    name="tensorflow_similarity",
     version=get_version("tensorflow_similarity/__init__.py"),
     description="Single shot and metric learning for humans",
     long_description=long_description,
