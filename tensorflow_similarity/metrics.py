@@ -1,6 +1,6 @@
 from abc import abstractmethod
 import tensorflow as tf
-from typing import List, Union
+from typing import List, Dict, Union
 
 
 class EvalMetric():
@@ -36,7 +36,7 @@ class EvalMetric():
 
     @staticmethod
     def from_config(self, config):
-        metric = get_metric_from_name(config['canonical_name'])
+        metric = make_metric(config['canonical_name'])
         metric.name = config['name']
         metric.k = config['k']
         metric.distance_threshold = config['distance_threshold']
@@ -51,12 +51,16 @@ class EvalMetric():
                 index_size: int,
                 match_ranks: List[int],
                 match_distances: List[float],
-                matches_labels: List[List[int]]) -> Union[int, float]:
+                lookups: List[List[Dict[str, Union[float, int]]]]
+                ) -> Union[int, float]:
         pass
         # match_ranks: rank 0 is unmatched, rank1 is first neighbopor, rank2 ...
         # match_distance: distance 0 means infinite, rest is match distances
 
-    def _suffix_name(self, name: str, k: int = None, distance: float = None) -> str:
+    def _suffix_name(self,
+                     name: str,
+                     k: int = None,
+                     distance: float = None) -> str:
         "Suffix metric name with k and distance if needed"
         if k and k > 1:
             name = "%s@%d" % (name, k)
@@ -117,7 +121,8 @@ class MeanRank(EvalMetric):
                 index_size: int,
                 match_ranks: List[int],
                 match_distances: List[float],
-                matches_labels: List[List[int]]) -> float:
+                lookups: List[List[Dict[str, Union[float, int]]]]
+                ) -> float:
 
         # remove unmatched elements (rank 0)
         matches = self.filter_ranks(match_ranks,
@@ -139,7 +144,8 @@ class MinRank(EvalMetric):
                 index_size: int,
                 match_ranks: List[int],
                 match_distances: List[float],
-                matches_labels: List[List[int]]) -> int:
+                lookups: List[List[Dict[str, Union[float, int]]]]
+                ) -> int:
 
         # remove unmatched elements (rank 0)
         matches = self.filter_ranks(match_ranks,
@@ -161,7 +167,8 @@ class MaxRank(EvalMetric):
                 index_size: int,
                 match_ranks: List[int],
                 match_distances: List[float],
-                matches_labels: List[List[int]]) -> int:
+                lookups: List[List[Dict[str, Union[float, int]]]]
+                ) -> int:
 
         # remove unmatched elements (rank 0)
         matches = self.filter_ranks(match_ranks,
@@ -193,7 +200,8 @@ class Accuracy(EvalMetric):
                 index_size: int,
                 match_ranks: List[int],
                 match_distances: List[float],
-                matches_labels: List[List[int]]) -> float:
+                lookups: List[List[Dict[str, Union[float, int]]]]
+                ) -> float:
 
         matches = self.filter_ranks(match_ranks,
                                     match_distances,
@@ -235,7 +243,8 @@ class Precision(EvalMetric):
                 index_size: int,
                 match_ranks: List[int],
                 match_distances: List[float],
-                matches_labels: List[List[int]]) -> float:
+                lookups: List[List[Dict[str, Union[float, int]]]]
+                ) -> float:
 
         matches = self.filter_ranks(match_ranks,
                                     match_distances,
@@ -271,7 +280,8 @@ class Recall(EvalMetric):
                 index_size: int,
                 match_ranks: List[int],
                 match_distances: List[float],
-                matches_labels: List[List[int]]) -> float:
+                lookups: List[List[Dict[str, Union[float, int]]]]
+                ) -> float:
 
         matches = self.filter_ranks(match_ranks,
                                     match_distances,
@@ -312,7 +322,8 @@ class F1Score(EvalMetric):
                 index_size: int,
                 match_ranks: List[int],
                 match_distances: List[float],
-                matches_labels: List[List[int]]) -> float:
+                lookups: List[List[Dict[str, Union[float, int]]]]
+                ) -> float:
 
         matches = self.filter_ranks(match_ranks,
                                     match_distances,
@@ -328,7 +339,18 @@ class F1Score(EvalMetric):
         return 2 * (precision * recall) / (precision + recall)
 
 
-def get_metric_from_name(metric_name) -> EvalMetric:
+def make_metric(metric: Union[str, EvalMetric]) -> EvalMetric:
+    """Covert metric from str name to object if needed.
+
+    Args:
+        metric (Union[str, EvalMetric]): EvalMetric() or metric name.
+
+    Raises:
+        ValueError: metric name is invalid.
+
+    Returns:
+        EvalMetric: Instanciated metric if needed.
+    """
     # ! Metrics must be non-instanciated.
     METRICS_ALIASES = {
         # accuracy
@@ -351,13 +373,19 @@ def get_metric_from_name(metric_name) -> EvalMetric:
         "min_rank": MinRank(),
         "minrank": MinRank(),
     }
-    if metric_name.lower() in METRICS_ALIASES:
-        return METRICS_ALIASES[metric_name.lower()]
+
+    if isinstance(metric, EvalMetric):
+        return metric
+    elif isinstance(metric, str):
+        if metric.lower() in METRICS_ALIASES:
+            return METRICS_ALIASES[metric.lower()]
+        else:
+            raise ValueError('Unknown metric name:', metric, ' typo?')
     else:
-        raise ValueError('Unknown metric name:', metric_name, ' typo?')
+        raise ValueError('metrics must be a str or a Evalmetric Object')
 
 
-def build_metrics(metrics: List[Union[str, EvalMetric]]) -> List[EvalMetric]:
+def make_metrics(metrics: List[Union[str, EvalMetric]]) -> List[EvalMetric]:
     """Convert a list of mixed metrics name and object to a list
     of EvalMetrics
 
@@ -369,10 +397,5 @@ def build_metrics(metrics: List[Union[str, EvalMetric]]) -> List[EvalMetric]:
     """
     eval_metrics = []
     for m in metrics:
-        if isinstance(m, EvalMetric):
-            eval_metrics.append(m)
-        elif isinstance(m, str):
-            eval_metrics.append(EvalMetric.get_metric_from_name(m))
-        else:
-            raise ValueError('metrics must be a str or a Evalmetric Object')
+        eval_metrics.append(make_metric(m))
     return eval_metrics

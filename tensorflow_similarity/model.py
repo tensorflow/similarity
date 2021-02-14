@@ -5,13 +5,14 @@ from pathlib import Path
 import tensorflow as tf
 from tensorflow.python.keras.engine import functional
 from tensorflow_similarity.indexer import Indexer
+from tensorflow_similarity.metrics import EvalMetric, make_metric
 
-from .types import PandasDataFrame
+from typing import List, Dict, Union
+from .types import FloatTensorLike, PandasDataFrame
 from .distances import metric_name_canonializer
-from .metrics import precision, f1_score, recall
 
 
-CALIBRATION_ACCURACY_TARGETS = {
+THRESHOLDS_TARGETS = {
     "very_likely": 0.99,
     "likely": 0.9
 }
@@ -127,21 +128,34 @@ class SimilarityModel(functional.Functional):
     def index_summary(self):
         self._index.print_stats()
 
-    def calibrate(self, x, y,
-                  targets=CALIBRATION_ACCURACY_TARGETS,
-                  k=2, verbose=1):
+    def calibrate(self,
+                  x: List[FloatTensorLike],
+                  y: List[int],
+                  thresholds_targets: Dict[str, float] = THRESHOLDS_TARGETS,
+                  k: int = 1,
+                  calibration_metric: Union[str, EvalMetric] = "f1_score",
+                  extra_metrics: List[Union[str, EvalMetric]] = ['precision', 'recall'],  # noqa
+                  rounding: int = 2,
+                  verbose: int = 1):
 
         # predict
         embeddings = self.predict(x)
 
         # calibrate
-        return self._index.calibrate(embeddings,
-                                     y,
-                                     k,
-                                     targets,
+        return self._index.calibrate(embeddings=embeddings,
+                                     y=y,
+                                     thresholds_targets=thresholds_targets,
+                                     k=k,
+                                     calibration_metric=calibration_metric,
+                                     extra_metrics=extra_metrics,
+                                     rounding=rounding,
                                      verbose=verbose)
 
-    def match(self, x, cutpoint='optimal', no_match_label=-1, verbose=0):
+    def match(self,
+              x,
+              cutpoint='optimal',
+              no_match_label=-1,
+              verbose=0):
         """Match a set of examples against the calibrated index
 
         For the match function to work, the index must be calibrated using
@@ -160,7 +174,7 @@ class SimilarityModel(functional.Functional):
             verbose (int, optional). Defaults to 0.
 
         Returns:
-            list(int): Return which class matches for each supplied example.
+            list(int): Return which class matches for each supplied example
 
         Notes:
             This function matches all the cutpoints at once internally as there
@@ -186,7 +200,12 @@ class SimilarityModel(functional.Functional):
         else:  # normal match behavior - returns a specific cut point
             return matches[cutpoint]
 
-    def evaluate_index(self, x, y, no_match_label=-1, verbose=1):
+    def evaluate_matching(self,
+                          x,
+                          y,
+                          k=1,
+                          extra_metrics=['accuracy', 'precision', 'recall'],
+                          verbose=1):
         """Evaluate model matching accuracy on a given dataset.
 
         Args:
@@ -202,67 +221,45 @@ class SimilarityModel(functional.Functional):
         Returns:
             dict: evaluation metrics
         """
-        # match data against the index
-        matches = self.match(x,
-                             verbose=verbose,
-                             no_match_label=no_match_label,
-                             cutpoint='all')
+        # There is some code duplication in this function but that is the best
+        # solution to keep the end-user API clean and doing inferences once.
 
-        num_examples = len(x)
-        cutpoints = sorted(list(matches.keys()))
-        y_pred = defaultdict(list)
-        y_true = defaultdict(list)
+        if not self._index.is_calibrated():
+            raise ValueError('Uncalibrated model: run model.calibration()')
 
+        # get embeddings
         if verbose:
-            pb = tqdm(total=num_examples, desc='Computing')
+            print("|-Computing embeddings")
+        embeddings = self.predict(x)
 
-        for idx in range(num_examples):
-            val = int(y[idx])
-
-            y_true['no_cutpoint'].append(val)
-            y_pred['no_cutpoint'].append(matches['optimal'][idx])
-
-            for cutpoint in cutpoints:
-                pred = matches[cutpoint][idx]
-                if pred != no_match_label:
-                    y_true[cutpoint].append(val)
-                    y_pred[cutpoint].append(pred)
-
-            if verbose:
-                pb.update()
-
-        if verbose:
-            pb.close()
-
-        # computing metrics
         results = defaultdict(dict)
-        METRICS_FN = [['precision', precision], ['f1_score', f1_score],
-                      ['recall', recall]]
+        cp_metric_name = self.index.calibration_metric.name
 
         if verbose:
-            pb = tqdm(total=len(METRICS_FN), desc="computing metrics")
+            pb = tqdm(total=len(self.index.cutpoints),
+                      desc='Evaluating cutpoints')
 
-        # standardized metric
-        for m in METRICS_FN:
-            for cutpoint in cutpoints:
-                tval = float(m[1](y_true[cutpoint], y_pred[cutpoint]))
-                results[cutpoint][m[0]] = tval
-
+        for cp_name, cp_value in self.index.cutpoints.items():
+            # create a metric that match at the requested k and threshold
+            metric = make_metric(cp_metric_name)
+            metric.k = k
+            metric.distance_threshold = cp_value
+            metrics = [metric] + extra_metrics
+            results[cp_name] = self.index.evaluate(embeddings, y, metrics, k)
             if verbose:
                 pb.update()
-
         if verbose:
             pb.close()
 
-        # display results if verbose
         if verbose:
+            headers = ['cp', cp_metric_name]  # noqa
+            for k in results['optimal'].keys():
+                if k not in headers:
+                    headers.append(str(k))
             rows = []
-            for metric_name in results['optimal'].keys():
-                row = [metric_name]
-                for cutpoint in cutpoints:
-                    row.append(results[cutpoint][metric_name])
-                rows.append(row)
-            print(tabulate(rows, headers=['metric'] + cutpoints))
+            for data in results.values():
+                rows.append([data[v] for v in headers])
+            print(tabulate(rows, headers=headers))
 
         return results
 

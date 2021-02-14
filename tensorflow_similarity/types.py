@@ -22,7 +22,6 @@ class PandasDataFrame(object):
     """Symbolic pandas frame
     Pandas type are too loose you get an Any. We want a PandaFrame
   """
-    pass
 
 
 class Tensor(object):
@@ -47,6 +46,7 @@ class Tensor(object):
     @property
     def __iter__(self):
         pass
+
 
 class IntTensor(Tensor):
     """Integer tensor"""

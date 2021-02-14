@@ -2,19 +2,22 @@
 
 import json
 from time import time
-from typing import DefaultDict, Deque
 import numpy as np
-from collections import defaultdict
-from collections import deque
+from collections import defaultdict, deque
 from tabulate import tabulate
 from pathlib import Path
 import tensorflow as tf
 from tqdm.auto import tqdm
 
-from .types import PandasDataFrame
+# types
+from typing import Dict, List, Union, DefaultDict, Deque, Any
+from .types import FloatTensorLike, PandasDataFrame
+
+# internal
 from .matchers import NMSLibMatcher
 from .tables import MemoryTable
 from .evaluators import MemoryEvaluator
+from .metrics import EvalMetric, make_metric, make_metrics, F1Score
 
 
 class Indexer():
@@ -59,8 +62,11 @@ class Indexer():
         # stats configuration
         self.stat_buffer_size = stat_buffer_size
 
-        # calibrations scores
-        self.calibration = None
+        # calibration
+        self.is_calibrated = False
+        self.calibration_metric: EvalMetric = F1Score()
+        self.cutpoints: Dict[str, Dict[str, Union[int, float, str]]] = {}
+        self.calibration_thresholds: Dict[str, List[Union[float, int]]] = {}
 
         # initialize internal structures
         self._init_structures()
@@ -83,7 +89,7 @@ class Indexer():
         else:
             raise ValueError("Unknown table type")
 
-        # index score normalizer
+        # code used to evaluate indexer performance
         if self.evaluator_type == 'memory':
             self.evaluator: MemoryEvaluator = MemoryEvaluator()
         else:
@@ -92,6 +98,12 @@ class Indexer():
         # stats
         self._stats: DefaultDict[str, int] = defaultdict(int)
         self._lookup_timings_buffer: Deque = deque([], maxlen=self.stat_buffer_size)  # noqa
+
+        # calibration data
+        self.is_calibrated = False
+        self.calibration_metric = F1Score()
+        self.cutpoints = {}
+        self.calibration_thresholds = {}
 
     def add(self, embedding, label=None, data=None, build=True, verbose=1):
         """ Add a single embedding to the indexer
@@ -148,7 +160,7 @@ class Indexer():
 
         self.matcher.batch_add(embeddings, idxs, build=build, verbose=verbose)
 
-    def single_lookup(self, embedding, k=5, as_dict=True):
+    def single_lookup(self, embedding, k=5):
         """Find the k closest match of a given embedding
 
         Args:
@@ -170,20 +182,16 @@ class Indexer():
         self._lookup_timings_buffer.append(lookup_time)
         self._stats['num_lookups'] += 1
 
-        if as_dict:
-            results = []
-            for i in range(len(embeddings)):
-                results.append({
-                    "rank": i + 1,
-                    "embedding": embeddings[i],
-                    "distance": distances[i],
-                    "label": labels[i],
-                    "data": data[i]
-                })
-            return results
-        else:
-            ranks = [i + 1 for i in range(len(labels))]
-            return embeddings, distances, labels, data, ranks
+        results = []
+        for i in range(len(embeddings)):
+            results.append({
+                "rank": i + 1,
+                "embedding": embeddings[i],
+                "distance": distances[i],
+                "label": labels[i],
+                "data": data[i]
+            })
+        return results
 
     def _batch_lookup(self, embeddings, k=5, threads=4):
         """Find the k closest match of a batch of embeddings
@@ -234,17 +242,29 @@ class Indexer():
 
         # return results
 
-    # evaluation related functionm
+    # evaluation related functions
+    def evaluate(self, embeddings, y, metrics, k: int = 1):
 
-    def is_calibrated(self):
-        "Is the index calibrated?"
-        return self.evaluator.is_calibrated()
+        # FIXME batch lookup
+        lookups = []
+        for idx in range(len(embeddings)):
+            nn = self.single_lookup(embeddings[idx], k=1)
+            lookups.append(nn)
 
-    def calibrate(self, embeddings, y, k, targets, verbose=1):
-        # FIXME: batch_lookup
-        y_true = []
-        labels = []
-        distances = []
+        return self.evaluator.evaluate(index_size=self.size(),
+                                       metrics=metrics,
+                                       targets_labels=y,
+                                       lookups=lookups)
+
+    def calibrate(self,
+                  embeddings: List[FloatTensorLike],
+                  y: List[int],
+                  thresholds_targets: Dict[str, float],
+                  k: int = 1,
+                  calibration_metric: Union[str, EvalMetric] = "f1_score",
+                  extra_metrics: List[Union[str, EvalMetric]] = ['precision', 'recall'],  # noqa
+                  rounding: int = 2,
+                  verbose: int = 1):
 
         num_examples = len(y)
 
@@ -252,36 +272,59 @@ class Indexer():
         if verbose:
             pb = tqdm(total=num_examples, desc='Finding NN')
 
+        # FIXME use bulk_lookup when ready
+        lookups = []
         for idx in range(num_examples):
-
-            # FIXME use bulk_lookup
-            knn = self.single_lookup(embeddings[idx], k=k)
-
-            for nn in knn:
-                # !don't remove the casts or later code will be very slow.
-                distances.append(float(nn['distance']))
-                y_true.append(int(y[idx]))
-                labels.append(int(nn['label']))
-
+            nn = self.single_lookup(embeddings[idx], k=k)
+            lookups.append(nn)
             if verbose:
                 pb.update()
 
         if verbose:
             pb.close()
 
-        return self.evaluator.calibrate(y_true,
-                                        labels,
-                                        distances,
-                                        targets,
-                                        verbose=verbose)
+        # making sure our metrics are all EvalMetric object
+        calibration_metric = make_metric(calibration_metric)
+        # This aweful syntax is due to mypy not understanding subtype :(
+        extra_eval_metrics: List[Union[str, EvalMetric]] = list(make_metrics(extra_metrics))  # noqa
 
-    def match(self, embeddings, no_match_label=-1, verbose=1):
+        # running calibration
+        thresholds, cutpoints = self.evaluator.calibrate(
+            self.size(),
+            calibration_metric=calibration_metric,
+            thresholds_targets=thresholds_targets,
+            targets_labels=y,
+            lookups=lookups,
+            extra_metrics=extra_eval_metrics,
+            rounding=rounding,
+            verbose=verbose
+        )
+
+        # display cutpoint results if requested
+        if verbose:
+            headers = ['name', 'value', 'distance']  # noqa
+            for k in cutpoints.keys():
+                if k not in headers:
+                    headers.append(str(k))
+            rows = []
+            for data in cutpoints.values():
+                rows.append([data[v] for v in headers])
+            print(tabulate(rows, headers=headers))
+
+        # store info for serialization purpose
+        self.calibration_metric = calibration_metric.get_config()
+        self.cutpoints = cutpoints
+        self.calibration_thresholds = thresholds
+        return cutpoints, thresholds
+
+    def match(self,
+              embeddings: List[FloatTensorLike],
+              no_match_label: int = -1,
+              verbose: int = 1):
         """Match embeddings against the various cutpoints thresholds
 
         Args:
-            embeddings (tensors): embeddings
-
-            labels(list(int)): the labels associated with the embeddings.
+            embeddings (FloatTensorLike): embeddings
 
             no_match_label (int, optional): What label value to assign when
             there is no match. Defaults to -1.
@@ -289,9 +332,10 @@ class Indexer():
             verbose (int): display progression. Default to 1.
 
         Notes:
-            1. its up to the model code to decide which of the cutpoints to
-            use / show to the users. The evaluator returns all of them as there
-            are little performance downside and makes code clearer and simpler.
+            1. its up to the `Model.match()` code to decide which of
+            cutpoints results to use / show to the users.
+            This function returns all of them as there is little performance
+            downside to do so and it makes code clearer and simpler.
 
             2. the function is responsible to return the list of class matched
             to allows implementation to use additional criterias if they choose
@@ -307,7 +351,6 @@ class Indexer():
         labels = []
         for idx in range(len(embeddings)):
 
-            # FIXME batch lookup
             knn = self.single_lookup(embeddings[idx], k=1)
 
             # ! don't remove casts, otherwise eval get very slow.
@@ -319,11 +362,26 @@ class Indexer():
 
         if verbose:
             pb.close()
+            pb = tqdm(total=len(distances) * len(self.cutpoints),
+                      desc='matching embeddings')
 
-        return self.evaluator.match(distances,
-                                    labels,
-                                    no_match_label=no_match_label,
-                                    verbose=verbose)
+        matches = defaultdict(list)
+        for name, cp in self.cutpoints.items():
+            threshold = float(cp['distance'])
+            for idx, distance in enumerate(distances):
+                if distance <= threshold:
+                    label = labels[idx]
+                else:
+                    label = no_match_label
+                matches[name].append(label)
+
+                if verbose:
+                    pb.update()
+
+        if verbose:
+            pb.close()
+
+        return matches
 
     def save(self, path, compression=True):
         """Save the index to disk
@@ -341,10 +399,12 @@ class Indexer():
             "evaluator": self.evaluator_type,
             "match_algorithm": self.match_algorithm,
             "stat_buffer_size": self.stat_buffer_size,
-            "calibration": self.calibration
+            "is_calibrated": self.is_calibrated,
+            "calibration_metric_config": self.calibration_metric.get_config(),
+            "cutpoints": self.cutpoints,
+            "calibration_thresholds": self.calibration_thresholds
         }
 
-        metadata['evaluator_config'] = self.evaluator.to_config()
         metadata_fname = self.__make_metadata_fname(path)
         tf.io.write_file(metadata_fname, json.dumps(metadata))
 
@@ -365,12 +425,6 @@ class Indexer():
                         match_algorithm=md['match_algorithm'],
                         stat_buffer_size=md['stat_buffer_size'])
 
-        # reload evaluator calibration if they exist
-        if md['evaluator_config']:
-            print("Loading evaluator calibration data")
-            index.evaluator = index.evaluator.from_config(
-                md['evaluator_config'])
-
         # reload the tables
         if verbose:
             print("Loading index data")
@@ -380,6 +434,16 @@ class Indexer():
         if verbose:
             print('Loading index matcher')
         index.matcher.load(path)
+
+        # reload calibration data if any
+
+        index.is_calibrated = md['is_calibrated']
+        if index.is_calibrated:
+            if verbose:
+                print("Loading calibration data")
+            index.calibration_metric = EvalMetric.from_config(md['calibration_metric_config'])  # noqa
+            index.cutpoints = md['cutpoints']
+            index.calibration_thresholds = md['calibration_thresholds']
         return index
 
     def size(self):
@@ -422,6 +486,8 @@ class Indexer():
             ['matching algorithm', self.match_algorithm],
             ['evaluator', self.evaluator_type],
             ['index size', self.size()]
+            ['calibrated', self.is_calibrated],
+            ['calibration_metric', self.calibration_metric]
         ]
         print(tabulate(rows))
         print('\n')

@@ -1,8 +1,11 @@
 from tensorflow.keras.callbacks import Callback
-from tensorflow_similarity.types import TensorLike
-from typing import List, DefaultDict
 from collections import defaultdict
 import tensorflow as tf
+
+from typing import List, DefaultDict, Dict, Union
+from tensorflow_similarity.types import TensorLike
+from tensorflow_similarity.evaluators import MemoryEvaluator
+from tensorflow_similarity.metrics import EvalMetric, make_metrics
 
 
 class EvalCallback(Callback):
@@ -13,6 +16,7 @@ class EvalCallback(Callback):
                  targets: TensorLike,
                  target_labels: List[int],
                  distance: str = 'cosine',
+                 metrics: List[Union[str, EvalMetric]] = ['accuracy', 'mean_rank'],  # noqa
                  tb_logdir: str = None,
                  k: int = 1):
         super().__init__()
@@ -22,6 +26,10 @@ class EvalCallback(Callback):
         self.targets_labels = target_labels
         self.distance = distance
         self.k = k
+        self.index_size = len(target_labels)
+        self.evaluator = MemoryEvaluator()
+        # typing requires this weird formulation
+        self.metrics: List[Union[str, EvalMetric]] = list(make_metrics(metrics))  # noqa
 
         if tb_logdir:
             tb_logdir = tb_logdir + '/match_rate/'
@@ -37,32 +45,22 @@ class EvalCallback(Callback):
         # rebuild the index
         self.model.index(self.targets, self.targets_labels, verbose=0)
 
-        # query the index and count the match
-        matches: DefaultDict[str, int] = defaultdict(int)
-        for qidx, query in enumerate(self.queries):
-            query_label = self.queries_labels[qidx]
-            nn = self.model.single_lookup(query, k=self.k)
-            matched = 0  # recall matches are cummulative
-            for n in nn:
-                if n['label'] == query_label:
-                    matched = 1
-                matches[n['rank']] += matched
+        embeddings = self.model.predict(self.queries)
 
-        # stats and write to the logs
-        self.match_rates = []  # we use an array for stable display
-        for idx in range(len(matches)):
-            rank = idx + 1
-            match_rate = matches[rank] / len(self.queries)
-            metric_name = "match_rate_@%s" % (rank)
-            logs[metric_name] = match_rate
-            self.match_rates.append([metric_name, match_rate])
+        lookups = []
+        for idx in range(len(embeddings)):
+            # FIXME batch lookup when ready
+            nn = self.single_lookup(embeddings[idx], k=1)
+            lookups.append(nn)
+        results = self.evaluator.evaluate(self.index_size, self.metrics,
+                                          self.queries_labels, lookups)
 
-        # for now just display till logs are fixed
-        metrics = ['%s:%0.4f' % (m[0], m[1]) for m in self.match_rates]
-        print(' - '.join(metrics))
+        # for now just display till tensorflow logs allows to write
+        mstr = ['%s:%0.4f' % (k, v) for k, v in results.items()]
+        print(' - '.join(mstr))
 
-        # Tensorboard
+        # Tensorboard if configured
         if self.tb_writer:
             with self.tb_writer.as_default():
-                for m in self.match_rates:
-                    tf.summary.scalar(m[0], m[1], step=epoch)
+                for k, v in results.items():
+                    tf.summary.scalar(k, v, step=epoch)

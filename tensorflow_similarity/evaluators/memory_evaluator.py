@@ -1,103 +1,166 @@
+import math
+from copy import copy
 from tabulate import tabulate
 from tqdm.auto import tqdm
 from .evaluator import Evaluator
 from collections import defaultdict
 import tensorflow as tf
+from typing import DefaultDict, List, Dict, Union
+from tensorflow_similarity.metrics import EvalMetric, make_metrics
 
 
 class MemoryEvaluator(Evaluator):
     "In memory evaluator system"
 
-    def __init__(self, targets={}, cutpoints={}, thresholds={}):
+    def evaluate(self,
+                 index_size: int,
+                 metrics: List[Union[str, EvalMetric]],
+                 targets_labels: List[int],
+                 lookups: List[List[Dict[str, Union[float, int]]]]
+                 ) -> Dict[str, Union[float, int]]:
 
-        self.targets = targets
-        self.cutpoints = cutpoints
-        self.thresholds = thresholds
+        # [nn[{'distance': xxx}, ]]
+        # normalize metrics
+        eval_metrics: List[EvalMetric] = make_metrics(metrics)
 
-    def is_calibrated(self):
-        return True if 'optimal' in self.cutpoints else False
+        # get max_k from first lookup result
+        max_k = len(lookups[0])
 
-    def calibrate(self, y, labels, distances, targets, verbose=1):
+        # ! don't add intermediate computation that don't speedup multiple
+        # ! metrics. Those goes into the metrics themselves.
+        # compute intermediate representations used by metrics
+        # rank 0 == no match / distance 0 == unknown
+        match_ranks = [0] * len(targets_labels)
+        match_distances = [0.0] * len(targets_labels)
+        for lidx, lookup in enumerate(lookups):
+            for nidx, n in enumerate(lookup):
+                rank = nidx + 1
+                if n['label'] == targets_labels[lidx]:
+                    match_ranks[lidx] = rank
+                    match_distances[lidx] = float(n['distance'])
 
-        # set new threshold targets
-        self.targets = targets
+        num_unmatched = match_ranks.count(0)
+        num_matched = len(targets_labels) - num_unmatched
 
-        # Compute PR metrics for all points while sorting distances
-        # we use y_preds, y_true to be able to reuse standardized functions
+        # compute metrics
+        evaluation = {}
+        for m in eval_metrics:
+            evaluation[m.name] = m.compute(
+                max_k,
+                targets_labels,
+                num_unmatched,
+                num_matched,
+                index_size,
+                match_ranks,
+                match_distances,
+                lookups,  # e.g used when k > 1 for confusion matrix
+            )
+
+        return evaluation
+
+    def calibrate(self,
+                  index_size: int,
+                  calibration_metric: EvalMetric,
+                  thresholds_targets: Dict[str, float],
+                  targets_labels: List[int],
+                  lookups: List[List[Dict[str, Union[float, int]]]],
+                  extra_metrics: List[Union[str, EvalMetric]] = [],
+                  rounding: int = 2,
+                  verbose: int = 1):
+
+        # copy threshold targets as we are going to delete them and don't want
+        # to alter users supplied data
+        thresholds_targets = copy(thresholds_targets)
+
+        # making a single list of metrics
+        combined_metrics = list(extra_metrics)  # covariance problem
+        combined_metrics.append(calibration_metric)
+
+        # Distance preparation
+        # flattening
+        distances = []
+        for l in lookups:
+            for n in l:
+                distances.append(n['distance'])
+
+        # sorting them
+        # !keep the casting to int() or it will be awefully slow
+        sorted_distances_idxs = [int(i) for i in list(tf.argsort(distances))]
+        sorted_distances_values = [distances[i] for i in sorted_distances_idxs]
         num_distances = len(distances)
-        sorted_distance_values = []
-        scores = defaultdict(list)
 
+        # evaluating performance as distance value increase
+        evaluations = []
         if verbose:
-            pb = tqdm(total=num_distances, desc='computing scores')
+            pb = tqdm(total=num_distances, desc='Evaluating')
 
-        # ! casting is needed for speed
-        positive_matches = 0
-        total_matches = 0
-        distance_idxs = [int(i) for i in list(tf.argsort(distances))]
-        for idx in distance_idxs:
-
-            if labels[idx] == y[idx]:
-                positive_matches += 1
-            total_matches += 1
-
-            # metrics
-            precision = positive_matches / total_matches
-            recall = total_matches / num_distances  # non-standard
-            f1_score = 2 * (precision * recall) / (precision + recall)
-
-            scores['precision'].append(precision)
-            scores['recall'].append(recall)
-            scores['f1_score'].append(f1_score)
-
-            # store sorted distance
-            sorted_distance_values.append(distances[idx])
-
+        for idx in sorted_distances_idxs:
+            evaluations.append(
+                self.evaluate(index_size, combined_metrics, targets_labels,
+                              lookups))
             if verbose:
                 pb.update()
 
         if verbose:
             pb.close()
 
-        # sfind the thresholds by going from left to right
-        # FIXME: make the number of thresholds user parametrizable?
-        rounding = 2
-        thresholds = defaultdict(list)
-        prev_precision = 100000
-        num_distances = len(sorted_distance_values)
+        # find the thresholds by going from right to left
 
+        # which direction metric improvement is?
+        if calibration_metric.direction == 'min':
+            # we want the lowest value at the largest distance possible
+            cmp = self._is_lower
+            prev_value = math.inf  # python 3.x only
+        else:
+            # we want the highest value at the largest distance possible
+            cmp = self._is_higher
+            prev_value = -math.inf
+
+        # we need a collection of list to apply vectorize operations and make
+        # the analysis / viz of the calibration data signifcantly easier
+        thresholds: DefaultDict[str, List[Union[int, float]]] = defaultdict(list)  # noqa
+        cutpoints: DefaultDict[str, Dict[str, Union[str, float, int]]] = defaultdict(dict)  # noqa
+        num_distances = len(sorted_distances_values)
         if verbose:
             pb = tqdm(total=num_distances, desc='computing thresholds')
 
+        # looping from right to left as we want the max distance for a given
+        # metric value
         for ridx in range(num_distances):
-            # Note: unsure if going left to right or right to left if better
-            # if going right to left, don't forget to reverse the thresholds
-            # idx = num_distances - ridx - 1  # reversed
-            idx = ridx  # not reversing
+            idx = num_distances - ridx - 1  # reversed
 
-            # used for threshold binning -- should be rounded
-            curr_precision = round(scores['precision'][idx], rounding)
+            # Rounding the calibration metric to create bins
+            curr_eval = evaluations[idx]
+            calibration_value = curr_eval[calibration_metric.name]
+            curr_value = round(calibration_value, rounding)
 
-            if curr_precision != prev_precision:
+            if cmp(curr_value, prev_value):
 
-                # used for threshold binning -- should be rounded
-                thresholds['precision'].append(curr_precision)
-                thresholds['recall'].append(
-                    round(scores['recall'][idx], rounding))
-
-                # don't round f1 or distance because we need the numerical
-                # precision for precise boundary computations
-                curr_distance = sorted_distance_values[idx]
+                # add a new distance threshold
+                thresholds['value'].append(curr_value)
+                curr_distance = sorted_distances_idxs[idx]
                 thresholds['distance'].append(curr_distance)
-                thresholds['f1_score'].append(scores['f1_score'][idx])
 
-                # update current precision threshold
-                prev_precision = curr_precision
+                # record the value for all the metrics requested by the user
+                for k, v in curr_eval.items():
+                    thresholds[k].append(v)
 
-                # test if the precision meet any our precision target
-                for target_name, target_value in self.targets.items():
-                    if curr_precision >= target_value:
-                        self.cutpoints[target_name] = curr_distance
+                # update current threshold value
+                prev_value = curr_value
+
+                # check if the current value meet or exceed threshold target
+                to_delete = []  # can't delete in an interation loop
+                for name, value in thresholds_targets.items():
+                    if cmp(curr_value, value) or curr_value == value:
+                        cutpoints[name] = {'name': name}  # useful for display
+                        for k in thresholds.keys():
+                            cutpoints[name][k] = thresholds[k][-1]
+                        to_delete.append(name)
+
+                # removing found targets to avoid finding lower value
+                # recall we go from right to left in the evaluation
+                for name in to_delete:
+                    del thresholds_targets[name]
 
             if verbose:
                 pb.update()
@@ -105,84 +168,25 @@ class MemoryEvaluator(Evaluator):
         if verbose:
             pb.close()
 
-        # record tresholds
-        self.thresholds = thresholds
-
         # find the optimal cutpoint
-        max_f1_idx = tf.math.argmax(thresholds['f1_score'])
-        self.cutpoints['optimal'] = float(thresholds['distance'][max_f1_idx])
+        if calibration_metric.direction == 'min':
+            best_idx = tf.math.argmin(thresholds[calibration_metric.name])
+        else:
+            best_idx = tf.math.argmax(thresholds[calibration_metric.name])
 
-        # reverse the threshold values so they go from left to right as user
-        # expect
-        # for v in thresholds.values():
-        #     v.reverse()
+        # record its value
+        cutpoints['optimal'] = {'name': 'optimal'}  # useful for display
+        for k in thresholds.keys():
+            cutpoints[name][k] = thresholds[k][best_idx]
 
-        # display result if asked
-        if verbose:
-            rows = [[k, v] for k, v in self.cutpoints.items()]
-            print(tabulate(rows, headers=['cutpoints', 'distance']))
+        # reverse the threshold so they go from left to right as user expect
+        for k in thresholds.keys():  # this syntax is need for mypy ...
+            thresholds[k].reverse()
 
-        # mark calibration as completed
-        self._is_calibrated = True
+        return thresholds, cutpoints
 
-        return self.to_config()
+    def _is_lower(self, a, b):
+        return a < b
 
-    def match(self, distances, labels, no_match_label=-1, verbose=1):
-        """Match distances against the various cutpoints thresholds
-
-        Note:
-        Args:
-            distances (list(float)): the distances to match againt the
-            cutpoints.
-
-            labels(list(int)): the associated labels with the distance.
-
-            no_match_label (int, optional): What label value to assign when
-            there is no match. Defaults to -1.
-
-            verbose (int): display progression. Default to 1.
-
-        Notes:
-            1. its up to the model code to decide which of the cutpoints to
-            use / show to the users. The evaluator returns all of them as there
-            are little performance downside and makes code clearer and simpler.
-
-            2. the function is responsible to return the list of class matched
-            to allows implementation to use additional criterias if they choose
-            to.
-
-        Returns:
-            dict: {cutpoint: list(bool)}
-        """
-        if verbose:
-            pb = tqdm(total=len(distances) * len(self.cutpoints),
-                      desc='matching embeddings')
-
-        matches = defaultdict(list)
-        for name, threshold in self.cutpoints.items():
-            for idx, distance in enumerate(distances):
-                if distance <= threshold:
-                    label = labels[idx]
-                else:
-                    label = no_match_label
-                matches[name].append(label)
-
-                if verbose:
-                    pb.update()
-
-        if verbose:
-            pb.close()
-
-        return matches
-
-    @staticmethod
-    def from_config(config):
-        return MemoryEvaluator(config['targets'], config['cutpoints'],
-                               config['thresholds'])
-
-    def to_config(self):
-        return {
-            "targets": self.targets,
-            "cutpoints": self.cutpoints,
-            "thresholds": self.thresholds,
-        }
+    def _is_higher(self, a, b):
+        return b > a
