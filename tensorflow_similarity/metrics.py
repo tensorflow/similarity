@@ -4,7 +4,6 @@ from typing import List, Dict, Union
 
 
 class EvalMetric():
-
     def __init__(self,
                  direction: str,
                  name: str,
@@ -43,18 +42,14 @@ class EvalMetric():
         return metric
 
     @abstractmethod
-    def compute(self,
-                max_k: int,
-                targets_labels: List[int],
-                num_matched: int,
-                num_unmatched: int,
-                index_size: int,
-                match_ranks: List[int],
-                match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]
-                ) -> Union[int, float]:
+    def compute(
+        self, max_k: int, targets_labels: List[int], num_matched: int,
+        num_unmatched: int, index_size: int, match_ranks: List[int],
+        match_distances: List[float],
+        lookups: List[List[Dict[str, Union[float,
+                                           int]]]]) -> Union[int, float]:
         pass
-        # match_ranks: rank 0 is unmatched, rank1 is first neighbopor, rank2 ...
+        # match_ranks: rank 0 is unmatched, rank1 is first neighbopor, rank2..
         # match_distance: distance 0 means infinite, rest is match distances
 
     def _suffix_name(self,
@@ -98,31 +93,46 @@ class EvalMetric():
         if not distance:
             distance = max(match_distances)
 
+        # print('max_rank', max_rank, 'max_distance', distance)
         for idx, r in enumerate(match_ranks):
-            if min_rank <= r <= max_rank and match_distances[idx] <= distance:
+            elt_distance = match_distances[idx]
+            if (min_rank <= r <= max_rank) and (elt_distance <= distance):
+                # print(distance, elt_distance)
                 filtered_ranks.append(r)
+            # else:
+            #    print('missed', idx, r, elt_distance)
         if not len(filtered_ranks):
             return [-1]
+
         return filtered_ranks
+
+    def compute_retrival_metrics(self, targets_labels, lookups, k):
+        true_positives = 0
+        false_positives = 0
+        false_negative = 0
+        for lidx, lookup in enumerate(lookups):
+            for n in lookup[:k]:
+                if n['distance'] > self.distance_threshold:
+                    if n['label'] == targets_labels[lidx]:
+                        false_negative += 1
+                else:
+                    if n['label'] == targets_labels[lidx]:
+                        true_positives += 1
+                    else:
+                        false_positives += 1
+        return true_positives, false_positives, false_negative
 
 
 class MeanRank(EvalMetric):
-
     def __init__(self, name='mean_rank') -> None:
         super().__init__(direction='min',
                          canonical_name='mean_rank',
                          name=name)
 
-    def compute(self,
-                max_k: int,
-                targets_labels: List[int],
-                num_matched: int,
-                num_unmatched: int,
-                index_size: int,
-                match_ranks: List[int],
+    def compute(self, max_k: int, targets_labels: List[int], num_matched: int,
+                num_unmatched: int, index_size: int, match_ranks: List[int],
                 match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]
-                ) -> float:
+                lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
 
         # remove unmatched elements (rank 0)
         matches = self.filter_ranks(match_ranks,
@@ -132,20 +142,13 @@ class MeanRank(EvalMetric):
 
 
 class MinRank(EvalMetric):
-
     def __init__(self, name='min_rank') -> None:
         super().__init__(direction='min', canonical_name='min_rank', name=name)
 
-    def compute(self,
-                max_k: int,
-                targets_labels: List[int],
-                num_matched: int,
-                num_unmatched: int,
-                index_size: int,
-                match_ranks: List[int],
+    def compute(self, max_k: int, targets_labels: List[int], num_matched: int,
+                num_unmatched: int, index_size: int, match_ranks: List[int],
                 match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]
-                ) -> int:
+                lookups: List[List[Dict[str, Union[float, int]]]]) -> int:
 
         # remove unmatched elements (rank 0)
         matches = self.filter_ranks(match_ranks,
@@ -155,20 +158,13 @@ class MinRank(EvalMetric):
 
 
 class MaxRank(EvalMetric):
-
     def __init__(self, name='max_rank') -> None:
         super().__init__(direction='min', canonical_name='max_rank', name=name)
 
-    def compute(self,
-                max_k: int,
-                targets_labels: List[int],
-                num_matched: int,
-                num_unmatched: int,
-                index_size: int,
-                match_ranks: List[int],
+    def compute(self, max_k: int, targets_labels: List[int], num_matched: int,
+                num_unmatched: int, index_size: int, match_ranks: List[int],
                 match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]
-                ) -> int:
+                lookups: List[List[Dict[str, Union[float, int]]]]) -> int:
 
         # remove unmatched elements (rank 0)
         matches = self.filter_ranks(match_ranks,
@@ -181,9 +177,8 @@ class Accuracy(EvalMetric):
     """How many correct matches are returned for the given paramters
     probably the most important metric. Accuracy can be at k=1 when
     """
-
     def __init__(self,
-                 distance_threshold: float = 0.5,
+                 distance_threshold: float = None,
                  k: int = 1,
                  name='accuracy') -> None:
         super().__init__(direction='max',
@@ -192,22 +187,16 @@ class Accuracy(EvalMetric):
                          k=k,
                          distance_threshold=distance_threshold)
 
-    def compute(self,
-                max_k: int,
-                targets_labels: List[int],
-                num_matched: int,
-                num_unmatched: int,
-                index_size: int,
-                match_ranks: List[int],
+    def compute(self, max_k: int, targets_labels: List[int], num_matched: int,
+                num_unmatched: int, index_size: int, match_ranks: List[int],
                 match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]
-                ) -> float:
-
+                lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
         matches = self.filter_ranks(match_ranks,
                                     match_distances,
                                     max_rank=self.k,
                                     distance=self.distance_threshold)
 
+        # FIMXE: wrong -- the denom needs to also be filtered
         return len(matches) / len(targets_labels)
 
 
@@ -223,7 +212,6 @@ class Precision(EvalMetric):
 
     Reference: TBD
     """
-
     def __init__(self,
                  distance_threshold: float = 0.5,
                  k: int = 1,
@@ -235,36 +223,26 @@ class Precision(EvalMetric):
                          k=k,
                          distance_threshold=distance_threshold)
 
-    def compute(self,
-                max_k: int,
-                targets_labels: List[int],
-                num_matched: int,
-                num_unmatched: int,
-                index_size: int,
-                match_ranks: List[int],
+    def compute(self, max_k: int, targets_labels: List[int], num_matched: int,
+                num_unmatched: int, index_size: int, match_ranks: List[int],
                 match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]
-                ) -> float:
+                lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
 
-        matches = self.filter_ranks(match_ranks,
-                                    match_distances,
-                                    max_rank=self.k,
-                                    distance=self.distance_threshold)
+        tp, fp, _ = self.compute_retrival_metrics(targets_labels, lookups,
+                                                   self.k)
 
-        true_positives = len(matches)
-        false_positives = num_matched - true_positives
-        denominator = true_positives + false_positives
+        denominator = tp + fp
         if denominator:
-            return true_positives / denominator
+            return tp / denominator
         else:
-            return 0.0
+            return 1.0
+
 
 class Recall(EvalMetric):
     """Computing matcher recall at k for a given distance threshold
 
     Recall formula: `true_positive / (true_positive + false_negative)`
     """
-
     def __init__(self,
                  distance_threshold: float = 0.5,
                  k: int = 1,
@@ -275,25 +253,18 @@ class Recall(EvalMetric):
                          k=k,
                          distance_threshold=distance_threshold)
 
-    def compute(self,
-                max_k: int,
-                targets_labels: List[int],
-                num_matched: int,
-                num_unmatched: int,
-                index_size: int,
-                match_ranks: List[int],
+    def compute(self, max_k: int, targets_labels: List[int], num_matched: int,
+                num_unmatched: int, index_size: int, match_ranks: List[int],
                 match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]
-                ) -> float:
+                lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
 
-        matches = self.filter_ranks(match_ranks,
-                                    match_distances,
-                                    max_rank=self.k,
-                                    distance=self.distance_threshold)
-
-        true_positives = len(matches)
-        # targets_labels = true positive + false negative
-        return true_positives / len(targets_labels)
+        tp, _, fn = self.compute_retrival_metrics(targets_labels, lookups,
+                                                  self.k)
+        denominator = tp + fn
+        if denominator:
+            return tp / denominator
+        else:
+            return 0.0
 
 
 class F1Score(EvalMetric):
@@ -306,7 +277,6 @@ class F1Score(EvalMetric):
     f1_score formula is: `2 * (precision * recall) / (precision + recall)`
 
     """
-
     def __init__(self,
                  distance_threshold: float = 0.5,
                  k: int = 1,
@@ -317,27 +287,16 @@ class F1Score(EvalMetric):
                          k=k,
                          distance_threshold=distance_threshold)
 
-    def compute(self,
-                max_k: int,
-                targets_labels: List[int],
-                num_matched: int,
-                num_unmatched: int,
-                index_size: int,
-                match_ranks: List[int],
+    def compute(self, max_k: int, targets_labels: List[int], num_matched: int,
+                num_unmatched: int, index_size: int, match_ranks: List[int],
                 match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]
-                ) -> float:
+                lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
 
-        matches = self.filter_ranks(match_ranks,
-                                    match_distances,
-                                    max_rank=self.k,
-                                    distance=self.distance_threshold)
+        tp, fp, fn = self.compute_retrival_metrics(targets_labels, lookups,
+                                                   self.k)
 
-        true_positives = len(matches)
-        false_positives = num_matched - true_positives
-
-        precision = true_positives / (true_positives + false_positives)
-        recall = true_positives / len(targets_labels)
+        precision = tp / (tp + fp) if tp + fp else 1.0
+        recall = tp / (tp + fn) if tp + fn else 0.0
 
         return 2 * (precision * recall) / (precision + recall)
 

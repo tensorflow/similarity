@@ -267,6 +267,10 @@ class SimilarityModel(functional.Functional):
         "Reinitialize the index"
         self._index.reset()
 
+    def index_size(self) -> int:
+        "Return the index size"
+        return self._index.size()
+
     def init_index(self,
                    distance,
                    table='memory',

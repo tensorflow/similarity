@@ -8,6 +8,7 @@ from tabulate import tabulate
 from pathlib import Path
 import tensorflow as tf
 from tqdm.auto import tqdm
+from copy import copy
 
 # types
 from typing import Dict, List, Union, DefaultDict, Deque, Any
@@ -176,17 +177,16 @@ class Indexer():
         """
         start = time()
         idxs, distances = self.matcher.lookup(embedding, k=k)
-        embeddings, labels, data = self.table.batch_get(idxs)
+        nn_embeddings, labels, data = self.table.batch_get(idxs)
 
         lookup_time = time() - start
         self._lookup_timings_buffer.append(lookup_time)
         self._stats['num_lookups'] += 1
-
         results = []
-        for i in range(len(embeddings)):
+        for i in range(len(nn_embeddings)):
             results.append({
                 "rank": i + 1,
-                "embedding": embeddings[i],
+                "embedding": nn_embeddings[i],
                 "distance": distances[i],
                 "label": labels[i],
                 "data": data[i]
@@ -296,18 +296,24 @@ class Indexer():
             targets_labels=y,
             lookups=lookups,
             extra_metrics=extra_eval_metrics,
-            rounding=rounding,
+            metric_rounding=rounding,
             verbose=verbose
         )
 
         # display cutpoint results if requested
         if verbose:
             headers = ['name', 'value', 'distance']  # noqa
-            for k in cutpoints.keys():
-                if k not in headers:
-                    headers.append(str(k))
+
+            # dynamicaly find which metrics we need
+            for data in cutpoints.values():
+                for k in data.keys():
+                    if k not in headers:
+                        headers.append(str(k))
+                break
+            print(cutpoints)
             rows = []
             for data in cutpoints.values():
+                print(data)
                 rows.append([data[v] for v in headers])
             print(tabulate(rows, headers=headers))
 

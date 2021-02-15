@@ -1,6 +1,5 @@
 import math
 from copy import copy
-from tabulate import tabulate
 from tqdm.auto import tqdm
 from .evaluator import Evaluator
 from collections import defaultdict
@@ -16,7 +15,8 @@ class MemoryEvaluator(Evaluator):
                  index_size: int,
                  metrics: List[Union[str, EvalMetric]],
                  targets_labels: List[int],
-                 lookups: List[List[Dict[str, Union[float, int]]]]
+                 lookups: List[List[Dict[str, Union[float, int]]]],
+                 distance_rounding: float = 8
                  ) -> Dict[str, Union[float, int]]:
 
         # [nn[{'distance': xxx}, ]]
@@ -30,17 +30,20 @@ class MemoryEvaluator(Evaluator):
         # ! metrics. Those goes into the metrics themselves.
         # compute intermediate representations used by metrics
         # rank 0 == no match / distance 0 == unknown
+        num_matched = 0
         match_ranks = [0] * len(targets_labels)
         match_distances = [0.0] * len(targets_labels)
         for lidx, lookup in enumerate(lookups):
+            true_label = targets_labels[lidx]
             for nidx, n in enumerate(lookup):
                 rank = nidx + 1
-                if n['label'] == targets_labels[lidx]:
+                if n['label'] == true_label:
+                    # print(n['label'], true_label, lookup)
                     match_ranks[lidx] = rank
-                    match_distances[lidx] = float(n['distance'])
-
-        num_unmatched = match_ranks.count(0)
-        num_matched = len(targets_labels) - num_unmatched
+                    match_distances[lidx] = round(n['distance'],
+                                                  distance_rounding)
+                    num_matched += 1
+        num_unmatched = len(targets_labels) - num_matched
 
         # compute metrics
         evaluation = {}
@@ -48,8 +51,8 @@ class MemoryEvaluator(Evaluator):
             evaluation[m.name] = m.compute(
                 max_k,
                 targets_labels,
-                num_unmatched,
                 num_matched,
+                num_unmatched,
                 index_size,
                 match_ranks,
                 match_distances,
@@ -65,9 +68,11 @@ class MemoryEvaluator(Evaluator):
                   targets_labels: List[int],
                   lookups: List[List[Dict[str, Union[float, int]]]],
                   extra_metrics: List[Union[str, EvalMetric]] = [],
-                  rounding: int = 2,
+                  distance_rounding: int = 8,
+                  metric_rounding: int = 6,
                   verbose: int = 1):
 
+        # distance are rounded because of numerical instablity
         # copy threshold targets as we are going to delete them and don't want
         # to alter users supplied data
         thresholds_targets = copy(thresholds_targets)
@@ -81,7 +86,7 @@ class MemoryEvaluator(Evaluator):
         distances = []
         for l in lookups:
             for n in l:
-                distances.append(n['distance'])
+                distances.append(round(n['distance'], distance_rounding))
 
         # sorting them
         # !keep the casting to int() or it will be awefully slow
@@ -94,10 +99,15 @@ class MemoryEvaluator(Evaluator):
         if verbose:
             pb = tqdm(total=num_distances, desc='Evaluating')
 
-        for idx in sorted_distances_idxs:
-            evaluations.append(
-                self.evaluate(index_size, combined_metrics, targets_labels,
-                              lookups))
+        for dist in sorted_distances_values:
+            # update distance theshold for metrics
+            for m in combined_metrics:
+                m.distance_threshold = dist
+
+            res = self.evaluate(index_size, combined_metrics, targets_labels,
+                                lookups, distance_rounding)
+            res['distance'] = dist
+            evaluations.append(res)
             if verbose:
                 pb.update()
 
@@ -107,14 +117,15 @@ class MemoryEvaluator(Evaluator):
         # find the thresholds by going from right to left
 
         # which direction metric improvement is?
-        if calibration_metric.direction == 'min':
+        #! loop is right to left so max is decreasing and min is increasing
+        if calibration_metric.direction == 'max':
             # we want the lowest value at the largest distance possible
             cmp = self._is_lower
             prev_value = math.inf  # python 3.x only
         else:
             # we want the highest value at the largest distance possible
             cmp = self._is_higher
-            prev_value = -math.inf
+            prev_value = 0
 
         # we need a collection of list to apply vectorize operations and make
         # the analysis / viz of the calibration data signifcantly easier
@@ -132,15 +143,17 @@ class MemoryEvaluator(Evaluator):
             # Rounding the calibration metric to create bins
             curr_eval = evaluations[idx]
             calibration_value = curr_eval[calibration_metric.name]
-            curr_value = round(calibration_value, rounding)
+            curr_value = round(calibration_value, metric_rounding)
+
+            # ? if bug use this line check that the values evolve correclty.
+            # print(curr_value, prev_value, cmp(curr_value, prev_value))
 
             if cmp(curr_value, prev_value):
 
                 # add a new distance threshold
                 thresholds['value'].append(curr_value)
-                curr_distance = sorted_distances_idxs[idx]
-                thresholds['distance'].append(curr_distance)
 
+                # ! the correct distance is already in the eval data
                 # record the value for all the metrics requested by the user
                 for k, v in curr_eval.items():
                     thresholds[k].append(v)
@@ -151,7 +164,7 @@ class MemoryEvaluator(Evaluator):
                 # check if the current value meet or exceed threshold target
                 to_delete = []  # can't delete in an interation loop
                 for name, value in thresholds_targets.items():
-                    if cmp(curr_value, value) or curr_value == value:
+                    if cmp(curr_value, value, equal=True):
                         cutpoints[name] = {'name': name}  # useful for display
                         for k in thresholds.keys():
                             cutpoints[name][k] = thresholds[k][-1]
@@ -177,7 +190,7 @@ class MemoryEvaluator(Evaluator):
         # record its value
         cutpoints['optimal'] = {'name': 'optimal'}  # useful for display
         for k in thresholds.keys():
-            cutpoints[name][k] = thresholds[k][best_idx]
+            cutpoints['optimal'][k] = thresholds[k][best_idx]
 
         # reverse the threshold so they go from left to right as user expect
         for k in thresholds.keys():  # this syntax is need for mypy ...
@@ -185,8 +198,12 @@ class MemoryEvaluator(Evaluator):
 
         return thresholds, cutpoints
 
-    def _is_lower(self, a, b):
-        return a < b
+    def _is_lower(self, curr, prev, equal=False):
+        if equal:
+            return curr <= prev
+        return curr < prev
 
-    def _is_higher(self, a, b):
-        return b > a
+    def _is_higher(self, curr, prev, equal=False):
+        if equal:
+            return curr >= prev
+        return curr > prev

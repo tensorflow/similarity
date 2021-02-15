@@ -1,7 +1,57 @@
 import tensorflow as tf
 from tensorflow_similarity.evaluators import MemoryEvaluator
+import random
 from tensorflow_similarity.model import THRESHOLDS_TARGETS
 from tensorflow_similarity.metrics import MinRank, MaxRank
+
+
+def generate_lookups(num_classes, examples_per_class=10, match_rate=0.7):
+    target_labels = []
+    lookups = []
+    num_match = 0
+    total = 0
+    for class_id in range(num_classes):
+        target_labels.extend([class_id for _ in range(examples_per_class)])
+
+        for _ in range(examples_per_class):
+            # draw labels at random
+            v = random.uniform(0, 1)
+            if v < match_rate:
+                label = class_id
+                num_match += 1
+
+            else:
+                label = random.randint(0, num_classes)
+                # case where random pick the same class ^^
+                if label == class_id:
+                    label += 1
+                    label %= num_classes
+
+            e = {
+                    'distance': round(random.uniform(0.0, 1.0), 3),
+                    'label': label,
+                    'label_true': class_id  # added for debug, code don't use that
+                }
+            lookups.append([e])
+            total += 1
+
+    effective_match_rate = num_match / total
+    return target_labels, lookups, effective_match_rate
+
+def test_evaluate_2():
+    NUM_CLASSES = 2
+    EXAMPLES_PER_CLASS = 4
+    MATCH_RATE = 0.7
+
+    index_size = NUM_CLASSES * EXAMPLES_PER_CLASS
+    metrics = ['accuracy']  # , 'accuracy', 'mean_rank']
+    target_labels, lookups, effective_match_rate = generate_lookups(NUM_CLASSES, EXAMPLES_PER_CLASS, MATCH_RATE)
+    # print(target_labels)
+    # print(lookups)
+
+    evaluator = MemoryEvaluator()
+    res = evaluator.evaluate(index_size, metrics, target_labels, lookups)
+    assert res['accuracy'] == effective_match_rate
 
 
 def test_evaluate():
@@ -44,6 +94,13 @@ def test_evaluate():
         print(res)
         for m, v in expected[idx].items():
             assert res[m] == v
+
+
+def test_comparators():
+    # created a regression
+    ev = MemoryEvaluator()
+    assert ev._is_higher(1,  0)
+    assert ev._is_lower(0, 1)
 
 # def test_config():
 
