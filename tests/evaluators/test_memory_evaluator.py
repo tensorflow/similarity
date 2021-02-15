@@ -1,21 +1,36 @@
 import tensorflow as tf
 from tensorflow_similarity.evaluators import MemoryEvaluator
-from tensorflow_similarity.model import CALIBRATION_ACCURACY_TARGETS
+from tensorflow_similarity.model import THRESHOLDS_TARGETS
 from tensorflow_similarity.metrics import MinRank, MaxRank
 
 
 def test_evaluate():
     TEST_VECTORS = [
         [
+            30,  # index size
+            [MinRank(), MaxRank()],  # metrics
             [1, 2, 3, 4, 5, 6, 7],  # targets_labels
-            [
-                [21, 2, 23, 4, 25, 6, 27],
-                [1,  22, 3, 24, 5, 26, 7]  # match_ranks
-            ],
-            [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],  # match_distances
-            30  # index size
+            [  # lookups
+                [
+                    {'label': 21, 'distance': 0.01},
+                    {'label': 1, 'distance': 0.1}
+                ],
+                [
+                    {'label': 2, 'distance': 0.2},
+                    {'label': 22, 'distance': 0.22}
+                ],
+                [
+                 {'label': 23, 'distance': 0.01},
+                 {'label': 3, 'distance': 0.3}
+                ],
+                [
+                 {'label': 4, 'distance': 0.4},
+                 {'label': 24, 'distance': 0.44}
+                ]
+            ]
         ]
     ]
+
     expected = [
         {
             "max_rank": 2,
@@ -23,7 +38,7 @@ def test_evaluate():
         }
     ]
 
-    ev = MemoryEvaluator(metrics=[MinRank(), MaxRank()])
+    ev = MemoryEvaluator()
     for idx, v in enumerate(TEST_VECTORS):
         res = ev.evaluate(v[0], v[1], v[2], v[3])
         print(res)

@@ -72,6 +72,19 @@ def test_max_rank():
         assert res == expected[idx]
 
 
+def test_f1_score():
+    expected = [3]
+    m = F1Score()
+
+    # check name
+    assert m.name == 'f1_score'
+
+    # check computation
+    for idx, v in enumerate(TEST_VECTORS):
+        res = compute_vector(m, v)
+        # FIXME compute the real value and check for it
+        # assert res == expected[idx]
+
 
 # lower level functions
 def test_filter_rank_k():

@@ -253,8 +253,11 @@ class Precision(EvalMetric):
 
         true_positives = len(matches)
         false_positives = num_matched - true_positives
-        return true_positives / (true_positives + false_positives)
-
+        denominator = true_positives + false_positives
+        if denominator:
+            return true_positives / denominator
+        else:
+            return 0.0
 
 class Recall(EvalMetric):
     """Computing matcher recall at k for a given distance threshold
