@@ -2,10 +2,12 @@ from collections import defaultdict
 from tqdm.auto import tqdm
 from tabulate import tabulate
 from pathlib import Path
+from copy import copy
 import tensorflow as tf
 from tensorflow.python.keras.engine import functional
 from tensorflow_similarity.indexer import Indexer
 from tensorflow_similarity.metrics import EvalMetric, make_metric
+
 
 from typing import List, Dict, Union
 from .types import FloatTensorLike, PandasDataFrame
@@ -183,7 +185,7 @@ class SimilarityModel(functional.Functional):
 
         """
         # basic checks
-        if not self._index.is_calibrated():
+        if not self._index.is_calibrated:
             raise ValueError('Uncalibrated model: run model.calibration()')
 
         # get embeddings
@@ -224,7 +226,7 @@ class SimilarityModel(functional.Functional):
         # There is some code duplication in this function but that is the best
         # solution to keep the end-user API clean and doing inferences once.
 
-        if not self._index.is_calibrated():
+        if not self._index.is_calibrated:
             raise ValueError('Uncalibrated model: run model.calibration()')
 
         # get embeddings
@@ -233,32 +235,37 @@ class SimilarityModel(functional.Functional):
         embeddings = self.predict(x)
 
         results = defaultdict(dict)
-        cp_metric_name = self.index.calibration_metric.name
+        cal_metric = self._index.get_calibration_metric()
 
         if verbose:
-            pb = tqdm(total=len(self.index.cutpoints),
+            pb = tqdm(total=len(self._index.cutpoints),
                       desc='Evaluating cutpoints')
 
-        for cp_name, cp_value in self.index.cutpoints.items():
+        for cp_name, cp_data in self._index.cutpoints.items():
             # create a metric that match at the requested k and threshold
-            metric = make_metric(cp_metric_name)
+            metric = make_metric(cal_metric.name)
             metric.k = k
-            metric.distance_threshold = cp_value
-            metrics = [metric] + extra_metrics
-            results[cp_name] = self.index.evaluate(embeddings, y, metrics, k)
+            metric.distance_threshold = cp_data['distance']
+            metrics = copy(extra_metrics)
+            metrics.append(metric)
+            res = self._index.evaluate(embeddings, y, metrics, k)
+            res['distance'] = cp_data['distance']
+            res['name'] = cp_name
+            results[cp_name] = res
             if verbose:
                 pb.update()
         if verbose:
             pb.close()
 
         if verbose:
-            headers = ['cp', cp_metric_name]  # noqa
+            headers = ['name', cal_metric.name]
             for k in results['optimal'].keys():
                 if k not in headers:
                     headers.append(str(k))
             rows = []
             for data in results.values():
                 rows.append([data[v] for v in headers])
+            print('\n [Summary]\n')
             print(tabulate(rows, headers=headers))
 
         return results

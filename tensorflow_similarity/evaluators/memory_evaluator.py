@@ -81,12 +81,16 @@ class MemoryEvaluator(Evaluator):
         combined_metrics = list(extra_metrics)  # covariance problem
         combined_metrics.append(calibration_metric)
 
-        # Distance preparation
-        # flattening
+
+        # data preparation: flatten and casting
+        # ! casting is needed as ops on TF.tensor are super slow
         distances = []
         for l in lookups:
             for n in l:
                 distances.append(round(n['distance'], distance_rounding))
+                n['label'] = int(n['label'])  # don't remove
+
+        targets_labels = [int(i) for i in targets_labels]
 
         # sorting them
         # !keep the casting to int() or it will be awefully slow
@@ -106,7 +110,7 @@ class MemoryEvaluator(Evaluator):
 
             res = self.evaluate(index_size, combined_metrics, targets_labels,
                                 lookups, distance_rounding)
-            res['distance'] = dist
+            res['distance'] = float(dist)  #! cast needed for serialization
             evaluations.append(res)
             if verbose:
                 pb.update()
@@ -117,7 +121,7 @@ class MemoryEvaluator(Evaluator):
         # find the thresholds by going from right to left
 
         # which direction metric improvement is?
-        #! loop is right to left so max is decreasing and min is increasing
+        # !loop is right to left so max is decreasing and min is increasing
         if calibration_metric.direction == 'max':
             # we want the lowest value at the largest distance possible
             cmp = self._is_lower

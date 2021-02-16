@@ -13,12 +13,12 @@ def test_calibration():
 
     index = Indexer()
     index.batch_add(data['embeddings_idx'][:SIZE], labels=data['y_idx'][:SIZE])
-    cutpoints, thresholds = index.calibrate(data['embeddings_cal'][:SIZE], data['y_cal'][:SIZE], thresholds_targets, verbose=1)
+    calibration = index.calibrate(data['embeddings_cal'][:SIZE], data['y_cal'][:SIZE], thresholds_targets, verbose=1)
     # assert 'vl' in cutpoints
-    assert 'optimal' in cutpoints
-    assert '0.5' in cutpoints
-    assert len(thresholds['distance']) == len(thresholds['value'])
-
+    assert 'optimal' in calibration['cutpoints']
+    assert '0.5' in calibration['cutpoints']
+    assert len(calibration['thresholds']['distance']) == len(calibration['thresholds']['value'])
+    assert index.is_calibrated
 
 def test_indexer_basic_flow():
 

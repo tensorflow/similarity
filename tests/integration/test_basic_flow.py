@@ -35,8 +35,8 @@ def test_basic_flow(tmp_path):
     NUM_CLASSES = 8
     REPS = 4
     EXAMPLES_PER_CLASS = 64
-    CLASS_PER_BATCH = 4
-    BATCH_PER_EPOCH = 1000
+    CLASS_PER_BATCH = 8
+    BATCH_PER_EPOCH = 500
     BATCH_SIZE = 16
     K = 5
     NUM_MATCHES = 3
@@ -73,10 +73,11 @@ def test_basic_flow(tmp_path):
     metrics = [dist_gap(distance), min_neg(distance), max_pos(distance)]
     model.compile(optimizer='adam', metrics=metrics, loss=triplet_loss)
 
-
+    # train
     history = model.fit(sampler,
                         batch_size=BATCH_SIZE,
                         epochs=1)
+
     # check that history is properly filled
     assert 'loss' in history.history
     assert 'dist_gap' in history.history
@@ -100,25 +101,25 @@ def test_basic_flow(tmp_path):
 
     # calibration
     calibration = model.calibrate(x, y, verbose=0)
-    # assert 'thresholds' in calibration
+    assert 'thresholds' in calibration
 
     # # evaluation
-    # metrics = model.evaluate_index(x, y)
-    # assert 'optimal' in metrics
-    # assert 0 <= metrics['optimal']['precision'] <= 1
-    # assert 0 <= metrics['optimal']['recall'] <= 1
-    # assert 0 <= metrics['optimal']['f1_score'] <= 1
+    metrics = model.evaluate_matching(x, y)
+    assert 'optimal' in metrics
+    assert 0 <= metrics['optimal']['precision'] <= 1
+    assert 0 <= metrics['optimal']['recall'] <= 1
+    assert 0 <= metrics['optimal']['f1_score'] <= 1
 
-    # # matchings
-    # matches = model.match(x[:NUM_MATCHES], cutpoint='optimal')
-    # assert len(matches) == NUM_MATCHES
+    # matchings
+    matches = model.match(x[:NUM_MATCHES], cutpoint='optimal')
+    assert len(matches) == NUM_MATCHES
 
     # # index summary
-    # model.index_summary()
+    model.index_summary()
 
     # # model save
-    # model.save(tmp_path)
+    model.save(tmp_path)
 
     # # model load
-    # mdl2 = load_model(tmp_path)
-    # mdl2.load_index(tmp_path)
+    mdl2 = load_model(tmp_path)
+    mdl2.load_index(tmp_path)

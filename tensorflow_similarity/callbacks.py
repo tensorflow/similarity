@@ -45,12 +45,10 @@ class EvalCallback(Callback):
         # rebuild the index
         self.model.index(self.targets, self.targets_labels, verbose=0)
 
-        embeddings = self.model.predict(self.queries)
-
         lookups = []
-        for idx in range(len(embeddings)):
+        for idx in range(len(self.queries_labels)):
             # FIXME batch lookup when ready
-            nn = self.model.single_lookup(embeddings[idx], k=1)
+            nn = self.model.single_lookup(self.queries[idx], k=1)
             lookups.append(nn)
         results = self.evaluator.evaluate(self.index_size, self.metrics,
                                           self.queries_labels, lookups)

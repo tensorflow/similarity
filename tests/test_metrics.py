@@ -10,23 +10,45 @@ MATCH_RANKS = 5
 MATCH_DISTANCES = 6
 MATCH_LABELS = 7
 
-TEST_VECTORS = [
-    [
-        3,  # max_k
-        [1, 2, 3, 4, 5, 6, 7],  # targets_labels
-        3,  # num_matched
-        4,  # num_unmatched
-        30,  # index size
-        [3, 2, 1, 0, 0, 0, 0],  # match_ranks
-        [0.4, 0.5, 0.6, 0, 0, 0, 0],  # match_distances
-        [   # match_labels
-            # using 2x as the failed set of matchs
-            [21, 22, 3, 24, 25, 26, 27],
-            [21, 2, 22, 24, 25, 26, 27],
-            [1, 22, 23, 24, 25, 26, 27]
-        ]
+TEST_VECTORS = [[
+    3,  # max_k
+    [1, 2, 3, 4],  # targets_labels
+    3,  # num_matched
+    1,  # num_unmatched
+    30,  # index size
+    [2, 1, 2, 0],  # match_ranks
+    [0.1, 0.2, 0.3, 0],  # match_distances
+    [  # lookups
+        [{
+            'label': 21,
+            'distance': 0.01
+        }, {
+            'label': 1,
+            'distance': 0.1
+        }],
+        [{
+            'label': 2,
+            'distance': 0.2
+        }, {
+            'label': 22,
+            'distance': 0.22
+        }],
+        [{
+            'label': 23,
+            'distance': 0.01
+        }, {
+            'label': 3,
+            'distance': 0.3
+        }],
+        [{
+            'label': 24,
+            'distance': 0.44
+        }, {
+            'label': 44,
+            'distance': 0.54
+        }]
     ]
-]
+]]
 
 
 def compute_vector(m, v):
@@ -34,7 +56,7 @@ def compute_vector(m, v):
 
 
 def test_mean_rank():
-    expected = [2]
+    expected = [1]
     m = MeanRank()
 
     # check name
@@ -60,7 +82,7 @@ def test_min_rank():
 
 
 def test_max_rank():
-    expected = [3]
+    expected = [2]
     m = MaxRank()
 
     # check name

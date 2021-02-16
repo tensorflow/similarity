@@ -310,18 +310,19 @@ class Indexer():
                     if k not in headers:
                         headers.append(str(k))
                 break
-            print(cutpoints)
+
+            # print(cutpoints)
             rows = []
             for data in cutpoints.values():
-                print(data)
                 rows.append([data[v] for v in headers])
             print(tabulate(rows, headers=headers))
 
         # store info for serialization purpose
-        self.calibration_metric = calibration_metric.get_config()
+        self.is_calibrated = True
+        self.calibration_metric = calibration_metric
         self.cutpoints = cutpoints
         self.calibration_thresholds = thresholds
-        return cutpoints, thresholds
+        return {"cutpoints": cutpoints, "thresholds": thresholds}
 
     def match(self,
               embeddings: List[FloatTensorLike],
@@ -452,6 +453,9 @@ class Indexer():
             index.calibration_thresholds = md['calibration_thresholds']
         return index
 
+    def get_calibration_metric(self):
+        return self.calibration_metric
+
     def size(self):
         "Return the index size"
         return self.table.size()
@@ -491,7 +495,7 @@ class Indexer():
             ['index table', self.table_type],
             ['matching algorithm', self.match_algorithm],
             ['evaluator', self.evaluator_type],
-            ['index size', self.size()]
+            ['index size', self.size()],
             ['calibrated', self.is_calibrated],
             ['calibration_metric', self.calibration_metric]
         ]

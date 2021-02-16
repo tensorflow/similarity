@@ -26,15 +26,15 @@ class EvalMetric():
 
     def get_config(self):
         return {
-            "name": self.name,
-            "canonical_name": self.canonical_name,
-            "direction": self.direction,
-            "k": self.k,
-            "distance_threshold": self.distance_threshold
+            "name": str(self.name),
+            "canonical_name": str(self.canonical_name),
+            "direction": str(self.direction),
+            "k": int(self.k),
+            "distance_threshold": float(self.distance_threshold)
         }
 
     @staticmethod
-    def from_config(self, config):
+    def from_config(config):
         metric = make_metric(config['canonical_name'])
         metric.name = config['name']
         metric.k = config['k']
@@ -43,11 +43,15 @@ class EvalMetric():
 
     @abstractmethod
     def compute(
-        self, max_k: int, targets_labels: List[int], num_matched: int,
-        num_unmatched: int, index_size: int, match_ranks: List[int],
+        self,
+        max_k: int,
+        targets_labels: List[int],
+        num_matched: int,
+        num_unmatched: int,
+        index_size: int,
+        match_ranks: List[int],
         match_distances: List[float],
-        lookups: List[List[Dict[str, Union[float,
-                                           int]]]]) -> Union[int, float]:
+        lookups: List[List[Dict[str, Union[float, int]]]]) -> Union[int, float]:
         pass
         # match_ranks: rank 0 is unmatched, rank1 is first neighbopor, rank2..
         # match_distance: distance 0 means infinite, rest is match distances
