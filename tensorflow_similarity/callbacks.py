@@ -35,7 +35,7 @@ class EvalCallback(Callback):
 
         if tb_logdir:
 
-            tb_logdir = str(Path(tb_logdir) / '/match_rate/')
+            tb_logdir = str(Path(tb_logdir) / 'match_rate/')
             self.tb_writer = tf.summary.create_file_writer(tb_logdir)
             print('TensorBoard logging enable in %s' % tb_logdir)
         else:
