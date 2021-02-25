@@ -161,19 +161,17 @@ class Indexer():
 
         self.matcher.batch_add(embeddings, idxs, build=build, verbose=verbose)
 
-    def single_lookup(self, embedding, k=5):
+    def single_lookup(self,
+                      embedding,
+                      k=5):
         """Find the k closest match of a given embedding
 
         Args:
             embedding ([type]): [description]
             k (int, optional): [description]. Defaults to 5.
-            as_dict(bool): return data as a dictionary. If False return as
-            list(lists). Default to True.
         Returns
-            if as_dict:
-                list(dicts): [{"embedding", "distance", "label", "data"}]
-            else:
-                list(lists): rank, embeddings, distances, labels, data
+            list(dicts): [{"embedding", "distance", "label", "data"}]
+
         """
         start = time()
         idxs, distances = self.matcher.lookup(embedding, k=k)
@@ -286,8 +284,7 @@ class Indexer():
         # making sure our metrics are all EvalMetric object
         calibration_metric = make_metric(calibration_metric)
         # This aweful syntax is due to mypy not understanding subtype :(
-        extra_eval_metrics: List[Union[str, EvalMetric]] = list(make_metrics(extra_metrics))  # noqa
-
+        extra_eval_metrics: List[Union[str, EvalMetric]] = [make_metric(m) for m in extra_metrics]  # noqa
         # running calibration
         thresholds, cutpoints = self.evaluator.calibrate(
             self.size(),
@@ -456,7 +453,7 @@ class Indexer():
     def get_calibration_metric(self):
         return self.calibration_metric
 
-    def size(self):
+    def size(self) -> int:
         "Return the index size"
         return self.table.size()
 

@@ -1,9 +1,10 @@
 from abc import abstractmethod
 import tensorflow as tf
-from typing import List, Dict, Union
+from abc import ABC
+from typing import List, Dict, Union, Tuple
 
 
-class EvalMetric():
+class EvalMetric(ABC):
     def __init__(self,
                  direction: str,
                  name: str,
@@ -110,7 +111,10 @@ class EvalMetric():
 
         return filtered_ranks
 
-    def compute_retrival_metrics(self, targets_labels, lookups, k):
+    def compute_retrival_metrics(self,
+                                 targets_labels,
+                                 lookups,
+                                 k) -> Tuple[int, int, int]:
         true_positives = 0
         false_positives = 0
         false_negative = 0

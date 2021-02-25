@@ -1,11 +1,13 @@
+from importlib import import_module
 from tensorflow.keras.callbacks import Callback
 from collections import defaultdict
 import tensorflow as tf
+from pathlib import Path
 
 from typing import List, DefaultDict, Dict, Union
 from tensorflow_similarity.types import TensorLike
 from tensorflow_similarity.evaluators import MemoryEvaluator
-from tensorflow_similarity.metrics import EvalMetric, make_metrics
+from tensorflow_similarity.metrics import EvalMetric, make_metric
 
 
 class EvalCallback(Callback):
@@ -28,11 +30,12 @@ class EvalCallback(Callback):
         self.k = k
         self.index_size = len(target_labels)
         self.evaluator = MemoryEvaluator()
-        # typing requires this weird formulation
-        self.metrics: List[Union[str, EvalMetric]] = list(make_metrics(metrics))  # noqa
+        # typing requires this weird formulation of creating a new list
+        self.metrics: List[Union[str, EvalMetric]] = [make_metric(m) for m in metrics] # noqa
 
         if tb_logdir:
-            tb_logdir = tb_logdir + '/match_rate/'
+
+            tb_logdir = str(Path(tb_logdir) / '/match_rate/')
             self.tb_writer = tf.summary.create_file_writer(tb_logdir)
             print('TensorBoard logging enable in %s' % tb_logdir)
         else:

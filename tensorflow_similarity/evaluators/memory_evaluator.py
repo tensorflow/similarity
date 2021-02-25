@@ -5,7 +5,7 @@ from .evaluator import Evaluator
 from collections import defaultdict
 import tensorflow as tf
 from typing import DefaultDict, List, Dict, Union
-from tensorflow_similarity.metrics import EvalMetric, make_metrics
+from tensorflow_similarity.metrics import EvalMetric, make_metric
 
 
 class MemoryEvaluator(Evaluator):
@@ -16,12 +16,12 @@ class MemoryEvaluator(Evaluator):
                  metrics: List[Union[str, EvalMetric]],
                  targets_labels: List[int],
                  lookups: List[List[Dict[str, Union[float, int]]]],
-                 distance_rounding: float = 8
+                 distance_rounding: int = 8
                  ) -> Dict[str, Union[float, int]]:
 
         # [nn[{'distance': xxx}, ]]
         # normalize metrics
-        eval_metrics: List[EvalMetric] = make_metrics(metrics)
+        eval_metrics: List[EvalMetric] = [make_metric(m) for m in metrics]
 
         # get max_k from first lookup result
         max_k = len(lookups[0])
@@ -78,9 +78,9 @@ class MemoryEvaluator(Evaluator):
         thresholds_targets = copy(thresholds_targets)
 
         # making a single list of metrics
-        combined_metrics = list(extra_metrics)  # covariance problem
+        # Need expl covariance problem
+        combined_metrics = list(extra_metrics)
         combined_metrics.append(calibration_metric)
-
 
         # data preparation: flatten and casting
         # ! casting is needed as ops on TF.tensor are super slow
@@ -110,7 +110,7 @@ class MemoryEvaluator(Evaluator):
 
             res = self.evaluate(index_size, combined_metrics, targets_labels,
                                 lookups, distance_rounding)
-            res['distance'] = float(dist)  #! cast needed for serialization
+            res['distance'] = float(dist)  # ! cast needed for serialization
             evaluations.append(res)
             if verbose:
                 pb.update()
