@@ -2,21 +2,32 @@
 
 ## 0.8.x - Evaluation and vizualization
 
-This release focus on implementing features and improvement
-related to data vizualization.
+This release is a major refactoring the evaluation subsystem to make
+it more flexible, better tested and having additional functionality that makes
+model evaluation easier.
 
 ### New features
 
+- Evaluate()
+- Calibrate()
+
 - `pairwise_euclidean()` is available.
 
-- Evaluation callback to evaluate match rate as training go added. Currently the
-callback can't report metrics in History due to a TF limitation. Working on
-finding a solution
+- Added an Evaluation callback to easily track metric evolution during
+training. Currently the callback can't report metrics in History
+due to a TF limitation. Working on finding a solution. Metrics can be tracked
+via `TensorBoard`.
 
 - Indexer now supports the `to_pandas()` method to make data analysis
 and visualization easier.
 
 ### Major improvements
+
+- Full rewrite of the evaluator() subsystem that allows configurable metrics
+for evaluation and calibration.
+
+- Metrics are now objects that have access to a clean intermediate data
+representation tha makes it easy
 
 - Better types for tensors that distinguish float and int based tensors and
 more part of the code is typed.
