@@ -82,13 +82,11 @@ class MemoryEvaluator(Evaluator):
         combined_metrics = list(extra_metrics)
         combined_metrics.append(calibration_metric)
 
-        # data preparation: flatten and casting
-        # ! casting is needed as ops on TF.tensor are super slow
+        # data preparation: flatten and rounding
         distances = []
         for l in lookups:
             for n in l:
                 distances.append(round(n['distance'], distance_rounding))
-                n['label'] = int(n['label'])  # don't remove
 
         targets_labels = [int(i) for i in targets_labels]
 

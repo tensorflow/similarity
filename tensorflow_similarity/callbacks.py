@@ -1,10 +1,8 @@
-from importlib import import_module
 from tensorflow.keras.callbacks import Callback
-from collections import defaultdict
 import tensorflow as tf
 from pathlib import Path
 
-from typing import List, DefaultDict, Dict, Union
+from typing import List, Union
 from tensorflow_similarity.types import TensorLike
 from tensorflow_similarity.evaluators import MemoryEvaluator
 from tensorflow_similarity.metrics import EvalMetric, make_metric
@@ -20,7 +18,22 @@ class EvalCallback(Callback):
                  distance: str = 'cosine',
                  metrics: List[Union[str, EvalMetric]] = ['accuracy', 'mean_rank'],  # noqa
                  tb_logdir: str = None,
+                 eval_head: int = None,
                  k: int = 1):
+        """Evaluate model matching quality against a validation dataset at
+        epoch end.
+
+        Args:
+            queries (TensorLike): [description]
+            query_labels (List[int]): [description]
+            targets (TensorLike): [description]
+            target_labels (List[int]): [description]
+            distance (str, optional): [description]. Defaults to 'cosine'.
+            metrics (List[Union[str, EvalMetric]], optional): [description]. Defaults to ['accuracy', 'mean_rank'].
+            embedding to evaluate. Defaults to None which is for model
+            with a single head.
+            k (int, optional): [description]. Defaults to 1.
+        """
         super().__init__()
         self.queries = queries
         self.queries_labels = query_labels

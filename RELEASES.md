@@ -1,5 +1,20 @@
 # Tensorflow Similarity releases notes
 
+## 0.9.x - Muli-output support
+
+This release focuses on refacoring the code to support cleanly multi-output
+models.
+
+### New features
+
+- `compile()` now support `embedding_output` to indicate which model output to
+use for indexing and lookups.
+
+### Major improvements
+
+- Better `hello_world` notebook - improved explaination and simplified.
+
+
 ## 0.8.x - Evaluation and vizualization
 
 This release is a major refactoring the evaluation subsystem to make
@@ -31,7 +46,6 @@ representation tha makes it easy
 
 - Better types for tensors that distinguish float and int based tensors and
 more part of the code is typed.
-
 
 ## 0.7 - Data Samplers
 

@@ -1,4 +1,3 @@
-from tests.test_metrics import compute_vector
 import tensorflow as tf
 from tensorflow.python.keras.saving.save import load_model
 from tensorflow_similarity.losses import TripletLoss

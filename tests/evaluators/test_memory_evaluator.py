@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow_similarity.evaluators import MemoryEvaluator
 import random
-from tensorflow_similarity.model import THRESHOLDS_TARGETS
 from tensorflow_similarity.metrics import MinRank, MaxRank
 
 
@@ -45,7 +44,8 @@ def test_evaluate_2():
 
     index_size = NUM_CLASSES * EXAMPLES_PER_CLASS
     metrics = ['accuracy']  # , 'accuracy', 'mean_rank']
-    target_labels, lookups, effective_match_rate = generate_lookups(NUM_CLASSES, EXAMPLES_PER_CLASS, MATCH_RATE)
+    target_labels, lookups, effective_match_rate = generate_lookups(
+        NUM_CLASSES, EXAMPLES_PER_CLASS, MATCH_RATE)
     # print(target_labels)
     # print(lookups)
 
