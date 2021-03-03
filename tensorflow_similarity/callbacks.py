@@ -18,20 +18,27 @@ class EvalCallback(Callback):
                  distance: str = 'cosine',
                  metrics: List[Union[str, EvalMetric]] = ['accuracy', 'mean_rank'],  # noqa
                  tb_logdir: str = None,
-                 eval_head: int = None,
                  k: int = 1):
         """Evaluate model matching quality against a validation dataset at
         epoch end.
 
         Args:
             queries (TensorLike): [description]
+
             query_labels (List[int]): [description]
+
             targets (TensorLike): [description]
+
             target_labels (List[int]): [description]
+
             distance (str, optional): [description]. Defaults to 'cosine'.
+
             metrics (List[Union[str, EvalMetric]], optional): [description]. Defaults to ['accuracy', 'mean_rank'].
             embedding to evaluate. Defaults to None which is for model
             with a single head.
+
+            tb_logdir (str): Where to write TensorBoard logs. Default to None
+
             k (int, optional): [description]. Defaults to 1.
         """
         super().__init__()

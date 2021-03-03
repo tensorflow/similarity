@@ -146,7 +146,7 @@ class Indexer():
             return predictions[self.embedding_output]
         return predictions  # passthrough
 
-    def _cast_label(self, label):
+    def _cast_label(self, label: Optional[str]) -> Optional[int]:
         if label is not None:
             label = int(label)
         return label
