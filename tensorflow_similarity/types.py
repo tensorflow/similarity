@@ -24,7 +24,7 @@ class PandasDataFrame(object):
   """
 
 
-class Tensor(object):
+class Tensor(List):
     """The base class of all dense Tensor objects.
 
   A dense tensor has a static data type (dtype), and may have a static rank and

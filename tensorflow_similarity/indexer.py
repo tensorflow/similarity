@@ -11,8 +11,8 @@ from tqdm.auto import tqdm
 from copy import copy
 
 # types
-from typing import Dict, List, Union, DefaultDict, Deque, Any
-from .types import FloatTensorLike, PandasDataFrame
+from typing import Dict, List, Union, DefaultDict, Deque, Optional
+from .types import FloatTensorLike, PandasDataFrame, TensorLike
 
 # internal
 from .matchers import NMSLibMatcher
@@ -34,6 +34,7 @@ class Indexer():
                  table: str = 'memory',
                  match_algorithm: str = 'nmslib_hnsw',
                  evaluator: str = 'memory',
+                 embedding_output: int = None,
                  stat_buffer_size: int = 1000) -> None:
         """Index embeddings to make them searchable via KNN
 
@@ -47,13 +48,20 @@ class Indexer():
             matcher (str, optional): What algorithm to use to perfom KNN
             search. Defaults to 'hnsw'.
 
+            embedding_output (int, optional): Which model output head predicts
+            the embbedings that should be indexed. Default to None which is for
+            single output model. For multi-head model, the callee, usually the
+            `SimilarityModel()` class is responsible for passing the
+            correct one.
+
             stat_buffer_size (int, optional): Size of the sliding windows
             buffer used to computer index performance. Defaults to 1000.
 
         Raises:
-            ValueError: [description]
+            ValueError: Invalid matcher or table.
         """
         self.distance = distance  # needed for save()/load()
+        self.embedding_output = embedding_output
 
         # internal structure naming
         self.match_algorithm = match_algorithm
@@ -106,17 +114,59 @@ class Indexer():
         self.cutpoints = {}
         self.calibration_thresholds = {}
 
-    def add(self, embedding, label=None, data=None, build=True, verbose=1):
+    def _get_embedding(self, prediction: FloatTensorLike) -> TensorLike:
+        """Return the 1st embedding vector from a (multi-output) model
+        prediction
+
+        See: `single_lookup()`, `add()`
+
+        Args:
+            prediction (FloatTensorLike): Model prediction for single embedding.
+
+        Returns:
+            TensorLike: 1D Tensor that contains the actual embedding
+        """
+
+        # in multi-output: embedding is [output_num][0]
+        if self.embedding_output:
+            return prediction[self.embedding_output][0]
+        return prediction[0]  # single output > return 1st element
+
+    def _get_embeddings(self, predictions: FloatTensorLike) -> TensorLike:
+        """Return the embedding vectors from a (multi-output) model prediction
+
+        Args:
+            predictions (FloatTensorLike): Model predictions.
+
+        Returns:
+            TensorLike: 2D Tensor (num_embeddings, embedding_value)
+        """
+
+        if self.embedding_output:
+            return predictions[self.embedding_output]
+        return predictions  # passthrough
+
+    def _cast_label(self, label: Optional[str]) -> Optional[int]:
+        if label is not None:
+            label = int(label)
+        return label
+
+    def add(self,
+            prediction: FloatTensorLike,
+            label: Optional[int] = None,
+            data: TensorLike = None,
+            build: bool = True,
+            verbose: int = 1):
         """ Add a single embedding to the indexer
 
         Args:
-            embedding (tensor): TF similarity model output / embeddings.
+            prediction (TensorLike): TF similarity model prediction.
 
-            label (str/int, optional): Label(s) associated with the
+            label (Union[str, int], optional): Label(s) associated with the
             embedding. Defaults to None.
 
-            data (Tensor, optional): Input data associated with the embedding.
-            Defaults to None.
+            data (TensorLike, optional): Input data associated with
+            the embedding. Defaults to None.
 
             build (bool, optional): Rebuild the index after insertion.
             Defaults to True. Set it to false if you would like to add
@@ -125,6 +175,10 @@ class Indexer():
             verbose (int, optional): Display progress if set to 1.
             Defaults to 1.
         """
+
+        # deal with potential multi-output
+        embedding = self._get_embedding(prediction)
+
         # store data and get its id
         idx = self.table.add(embedding, label, data)
 
@@ -132,15 +186,15 @@ class Indexer():
         self.matcher.add(embedding, idx, build=build, verbose=verbose)
 
     def batch_add(self,
-                  embeddings,
-                  labels=None,
-                  data=None,
-                  build=True,
-                  verbose=1):
+                  predictions: TensorLike,
+                  labels: Optional[List[Optional[int]]] = None,
+                  data: Optional[TensorLike] = None,
+                  build: bool = True,
+                  verbose: int = 1):
         """Add a batch of embeddings to the indexer
 
         Args:
-            embeddings (list(tensor)): TF similarity model output / embeddings.
+            predictions (Tensorlike): TF similarity model predictions.
             labels (list(str/int), optional): label(s) associated with the
             embedding. Defaults to None.
             datas (list(Tensor), optional): input data associated with the
@@ -154,108 +208,105 @@ class Indexer():
             Defaults to 1.
         """
 
+        # deal with potential multi-output
+        embeddings = self._get_embeddings(predictions)
+
         # store points
         if verbose:
             print('|-Storing data points in index table')
         idxs = self.table.batch_add(embeddings, labels, data)
-
         self.matcher.batch_add(embeddings, idxs, build=build, verbose=verbose)
 
     def single_lookup(self,
-                      embedding,
-                      k=5):
+                      prediction: FloatTensorLike,
+                      k: int = 5):
         """Find the k closest match of a given embedding
 
         Args:
-            embedding ([type]): [description]
-            k (int, optional): [description]. Defaults to 5.
+            prediction (FloatTensorLike): model prediction.
+            k (int, optional): Number of nearest neighboors to lookup.
+            Defaults to 5.
         Returns
             list(dicts): [{"embedding", "distance", "label", "data"}]
 
         """
+
+        embedding = self._get_embedding(prediction)
         start = time()
         idxs, distances = self.matcher.lookup(embedding, k=k)
         nn_embeddings, labels, data = self.table.batch_get(idxs)
 
         lookup_time = time() - start
-        self._lookup_timings_buffer.append(lookup_time)
-        self._stats['num_lookups'] += 1
         results = []
         for i in range(len(nn_embeddings)):
+            # ! casting is needed to avoid slowness down the line
             results.append({
                 "rank": i + 1,
                 "embedding": nn_embeddings[i],
-                "distance": distances[i],
-                "label": labels[i],
+                "distance": float(distances[i]),
+                "label": self._cast_label(labels[i]),
                 "data": data[i]
             })
+        self._lookup_timings_buffer.append(lookup_time)
+        self._stats['num_lookups'] += 1
         return results
 
-    def _batch_lookup(self, embeddings, k=5, threads=4):
-        """Find the k closest match of a batch of embeddings
+    def batch_lookup(self,
+                     predictions: FloatTensorLike,
+                     k: int = 5,
+                     threads: int = None,
+                     verbose: int = 1):
 
-        Args:
-            embeddings ([type]): [description]
-            k (int, optional): [description]. Defaults to 5.
-            threads (int, optional). Defaults to 4
-        Returns
-            list(list): list of k nearest matched embeddings.
-        """
+        embeddings = self._get_embeddings(predictions)
+        num_embeddings = len(embeddings)
+        start = time()
 
-        print('Unreliable method -- Distances are innacurate:%s' % int(time()))
-        # results = []
-        # start = time()
-        # matches = self.matcher.knnQueryBatch(embeddings,
-        #                                      k=k,
-        #                                      num_threads=threads)
-        # for emb_idx, res in enumerate(matches):
-        #     elt_idxs, _ = res
+        if verbose:
+            pb = tqdm(total=num_embeddings, desc='Finding NN')
 
-        #     ngbs = []
-        #     for i, e_idx in enumerate(elt_idxs):
-        #         data = self.mapper.get(e_idx)
-        #         ngbs.append(data)
+        lookups = []
+        for eidx in range(num_embeddings):
+            # FIXME: threading / or get nsmw batch to work reliablys
+            lidxs, distances = self.matcher.lookup(embeddings[eidx], k=k)
+            nn_embeddings, labels, data = self.table.batch_get(lidxs)
 
-        #     ngb_embs = tf.constant([n['embedding'] for n in ngbs])
-        #     # print(ngb_embs.shape)
-        #     emb = tf.expand_dims(embeddings[emb_idx], axis=0)
-        #     # print(emb.shape)
-        #     distances = cosine(emb, ngb_embs)[0]
+            lookup = []
+            for i in range(len(nn_embeddings)):
+                lookup.append({
+                    "rank": i + 1,
+                    "embedding": nn_embeddings[i],
+                    "distance": float(distances[i]),
+                    "label": self._cast_label(labels[i]),
+                    "data": data[i]
+                })
+            lookups.append(lookup)
+            if verbose:
+                pb.update()
+        if verbose:
+            pb.close()
 
-        #     for idx in range(k):
-        #         # FIXME numerical stability
-        #         ngbs[idx]['distance'] = float(distances[idx])
+        # stats
+        lookup_time = time() - start
+        per_lookup_time = lookup_time / num_embeddings
+        for _ in range(num_embeddings):
+            self._lookup_timings_buffer.append(per_lookup_time)
+        self._stats['num_lookups'] += num_embeddings
 
-        #     # ngbs = sorted(ngbs, key=itemgetter('distance'))
-
-        #     results.append(ngbs)
-
-        # lookup_time = time() - start
-
-        # # stats
-        # elt_lookup_time = lookup_time / len(results)
-        # for _ in range(len(results)):
-        #     self._lookup_timings_buffer.append(elt_lookup_time)
-        # self._stats['num_lookups'] += len(results)
-
-        # return results
+        return lookups
 
     # evaluation related functions
-    def evaluate(self, embeddings, y, metrics, k: int = 1):
+    def evaluate(self, predictions, y, metrics, k: int = 1, verbose: int = 1):
+        # Find NN
+        lookups = self.batch_lookup(predictions, verbose=verbose)
 
-        # FIXME batch lookup
-        lookups = []
-        for idx in range(len(embeddings)):
-            nn = self.single_lookup(embeddings[idx], k=1)
-            lookups.append(nn)
-
+        # Evaluate them
         return self.evaluator.evaluate(index_size=self.size(),
                                        metrics=metrics,
                                        targets_labels=y,
                                        lookups=lookups)
 
     def calibrate(self,
-                  embeddings: List[FloatTensorLike],
+                  predictions: FloatTensorLike,
                   y: List[int],
                   thresholds_targets: Dict[str, float],
                   k: int = 1,
@@ -264,22 +315,8 @@ class Indexer():
                   rounding: int = 2,
                   verbose: int = 1):
 
-        num_examples = len(y)
-
-        # getting the NN distance and labels
-        if verbose:
-            pb = tqdm(total=num_examples, desc='Finding NN')
-
-        # FIXME use bulk_lookup when ready
-        lookups = []
-        for idx in range(num_examples):
-            nn = self.single_lookup(embeddings[idx], k=k)
-            lookups.append(nn)
-            if verbose:
-                pb.update()
-
-        if verbose:
-            pb.close()
+        # find NN
+        lookups = self.batch_lookup(predictions, verbose=verbose)
 
         # making sure our metrics are all EvalMetric object
         calibration_metric = make_metric(calibration_metric)
@@ -322,13 +359,13 @@ class Indexer():
         return {"cutpoints": cutpoints, "thresholds": thresholds}
 
     def match(self,
-              embeddings: List[FloatTensorLike],
+              predictions: FloatTensorLike,
               no_match_label: int = -1,
               verbose: int = 1):
         """Match embeddings against the various cutpoints thresholds
 
         Args:
-            embeddings (FloatTensorLike): embeddings
+            predictions (FloatTensorLike): embeddings
 
             no_match_label (int, optional): What label value to assign when
             there is no match. Defaults to -1.
@@ -348,24 +385,16 @@ class Indexer():
         Returns:
             dict:{cutpoint: list(bool)}
         """
-        if verbose:
-            pb = tqdm(total=len(embeddings), desc='looking up embeddings')
+        lookups = self.batch_lookup(predictions, k=1, verbose=verbose)
 
+        # vectorize
         distances = []
         labels = []
-        for idx in range(len(embeddings)):
-
-            knn = self.single_lookup(embeddings[idx], k=1)
-
-            # ! don't remove casts, otherwise eval get very slow.
-            distances.append(float(knn[0]['distance']))
-            labels.append(int(knn[0]['label']))
-
-            if verbose:
-                pb.update()
+        for lookup in lookups:
+            distances.append(lookup[0]['distance'])
+            labels.append(lookup[0]['label'])
 
         if verbose:
-            pb.close()
             pb = tqdm(total=len(distances) * len(self.cutpoints),
                       desc='matching embeddings')
 
@@ -402,6 +431,7 @@ class Indexer():
             "table": self.table_type,
             "evaluator": self.evaluator_type,
             "match_algorithm": self.match_algorithm,
+            "embedding_output": self.embedding_output,
             "stat_buffer_size": self.stat_buffer_size,
             "is_calibrated": self.is_calibrated,
             "calibration_metric_config": self.calibration_metric.get_config(),
@@ -425,6 +455,7 @@ class Indexer():
         md = json.loads(metadata)
         index = Indexer(distance=md['distance'],
                         table=md['table'],
+                        embedding_output=md['embedding_output'],
                         evaluator=md['evaluator'],
                         match_algorithm=md['match_algorithm'],
                         stat_buffer_size=md['stat_buffer_size'])
@@ -494,7 +525,8 @@ class Indexer():
             ['evaluator', self.evaluator_type],
             ['index size', self.size()],
             ['calibrated', self.is_calibrated],
-            ['calibration_metric', self.calibration_metric]
+            ['calibration_metric', self.calibration_metric],
+            ['embedding_output', self.embedding_output]
         ]
         print(tabulate(rows))
         print('\n')
