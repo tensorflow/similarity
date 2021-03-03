@@ -2,7 +2,7 @@
 
 ## 0.9.x - Muli-output support
 
-This release focuses on refacoring the code to support cleanly multi-output
+This release focuses on refactoring the code to support cleanly multi-output
 models.
 
 ### New features

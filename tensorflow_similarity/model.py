@@ -82,6 +82,8 @@ class SimilarityModel(functional.Functional):
                        metric loss"
 
                 raise ValueError(msg)
+            print("Distance metric automatically set to", distance,
+                  "use the distance arg to override.")
         else:
             distance = metric_name_canonializer(distance)
 
@@ -91,6 +93,8 @@ class SimilarityModel(functional.Functional):
                 raise("Embedding_output value exceed number of model outputs")
 
         if not embedding_output and num_outputs > 1:
+            print("Embedding output set to be model output 0",
+                  "Use the embedding_output arg to override this")
             embedding_output = 0
 
         # init index
