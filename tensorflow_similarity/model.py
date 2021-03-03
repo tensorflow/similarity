@@ -14,12 +14,6 @@ from .types import FloatTensorLike, PandasDataFrame
 from .distances import metric_name_canonializer
 
 
-THRESHOLDS_TARGETS = {
-    "very_likely": 0.99,
-    "likely": 0.9
-}
-
-
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class SimilarityModel(functional.Functional):
     """Sub-classing Keras.Model to allow access to the forward pass values for
@@ -65,6 +59,7 @@ class SimilarityModel(functional.Functional):
                 loss=None,
                 metrics=None,
                 loss_weights=None,
+                embedding_output=None,
                 table='memory',
                 matcher='nmslib_hnsw',
                 stat_buffer_size=1000,
@@ -87,13 +82,26 @@ class SimilarityModel(functional.Functional):
                        metric loss"
 
                 raise ValueError(msg)
+            print("Distance metric automatically set to", distance,
+                  "use the distance arg to override.")
         else:
             distance = metric_name_canonializer(distance)
+
+        # check if we we need to set the embedding head
+        num_outputs = len(self.output_names)
+        if embedding_output and embedding_output > num_outputs:
+                raise("Embedding_output value exceed number of model outputs")
+
+        if not embedding_output and num_outputs > 1:
+            print("Embedding output set to be model output 0",
+                  "Use the embedding_output arg to override this")
+            embedding_output = 0
 
         # init index
         self._index: Indexer = Indexer(distance=distance,
                                        table=table,
                                        match_algorithm=matcher,
+                                       embedding_output=embedding_output,
                                        stat_buffer_size=stat_buffer_size)
 
         # call underlying keras method
@@ -109,23 +117,25 @@ class SimilarityModel(functional.Functional):
         if verbose:
             print('[Indexing %d points]' % len(x))
             print('|-Computing embeddings')
-        embeddings = self.predict(x)
+        predictions = self.predict(x)
         data = x if store_data else None
-        self._index.batch_add(embeddings,
+        self._index.batch_add(predictions,
                               y,
                               data,
                               build=build,
                               verbose=verbose)
 
-    def _lookup(self, x, k=5, threads=4):
-        print("THIS FUNCTION RETURN BOGUS DISTANCES")
-        embeddings = self.predict(x)
-        return self._index.batch_lookup(embeddings, k=k)
+    def lookup(self, x, k=5, threads=4, verbose=1):
+        predictions = self.predict(x)
+        return self._index.batch_lookup(predictions,
+                                        k=k,
+                                        threads=threads,
+                                        verbose=verbose)
 
     def single_lookup(self, x, k=5):
         x = tf.expand_dims(x, axis=0)
-        embedding = self.predict(x)[0]
-        return self._index.single_lookup(embedding, k=k)
+        prediction = self.predict(x)
+        return self._index.single_lookup(prediction, k=k)
 
     def index_summary(self):
         self._index.print_stats()
@@ -133,7 +143,7 @@ class SimilarityModel(functional.Functional):
     def calibrate(self,
                   x: List[FloatTensorLike],
                   y: List[int],
-                  thresholds_targets: Dict[str, float] = THRESHOLDS_TARGETS,
+                  thresholds_targets: Dict[str, float] = {},
                   k: int = 1,
                   calibration_metric: Union[str, EvalMetric] = "f1_score",
                   extra_metrics: List[Union[str, EvalMetric]] = ['precision', 'recall'],  # noqa
@@ -141,10 +151,10 @@ class SimilarityModel(functional.Functional):
                   verbose: int = 1):
 
         # predict
-        embeddings = self.predict(x)
+        predictions = self.predict(x)
 
         # calibrate
-        return self._index.calibrate(embeddings=embeddings,
+        return self._index.calibrate(predictions=predictions,
                                      y=y,
                                      thresholds_targets=thresholds_targets,
                                      k=k,
@@ -188,11 +198,11 @@ class SimilarityModel(functional.Functional):
         if not self._index.is_calibrated:
             raise ValueError('Uncalibrated model: run model.calibration()')
 
-        # get embeddings
-        embeddings = self.predict(x)
+        # get predictions
+        predictions = self.predict(x)
 
         # matching
-        matches = self._index.match(embeddings,
+        matches = self._index.match(predictions,
                                     no_match_label=no_match_label,
                                     verbose=verbose)
 
@@ -232,7 +242,7 @@ class SimilarityModel(functional.Functional):
         # get embeddings
         if verbose:
             print("|-Computing embeddings")
-        embeddings = self.predict(x)
+        predictions = self.predict(x)
 
         results = defaultdict(dict)
         cal_metric = self._index.get_calibration_metric()
@@ -248,7 +258,7 @@ class SimilarityModel(functional.Functional):
             metric.distance_threshold = cp_data['distance']
             metrics = copy(extra_metrics)
             metrics.append(metric)
-            res = self._index.evaluate(embeddings, y, metrics, k)
+            res = self._index.evaluate(predictions, y, metrics, k)
             res['distance'] = cp_data['distance']
             res['name'] = cp_name
             results[cp_name] = res

@@ -1,4 +1,3 @@
-from tests.test_metrics import compute_vector
 import tensorflow as tf
 from tensorflow.python.keras.saving.save import load_model
 from tensorflow_similarity.losses import TripletLoss
@@ -52,10 +51,10 @@ def test_basic_flow(tmp_path):
     # print(y[0])
     # quit()
     sampler = MultiShotMemorySampler(x,
-                                    y,
-                                    class_per_batch=CLASS_PER_BATCH,
-                                    batch_size=BATCH_SIZE,
-                                    batch_per_epoch=BATCH_PER_EPOCH)
+                                     y,
+                                     class_per_batch=CLASS_PER_BATCH,
+                                     batch_size=BATCH_SIZE,
+                                     batch_per_epoch=BATCH_PER_EPOCH)
 
     # model
     inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS, ))
@@ -65,18 +64,17 @@ def test_basic_flow(tmp_path):
     model = SimilarityModel(inputs, outputs)
 
     # loss
-    triplet_loss = TripletLoss(distance=distance,
-                            positive_mining_strategy=positive_mining_strategy,
-                            negative_mining_strategy=negative_mining_strategy)
+    triplet_loss = TripletLoss(
+        distance=distance,
+        positive_mining_strategy=positive_mining_strategy,
+        negative_mining_strategy=negative_mining_strategy)
 
     # compile
     metrics = [dist_gap(distance), min_neg(distance), max_pos(distance)]
     model.compile(optimizer='adam', metrics=metrics, loss=triplet_loss)
 
     # train
-    history = model.fit(sampler,
-                        batch_size=BATCH_SIZE,
-                        epochs=1)
+    history = model.fit(sampler, batch_size=BATCH_SIZE, epochs=2)
 
     # check that history is properly filled
     assert 'loss' in history.history
