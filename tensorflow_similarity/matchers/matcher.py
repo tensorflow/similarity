@@ -1,14 +1,20 @@
 from abc import ABC, abstractmethod
+from tensorflow_similarity.types import FloatTensorLike
+from typing import List, Tuple
 
 
 class Matcher(ABC):
 
     @abstractmethod
-    def add(self, embedding, idx, build=True, verbose=1):
+    def add(self,
+            embedding: FloatTensorLike,
+            idx: int,
+            build: bool = True,
+            verbose: int = 1):
         """Add an embedding to the index
 
         Args:
-            embedding (tensor): Record embedding as computed
+            embedding (FloatTensorLike): Record embedding as computed
             by the model.
 
             idx (int): Embedding id in the index table. Used to lookup
@@ -23,12 +29,16 @@ class Matcher(ABC):
         pass
 
     @abstractmethod
-    def batch_add(self,  embeddings, idxs, build=True, verbose=1):
-        """Add a set of record to the table
+    def batch_add(self,
+                  embeddings: FloatTensorLike,
+                  idxs: List[int],
+                  build: bool = True,
+                  verbose: int = 1):
+        """Add an embedding to the index
 
         Args:
-            embedding (tensor): Record embedding as computed
-            by the model.
+            embeddings (FloatTensorLike): List of embeddings to add to the
+            index.
 
             idxs (int): Embedding id in the index table. Used to lookup
             associated metadata.
@@ -42,16 +52,34 @@ class Matcher(ABC):
         pass
 
     @abstractmethod
-    def lookup(self, embedding, k=5):
+    def lookup(self,
+               embedding: FloatTensorLike,
+               k: int = 5) -> Tuple[List[int], List[float]]:
+        """Find the embedding K nearest neighboors
+
+        Args:
+            embedding (FloatTensorLike): Target embedding as predicted by
+            the model.
+            k (int, optional): Number of nearest neighboors to lookup.
+            Defaults to 5.
+        """
         pass
 
     @abstractmethod
-    def batch_lookup(self, embeddings, k=5):
-        "Number of record in the table"
+    def batch_lookup(self,
+                     embeddings: FloatTensorLike,
+                     k: int = 5) -> Tuple[List[List[int]], List[List[float]]]:
+        """Find embeddings K nearest neighboors
+        Args:
+            embedding (FloatTensorLike): Target embedding as predicted by
+            the model.
+            k (int, optional): Number of nearest neighboors to lookup.
+            Defaults to 5.
+        """
         pass
 
     @abstractmethod
-    def save(self, path):
+    def save(self, path: str):
         """Serializes index on disk
 
         Args:
@@ -60,7 +88,7 @@ class Matcher(ABC):
         pass
 
     @abstractmethod
-    def load(self, path):
+    def load(self, path: str):
         """load index on disk
 
         Args:

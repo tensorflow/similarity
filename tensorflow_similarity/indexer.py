@@ -8,7 +8,6 @@ from tabulate import tabulate
 from pathlib import Path
 import tensorflow as tf
 from tqdm.auto import tqdm
-from copy import copy
 
 # types
 from typing import Dict, List, Union, DefaultDict, Deque, Optional
@@ -18,7 +17,7 @@ from .types import FloatTensorLike, PandasDataFrame, TensorLike
 from .matchers import NMSLibMatcher
 from .tables import MemoryTable
 from .evaluators import MemoryEvaluator
-from .metrics import EvalMetric, make_metric, make_metrics, F1Score
+from .metrics import EvalMetric, make_metric, F1Score
 
 
 class Indexer():
@@ -146,7 +145,7 @@ class Indexer():
             return predictions[self.embedding_output]
         return predictions  # passthrough
 
-    def _cast_label(self, label: Optional[str]) -> Optional[int]:
+    def _cast_label(self, label: Optional[int]) -> Optional[int]:
         if label is not None:
             label = int(label)
         return label
