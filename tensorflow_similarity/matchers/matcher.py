@@ -26,7 +26,6 @@ class Matcher(ABC):
 
             verbose (int, optional): [description]. Defaults to 1.
         """
-        pass
 
     @abstractmethod
     def batch_add(self,
@@ -49,7 +48,6 @@ class Matcher(ABC):
 
             verbose (int, optional): [description]. Defaults to 1.
         """
-        pass
 
     @abstractmethod
     def lookup(self,
@@ -63,7 +61,6 @@ class Matcher(ABC):
             k (int, optional): Number of nearest neighboors to lookup.
             Defaults to 5.
         """
-        pass
 
     @abstractmethod
     def batch_lookup(self,
@@ -76,7 +73,6 @@ class Matcher(ABC):
             k (int, optional): Number of nearest neighboors to lookup.
             Defaults to 5.
         """
-        pass
 
     @abstractmethod
     def save(self, path: str):
@@ -85,7 +81,6 @@ class Matcher(ABC):
         Args:
             path (str): where to store the data
         """
-        pass
 
     @abstractmethod
     def load(self, path: str):
@@ -94,4 +89,3 @@ class Matcher(ABC):
         Args:
             path (str): where to store the data
         """
-        pass

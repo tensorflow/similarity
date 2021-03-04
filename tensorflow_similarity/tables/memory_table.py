@@ -25,15 +25,15 @@ class MemoryTable(Table):
         """Add a record to the table
 
         Args:
-            embedding (tensor): Record embedding as computed
+            embedding (FloatTensorLike): Record embedding predicted
             by the model.
 
             label (int, optional): Class numerical id. Defaults to None.
 
-            data (tensor, optional): Record data. Defaults to None.
+            data (FloatTensorLike, optional): Record data. Defaults to None.
 
         Returns:
-            int: associated record id
+            int: associated record id.
         """
         idx = self.num_items
         self.labels.append(label)
@@ -47,19 +47,24 @@ class MemoryTable(Table):
             embeddings: List[FloatTensorLike],
             labels: List[Optional[int]] = None,
             data: List[Optional[FloatTensorLike]] = None) -> List[int]:
-        """Add a set of record to the mapper
+        """Add a set of record to the table
 
         Args:
-            embeddings (list(tensor)): Record embedding as computed
+            embeddings (FloatTensorLike): Record the embeddings predicted
             by the model.
 
             labels (list(int), optional): Class numerical id. Defaults to None.
 
-            datas (list(tensor), optional): Record data. Defaults to No.
+            datas (list(FloatTensorLike), optional): Record data.
+            Defaults to None.
+
+        See:
+            add() for what a record contains.
 
         Returns:
-            list(int): list of associated record id
+            list(int): list of associated record id.
         """
+
         idxs: List[int] = []
         for idx, embedding in enumerate(embeddings):
             label = None if labels is None else labels[idx]
@@ -73,10 +78,10 @@ class MemoryTable(Table):
         """Get record from the mapper
 
         Args:
-            idx (int): record_id to lookup
+            idx (int): lookup record id to fetch
 
         Returns:
-            record: record associated with the record_id
+            record: record associated with the requested record id
         """
         return self.embeddings[idx], self.labels[idx], self.data[idx]
 
@@ -86,10 +91,10 @@ class MemoryTable(Table):
         """Get records from the table
 
         Args:
-            idx (int): record_id to lookup
+            idxs (List[int]): lookups record ids to fetch
 
         Returns:
-            list(records): record associated with the record_id
+            Tuple(List): data associated with the requested record ids
         """
         embeddings = []
         labels = []
@@ -106,10 +111,11 @@ class MemoryTable(Table):
         return self.num_items
 
     def save(self, path: str, compression: bool = True) -> None:
-        """Serializes index on disk
+        """Serializes index on disks
 
         Args:
-            path (str): where to store the data
+            path (str): where to store the data.
+            compression (bool): Compress index data. Defaults to True.
         """
         fname = self._make_fname(path)
         if compression:

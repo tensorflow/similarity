@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import DefaultDict, List, Dict, Union
+from typing import List, Dict, Union
 from tensorflow_similarity.metrics import EvalMetric
 
 
@@ -39,7 +39,6 @@ class Evaluator(ABC):
             Dict[str, Union[float, int]]: Dictionnary of metric results where
             keys are the metric names and values are the metrics values.
         """
-        pass
 
     @abstractmethod
     def calibrate(self,
@@ -83,4 +82,3 @@ class Evaluator(ABC):
 
             verbose (int, optional): Be verbose. Defaults to 1.
         """
-        pass

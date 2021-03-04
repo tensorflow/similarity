@@ -1,5 +1,15 @@
 # Tensorflow Similarity releases notes
 
+## 0.10.x - Getting ready for release
+
+This release focuses on code quality and documentation
+to be ready for initial  release.
+
+## Major improvements
+
+- All major classes are properly documented
+- All major classes are typed.
+
 ## 0.9.x - Muli-output support
 
 This release focuses on refactoring the code to support cleanly multi-output

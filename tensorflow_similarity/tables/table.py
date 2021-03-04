@@ -12,15 +12,15 @@ class Table(ABC):
         """Add a record to the table
 
         Args:
-            embedding (tensor): Record embedding as computed
-            by the model. Defaults to None.
+            embedding (FloatTensorLike): Record an embedding predicted
+            by the model.
 
             label (int, optional): Class numerical id. Defaults to None.
 
-            data (tensor, optional): Record data. Defaults to None.
+            data (FloatTensorLike, optional): Record data. Defaults to None.
 
         Returns:
-            int: associated record id
+            int: associated record id.
         """
 
     @abstractmethod
@@ -32,18 +32,19 @@ class Table(ABC):
         """Add a set of record to the table
 
         Args:
-            embeddings (list(tensor)): Record embedding as computed
+            embeddings (FloatTensorLike): Record the embeddings predicted
             by the model.
 
             labels (list(int), optional): Class numerical id. Defaults to None.
 
-            datas (list(tensor), optional): Record data. Defaults to No.
+            datas (list(FloatTensorLike), optional): Record data.
+            Defaults to None.
 
         See:
             add() for what a record contains.
 
         Returns:
-            list(int): list of associated record id
+            list(int): list of associated record id.
         """
 
     @abstractmethod
@@ -53,10 +54,10 @@ class Table(ABC):
         """Get record from the table
 
         Args:
-            idx (int): record_id to lookup
+            idx (int): lookup record id to fetch.
 
         Returns:
-            list: data associated with the record_id
+            record: record associated with the requested record id.
         """
 
     @abstractmethod
@@ -66,26 +67,24 @@ class Table(ABC):
         """Get records from the table
 
         Args:
-            idxs (int): record ids to lookup
+            idxs (List[int]): lookups record ids to fetch.
 
         Returns:
-            list(lists): data associated with the record ids
+            Tuple(List): data associated with the requested record ids.
         """
-
 
     @abstractmethod
     def size(self) -> int:
         "Number of record in the table"
-
 
     @abstractmethod
     def save(self, path: str, compression: bool = True) -> None:
         """Serializes index on disks
 
         Args:
-            path (str): where to store the data
+            path (str): where to store the data.
+            compression (bool): Compress index data. Defaults to True.
         """
-
 
     @abstractmethod
     def load(self, path: str) -> None:
