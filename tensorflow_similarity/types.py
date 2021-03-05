@@ -24,6 +24,10 @@ class PandasDataFrame(object):
   """
 
 
+class Distance(object):
+    """Symbolic Distance object"""
+
+
 class Tensor(List):
     """The base class of all dense Tensor objects.
 

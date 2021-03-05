@@ -52,7 +52,7 @@ setup(
     extras_require={
         "dev": [
             'pytest', 'pytest-cov', 'flake8', 'twine', 'perfCounters',
-            'pytype'
+            'pytype', 'flake8'
         ],
     },
     classifiers=[
