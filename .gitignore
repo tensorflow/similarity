@@ -4,6 +4,7 @@ tensorflow_similarity.egg-info/
 logs/
 models/
 .vscode/
+site/
 release.sh
 
 # Byte-compiled / optimized / DLL files

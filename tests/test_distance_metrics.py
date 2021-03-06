@@ -1,9 +1,8 @@
-from tensorflow_similarity import metrics
 import tensorflow as tf
 from tensorflow_similarity.distance_metrics import DistanceMetric
 from tensorflow_similarity.distance_metrics import DistanceGapMetric
-from tensorflow_similarity.distances import cosine
-
+from tensorflow_similarity.distances import CosineDistance
+from tensorflow_similarity.types import FloatTensor
 EMB1 = [
     [0.5, 1, 0.5],
     [0.2, 0.8, 0.4],
@@ -17,9 +16,17 @@ LABELS = tf.Variable([[1], [1], [2], [2]], dtype='int32')
 EMBEDDINGS = tf.Variable(EMB1 + EMB2)
 
 
+def cosine(a: FloatTensor, b: FloatTensor, axis: int = -1) -> FloatTensor:
+    t1 = tf.nn.l2_normalize(a, axis=axis)
+    t2 = tf.nn.l2_normalize(b, axis=axis)
+    distances = 1 - tf.linalg.matmul(t1, t2, transpose_b=True)
+    distances = tf.math.maximum(distances, 0.0)
+    return distances
+
+
 def compute_metric(distance, aggregate, labels, embeddings):
     "Inner function that call the core class"
-    metric = DistanceMetric('cosine', aggregate=aggregate)
+    metric = DistanceMetric(distance, aggregate=aggregate)
     metric.update_state(labels, embeddings, None)
     return metric.result()
 
@@ -34,7 +41,7 @@ def test_distance_metric_serialize():
     metric = DistanceMetric('cosine', aggregate='max')
     config = metric.get_config()
     metric2 = DistanceMetric.from_config(config)
-    assert metric2.distance == 'cosine'
+    assert isinstance(metric2.distance, CosineDistance)
     assert metric2.aggregate == metric.aggregate
 
     metric.update_state(LABELS, EMBEDDINGS, None)
@@ -94,12 +101,4 @@ def test_min_positive():
 def test_gap():
     metric = DistanceGapMetric('cosine')
     metric.update_state(LABELS, EMBEDDINGS, None)
-    gap = metric.result()
-
-    # l1 = tf.reduce_max(cosine(EMB1, EMB2), axis=1)
-    # l2 = tf.reduce_max(cosine(EMB2, EMB2), axis=1)
-    # max_pos = tf.reduce_max([l1, l2])
-
-    # min_neg = tf.reduce_min(cosine(EMB1, EMB2))
-    # manual_gap = min_neg - max_pos
-    # assert gap == manual_gap
+    metric.result()

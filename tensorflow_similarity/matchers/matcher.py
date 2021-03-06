@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from tensorflow_similarity.types import FloatTensorLike
+from tensorflow_similarity.types import FloatTensor
 from typing import List, Tuple
 
 
@@ -7,14 +7,14 @@ class Matcher(ABC):
 
     @abstractmethod
     def add(self,
-            embedding: FloatTensorLike,
+            embedding: FloatTensor,
             idx: int,
             build: bool = True,
             verbose: int = 1):
         """Add an embedding to the index
 
         Args:
-            embedding (FloatTensorLike): Record embedding as computed
+            embedding (FloatTensor): Record embedding as computed
             by the model.
 
             idx (int): Embedding id in the index table. Used to lookup
@@ -29,14 +29,14 @@ class Matcher(ABC):
 
     @abstractmethod
     def batch_add(self,
-                  embeddings: FloatTensorLike,
+                  embeddings: FloatTensor,
                   idxs: List[int],
                   build: bool = True,
                   verbose: int = 1):
         """Add an embedding to the index
 
         Args:
-            embeddings (FloatTensorLike): List of embeddings to add to the
+            embeddings (FloatTensor): List of embeddings to add to the
             index.
 
             idxs (int): Embedding id in the index table. Used to lookup
@@ -51,12 +51,12 @@ class Matcher(ABC):
 
     @abstractmethod
     def lookup(self,
-               embedding: FloatTensorLike,
+               embedding: FloatTensor,
                k: int = 5) -> Tuple[List[int], List[float]]:
         """Find the embedding K nearest neighboors
 
         Args:
-            embedding (FloatTensorLike): Target embedding as predicted by
+            embedding (FloatTensor): Target embedding as predicted by
             the model.
             k (int, optional): Number of nearest neighboors to lookup.
             Defaults to 5.
@@ -64,11 +64,11 @@ class Matcher(ABC):
 
     @abstractmethod
     def batch_lookup(self,
-                     embeddings: FloatTensorLike,
+                     embeddings: FloatTensor,
                      k: int = 5) -> Tuple[List[List[int]], List[List[float]]]:
         """Find embeddings K nearest neighboors
         Args:
-            embedding (FloatTensorLike): Target embedding as predicted by
+            embedding (FloatTensor): Target embedding as predicted by
             the model.
             k (int, optional): Number of nearest neighboors to lookup.
             Defaults to 5.

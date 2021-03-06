@@ -5,8 +5,14 @@
 This release focuses on code quality and documentation
 to be ready for initial  release.
 
+## New features
+
+- Package documentation is available
+
 ## Major improvements
 
+- Distance refactored to be object
+- Refactored tensor types
 - All major classes are properly documented
 - All major classes are typed.
 

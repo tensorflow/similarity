@@ -24,10 +24,6 @@ class PandasDataFrame(object):
   """
 
 
-class Distance(object):
-    """Symbolic Distance object"""
-
-
 class Tensor(List):
     """The base class of all dense Tensor objects.
 
@@ -78,9 +74,3 @@ class Value(Tensor):
     def numpy(self):
         pass
 
-
-TensorLike = Union[Tensor, list, np.ndarray]
-
-FloatTensorLike = Union[FloatTensor, list, np.ndarray]
-
-IntTensorLike = Union[IntTensor, list, np.ndarray]

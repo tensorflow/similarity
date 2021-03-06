@@ -1,23 +1,23 @@
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Optional
-from tensorflow_similarity.types import FloatTensorLike, PandasDataFrame
+from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 
 
 class Table(ABC):
 
     @abstractmethod
-    def add(self, embedding: FloatTensorLike,
+    def add(self, embedding: FloatTensor,
             label: Optional[int] = None,
-            data: Optional[FloatTensorLike] = None) -> int:
+            data: Optional[Tensor] = None) -> int:
         """Add a record to the table
 
         Args:
-            embedding (FloatTensorLike): Record an embedding predicted
+            embedding (FloatTensor): Record an embedding predicted
             by the model.
 
             label (int, optional): Class numerical id. Defaults to None.
 
-            data (FloatTensorLike, optional): Record data. Defaults to None.
+            data (FloatTensor, optional): Record data. Defaults to None.
 
         Returns:
             int: associated record id.
@@ -26,18 +26,18 @@ class Table(ABC):
     @abstractmethod
     def batch_add(
             self,
-            embeddings: List[FloatTensorLike],
+            embeddings: List[FloatTensor],
             labels: List[Optional[int]] = None,
-            data: List[Optional[FloatTensorLike]] = None) -> List[int]:
+            data: List[Optional[Tensor]] = None) -> List[int]:
         """Add a set of record to the table
 
         Args:
-            embeddings (FloatTensorLike): Record the embeddings predicted
+            embeddings (FloatTensor): Record the embeddings predicted
             by the model.
 
             labels (list(int), optional): Class numerical id. Defaults to None.
 
-            datas (list(FloatTensorLike), optional): Record data.
+            datas (list(FloatTensor), optional): Record data.
             Defaults to None.
 
         See:
@@ -48,9 +48,9 @@ class Table(ABC):
         """
 
     @abstractmethod
-    def get(self, idx: int) -> Tuple[FloatTensorLike,
+    def get(self, idx: int) -> Tuple[FloatTensor,
                                      Optional[int],
-                                     Optional[FloatTensorLike]]:
+                                     Optional[Tensor]]:
         """Get record from the table
 
         Args:
@@ -62,8 +62,8 @@ class Table(ABC):
 
     @abstractmethod
     def batch_get(self, idxs: List[int]
-                  ) -> Tuple[List[FloatTensorLike], List[Optional[int]],
-                             List[Optional[FloatTensorLike]]]:
+                  ) -> Tuple[List[FloatTensor], List[Optional[int]],
+                             List[Optional[Tensor]]]:
         """Get records from the table
 
         Args:

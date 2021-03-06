@@ -1,6 +1,6 @@
 import numpy as np
 from pathlib import Path
-from tensorflow_similarity.types import FloatTensorLike, List, Tuple
+from tensorflow_similarity.types import FloatTensor, List, Tuple, Tensor
 from tensorflow_similarity.types import Optional, PandasDataFrame
 import pandas as pd
 from .table import Table
@@ -13,24 +13,24 @@ class MemoryTable(Table):
         # We are using a native python array in memory for its row speed.
         # Serialization / export relies on Arrow.
         self.labels: List[Optional[int]] = []
-        self.embeddings: List[FloatTensorLike] = []
-        self.data: List[Optional[FloatTensorLike]] = []
+        self.embeddings: List[FloatTensor] = []
+        self.data: List[Optional[Tensor]] = []
         self.num_items: int = 0
         pass
 
     def add(self,
-            embedding: FloatTensorLike,
+            embedding: FloatTensor,
             label: Optional[int] = None,
-            data: Optional[FloatTensorLike] = None) -> int:
+            data: Optional[Tensor] = None) -> int:
         """Add a record to the table
 
         Args:
-            embedding (FloatTensorLike): Record embedding predicted
+            embedding (FloatTensor): Record embedding predicted
             by the model.
 
             label (int, optional): Class numerical id. Defaults to None.
 
-            data (FloatTensorLike, optional): Record data. Defaults to None.
+            data (Tensor, optional): Record data. Defaults to None.
 
         Returns:
             int: associated record id.
@@ -44,18 +44,18 @@ class MemoryTable(Table):
 
     def batch_add(
             self,
-            embeddings: List[FloatTensorLike],
+            embeddings: List[FloatTensor],
             labels: List[Optional[int]] = None,
-            data: List[Optional[FloatTensorLike]] = None) -> List[int]:
+            data: List[Optional[Tensor]] = None) -> List[int]:
         """Add a set of record to the table
 
         Args:
-            embeddings (FloatTensorLike): Record the embeddings predicted
+            embeddings (FloatTensor): Record the embeddings predicted
             by the model.
 
             labels (list(int), optional): Class numerical id. Defaults to None.
 
-            datas (list(FloatTensorLike), optional): Record data.
+            datas (list(Tensor), optional): Record data.
             Defaults to None.
 
         See:
@@ -72,9 +72,9 @@ class MemoryTable(Table):
             idxs.append(self.add(embedding, label, rec_data))
         return idxs
 
-    def get(self, idx: int) -> Tuple[FloatTensorLike,
+    def get(self, idx: int) -> Tuple[FloatTensor,
                                      Optional[int],
-                                     Optional[FloatTensorLike]]:
+                                     Optional[Tensor]]:
         """Get record from the mapper
 
         Args:
@@ -86,8 +86,8 @@ class MemoryTable(Table):
         return self.embeddings[idx], self.labels[idx], self.data[idx]
 
     def batch_get(self, idxs: List[int]
-                  ) -> Tuple[List[FloatTensorLike], List[Optional[int]],
-                             List[Optional[FloatTensorLike]]]:
+                  ) -> Tuple[List[FloatTensor], List[Optional[int]],
+                             List[Optional[Tensor]]]:
         """Get records from the table
 
         Args:
