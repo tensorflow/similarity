@@ -75,26 +75,26 @@ class MemoryTable(Table):
     def get(self, idx: int) -> Tuple[FloatTensor,
                                      Optional[int],
                                      Optional[Tensor]]:
-        """Get record from the mapper
+        """Get a record from the mapper.
 
         Args:
-            idx (int): lookup record id to fetch
+            idx (int): lookup record id to fetch.
 
         Returns:
-            record: record associated with the requested record id
+            record: record associated with the requested record id.
         """
         return self.embeddings[idx], self.labels[idx], self.data[idx]
 
     def batch_get(self, idxs: List[int]
                   ) -> Tuple[List[FloatTensor], List[Optional[int]],
                              List[Optional[Tensor]]]:
-        """Get records from the table
+        """Get records from the table.
 
         Args:
-            idxs (List[int]): lookups record ids to fetch
+            idxs (List[int]): lookups record ids to fetch.
 
         Returns:
-            Tuple(List): data associated with the requested record ids
+            Tuple(List): data associated with the requested record ids.
         """
         embeddings = []
         labels = []
@@ -133,7 +133,7 @@ class MemoryTable(Table):
         """load index on disk
 
         Args:
-            path (str): where to store the data
+            path: which directory to use to store the index data.
         """
 
         fname = self._make_fname(path, check_file_exit=True)

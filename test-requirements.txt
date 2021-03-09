@@ -1,0 +1,11 @@
+setuptools
+wheel
+mypy
+pytest
+flake8
+pytest-cov
+pytype
+twine
+setuptools
+nmslib
+tensorflow

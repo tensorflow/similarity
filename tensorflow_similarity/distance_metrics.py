@@ -19,7 +19,7 @@ class DistanceMetric(Metric):
 
         if not name:
             name = "%s_%s" % (aggregate, anchor[:3])
-        super(DistanceMetric, self).__init__(name=name, **kwargs)
+        super().__init__(name=name, **kwargs)
 
         self.distance = distance_canonicalizer(distance)
 
@@ -98,7 +98,7 @@ class DistanceGapMetric(Metric):
                  name=None,
                  **kwargs):
         name = name if name else 'dist_gap'
-        super(DistanceGapMetric, self).__init__(name=name, **kwargs)
+        super().__init__(name=name, **kwargs)
         self.distance = distance
         self.max_pos_fn = DistanceMetric(distance, aggregate='max')
         self.min_neg_fn = DistanceMetric(distance,

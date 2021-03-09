@@ -59,8 +59,7 @@ class Evaluator(ABC):
 
             calibration_metric (EvalMetric): Metric used for calibration.
 
-            thresholds_targets (Dict[str, float]): Calibratio metrics
-
+            thresholds_targets (Dict[str, float]): Calibration metrics
             thresholds that are targeted. The function will find the closed
             distance value.
 

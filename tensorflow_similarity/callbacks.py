@@ -37,7 +37,7 @@ class EvalCallback(Callback):
             embedding to evaluate. Defaults to None which is for model
             with a single head.
 
-            tb_logdir: Where to write TensorBoard logs. Default to None
+            tb_logdir: Where to write TensorBoard logs. Defaults to None.
 
             k: [description].
         """

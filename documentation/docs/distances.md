@@ -1,6 +1,6 @@
 # Distances
 
-## tfsim.distance.EuclidianDistance
+## tfsim.distance.CosineDistance
 
 :::tensorflow_similarity.distances.CosineDistance
 
