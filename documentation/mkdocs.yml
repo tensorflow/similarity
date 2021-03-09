@@ -1,0 +1,15 @@
+site_name: TensorFlow Similarity
+repo_url: https://github.com/tensorflow/similarity
+theme:
+  name: material
+  palette:
+    primary: orange
+    accent: blue
+  icon:
+    repo: fontawesome/brands/github
+plugins:
+- search
+- mkdocstrings:
+    custom_templates: mkdocstrings
+    watch:
+     - tensorflow_similarity/

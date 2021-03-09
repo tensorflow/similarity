@@ -3,7 +3,7 @@ import tensorflow as tf
 from pathlib import Path
 
 from typing import List, Union
-from tensorflow_similarity.types import TensorLike
+from tensorflow_similarity.types import Tensor
 from tensorflow_similarity.evaluators import MemoryEvaluator
 from tensorflow_similarity.metrics import EvalMetric, make_metric
 
@@ -11,9 +11,9 @@ from tensorflow_similarity.metrics import EvalMetric, make_metric
 class EvalCallback(Callback):
 
     def __init__(self,
-                 queries: TensorLike,
+                 queries: Tensor,
                  query_labels: List[int],
-                 targets: TensorLike,
+                 targets: Tensor,
                  target_labels: List[int],
                  distance: str = 'cosine',
                  metrics: List[Union[str, EvalMetric]] = ['accuracy', 'mean_rank'],  # noqa
@@ -23,23 +23,23 @@ class EvalCallback(Callback):
         epoch end.
 
         Args:
-            queries (TensorLike): [description]
+            queries: [description]
 
-            query_labels (List[int]): [description]
+            query_labels: [description]
 
-            targets (TensorLike): [description]
+            targets: [description]
 
-            target_labels (List[int]): [description]
+            target_labels: [description]
 
-            distance (str, optional): [description]. Defaults to 'cosine'.
+            distance: [description]
 
-            metrics (List[Union[str, EvalMetric]], optional): [description]. Defaults to ['accuracy', 'mean_rank'].
+            metrics: [description]. Defaults to ['accuracy', 'mean_rank'].
             embedding to evaluate. Defaults to None which is for model
             with a single head.
 
-            tb_logdir (str): Where to write TensorBoard logs. Default to None
+            tb_logdir: Where to write TensorBoard logs. Defaults to None.
 
-            k (int, optional): [description]. Defaults to 1.
+            k: [description].
         """
         super().__init__()
         self.queries = queries

@@ -1,6 +1,6 @@
 import numpy as np
 from pathlib import Path
-from tensorflow_similarity.types import FloatTensorLike, List, Tuple
+from tensorflow_similarity.types import FloatTensor, List, Tuple, Tensor
 from tensorflow_similarity.types import Optional, PandasDataFrame
 import pandas as pd
 from .table import Table
@@ -13,27 +13,27 @@ class MemoryTable(Table):
         # We are using a native python array in memory for its row speed.
         # Serialization / export relies on Arrow.
         self.labels: List[Optional[int]] = []
-        self.embeddings: List[FloatTensorLike] = []
-        self.data: List[Optional[FloatTensorLike]] = []
+        self.embeddings: List[FloatTensor] = []
+        self.data: List[Optional[Tensor]] = []
         self.num_items: int = 0
         pass
 
     def add(self,
-            embedding: FloatTensorLike,
+            embedding: FloatTensor,
             label: Optional[int] = None,
-            data: Optional[FloatTensorLike] = None) -> int:
+            data: Optional[Tensor] = None) -> int:
         """Add a record to the table
 
         Args:
-            embedding (tensor): Record embedding as computed
+            embedding (FloatTensor): Record embedding predicted
             by the model.
 
             label (int, optional): Class numerical id. Defaults to None.
 
-            data (tensor, optional): Record data. Defaults to None.
+            data (Tensor, optional): Record data. Defaults to None.
 
         Returns:
-            int: associated record id
+            int: associated record id.
         """
         idx = self.num_items
         self.labels.append(label)
@@ -44,22 +44,27 @@ class MemoryTable(Table):
 
     def batch_add(
             self,
-            embeddings: List[FloatTensorLike],
+            embeddings: List[FloatTensor],
             labels: List[Optional[int]] = None,
-            data: List[Optional[FloatTensorLike]] = None) -> List[int]:
-        """Add a set of record to the mapper
+            data: List[Optional[Tensor]] = None) -> List[int]:
+        """Add a set of record to the table
 
         Args:
-            embeddings (list(tensor)): Record embedding as computed
+            embeddings (FloatTensor): Record the embeddings predicted
             by the model.
 
             labels (list(int), optional): Class numerical id. Defaults to None.
 
-            datas (list(tensor), optional): Record data. Defaults to No.
+            datas (list(Tensor), optional): Record data.
+            Defaults to None.
+
+        See:
+            add() for what a record contains.
 
         Returns:
-            list(int): list of associated record id
+            list(int): list of associated record id.
         """
+
         idxs: List[int] = []
         for idx, embedding in enumerate(embeddings):
             label = None if labels is None else labels[idx]
@@ -67,29 +72,29 @@ class MemoryTable(Table):
             idxs.append(self.add(embedding, label, rec_data))
         return idxs
 
-    def get(self, idx: int) -> Tuple[FloatTensorLike,
+    def get(self, idx: int) -> Tuple[FloatTensor,
                                      Optional[int],
-                                     Optional[FloatTensorLike]]:
-        """Get record from the mapper
+                                     Optional[Tensor]]:
+        """Get a record from the mapper.
 
         Args:
-            idx (int): record_id to lookup
+            idx (int): lookup record id to fetch.
 
         Returns:
-            record: record associated with the record_id
+            record: record associated with the requested record id.
         """
         return self.embeddings[idx], self.labels[idx], self.data[idx]
 
     def batch_get(self, idxs: List[int]
-                  ) -> Tuple[List[FloatTensorLike], List[Optional[int]],
-                             List[Optional[FloatTensorLike]]]:
-        """Get records from the table
+                  ) -> Tuple[List[FloatTensor], List[Optional[int]],
+                             List[Optional[Tensor]]]:
+        """Get records from the table.
 
         Args:
-            idx (int): record_id to lookup
+            idxs (List[int]): lookups record ids to fetch.
 
         Returns:
-            list(records): record associated with the record_id
+            Tuple(List): data associated with the requested record ids.
         """
         embeddings = []
         labels = []
@@ -106,10 +111,11 @@ class MemoryTable(Table):
         return self.num_items
 
     def save(self, path: str, compression: bool = True) -> None:
-        """Serializes index on disk
+        """Serializes index on disks
 
         Args:
-            path (str): where to store the data
+            path (str): where to store the data.
+            compression (bool): Compress index data. Defaults to True.
         """
         fname = self._make_fname(path)
         if compression:
@@ -127,7 +133,7 @@ class MemoryTable(Table):
         """load index on disk
 
         Args:
-            path (str): where to store the data
+            path: which directory to use to store the index data.
         """
 
         fname = self._make_fname(path, check_file_exit=True)

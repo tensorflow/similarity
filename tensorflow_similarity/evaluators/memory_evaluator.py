@@ -18,7 +18,26 @@ class MemoryEvaluator(Evaluator):
                  lookups: List[List[Dict[str, Union[float, int]]]],
                  distance_rounding: int = 8
                  ) -> Dict[str, Union[float, int]]:
+        """Evaluate lookup performances against a supplied set of metrics
 
+        Args:
+            index_size (int): Size of the search index.
+
+            metrics (List[Union[str, EvalMetric]]): List of `EvalMetric()` to
+            evaluate lookup matches against.
+
+            targets_labels (List[int]): List of expected matched labels.
+
+            lookups (List[List[Dict[str, Union[float, int]]]]): List of lookup
+            results as produced by the `Index()` `batch_lookup()` method.
+
+            distance_rounding (int, optional): How many digit to consider to
+            decide of the distance changed. Defaults to 8.
+
+        Returns:
+            Dict[str, Union[float, int]]: Dictionnary of metric results where
+            keys are the metric names and values are the metrics values.
+        """
         # [nn[{'distance': xxx}, ]]
         # normalize metrics
         eval_metrics: List[EvalMetric] = [make_metric(m) for m in metrics]
@@ -104,7 +123,8 @@ class MemoryEvaluator(Evaluator):
         for dist in sorted_distances_values:
             # update distance theshold for metrics
             for m in combined_metrics:
-                m.distance_threshold = dist
+                if isinstance(m, EvalMetric):  # typechecking requires this
+                    m.distance_threshold = dist
 
             res = self.evaluate(index_size, combined_metrics, targets_labels,
                                 lookups, distance_rounding)

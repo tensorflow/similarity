@@ -48,10 +48,8 @@ class MultiShotMemorySampler(Sampler):
                      num_classes: int,
                      example_per_class: int
                      ) -> Tuple[tf_types.TensorLike, tf_types.TensorLike]:
-        _ = batch_id
 
         # select class at ramdom
-
         class_list = random.sample(self.class_list, k=num_classes)
 
         # get example for each class

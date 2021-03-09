@@ -52,7 +52,8 @@ class EvalMetric(ABC):
         index_size: int,
         match_ranks: List[int],
         match_distances: List[float],
-        lookups: List[List[Dict[str, Union[float, int]]]]) -> Union[int, float]:
+        lookups: List[List[Dict[str, Union[float, int]]]]
+                ) -> Union[int, float]:
         pass
         # match_ranks: rank 0 is unmatched, rank1 is first neighbopor, rank2..
         # match_distance: distance 0 means infinite, rest is match distances

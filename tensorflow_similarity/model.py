@@ -10,8 +10,8 @@ from tensorflow_similarity.metrics import EvalMetric, make_metric
 
 
 from typing import List, Dict, Union
-from .types import FloatTensorLike, PandasDataFrame
-from .distances import metric_name_canonializer
+from .types import FloatTensor, PandasDataFrame
+from .distances import distance_canonicalizer
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -85,7 +85,7 @@ class SimilarityModel(functional.Functional):
             print("Distance metric automatically set to", distance,
                   "use the distance arg to override.")
         else:
-            distance = metric_name_canonializer(distance)
+            distance = distance_canonicalizer(distance)
 
         # check if we we need to set the embedding head
         num_outputs = len(self.output_names)
@@ -141,7 +141,7 @@ class SimilarityModel(functional.Functional):
         self._index.print_stats()
 
     def calibrate(self,
-                  x: List[FloatTensorLike],
+                  x: List[FloatTensor],
                   y: List[int],
                   thresholds_targets: Dict[str, float] = {},
                   k: int = 1,

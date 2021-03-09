@@ -3,7 +3,7 @@ import tensorflow as tf
 from tensorflow.keras.metrics import Metric
 from tensorflow_similarity.algebra import build_masks
 from tensorflow_similarity.algebra import masked_minimum, masked_maximum
-from tensorflow_similarity.distances import pairwise_cosine
+from tensorflow_similarity.distances import distance_canonicalizer
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -17,12 +17,11 @@ class DistanceMetric(Metric):
                  negative_mining_strategy="hard",
                  **kwargs):
 
-        self.distance = distance
-
         if not name:
             name = "%s_%s" % (aggregate, anchor[:3])
-        super(DistanceMetric, self).__init__(name=name, **kwargs)
-        self.distance = distance
+        super().__init__(name=name, **kwargs)
+
+        self.distance = distance_canonicalizer(distance)
 
         if anchor not in ['positive', 'negative']:
             raise ValueError('Invalid anchor_type')
@@ -46,11 +45,7 @@ class DistanceMetric(Metric):
     def update_state(self, labels, embeddings, sample_weight):
 
         # [distances]
-        if self.distance == 'cosine':
-            pairwise_distances = pairwise_cosine(embeddings)
-        else:
-            # user supplied distance function
-            pairwise_distances = self.distance(embeddings)
+        pairwise_distances = self.distance(embeddings)
 
         # [mask]
         batch_size = tf.size(labels)
@@ -87,7 +82,7 @@ class DistanceMetric(Metric):
 
     def get_config(self):
         return {
-            "distance": self.distance,
+            "distance": self.distance.name,
             "aggregate": self.aggregate,
             "anchor": self.anchor,
             "name": self.name,
@@ -103,7 +98,7 @@ class DistanceGapMetric(Metric):
                  name=None,
                  **kwargs):
         name = name if name else 'dist_gap'
-        super(DistanceGapMetric, self).__init__(name=name, **kwargs)
+        super().__init__(name=name, **kwargs)
         self.distance = distance
         self.max_pos_fn = DistanceMetric(distance, aggregate='max')
         self.min_neg_fn = DistanceMetric(distance,
