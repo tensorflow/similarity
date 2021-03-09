@@ -8,20 +8,21 @@ from tabulate import tabulate
 from pathlib import Path
 import tensorflow as tf
 from tqdm.auto import tqdm
-from copy import copy
 
 # types
 from typing import Dict, List, Union, DefaultDict, Deque, Optional
-from .types import FloatTensorLike, PandasDataFrame, TensorLike
+from .types import FloatTensor, PandasDataFrame, Tensor
 
 # internal
+from .distances import distance_canonicalizer, Distance
 from .matchers import NMSLibMatcher
 from .tables import MemoryTable
 from .evaluators import MemoryEvaluator
-from .metrics import EvalMetric, make_metric, make_metrics, F1Score
+from .metrics import EvalMetric, make_metric, F1Score
 
 
 class Indexer():
+    "Indexing system that allows to index and search them in KNN"
     # semantic sugar for the order of the returned data
     EMBEDDINGS = 0
     DISTANCES = 1
@@ -30,7 +31,7 @@ class Indexer():
     RANKS = 4
 
     def __init__(self,
-                 distance: str = 'cosine',
+                 distance: Union[Distance, str] = 'cosine',
                  table: str = 'memory',
                  match_algorithm: str = 'nmslib_hnsw',
                  evaluator: str = 'memory',
@@ -39,27 +40,31 @@ class Indexer():
         """Index embeddings to make them searchable via KNN
 
         Args:
-            distance (str, optional): Distance type used in the embeedings.
+            distance: Distance used to compute embeddings proximity.
             Defaults to 'cosine'.
 
-            table (str, optional): How to store the index records.
+            table: How to store the index records.
             Defaults to 'memory'.
 
-            matcher (str, optional): What algorithm to use to perfom KNN
+            match_algorithm: Which `Matcher()` framework to use to perfom KNN
             search. Defaults to 'hnsw'.
 
-            embedding_output (int, optional): Which model output head predicts
+            evaluator: What type of `Evaluator()` to use to evaluate index
+            performance. Defaults to in-memory one.
+
+            embedding_output: Which model output head predicts
             the embbedings that should be indexed. Default to None which is for
             single output model. For multi-head model, the callee, usually the
             `SimilarityModel()` class is responsible for passing the
             correct one.
 
-            stat_buffer_size (int, optional): Size of the sliding windows
+            stat_buffer_size: Size of the sliding windows
             buffer used to computer index performance. Defaults to 1000.
 
         Raises:
             ValueError: Invalid matcher or table.
         """
+        distance = distance_canonicalizer(distance)
         self.distance = distance  # needed for save()/load()
         self.embedding_output = embedding_output
 
@@ -114,65 +119,71 @@ class Indexer():
         self.cutpoints = {}
         self.calibration_thresholds = {}
 
-    def _get_embedding(self, prediction: FloatTensorLike) -> TensorLike:
+    def _get_embedding(self, prediction: FloatTensor) -> FloatTensor:
         """Return the 1st embedding vector from a (multi-output) model
         prediction
 
         See: `single_lookup()`, `add()`
 
         Args:
-            prediction (FloatTensorLike): Model prediction for single embedding.
+            prediction: Model prediction for single embedding.
 
         Returns:
-            TensorLike: 1D Tensor that contains the actual embedding
+            FloatTensor: 1D Tensor that contains the actual embedding
         """
 
-        # in multi-output: embedding is [output_num][0]
         if self.embedding_output:
-            return prediction[self.embedding_output][0]
-        return prediction[0]  # single output > return 1st element
+            # in multi-output: embedding is [output_num][0]
+            embedding: FloatTensor = prediction[self.embedding_output][0]
+        else:
+            # single output > return 1st element
+            embedding = prediction[0]
+        return embedding
 
-    def _get_embeddings(self, predictions: FloatTensorLike) -> TensorLike:
+    def _get_embeddings(self, predictions: FloatTensor) -> FloatTensor:
         """Return the embedding vectors from a (multi-output) model prediction
 
         Args:
-            predictions (FloatTensorLike): Model predictions.
+            prediction: Model predictions.
 
         Returns:
-            TensorLike: 2D Tensor (num_embeddings, embedding_value)
+            Tensor: 2D Tensor (num_embeddings, embedding_value)
         """
 
         if self.embedding_output:
-            return predictions[self.embedding_output]
-        return predictions  # passthrough
+            embeddings: FloatTensor = predictions[self.embedding_output]
+        else:
+            # needed for typing
+            embeddings = predictions
+        return embeddings
 
-    def _cast_label(self, label: Optional[str]) -> Optional[int]:
+    def _cast_label(self, label: Optional[int]) -> Optional[int]:
         if label is not None:
             label = int(label)
         return label
 
     def add(self,
-            prediction: FloatTensorLike,
+            prediction: FloatTensor,
             label: Optional[int] = None,
-            data: TensorLike = None,
+            data: Tensor = None,
             build: bool = True,
             verbose: int = 1):
         """ Add a single embedding to the indexer
 
         Args:
-            prediction (TensorLike): TF similarity model prediction.
+            prediction: TF similarity model prediction.
 
-            label (Union[str, int], optional): Label(s) associated with the
+            label: Label(s) associated with the
             embedding. Defaults to None.
 
-            data (TensorLike, optional): Input data associated with
+            data: Input data associated with
             the embedding. Defaults to None.
 
-            build (bool, optional): Rebuild the index after insertion.
+            build: Rebuild the index after insertion.
             Defaults to True. Set it to false if you would like to add
             multiples batchs/points and build it manually once after.
 
-            verbose (int, optional): Display progress if set to 1.
+            verbose: Display progress if set to 1.
             Defaults to 1.
         """
 
@@ -186,26 +197,25 @@ class Indexer():
         self.matcher.add(embedding, idx, build=build, verbose=verbose)
 
     def batch_add(self,
-                  predictions: TensorLike,
+                  predictions: FloatTensor,
                   labels: Optional[List[Optional[int]]] = None,
-                  data: Optional[TensorLike] = None,
+                  data: Optional[Tensor] = None,
                   build: bool = True,
                   verbose: int = 1):
         """Add a batch of embeddings to the indexer
 
         Args:
-            predictions (Tensorlike): TF similarity model predictions.
-            labels (list(str/int), optional): label(s) associated with the
-            embedding. Defaults to None.
-            datas (list(Tensor), optional): input data associated with the
-            embedding. Defaults to None.
+            predictions: TF similarity model predictions.
 
-            build (bool, optional): Rebuild the index after insertion.
+            labels: label(s) associated with the embedding. Defaults to None.
+
+            datas: input data associated with the embedding. Defaults to None.
+
+            build: Rebuild the index after insertion.
             Defaults to True. Set it to false if you would like to add
             multiples batchs/points and build it manually once after.
 
-            verbose (int, optional): Display progress if set to 1.
-            Defaults to 1.
+            verbose: Display progress if set to 1. Defaults to 1.
         """
 
         # deal with potential multi-output
@@ -218,14 +228,13 @@ class Indexer():
         self.matcher.batch_add(embeddings, idxs, build=build, verbose=verbose)
 
     def single_lookup(self,
-                      prediction: FloatTensorLike,
+                      prediction: FloatTensor,
                       k: int = 5):
         """Find the k closest match of a given embedding
 
         Args:
-            prediction (FloatTensorLike): model prediction.
-            k (int, optional): Number of nearest neighboors to lookup.
-            Defaults to 5.
+            prediction: model prediction.
+            k: Number of nearest neighboors to lookup. Defaults to 5.
         Returns
             list(dicts): [{"embedding", "distance", "label", "data"}]
 
@@ -252,10 +261,20 @@ class Indexer():
         return results
 
     def batch_lookup(self,
-                     predictions: FloatTensorLike,
+                     predictions: FloatTensor,
                      k: int = 5,
                      threads: int = None,
                      verbose: int = 1):
+
+        """Find the k closest match of a set of embeddings
+
+        Args:
+            predictions: model predictions.
+            k: Number of nearest neighboors to lookup. Defaults to 5.
+        Returns
+            list(dicts): list([{"embedding", "distance", "label", "data"}])
+
+        """
 
         embeddings = self._get_embeddings(predictions)
         num_embeddings = len(embeddings)
@@ -306,7 +325,7 @@ class Indexer():
                                        lookups=lookups)
 
     def calibrate(self,
-                  predictions: FloatTensorLike,
+                  predictions: FloatTensor,
                   y: List[int],
                   thresholds_targets: Dict[str, float],
                   k: int = 1,
@@ -359,13 +378,13 @@ class Indexer():
         return {"cutpoints": cutpoints, "thresholds": thresholds}
 
     def match(self,
-              predictions: FloatTensorLike,
+              predictions: FloatTensor,
               no_match_label: int = -1,
               verbose: int = 1):
         """Match embeddings against the various cutpoints thresholds
 
         Args:
-            predictions (FloatTensorLike): embeddings
+            predictions (FloatTensor): embeddings
 
             no_match_label (int, optional): What label value to assign when
             there is no match. Defaults to -1.
@@ -427,7 +446,7 @@ class Indexer():
         path = str(path)
         # saving metadata
         metadata = {
-            "distance": self.distance,
+            "distance": self.distance.name,
             "table": self.table_type,
             "evaluator": self.evaluator_type,
             "match_algorithm": self.match_algorithm,

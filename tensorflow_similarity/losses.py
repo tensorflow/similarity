@@ -26,17 +26,21 @@ References
 
 import tensorflow as tf
 from .utils import is_tensor_or_variable
-from .distances import metric_name_canonializer, pairwise_cosine
+from .distances import Distance, distance_canonicalizer
 from .algebra import masked_maximum, masked_minimum, build_masks
+from .types import FloatTensor
+from typing import Callable, List, Union
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
-def triplet_loss(labels, embeddings, distance='cosine',
-                 positive_mining_strategy='hard',
-                 negative_mining_strategy='semi-hard',
-                 soft_margin=False,
-                 margin=1.0):
+def triplet_loss(labels: List[int],
+                 embeddings: FloatTensor,
+                 distance: Callable,
+                 positive_mining_strategy: str = 'hard',
+                 negative_mining_strategy: str = 'semi-hard',
+                 soft_margin: bool = False,
+                 margin: float = 1.0):
     """Triplet loss computations
 
     Args:
@@ -66,11 +70,7 @@ def triplet_loss(labels, embeddings, distance='cosine',
     batch_size = tf.size(labels)
 
     # [distances]
-    if distance == 'cosine':
-        pairwise_distances = pairwise_cosine(embeddings)
-    else:
-        # user supplied distance function
-        pairwise_distances = distance(embeddings)
+    pairwise_distances = distance(embeddings)
 
     # [masks]
     positive_mask, negative_mask = build_masks(labels, batch_size)
@@ -193,16 +193,16 @@ class TripletLoss(LossFunctionWrapper):
     """
 
     def __init__(self,
-                 distance='cosine',
-                 positive_mining_strategy='hard',
-                 negative_mining_strategy='hard',
-                 soft_margin=False,
-                 margin=1.0,
-                 name=None):
+                 distance: Union[Distance, str] = 'cosine',
+                 positive_mining_strategy: str = 'hard',
+                 negative_mining_strategy: str = 'hard',
+                 soft_margin: bool = False,
+                 margin: float = 1.0,
+                 name: str = None):
         """Initializes the TripletLoss
 
         Args:
-            distance (str, optional): Which distance function to use to compute
+            distance (Un, optional): Which distance function to use to compute
             the pairwise distances between embeddings. Defaults to 'cosine'.
 
             positive_mining_strategy (str, optional): What mining strategy to
@@ -226,7 +226,7 @@ class TripletLoss(LossFunctionWrapper):
         """
 
         # distance canonicalization
-        distance = metric_name_canonializer(distance)
+        distance = distance_canonicalizer(distance)
         self.distance = distance
         # sanity checks
 
@@ -239,7 +239,7 @@ class TripletLoss(LossFunctionWrapper):
         # Ensure users knows its one or the other
         if margin != 1.0 and soft_margin:
             raise ValueError('Margin value is not used when soft_margin is\
-                set to True')
+                              set to True')
 
         super().__init__(triplet_loss,
                          name=name,

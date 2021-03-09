@@ -39,7 +39,7 @@ long_description = read("README.md")
 setup(
     name="tensorflow_similarity",
     version=get_version("tensorflow_similarity/__init__.py"),
-    description="Single shot and metric learning for humans",
+    description="Metric learning for humans",
     long_description=long_description,
     author='Tensorflow Similarity authors',
     author_email='tensorflow_similarity@google.com',
@@ -49,12 +49,6 @@ setup(
         'numpy', 'tabulate', 'nmslib', 'tensorflow>=2.4', 'tqdm',
         'matplotlib', 'pandas'
     ],
-    extras_require={
-        "dev": [
-            'pytest', 'pytest-cov', 'flake8', 'twine', 'perfCounters',
-            'pytype'
-        ],
-    },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console', 'Framework :: Jupyter',

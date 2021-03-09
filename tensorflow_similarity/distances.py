@@ -1,61 +1,102 @@
+from abc import abstractmethod, ABC
+from typing import Union
 import tensorflow as tf
-from tensorflow.types.experimental import TensorLike
+from .types import FloatTensor
 
 
-def metric_name_canonializer(metric_name: str) -> str:
-    """Normalize metric name as each have various names in the literature
+class Distance(ABC):
+    def __init__(self, name: str):
+        self.name = name
+
+    @abstractmethod
+    def call(self, embeddings: FloatTensor, axis: int = 1) -> FloatTensor:
+        """Compute distance"""
+
+    def __call__(self, embeddings: FloatTensor, axis: int = 1):
+        return self.call(embeddings, axis)
+
+    def __str__(self) -> str:
+        return self.name
+
+    def get_config(self):
+        return {
+            "name": self.name
+        }
+
+@tf.keras.utils.register_keras_serializable(package="Similarity")
+class CosineDistance(Distance):
+
+    def __init__(self, name: str = None):
+        """Compute pairwises cosine distances"""
+        name = name if name else 'cosine'
+        super().__init__(name)
+
+    @tf.function
+    def call(self, embeddings: FloatTensor, axis: int = 1) -> FloatTensor:
+        tensor = tf.nn.l2_normalize(embeddings, axis=axis)
+        distances: FloatTensor = 1 - tf.linalg.matmul(tensor,
+                                                      tensor, transpose_b=True)
+        distances = tf.math.maximum(distances, 0.0)
+        return distances
+
+@tf.keras.utils.register_keras_serializable(package="Similarity")
+class EuclidianDistance(Distance):
+
+    def __init__(self, name: str = None):
+        """Compute pairwises Euclidian distances"""
+        name = name if name else 'euclidian'
+        super().__init__(name)
+
+    @tf.function
+    def call(self, embeddings: FloatTensor, axis: int = 1) -> FloatTensor:
+        squared_norm = tf.math.square(embeddings)
+        squared_norm = tf.math.reduce_sum(squared_norm,
+                                          axis=axis,
+                                          keepdims=True)
+
+        distances: FloatTensor = 2.0 * tf.linalg.matmul(embeddings,
+                                                        embeddings,
+                                                        transpose_b=True)
+        distances = squared_norm - distances + tf.transpose(squared_norm)
+
+        # Avoid NaN gradients when back propegating through the sqrt.
+        distances = tf.math.maximum(distances, 1e-16)
+        distances = tf.math.sqrt(distances)
+
+        return distances
+
+
+def distance_canonicalizer(distance: Union[Distance, str]) -> Distance:
+    """Normalize user requested distance to its matching Distance object.
 
     Args:
-        metric_name: name of the metric to canonicalize.
-    """
-    metric_name = metric_name.lower().strip()
+        distance: Requested distance either by name or by object
 
+    Returns:
+        Distance: Requested object name.
+    """
     mapping = {
-        "l2": 'cosine',
-        'cosine': 'cosine'
+        'cosine': 'cosine',
+        'euclidian': 'euclidian',
+        'l2': 'euclidian'
     }
 
-    if metric_name not in mapping:
-        raise ValueError('Metric not supported by the framework')
+    if isinstance(distance, str):
+        distance_name = distance.lower().strip()
+        if distance_name in mapping:
+            distance_name = mapping[distance_name]
+        else:
+            raise ValueError('Metric not supported by the framework')
 
-    return mapping[metric_name]
+        # instanciating
+        if distance_name == 'cosine':
+            return CosineDistance()
+        elif distance_name == 'euclidian':
+            return EuclidianDistance()
 
+    elif isinstance(distance, Distance):
+        # user supplied distance function
+        return distance
 
-@tf.function
-def pairwise_euclidean(embeddings: TensorLike, axis: int=1) -> TensorLike:
-    squared_norm = tf.math.square(embeddings)
-    squared_norm = tf.math.reduce_sum(squared_norm, axis=axis, keepdims=True)
-
-    distances = 2.0 * tf.linalg.matmul(embeddings, embeddings, transpose_b=True)
-    distances = squared_norm - distances + tf.transpose(squared_norm)
-
-    # Avoid NaN gradients when back propegating through the sqrt.
-    distances = tf.math.maximum(distances, 1e-16)
-    distances = tf.math.sqrt(distances)
-
-    return distances
-
-@tf.function
-def pairwise_cosine(embeddings: TensorLike, axis: int=1) -> TensorLike:
-    tensor = tf.nn.l2_normalize(embeddings, axis=axis)
-    distances = 1 - tf.linalg.matmul(tensor, tensor, transpose_b=True)
-    distances = tf.math.maximum(distances, 0.0)
-    return distances
-
-
-@tf.function
-def cosine(a: TensorLike, b: TensorLike, axis: int=-1) -> TensorLike:
-    t1 = tf.nn.l2_normalize(a, axis=axis)
-    t2 = tf.nn.l2_normalize(b, axis=axis)
-    distances = 1 - tf.linalg.matmul(t1, t2, transpose_b=True)
-    distances = tf.math.maximum(distances, 0.0)
-    return distances
-
-def pairwise_snr():
-    """ Signal to Noise pairwise distance
-
-    Proposed in:
-    Signal-to-Noise Ratio: A Robust Distance Metric for Deep Metric Learning
-    https://openaccess.thecvf.com/content_CVPR_2019/papers/Yuan_Signal-To-Noise_Ratio_A_Robust_Distance_Metric_for_Deep_Metric_Learning_CVPR_2019_paper.pdf
-    """
-    pass
+    raise ValueError('Unknown distance: must either be a MetricDistance\
+                          or a known distance function')
