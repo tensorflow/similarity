@@ -12,4 +12,4 @@ plugins:
 - mkdocstrings:
     custom_templates: mkdocstrings
     watch:
-     - tensorflow_similarity/
+     - ../tensorflow_similarity/

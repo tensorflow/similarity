@@ -1,5 +1,7 @@
 # Distances
 
+Pairwise distances used in `MetricLoss` to compute the distance between the embeddings.
+
 ## tfsim.distance.CosineDistance
 
 :::tensorflow_similarity.distances.CosineDistance

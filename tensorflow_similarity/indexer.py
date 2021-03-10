@@ -490,7 +490,6 @@ class Indexer():
         index.matcher.load(path)
 
         # reload calibration data if any
-
         index.is_calibrated = md['is_calibrated']
         if index.is_calibrated:
             if verbose:
