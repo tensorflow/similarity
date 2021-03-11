@@ -15,6 +15,10 @@ class NMSLibMatcher(Matcher):
 
         if distance.name == 'cosine':
             space = 'cosinesimil'
+        elif distance.name == 'euclidian':
+            space = 'l2'
+        elif distance.name == 'manhattan':
+            space = 'l1'
         else:
             raise ValueError('Unsupported metric space')
 

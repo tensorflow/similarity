@@ -8,6 +8,8 @@ to be ready for initial  release.
 ## New features
 
 - Package documentation is available
+- Manhattan distance is available.
+- nmslib matcher now supports l2 and l1 distances.
 
 ## Major improvements
 

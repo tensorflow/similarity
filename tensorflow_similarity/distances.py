@@ -65,6 +65,31 @@ class EuclidianDistance(Distance):
 
         return distances
 
+@tf.keras.utils.register_keras_serializable(package="Similarity")
+class ManhattanDistance(Distance):
+
+    def __init__(self, name: str = None):
+        """Compute pairwises manhattan distances"""
+        name = name if name else 'manhattan'
+        super().__init__(name)
+
+    @tf.function
+    def call(self, embeddings: FloatTensor, axis: int = 1) -> FloatTensor:
+        shape = embeddings.shape
+        if axis == 0:
+            xA = tf.reshape(embeddings, [shape[0], shape[1], 1])
+        elif axis == 1:
+            xA = tf.reshape(embeddings, [1, shape[0], shape[1]])
+        else:
+            raise ValueError("Axis must be 0 or 1.")
+
+        xB = tf.reshape(embeddings, [shape[0], 1, shape[1]])
+
+        deltas =  xA - xB
+        distances = tf.reduce_sum(tf.abs(deltas), axis=-1* axis)
+
+        return distances
+
 
 def distance_canonicalizer(distance: Union[Distance, str]) -> Distance:
     """Normalize user requested distance to its matching Distance object.
@@ -78,7 +103,8 @@ def distance_canonicalizer(distance: Union[Distance, str]) -> Distance:
     mapping = {
         'cosine': 'cosine',
         'euclidian': 'euclidian',
-        'l2': 'euclidian'
+        'l2': 'euclidian',
+        'l1': 'manhattan',
     }
 
     if isinstance(distance, str):
@@ -93,6 +119,8 @@ def distance_canonicalizer(distance: Union[Distance, str]) -> Distance:
             return CosineDistance()
         elif distance_name == 'euclidian':
             return EuclidianDistance()
+        elif distance_name == 'manhattan':
+            return ManhattanDistance()
 
     elif isinstance(distance, Distance):
         # user supplied distance function
