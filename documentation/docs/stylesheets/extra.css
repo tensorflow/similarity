@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');
+
+body {
+    color: rgb(32, 33, 36) !important;
+    font-family: Roboto, "Noto Sans", sans-serif !important;
+    font-size: 14px;
+
+}
+
+header {
+    background-color: white !important;
+    color: rgb(66, 80, 102) !important;
+    border-bottom: rgb(66, 80, 102) 1px solid;
+}
+
+
+
+.language-python {
+    font-size: 18px !important;
+    font-family: "Roboto mono", monospace;
+    font-weight: 500;
+}
+
+.md-container a {
+    color: #1a73e8 !important;
+}
+
+/* table */
+.md-typeset table:not([class]) th {
+    background: #feefe3 !important;
+    color: rgb(32, 33, 36);
+    font-weight: 500;
+    font-family: Roboto, "Noto Sans", sans-serif !important;
+}
+
+td > code {
+    font-size: 14px !important;
+    font-family: "Roboto mono", monospace;
+    font-weight: 400;
+}
+
+td > p {
+    color: rgb(32, 33, 36) !important;
+    font-family: Roboto, "Noto Sans", sans-serif !important;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+/* headers */
+h1 {
+   color: rgb(32, 33, 36) !important;
+   font-size: 36px;
+   font-weight: 400 !important;
+}
+
+h2 {
+    color: rgb(32, 33, 36) !important;
+    font-size: 24px;
+    font-weight: 400 !important;
+}
