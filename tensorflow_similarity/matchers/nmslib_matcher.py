@@ -2,7 +2,7 @@ import nmslib
 from pathlib import Path
 from typing import List, Tuple
 
-from tensorflow_similarity.distances import distance_canonicalizer
+from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from .matcher import Matcher
 from tensorflow_similarity.types import FloatTensor
 
@@ -15,7 +15,7 @@ class NMSLibMatcher(Matcher):
     """
 
     def __init__(self,
-                 distance: str = 'cosine',
+                 distance: Distance,
                  algorithm: str = 'nmslib_hnsw',
                  verbose: int = 1):
 
