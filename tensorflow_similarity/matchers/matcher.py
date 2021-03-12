@@ -11,20 +11,22 @@ class Matcher(ABC):
             idx: int,
             build: bool = True,
             verbose: int = 1):
-        """Add an embedding to the index
+        """Add a single embedding to the matcher.
 
         Args:
-            embedding (FloatTensor): Record embedding as computed
-            by the model.
+            embedding: The embedding to index as computed by
+            the similarity model.
 
-            idx (int): Embedding id in the index table. Used to lookup
-            associated metadata.
+            idx: Embedding id as in the index table.
+            Returned with the embedding to allow to lookup
+            the data associated with a given embedding.
 
-            build (bool, optional): Rebuild the index after the addition.
-            Required to make it searchable. Set to false to save time,
+            build: Rebuild the index after the addition.
+            Required to make the embedding searchable.
+            Set to false to save time between successive addition.
             Defaults to True.
 
-            verbose (int, optional): [description]. Defaults to 1.
+            verbose: Be verbose. Defaults to 1.
         """
 
     @abstractmethod
@@ -33,53 +35,50 @@ class Matcher(ABC):
                   idxs: List[int],
                   build: bool = True,
                   verbose: int = 1):
-        """Add an embedding to the index
+        """Add a batch of embeddings to the matcher.
 
         Args:
-            embeddings (FloatTensor): List of embeddings to add to the
-            index.
+            embeddings: List of embeddings to add to the index.
 
-            idxs (int): Embedding id in the index table. Used to lookup
-            associated metadata.
+            idxs (int): Embedding ids as in the index table. Returned with
+            the embeddings to allow to lookup the data associated
+            with the returned embeddings.
 
-            build (bool, optional): Rebuild the index after the addition.
-            Required to make it searchable. Set to false to save time,
-            Defaults to True.
+            build: Rebuild the index after the addition. Required to
+            make the embeddings searchable. Set to false to save
+            time between successive addition. Defaults to True.
 
-            verbose (int, optional): [description]. Defaults to 1.
+            verbose: Be verbose. Defaults to 1.
         """
 
     @abstractmethod
     def lookup(self,
                embedding: FloatTensor,
                k: int = 5) -> Tuple[List[int], List[float]]:
-        """Find the embedding K nearest neighboors
+        """Find embedding K nearest neighboors embeddings.
 
         Args:
-            embedding (FloatTensor): Target embedding as predicted by
-            the model.
-            k (int, optional): Number of nearest neighboors to lookup.
-            Defaults to 5.
+            embedding: Query embedding as predicted by the model.
+            k: Number of nearest neighboors embedding to lookup. Defaults to 5.
         """
 
     @abstractmethod
     def batch_lookup(self,
                      embeddings: FloatTensor,
                      k: int = 5) -> Tuple[List[List[int]], List[List[float]]]:
-        """Find embeddings K nearest neighboors
+        """Find embeddings K nearest neighboors embeddings.
+
         Args:
-            embedding (FloatTensor): Target embedding as predicted by
-            the model.
-            k (int, optional): Number of nearest neighboors to lookup.
-            Defaults to 5.
+            embedding: Batch of query embeddings as predicted by the model.
+            k: Number of nearest neighboors embedding to lookup. Defaults to 5.
         """
 
     @abstractmethod
     def save(self, path: str):
-        """Serializes index on disk
+        """Serializes the index data on disk
 
         Args:
-            path (str): where to store the data
+            path: where to store the data
         """
 
     @abstractmethod
@@ -87,5 +86,5 @@ class Matcher(ABC):
         """load index on disk
 
         Args:
-            path (str): where to store the data
+            path: where to store the data
         """

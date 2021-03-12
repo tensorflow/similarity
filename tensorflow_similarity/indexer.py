@@ -22,7 +22,16 @@ from .metrics import EvalMetric, make_metric, F1Score
 
 
 class Indexer():
-    "Indexing system that allows to index and search them in KNN"
+    """Indexing system that allows to efficiently find nearest embeddings
+    by indexing known embeddings and make them searchable using an
+    [Approximate Nearest Neigboors Search](https://en.wikipedia.org/wiki/Nearest_neighbor_search) search implemented via the
+    [`Matcher()`](matchers/overview.md) classes and associated data lookup
+    via the [`Table()`](tables/overview.md) classes.
+
+    The indexer allows to evaluate the quality of the constructed index and
+    calibrate the [SimilarityModel.match()](similarity_model.md) function via
+    the [`Evaluator()`](evaluators/overview.md) classes.
+    """
     # semantic sugar for the order of the returned data
     EMBEDDINGS = 0
     DISTANCES = 1

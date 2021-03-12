@@ -8,6 +8,7 @@ theme:
 extra_css:
   - stylesheets/extra.css
 plugins:
+- autorefs
 - search
 - mkdocstrings:
     custom_templates: mkdocstrings
