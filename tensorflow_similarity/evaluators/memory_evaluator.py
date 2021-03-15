@@ -9,7 +9,7 @@ from tensorflow_similarity.metrics import EvalMetric, make_metric
 
 
 class MemoryEvaluator(Evaluator):
-    "In memory evaluator system"
+    """In memory index performance evaluation and calibration."""
 
     def evaluate(self,
                  index_size: int,
@@ -18,25 +18,24 @@ class MemoryEvaluator(Evaluator):
                  lookups: List[List[Dict[str, Union[float, int]]]],
                  distance_rounding: int = 8
                  ) -> Dict[str, Union[float, int]]:
-        """Evaluate lookup performances against a supplied set of metrics
+        """Evaluates lookup performances against a supplied set of metrics
 
         Args:
-            index_size (int): Size of the search index.
+            index_size: Size of the search index.
 
-            metrics (List[Union[str, EvalMetric]]): List of `EvalMetric()` to
-            evaluate lookup matches against.
+            metrics: List of `EvalMetric()` to evaluate lookup matches against.
 
-            targets_labels (List[int]): List of expected matched labels.
+            targets_labels: List of the expected labels to match.
 
-            lookups (List[List[Dict[str, Union[float, int]]]]): List of lookup
-            results as produced by the `Index()` `batch_lookup()` method.
+            lookups: List of lookup results as produced by the
+            `Index().batch_lookup()` method.
 
-            distance_rounding (int, optional): How many digit to consider to
-            decide of the distance changed. Defaults to 8.
+            distance_rounding: How many digit to consider to decide if
+            the distance changed. Defaults to 8.
 
         Returns:
-            Dict[str, Union[float, int]]: Dictionnary of metric results where
-            keys are the metric names and values are the metrics values.
+            Dictionnary of metric results where keys are the metric
+            names and values are the metrics values.
         """
         # [nn[{'distance': xxx}, ]]
         # normalize metrics
@@ -90,6 +89,33 @@ class MemoryEvaluator(Evaluator):
                   distance_rounding: int = 8,
                   metric_rounding: int = 6,
                   verbose: int = 1):
+        """Computes the distances thresholds that the calibration much match to
+        meet fixed target.
+
+        Args:
+            index_size: Index size.
+
+            calibration_metric: Metric used for calibration.
+
+            thresholds_targets: Calibration metrics thresholds that are
+            targeted. The function will find the closed distance value.
+
+            targets_labels: List of expected labels for the lookups.
+
+            lookup: List of lookup results as produced by the
+            `Index.batch_lookup()` method.
+
+            extra_metrics: Additional metrics that should be computed and
+            reported as part of the calibration. Defaults to [].
+
+            distance_rounding: How many digit to consider to
+            decide if the distance changed. Defaults to 8.
+
+            metric_rounding: How many digit to consider to decide if
+            the metric changed. Defaults to 6.
+
+            verbose: Be verbose. Defaults to 1.
+        """
 
         # distance are rounded because of numerical instablity
         # copy threshold targets as we are going to delete them and don't want
