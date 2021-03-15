@@ -8,6 +8,6 @@ Adding another backend is fairly straightforward - create subclass the abstract 
 
 ## Modules
 
-[NMSLibMatcher](nmslib.md): Default Matcher implemented on topp of the ANN library [NMSLIB](https://github.com/nmslib/nmslib).
+[NMSLibMatcher](nmslib.md): Default Matcher implemented on top of the ANN library [NMSLIB](https://github.com/nmslib/nmslib).
 
 [Matcher](matcher.md): Abstract Matcher based class.

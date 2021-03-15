@@ -6,100 +6,99 @@ from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 class Table(ABC):
 
     @abstractmethod
-    def add(self, embedding: FloatTensor,
+    def add(self,
+            embedding: FloatTensor,
             label: Optional[int] = None,
             data: Optional[Tensor] = None) -> int:
-        """Add a record to the table
+        """Add an Embedding record to the table.
 
         Args:
-            embedding (FloatTensor): Record an embedding predicted
-            by the model.
+            embedding: Embedding predicted by the model.
 
-            label (int, optional): Class numerical id. Defaults to None.
+            label: Class numerical id. Defaults to None.
 
-            data (FloatTensor, optional): Record data. Defaults to None.
+            data: Data associated with the embedding. Defaults to None.
 
         Returns:
-            int: associated record id.
+            Associated record id.
         """
-
     @abstractmethod
-    def batch_add(
-            self,
-            embeddings: List[FloatTensor],
-            labels: List[Optional[int]] = None,
-            data: List[Optional[Tensor]] = None) -> List[int]:
-        """Add a set of record to the table
+    def batch_add(self,
+                  embeddings: List[FloatTensor],
+                  labels: List[Optional[int]] = None,
+                  data: List[Optional[Tensor]] = None) -> List[int]:
+        """Add a set of embedding records to the table.
 
         Args:
-            embeddings (FloatTensor): Record the embeddings predicted
-            by the model.
+            embeddings: Embeddings predicted by the model.
 
-            labels (list(int), optional): Class numerical id. Defaults to None.
+            labels: Class numerical ids. Defaults to None.
 
-            datas (list(FloatTensor), optional): Record data.
-            Defaults to None.
+            data: Data associated with the embeddings. Defaults to None.
 
         See:
             add() for what a record contains.
 
         Returns:
-            list(int): list of associated record id.
+            List of associated record id.
         """
 
     @abstractmethod
     def get(self, idx: int) -> Tuple[FloatTensor,
                                      Optional[int],
                                      Optional[Tensor]]:
-        """Get record from the table
+        """Get an embedding record from the table
 
         Args:
-            idx (int): lookup record id to fetch.
+            idx: Id of the record to fetch.
 
         Returns:
-            record: record associated with the requested record id.
+            record associated with the requested id.
         """
 
     @abstractmethod
     def batch_get(self, idxs: List[int]
                   ) -> Tuple[List[FloatTensor], List[Optional[int]],
                              List[Optional[Tensor]]]:
-        """Get records from the table
+        """Get embedding records from the table
 
         Args:
-            idxs (List[int]): lookups record ids to fetch.
+            idxs: ids of the records to fetch.
 
         Returns:
-            Tuple(List): data associated with the requested record ids.
+            List of records associated with the requested ids.
         """
 
     @abstractmethod
     def size(self) -> int:
-        "Number of record in the table"
+        "Number of record in the table."
 
     @abstractmethod
     def save(self, path: str, compression: bool = True) -> None:
-        """Serializes index on disks
+        """Serializes index on disk.
 
         Args:
-            path (str): where to store the data.
-            compression (bool): Compress index data. Defaults to True.
+            path: Directory where to store the data.
+            compression: Compress index data. Defaults to True.
         """
 
     @abstractmethod
-    def load(self, path: str) -> None:
-        """load index on disk
+    def load(self, path: str) -> int:
+        """Load index on disk
 
         Args:
-            path (str): where to store the data
+            path: where to store the data
+
+        Returns:
+           Number of records reloaded.
         """
 
     @abstractmethod
-    def to_data_frame(self, num_items: int = 0) -> PandasDataFrame:
-        """Export data as pandas dataframe
+    def to_pandas(self, num_records: int = 0) -> PandasDataFrame:
+        """Export data as a Pandas dataframe.
 
         Args:
-            num_items (int, optional): Num items to export to the dataframe.
+            num_records: Number of records to export to the dataframe.
             Defaults to 0 (unlimited).
 
         Returns:

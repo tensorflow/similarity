@@ -341,7 +341,7 @@ class Indexer():
                   calibration_metric: Union[str, EvalMetric] = "f1_score",
                   extra_metrics: List[Union[str, EvalMetric]] = ['precision', 'recall'],  # noqa
                   rounding: int = 2,
-                  verbose: int = 1):
+                  verbose: int = 1) -> Dict[str, List[float]]:
 
         # find NN
         lookups = self.batch_lookup(predictions, verbose=verbose)
@@ -389,7 +389,7 @@ class Indexer():
     def match(self,
               predictions: FloatTensor,
               no_match_label: int = -1,
-              verbose: int = 1):
+              verbose: int = 1) -> Dict[str, List[int]]:
         """Match embeddings against the various cutpoints thresholds
 
         Args:
@@ -411,7 +411,7 @@ class Indexer():
             to.
 
         Returns:
-            dict:{cutpoint: list(bool)}
+            Matches list keyed by cutpoint names.
         """
         lookups = self.batch_lookup(predictions, k=1, verbose=verbose)
 
