@@ -83,18 +83,6 @@ def test_manhattan():
     ])
     assert tf.reduce_all(tf.math.equal(vals, expected))
 
-def test_manhattan_axis_0():
-    a = tf.convert_to_tensor([
-        [0.0, 0.0],
-        [0.0, 1.0],
-        [1.0, 1.0],
-        [3.0, 0.0]
-    ])
-    d = ManhattanDistance()
-    vals = d(a, axis=0)
-    expected = tf.constant([[0.0, 4.0], [4.0, 0.0]])
-    assert tf.reduce_all(tf.math.equal(vals, expected))
-
 def test_manhattan_same():
     a = tf.convert_to_tensor([[1.0, 1.0], [1.0, 1.0]])
     d = ManhattanDistance()

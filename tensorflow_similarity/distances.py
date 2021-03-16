@@ -9,11 +9,11 @@ class Distance(ABC):
         self.name = name
 
     @abstractmethod
-    def call(self, embeddings: FloatTensor, axis: int = 1) -> FloatTensor:
+    def call(self, embeddings: FloatTensor) -> FloatTensor:
         """Compute distance"""
 
-    def __call__(self, embeddings: FloatTensor, axis: int = 1):
-        return self.call(embeddings, axis)
+    def __call__(self, embeddings: FloatTensor):
+        return self.call(embeddings)
 
     def __str__(self) -> str:
         return self.name
@@ -32,8 +32,9 @@ class CosineDistance(Distance):
         super().__init__(name)
 
     @tf.function
-    def call(self, embeddings: FloatTensor, axis: int = 1) -> FloatTensor:
-        tensor = tf.nn.l2_normalize(embeddings, axis=axis)
+    def call(self, embeddings: FloatTensor) -> FloatTensor:
+        x_rs = tf.reshape(embeddings, shape=(embeddings.shape[0], -1))
+        tensor = tf.nn.l2_normalize(x_rs, axis=1)
         distances: FloatTensor = 1 - tf.linalg.matmul(tensor,
                                                       tensor, transpose_b=True)
         distances = tf.math.maximum(distances, 0.0)
@@ -48,10 +49,11 @@ class EuclidianDistance(Distance):
         super().__init__(name)
 
     @tf.function
-    def call(self, embeddings: FloatTensor, axis: int = 1) -> FloatTensor:
-        squared_norm = tf.math.square(embeddings)
+    def call(self, embeddings: FloatTensor) -> FloatTensor:
+        x_rs = tf.reshape(embeddings, shape=(embeddings.shape[0], -1))
+        squared_norm = tf.math.square(x_rs)
         squared_norm = tf.math.reduce_sum(squared_norm,
-                                          axis=axis,
+                                          axis=1,
                                           keepdims=True)
 
         distances: FloatTensor = 2.0 * tf.linalg.matmul(embeddings,
@@ -74,20 +76,10 @@ class ManhattanDistance(Distance):
         super().__init__(name)
 
     @tf.function
-    def call(self, embeddings: FloatTensor, axis: int = 1) -> FloatTensor:
-        shape = embeddings.shape
-        if axis == 0:
-            xA = tf.reshape(embeddings, [shape[0], shape[1], 1])
-        elif axis == 1:
-            xA = tf.reshape(embeddings, [1, shape[0], shape[1]])
-        else:
-            raise ValueError("Axis must be 0 or 1.")
-
-        xB = tf.reshape(embeddings, [shape[0], 1, shape[1]])
-
-        deltas =  xA - xB
-        distances = tf.reduce_sum(tf.abs(deltas), axis=-1* axis)
-
+    def call(self, embeddings: FloatTensor) -> FloatTensor:
+        x_rs = tf.reshape(embeddings, shape=(embeddings.shape[0], -1))
+        deltas = tf.expand_dims(x_rs, axis=1) - tf.expand_dims(x_rs, axis=0)
+        distances = tf.reduce_sum(tf.abs(deltas), axis=2)
         return distances
 
 
