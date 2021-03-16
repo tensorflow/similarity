@@ -33,7 +33,8 @@ class CosineDistance(Distance):
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
-        x_rs = tf.reshape(embeddings, shape=(embeddings.shape[0], -1))
+        print(embeddings.shape)
+        x_rs = tf.reshape(embeddings, shape=[tf.shape(embeddings)[0], -1])
         tensor = tf.nn.l2_normalize(x_rs, axis=1)
         distances: FloatTensor = 1 - tf.linalg.matmul(tensor,
                                                       tensor, transpose_b=True)
@@ -50,7 +51,7 @@ class EuclidianDistance(Distance):
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
-        x_rs = tf.reshape(embeddings, shape=(embeddings.shape[0], -1))
+        x_rs = tf.reshape(embeddings, shape=[tf.shape(embeddings)[0], -1])
         squared_norm = tf.math.square(x_rs)
         squared_norm = tf.math.reduce_sum(squared_norm,
                                           axis=1,
@@ -77,9 +78,9 @@ class ManhattanDistance(Distance):
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
-        x_rs = tf.reshape(embeddings, shape=(embeddings.shape[0], -1))
+        x_rs = tf.reshape(embeddings, shape=[tf.shape(embeddings)[0], -1])
         deltas = tf.expand_dims(x_rs, axis=1) - tf.expand_dims(x_rs, axis=0)
-        distances = tf.reduce_sum(tf.abs(deltas), axis=2)
+        distances: FloatTensor = tf.norm(deltas, 1, axis=2)
         return distances
 
 
