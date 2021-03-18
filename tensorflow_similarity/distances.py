@@ -27,7 +27,7 @@ class Distance(ABC):
 class CosineDistance(Distance):
 
     def __init__(self, name: str = None):
-        """Compute pairwises cosine distances"""
+        """Compute pairwise cosine distances"""
         name = name if name else 'cosine'
         super().__init__(name)
 
@@ -42,11 +42,11 @@ class CosineDistance(Distance):
         return distances
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class EuclidianDistance(Distance):
+class EuclideanDistance(Distance):
 
     def __init__(self, name: str = None):
-        """Compute pairwises Euclidian distances"""
-        name = name if name else 'euclidian'
+        """Compute pairwise Euclidean distances"""
+        name = name if name else 'euclidean'
         super().__init__(name)
 
     @tf.function
@@ -57,14 +57,17 @@ class EuclidianDistance(Distance):
                                           axis=1,
                                           keepdims=True)
 
-        distances: FloatTensor = 2.0 * tf.linalg.matmul(embeddings,
-                                                        embeddings,
-                                                        transpose_b=True)
+        distances: FloatTensor= 2.0 * tf.linalg.matmul(embeddings,
+                                                       embeddings,
+                                                       transpose_b=True)
         distances = squared_norm - distances + tf.transpose(squared_norm)
 
-        # Avoid NaN gradients when back propegating through the sqrt.
-        distances = tf.math.maximum(distances, 1e-16)
-        distances = tf.math.sqrt(distances)
+        # Avoid NaN and inf gradients when back propagating through the sqrt.
+        # values smaller than 1e-18 produce inf for the gradient, and 0.0 produces NaN.
+        # All values smaller than 1e-13 should produce a gradient of 1.0.
+        dist_mask = tf.math.greater_equal(distances, 1e-18)
+        distances = tf.math.maximum(distances, 1e-18)
+        distances = tf.math.sqrt(distances) * tf.cast(dist_mask, tf.float32)
 
         return distances
 
@@ -72,7 +75,7 @@ class EuclidianDistance(Distance):
 class ManhattanDistance(Distance):
 
     def __init__(self, name: str = None):
-        """Compute pairwises manhattan distances"""
+        """Compute pairwise Manhattan distances"""
         name = name if name else 'manhattan'
         super().__init__(name)
 
@@ -95,8 +98,8 @@ def distance_canonicalizer(distance: Union[Distance, str]) -> Distance:
     """
     mapping = {
         'cosine': 'cosine',
-        'euclidian': 'euclidian',
-        'l2': 'euclidian',
+        'euclidean': 'euclidean',
+        'l2': 'euclidean',
         'l1': 'manhattan',
     }
 
@@ -110,8 +113,8 @@ def distance_canonicalizer(distance: Union[Distance, str]) -> Distance:
         # instanciating
         if distance_name == 'cosine':
             return CosineDistance()
-        elif distance_name == 'euclidian':
-            return EuclidianDistance()
+        elif distance_name == 'euclidean':
+            return EuclideanDistance()
         elif distance_name == 'manhattan':
             return ManhattanDistance()
 

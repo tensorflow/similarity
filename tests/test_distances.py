@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from tensorflow_similarity.distances import CosineDistance
-from tensorflow_similarity.distances import EuclidianDistance
+from tensorflow_similarity.distances import EuclideanDistance
 from tensorflow_similarity.distances import ManhattanDistance
 
 
@@ -48,23 +48,23 @@ def test_cosine_vals():
 
 def test_euclidean():
     a = tf.convert_to_tensor([[0.0, 3.0], [4.0, 0.0]])
-    d = EuclidianDistance()
+    d = EuclideanDistance()
     vals = d(a)
-    assert tf.reduce_all(tf.math.equal(vals, tf.constant([[1e-8, 5.0],[5.0, 1e-8]])))
+    assert tf.reduce_all(tf.math.equal(vals, tf.constant([[0.0, 5.0],[5.0, 0.0]])))
 
 
 def test_euclidean_same():
     a = tf.convert_to_tensor([[1.0, 1.0], [1.0, 1.0]])
-    d = EuclidianDistance()
+    d = EuclideanDistance()
     vals = d(a)
     assert tf.round(tf.reduce_sum(vals)) == 0
 
 
 def test_euclidean_opposite():
     a = tf.convert_to_tensor([[0.0, 1.0], [0.0, -1.0]])
-    d = EuclidianDistance()
+    d = EuclideanDistance()
     vals = d(a)
-    assert tf.reduce_all(tf.math.equal(vals, tf.constant([[1e-8, 2.0],[2.0, 1e-8]])))
+    assert tf.reduce_all(tf.math.equal(vals, tf.constant([[0.0, 2.0],[2.0, 0.0]])))
 
 def test_manhattan():
     a = tf.convert_to_tensor([

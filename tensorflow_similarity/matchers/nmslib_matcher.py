@@ -15,7 +15,7 @@ class NMSLibMatcher(Matcher):
 
         if distance.name == 'cosine':
             space = 'cosinesimil'
-        elif distance.name == 'euclidian':
+        elif distance.name == 'euclidean':
             space = 'l2'
         elif distance.name == 'manhattan':
             space = 'l1'
