@@ -339,7 +339,7 @@ class Indexer():
                   thresholds_targets: Dict[str, float],
                   k: int = 1,
                   calibration_metric: Union[str, EvalMetric] = "f1_score",
-                  extra_metrics: List[Union[str, EvalMetric]] = ['precision', 'recall'],  # noqa
+                  extra_metrics: List[Union[str, EvalMetric]] = ['accuracy', 'recall'],  # noqa
                   rounding: int = 2,
                   verbose: int = 1) -> Dict[str, List[float]]:
 
@@ -377,7 +377,7 @@ class Indexer():
             rows = []
             for data in cutpoints.values():
                 rows.append([data[v] for v in headers])
-            print(tabulate(rows, headers=headers))
+            print("\n", tabulate(rows, headers=headers))
 
         # store info for serialization purpose
         self.is_calibrated = True

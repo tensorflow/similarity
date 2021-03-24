@@ -61,7 +61,6 @@ class MemoryEvaluator(Evaluator):
                     match_distances[lidx] = round(n['distance'],
                                                   distance_rounding)
                     num_matched += 1
-        num_unmatched = len(targets_labels) - num_matched
 
         # compute metrics
         evaluation = {}
@@ -69,8 +68,6 @@ class MemoryEvaluator(Evaluator):
             evaluation[m.name] = m.compute(
                 max_k,
                 targets_labels,
-                num_matched,
-                num_unmatched,
                 index_size,
                 match_ranks,
                 match_distances,

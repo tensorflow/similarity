@@ -1,5 +1,5 @@
 from tensorflow_similarity.metrics import MinRank, MeanRank, MaxRank
-from tensorflow_similarity.metrics import Accuracy, Precision, Recall, F1Score
+from tensorflow_similarity.metrics import Accuracy, Recall, F1Score
 
 MAX_K = 0
 TARGETS_LABELS = 1
@@ -13,8 +13,6 @@ MATCH_LABELS = 7
 TEST_VECTORS = [[
     3,  # max_k
     [1, 2, 3, 4],  # targets_labels
-    3,  # num_matched
-    1,  # num_unmatched
     30,  # index size
     [2, 1, 2, 0],  # match_ranks
     [0.1, 0.2, 0.3, 0],  # match_distances
@@ -52,7 +50,7 @@ TEST_VECTORS = [[
 
 
 def compute_vector(m, v):
-    return m.compute(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7])
+    return m.compute(v[0], v[1], v[2], v[3], v[4], v[5])
 
 
 def test_mean_rank():

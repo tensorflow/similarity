@@ -157,7 +157,7 @@ class MemoryTable(Table):
             raise ValueError("Index file not found")
         return str(fname)
 
-    def to_pandas(self, num_records: int = 0) -> PandasDataFrame:
+    def to_data_frame(self, num_records: int = 0) -> PandasDataFrame:
         """Export data as a Pandas dataframe.
 
         Args:
