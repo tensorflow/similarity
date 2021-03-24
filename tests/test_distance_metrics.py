@@ -3,6 +3,7 @@ from tensorflow_similarity.distance_metrics import DistanceMetric
 from tensorflow_similarity.distance_metrics import DistanceGapMetric
 from tensorflow_similarity.distances import CosineDistance
 from tensorflow_similarity.types import FloatTensor
+
 EMB1 = [
     [0.5, 1, 0.5],
     [0.2, 0.8, 0.4],
@@ -25,7 +26,7 @@ def cosine(a: FloatTensor, b: FloatTensor, axis: int = -1) -> FloatTensor:
 
 
 def compute_metric(distance, aggregate, labels, embeddings):
-    "Inner function that call the core class"
+    'Inner function that call the core class'
     metric = DistanceMetric(distance, aggregate=aggregate)
     metric.update_state(labels, embeddings, None)
     return metric.result()
@@ -49,53 +50,52 @@ def test_distance_metric_serialize():
     assert metric.result() == metric2.result()
 
 
-def test_avg_positive():
+class DistanceMetricsTest(tf.test.TestCase):
 
-    agg = ['avg', tf.reduce_mean]
+    def test_avg_positive(self):
 
-    # metric computation
-    metric_val = compute_metric('cosine', agg[0], LABELS, EMBEDDINGS)
+        agg = ['avg', tf.reduce_mean]
 
-    # manual computation
-    hard_distances = manual_hard_mining(cosine, EMB1, EMB2)
-    manual_val = agg[1](hard_distances)
-    assert metric_val == manual_val
+        # metric computation
+        metric_val = compute_metric('cosine', agg[0], LABELS, EMBEDDINGS)
 
+        # manual computation
+        hard_distances = manual_hard_mining(cosine, EMB1, EMB2)
+        manual_val = agg[1](hard_distances)
+        self.assertAllClose(metric_val, manual_val)
 
-def test_sum_positive():
-    agg = ['sum', tf.reduce_sum]
+    def test_sum_positive(self):
+        agg = ['sum', tf.reduce_sum]
 
-    # metric computation
-    metric_val = compute_metric('cosine', agg[0], LABELS, EMBEDDINGS)
+        # metric computation
+        metric_val = compute_metric('cosine', agg[0], LABELS, EMBEDDINGS)
 
-    # manual computation
-    hard_distances = manual_hard_mining(cosine, EMB1, EMB2)
-    manual_val = agg[1](hard_distances)
-    assert metric_val == manual_val
+        # manual computation
+        hard_distances = manual_hard_mining(cosine, EMB1, EMB2)
+        manual_val = agg[1](hard_distances)
+        self.assertAllClose(metric_val, manual_val)
 
+    def test_max_positive(self):
+        agg = ['max', tf.reduce_max]
 
-def test_max_positive():
-    agg = ['max', tf.reduce_max]
+        # metric computation
+        metric_val = compute_metric('cosine', agg[0], LABELS, EMBEDDINGS)
 
-    # metric computation
-    metric_val = compute_metric('cosine', agg[0], LABELS, EMBEDDINGS)
+        # manual computation
+        hard_distances = manual_hard_mining(cosine, EMB1, EMB2)
+        manual_val = agg[1](hard_distances)
+        self.assertAllClose(metric_val, manual_val)
 
-    # manual computation
-    hard_distances = manual_hard_mining(cosine, EMB1, EMB2)
-    manual_val = agg[1](hard_distances)
-    assert metric_val == manual_val
+    def test_min_positive(self):
+        agg = ['min', tf.reduce_min]
 
+        # metric computation
+        metric_val = compute_metric('cosine', agg[0], LABELS, EMBEDDINGS)
 
-def test_min_positive():
-    agg = ['min', tf.reduce_min]
-
-    # metric computation
-    metric_val = compute_metric('cosine', agg[0], LABELS, EMBEDDINGS)
-
-    # manual computation
-    hard_distances = manual_hard_mining(cosine, EMB1, EMB2)
-    manual_val = agg[1](hard_distances)
-    assert metric_val == manual_val
+        # manual computation
+        hard_distances = manual_hard_mining(cosine, EMB1, EMB2)
+        manual_val = agg[1](hard_distances)
+        self.assertAllClose(metric_val, manual_val)
 
 
 def test_gap():
