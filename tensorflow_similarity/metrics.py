@@ -137,7 +137,7 @@ class EvalMetric(ABC):
     def compute_retrival_metrics(self,
                                  targets_labels: List[int],
                                  lookups: List[List[Dict[str, Union[float, int]]]],  # noqa
-                                ) -> Tuple[int, int, int]:
+                                ) -> Tuple[int, int, int, int]:
         true_positives = 0
         false_positives = 0
         true_negative = 0

@@ -2,6 +2,8 @@
 
 ## Modules
 
+**FIXME**: Add more data.
+
 [Indexer](indexer.md): Build, manage and make embeddings databases searcheable.
 
 [Matchers](matchers/overview.md): Efficiently find nearest embeddings by
