@@ -97,8 +97,8 @@ class SingleShotMemorySampler(Sampler):
                                  minval=0,
                                  maxval=self.num_elts,
                                  dtype='int32')
-        # don't forget to cast for speed
-        y = tf.constant([int(i) for i in idxs], dtype='int32')
-        x = tf.constant([self.x[idx] for idx in y], dtype='float')
+        # ! don't cast data as different model use different type.
+        y = tf.constant([int(i) for i in idxs])
+        x = tf.constant([self.x[idx] for idx in y])
 
         return x, y
