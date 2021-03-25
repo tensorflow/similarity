@@ -172,7 +172,8 @@ class MeanRank(EvalMetric):
         matches = self.filter_ranks(match_ranks,
                                     match_distances,
                                     max_rank=max_k)
-        return float(tf.reduce_mean(matches))
+        # ! must cast matches before computing to avoid rounding
+        return float(tf.reduce_mean(tf.cast(matches, dtype='float')))
 
 
 class MinRank(EvalMetric):

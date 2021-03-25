@@ -16,6 +16,12 @@ to be ready for initial  release.
 - All major classes are properly documented
 - All major classes are typed.
 
+## Major fixes
+
+- Mean metric now properly return fractional ranks.
+- Evaluation Callback properly work on multioutput.
+- Memory samplers now properly work on arbitrary tensor type.
+
 ## 0.9.x - Muli-output support
 
 This release focuses on refactoring the code to support cleanly multi-output
