@@ -141,7 +141,7 @@ class Indexer():
             FloatTensor: 1D Tensor that contains the actual embedding
         """
 
-        if self.embedding_output:
+        if isinstance(self.embedding_output, int):
             # in multi-output: embedding is [output_num][0]
             embedding: FloatTensor = prediction[self.embedding_output][0]
         else:
@@ -159,7 +159,7 @@ class Indexer():
             Tensor: 2D Tensor (num_embeddings, embedding_value)
         """
 
-        if self.embedding_output:
+        if isinstance(self.embedding_output, int):
             embeddings: FloatTensor = predictions[self.embedding_output]
         else:
             # needed for typing
