@@ -146,7 +146,7 @@ class SimilarityModel(functional.Functional):
                   thresholds_targets: Dict[str, float] = {},
                   k: int = 1,
                   calibration_metric: Union[str, EvalMetric] = "f1_score",
-                  extra_metrics: List[Union[str, EvalMetric]] = ['precision', 'recall'],  # noqa
+                  extra_metrics: List[Union[str, EvalMetric]] = ['accuracy', 'recall'],  # noqa
                   rounding: int = 2,
                   verbose: int = 1):
 
@@ -216,7 +216,7 @@ class SimilarityModel(functional.Functional):
                           x,
                           y,
                           k=1,
-                          extra_metrics=['accuracy', 'precision', 'recall'],
+                          extra_metrics=['accuracy', 'recall'],
                           verbose=1):
         """Evaluate model matching accuracy on a given dataset.
 

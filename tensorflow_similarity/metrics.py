@@ -47,16 +47,31 @@ class EvalMetric(ABC):
         self,
         max_k: int,
         targets_labels: List[int],
-        num_matched: int,
-        num_unmatched: int,
         index_size: int,
         match_ranks: List[int],
         match_distances: List[float],
         lookups: List[List[Dict[str, Union[float, int]]]]
                 ) -> Union[int, float]:
-        pass
-        # match_ranks: rank 0 is unmatched, rank1 is first neighbopor, rank2..
-        # match_distance: distance 0 means infinite, rest is match distances
+        """Compute the metric
+
+        Args:
+            max_k: Number of neigboors considers during the retrieval.
+
+            targets_labels: Expected labels for the query. One label per query.
+            index_size: Total size of the index.
+
+            match_ranks: Minimal rank at which the targeted label is matched.
+            For example if the label is matched by the 2nd closest neigboors
+            then match rank is 2. If there is no match then value 0.
+
+            match_distances: Minimal distance at which the targeted label is
+            matched. Mirror the *match_rank* arg.
+
+            lookups: Full index lookup results to compute more advance metrics.
+
+        Returns:
+            metric results.
+        """
 
     def _suffix_name(self,
                      name: str,
@@ -80,16 +95,23 @@ class EvalMetric(ABC):
         """Filter match ranks to only keep matches between `min_rank`
         and `max_rank` below a give distance.
 
-        Args:
-            match_ranks (List[int]): [description]
-            min_rank (int, optional): Minimal rank to keep (inclusive).
-            Defaults to 1.
+        Notes:
+            Neigboors are order by ascending distance.
 
-            max_rank (int, optional): Max rank to keep (inclusive).
-            Defaults to None. If None will keep all ranks above `min_rank`
+
+        Args:
+            match_ranks: Min rank at which the embedding match the correct
+            label. For example, rank 1 is the closest neigboor,
+            Rank 5 is the 5th neigboor. There might be neigboors with
+            higher ranks that are from a different class.
+
+            min_rank: Minimal rank to keep (inclusive). Defaults to 1.
+
+            max_rank: Max rank to keep (inclusive). Defaults to None.
+            If None will keep all ranks above `min_rank`
 
         Returns:
-            List[int]: filtered ranks as a dense array with missing elements
+            filtered ranks as a dense array with missing elements
             removed. len(filtered_ranks) <= len(match_ranks)
         """
         filtered_ranks = []
@@ -113,23 +135,26 @@ class EvalMetric(ABC):
         return filtered_ranks
 
     def compute_retrival_metrics(self,
-                                 targets_labels,
-                                 lookups,
-                                 k) -> Tuple[int, int, int]:
+                                 targets_labels: List[int],
+                                 lookups: List[List[Dict[str, Union[float, int]]]],  # noqa
+                                ) -> Tuple[int, int, int, int]:
         true_positives = 0
         false_positives = 0
+        true_negative = 0
         false_negative = 0
         for lidx, lookup in enumerate(lookups):
-            for n in lookup[:k]:
-                if n['distance'] > self.distance_threshold:
+            for n in lookup[:self.k]:
+                if self.distance_threshold and n['distance'] > self.distance_threshold:  # noqa
                     if n['label'] == targets_labels[lidx]:
                         false_negative += 1
+                    else:
+                        true_negative += 1
                 else:
                     if n['label'] == targets_labels[lidx]:
                         true_positives += 1
                     else:
                         false_positives += 1
-        return true_positives, false_positives, false_negative
+        return true_positives, false_positives, false_negative, true_negative
 
 
 class MeanRank(EvalMetric):
@@ -138,8 +163,8 @@ class MeanRank(EvalMetric):
                          canonical_name='mean_rank',
                          name=name)
 
-    def compute(self, max_k: int, targets_labels: List[int], num_matched: int,
-                num_unmatched: int, index_size: int, match_ranks: List[int],
+    def compute(self, max_k: int, targets_labels: List[int], index_size: int,
+                match_ranks: List[int],
                 match_distances: List[float],
                 lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
 
@@ -147,15 +172,16 @@ class MeanRank(EvalMetric):
         matches = self.filter_ranks(match_ranks,
                                     match_distances,
                                     max_rank=max_k)
-        return float(tf.reduce_mean(matches))
+        # ! must cast matches before computing to avoid rounding
+        return float(tf.reduce_mean(tf.cast(matches, dtype='float')))
 
 
 class MinRank(EvalMetric):
     def __init__(self, name='min_rank') -> None:
         super().__init__(direction='min', canonical_name='min_rank', name=name)
 
-    def compute(self, max_k: int, targets_labels: List[int], num_matched: int,
-                num_unmatched: int, index_size: int, match_ranks: List[int],
+    def compute(self, max_k: int, targets_labels: List[int],
+                index_size: int, match_ranks: List[int],
                 match_distances: List[float],
                 lookups: List[List[Dict[str, Union[float, int]]]]) -> int:
 
@@ -170,8 +196,8 @@ class MaxRank(EvalMetric):
     def __init__(self, name='max_rank') -> None:
         super().__init__(direction='min', canonical_name='max_rank', name=name)
 
-    def compute(self, max_k: int, targets_labels: List[int], num_matched: int,
-                num_unmatched: int, index_size: int, match_ranks: List[int],
+    def compute(self, max_k: int, targets_labels: List[int],
+                index_size: int, match_ranks: List[int],
                 match_distances: List[float],
                 lookups: List[List[Dict[str, Union[float, int]]]]) -> int:
 
@@ -183,8 +209,12 @@ class MaxRank(EvalMetric):
 
 
 class Accuracy(EvalMetric):
-    """How many correct matches are returned for the given paramters
-    probably the most important metric. Accuracy can be at k=1 when
+    """How many correct matches are returned for the given set pf parameters
+    Probably the most important metric. Binary accuracy and match() is when
+    k=1.
+
+    num_matches / num_queries
+
     """
     def __init__(self,
                  distance_threshold: float = None,
@@ -196,20 +226,23 @@ class Accuracy(EvalMetric):
                          k=k,
                          distance_threshold=distance_threshold)
 
-    def compute(self, max_k: int, targets_labels: List[int], num_matched: int,
-                num_unmatched: int, index_size: int, match_ranks: List[int],
-                match_distances: List[float],
+    def compute(self, max_k: int, targets_labels: List[int], index_size: int,
+                match_ranks: List[int], match_distances: List[float],
                 lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
         matches = self.filter_ranks(match_ranks,
                                     match_distances,
                                     max_rank=self.k,
                                     distance=self.distance_threshold)
 
-        # FIMXE: wrong -- the denom needs to also be filtered
-        return len(matches) / len(targets_labels)
+        num_queries = len(targets_labels)
+        num_matches = len(matches)
+        return num_matches / num_queries
 
 
-class Precision(EvalMetric):
+
+#FIXME:precision@k and precision:T to be written.
+# ThresholdPrecision and RankPrecision()
+class FIXMEPrecision(EvalMetric):
     """ Compute the precision of the matches.
 
     Notes: precision computation for similarity is different from
@@ -232,13 +265,11 @@ class Precision(EvalMetric):
                          k=k,
                          distance_threshold=distance_threshold)
 
-    def compute(self, max_k: int, targets_labels: List[int], num_matched: int,
-                num_unmatched: int, index_size: int, match_ranks: List[int],
-                match_distances: List[float],
+    def compute(self, max_k: int, targets_labels: List[int], index_size: int,
+                match_ranks: List[int], match_distances: List[float],
                 lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
 
-        tp, fp, _ = self.compute_retrival_metrics(targets_labels, lookups,
-                                                   self.k)
+        tp, fp, _, _ = self.compute_retrival_metrics(targets_labels, lookups)
 
         denominator = tp + fp
         if denominator:
@@ -250,7 +281,7 @@ class Precision(EvalMetric):
 class Recall(EvalMetric):
     """Computing matcher recall at k for a given distance threshold
 
-    Recall formula: `true_positive / (true_positive + false_negative)`
+    Recall formula: num_misses / num_queries
     """
     def __init__(self,
                  distance_threshold: float = 0.5,
@@ -262,18 +293,18 @@ class Recall(EvalMetric):
                          k=k,
                          distance_threshold=distance_threshold)
 
-    def compute(self, max_k: int, targets_labels: List[int], num_matched: int,
-                num_unmatched: int, index_size: int, match_ranks: List[int],
-                match_distances: List[float],
+    def compute(self, max_k: int, targets_labels: List[int], index_size: int,
+                match_ranks: List[int], match_distances: List[float],
                 lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
 
-        tp, _, fn = self.compute_retrival_metrics(targets_labels, lookups,
-                                                  self.k)
-        denominator = tp + fn
-        if denominator:
-            return tp / denominator
-        else:
-            return 0.0
+        matches = self.filter_ranks(match_ranks,
+                                    match_distances,
+                                    max_rank=self.k,
+                                    distance=self.distance_threshold)
+        num_queries = len(targets_labels)
+        num_matches = len(matches)
+        misses = num_queries - num_matches
+        return misses / num_queries
 
 
 class F1Score(EvalMetric):
@@ -282,8 +313,13 @@ class F1Score(EvalMetric):
 
     https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html
 
+    notes:
+        **This is not the traditional formula** its over query set
+        not index set. To be meaningful this assumes that each of the
+        query have at least 1 matching example in the index.
+        See paper for details
 
-    f1_score formula is: `2 * (precision * recall) / (precision + recall)`
+    f1_score formula is: `2 * (accuracy * recall) / (accuracy + recall)`
 
     """
     def __init__(self,
@@ -296,16 +332,21 @@ class F1Score(EvalMetric):
                          k=k,
                          distance_threshold=distance_threshold)
 
-    def compute(self, max_k: int, targets_labels: List[int], num_matched: int,
-                num_unmatched: int, index_size: int, match_ranks: List[int],
-                match_distances: List[float],
+    def compute(self, max_k: int, targets_labels: List[int], index_size: int,
+                match_ranks: List[int], match_distances: List[float],
                 lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
 
-        tp, fp, fn = self.compute_retrival_metrics(targets_labels, lookups,
-                                                   self.k)
+        matches = self.filter_ranks(match_ranks,
+                                    match_distances,
+                                    max_rank=self.k,
+                                    distance=self.distance_threshold)
 
-        precision = tp / (tp + fp) if tp + fp else 1.0
-        recall = tp / (tp + fn) if tp + fn else 0.0
+        num_queries = len(targets_labels)
+        num_matches = len(matches)
+        num_misses = num_queries - num_matches
+
+        precision = num_matches / num_queries
+        recall = num_misses / num_queries
 
         return 2 * (precision * recall) / (precision + recall)
 
@@ -329,8 +370,6 @@ def make_metric(metric: Union[str, EvalMetric]) -> EvalMetric:
         "acc": Accuracy(),
         # recall
         "recall": Recall(),
-        # precision
-        "precision": Precision(),
         # f1 score
         "f1_score": F1Score(),
         "f1": F1Score(),

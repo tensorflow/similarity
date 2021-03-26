@@ -104,7 +104,7 @@ def test_basic_flow(tmp_path):
     # # evaluation
     metrics = model.evaluate_matching(x, y)
     assert 'optimal' in metrics
-    assert 0 <= metrics['optimal']['precision'] <= 1
+    assert 0 <= metrics['optimal']['accuracy'] <= 1
     assert 0 <= metrics['optimal']['recall'] <= 1
     assert 0 <= metrics['optimal']['f1_score'] <= 1
 
