@@ -2,14 +2,22 @@ import nmslib
 from pathlib import Path
 from typing import List, Tuple
 
-from tensorflow_similarity.distances import distance_canonicalizer
+from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from .matcher import Matcher
 from tensorflow_similarity.types import FloatTensor
 
 
 class NMSLibMatcher(Matcher):
+    """
+    Efficiently find nearest embeddings by indexing known embeddings and make
+    them searchable using the  [Approximate Nearest Neigboors Search](https://en.wikipedia.org/wiki/Nearest_neighbor_search)
+    search library [NMSLIB](https://github.com/nmslib/nmslib).
+    """
 
-    def __init__(self, distance='cosine', algorithm='nmslib_hnsw', verbose=1):
+    def __init__(self,
+                 distance: Distance,
+                 algorithm: str = 'nmslib_hnsw',
+                 verbose: int = 1):
 
         distance = distance_canonicalizer(distance)
 
@@ -36,17 +44,19 @@ class NMSLibMatcher(Matcher):
         """Add an embedding to the index
 
         Args:
-            embedding (FloatTensor): Record embedding as computed
-            by the model.
+            embedding: The embedding to index as computed by
+            the similarity model.
 
-            idx (int): Embedding id in the index table. Used to lookup
-            associated metadata.
+            idx: Embedding id as in the index table.
+            Returned with the embedding to allow to lookup
+            the data associated with a given embedding.
 
-            build (bool, optional): Rebuild the index after the addition.
-            Required to make it searchable. Set to false to save time,
+            build: Rebuild the index after the addition.
+            Required to make the embedding searchable.
+            Set to false to save time between successive addition.
             Defaults to True.
 
-            verbose (int, optional): [description]. Defaults to 1.
+            verbose: Be verbose. Defaults to 1.
         """
         self._matcher.addDataPoint(idx, embedding)
         if build:
@@ -57,20 +67,20 @@ class NMSLibMatcher(Matcher):
                   idxs: List[int],
                   build: bool = True,
                   verbose: int = 1):
-        """Add an embedding to the index
+        """Add a batch of embeddings to the matcher.
 
         Args:
-            embeddings (FloatTensor): List of embeddings to add to the
-            index.
+            embeddings: List of embeddings to add to the index.
 
-            idxs (int): Embedding id in the index table. Used to lookup
-            associated metadata.
+            idxs (int): Embedding ids as in the index table. Returned with
+            the embeddings to allow to lookup the data associated
+            with the returned embeddings.
 
-            build (bool, optional): Rebuild the index after the addition.
-            Required to make it searchable. Set to false to save time,
-            Defaults to True.
+            build: Rebuild the index after the addition. Required to
+            make the embeddings searchable. Set to false to save
+            time between successive addition. Defaults to True.
 
-            verbose (int, optional): [description]. Defaults to 1.
+            verbose: Be verbose. Defaults to 1.
         """
         # !addDataPoint and addDataPointBAtch have inverted parameters
         if verbose:
@@ -85,13 +95,11 @@ class NMSLibMatcher(Matcher):
     def lookup(self,
                embedding: FloatTensor,
                k: int = 5) -> Tuple[List[int], List[float]]:
-        """Find the embedding K nearest neighboors
+        """Find embedding K nearest neighboors embeddings.
 
         Args:
-            embedding (FloatTensor): Target embedding as predicted by
-            the model.
-            k (int, optional): Number of nearest neighboors to lookup.
-            Defaults to 5.
+            embedding: Query embedding as predicted by the model.
+            k: Number of nearest neighboors embedding to lookup. Defaults to 5.
         """
         idxs: List[int] = []
         distances: List[float] = []
@@ -101,12 +109,11 @@ class NMSLibMatcher(Matcher):
     def batch_lookup(self,
                      embeddings: FloatTensor,
                      k: int = 5) -> Tuple[List[List[int]], List[List[float]]]:
-        """Find embeddings K nearest neighboors
+        """Find embeddings K nearest neighboors embeddings.
+
         Args:
-            embedding (FloatTensor): Target embedding as predicted by
-            the model.
-            k (int, optional): Number of nearest neighboors to lookup.
-            Defaults to 5.
+            embedding: Batch of query embeddings as predicted by the model.
+            k: Number of nearest neighboors embedding to lookup. Defaults to 5.
         """
         batch_idxs = []
         batch_distances = []
@@ -120,10 +127,10 @@ class NMSLibMatcher(Matcher):
         return batch_idxs, batch_distances
 
     def save(self, path: str):
-        """Serializes index on disk
+        """Serializes the index data on disk
 
         Args:
-            path (str): where to store the data
+            path: where to store the data
         """
         fname = self.__make_fname(path)
         self._matcher.saveIndex(fname, save_data=True)
@@ -132,7 +139,7 @@ class NMSLibMatcher(Matcher):
         """load index on disk
 
         Args:
-            path (str): where to store the data
+            path: where to store the data
         """
         fname = self.__make_fname(path)
         self._matcher.loadIndex(fname, load_data=True)

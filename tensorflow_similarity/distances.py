@@ -10,7 +10,15 @@ class Distance(ABC):
 
     @abstractmethod
     def call(self, embeddings: FloatTensor, axis: int = 1) -> FloatTensor:
-        """Compute distance"""
+        """Compute pairwise distances for a given batch.
+
+        Args:
+            embeddings: Embeddings to compute the pairwise one.
+            axis: Which axis the embeddings are on. Defaults to 1.
+
+        Returns:
+            FloatTensor: Pairwise distance tensor.
+        """
 
     def __call__(self, embeddings: FloatTensor, axis: int = 1):
         return self.call(embeddings, axis)
@@ -23,32 +31,66 @@ class Distance(ABC):
             "name": self.name
         }
 
+
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class CosineDistance(Distance):
+    """Compute pairwises cosine distances between embeddings.
 
+    The [Cosine Distance](https://en.wikipedia.org/wiki/Cosine_similarity) is
+    an angular distance that varies from 0 (similar) to 1 (disimilar).
+    """
     def __init__(self, name: str = None):
-        """Compute pairwises cosine distances"""
+        "Init Euclidian distance"
         name = name if name else 'cosine'
         super().__init__(name)
 
     @tf.function
     def call(self, embeddings: FloatTensor, axis: int = 1) -> FloatTensor:
+        """Compute pairwise distances for a given batch of embeddings.
+
+        Args:
+            embeddings: Embeddings to compute the pairwise one.
+            axis: Which axis the embeddings are on. Defaults to 1.
+
+        Returns:
+            FloatTensor: Pairwise distance tensor.
+        """
         tensor = tf.nn.l2_normalize(embeddings, axis=axis)
         distances: FloatTensor = 1 - tf.linalg.matmul(tensor,
                                                       tensor, transpose_b=True)
         distances = tf.math.maximum(distances, 0.0)
         return distances
 
+
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class EuclidianDistance(Distance):
+    """Compute pairwises euclidian distances between embeddings.
+
+    The [Euclidian Distance](https://en.wikipedia.org/wiki/Euclidean_distance)
+    is the standard distance to measure the line segment between two embedding
+    in the cartesian point. The larger the distance the more disimilar
+    the embeddings are.
+
+    **Alias**: L2 Norm, Pythagorian
+    """
 
     def __init__(self, name: str = None):
-        """Compute pairwises Euclidian distances"""
+
         name = name if name else 'euclidian'
         super().__init__(name)
 
     @tf.function
     def call(self, embeddings: FloatTensor, axis: int = 1) -> FloatTensor:
+        """Compute pairwise distances for a given batch of embeddings.
+
+        Args:
+            embeddings: Embeddings to compute the pairwise one.
+
+            axis: Which axis the embeddings are on. Defaults to 1.
+
+        Returns:
+            FloatTensor: Pairwise distance tensor.
+        """
         squared_norm = tf.math.square(embeddings)
         squared_norm = tf.math.reduce_sum(squared_norm,
                                           axis=axis,
@@ -78,6 +120,7 @@ def distance_canonicalizer(distance: Union[Distance, str]) -> Distance:
     mapping = {
         'cosine': 'cosine',
         'euclidian': 'euclidian',
+        'pythagorean': 'euclidian',
         'l2': 'euclidian'
     }
 

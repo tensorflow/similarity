@@ -15,7 +15,7 @@
 """Metric losses
 
 References
-    - Original paper: FaceNet: A Unified Embedding for Face Recognition
+    - : FaceNet: A Unified Embedding for Face Recognition
     and Clustering: https://arxiv.org/abs/1503.03832
 
     - Mining strategies:
@@ -123,7 +123,7 @@ def triplet_loss(labels: List[int],
     return triplet_loss
 
 
-class LossFunctionWrapper(tf.keras.losses.Loss):
+class MetricLoss(tf.keras.losses.Loss):
     """Wraps a loss function in the `Loss` class."""
 
     def __init__(
@@ -173,7 +173,7 @@ class LossFunctionWrapper(tf.keras.losses.Loss):
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class TripletLoss(LossFunctionWrapper):
+class TripletLoss(MetricLoss):
     """Computes the triplet loss in an online fashion.
 
     This loss encourages the positive distances between a pair of embeddings

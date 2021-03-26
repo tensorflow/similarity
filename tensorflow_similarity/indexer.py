@@ -22,7 +22,16 @@ from .metrics import EvalMetric, make_metric, F1Score
 
 
 class Indexer():
-    "Indexing system that allows to index and search them in KNN"
+    """Indexing system that allows to efficiently find nearest embeddings
+    by indexing known embeddings and make them searchable using an
+    [Approximate Nearest Neigboors Search](https://en.wikipedia.org/wiki/Nearest_neighbor_search)
+    search implemented via the [`Matcher()`](matchers/overview.md) classes
+    and associated data lookup via the [`Table()`](tables/overview.md) classes.
+
+    The indexer allows to evaluate the quality of the constructed index and
+    calibrate the [SimilarityModel.match()](similarity_model.md) function via
+    the [`Evaluator()`](evaluators/overview.md) classes.
+    """
     # semantic sugar for the order of the returned data
     EMBEDDINGS = 0
     DISTANCES = 1
@@ -132,7 +141,7 @@ class Indexer():
             FloatTensor: 1D Tensor that contains the actual embedding
         """
 
-        if self.embedding_output:
+        if isinstance(self.embedding_output, int):
             # in multi-output: embedding is [output_num][0]
             embedding: FloatTensor = prediction[self.embedding_output][0]
         else:
@@ -150,7 +159,7 @@ class Indexer():
             Tensor: 2D Tensor (num_embeddings, embedding_value)
         """
 
-        if self.embedding_output:
+        if isinstance(self.embedding_output, int):
             embeddings: FloatTensor = predictions[self.embedding_output]
         else:
             # needed for typing
@@ -227,17 +236,17 @@ class Indexer():
         idxs = self.table.batch_add(embeddings, labels, data)
         self.matcher.batch_add(embeddings, idxs, build=build, verbose=verbose)
 
-    def single_lookup(self,
-                      prediction: FloatTensor,
-                      k: int = 5):
-        """Find the k closest match of a given embedding
+    def single_lookup(
+            self,
+            prediction: FloatTensor,
+            k: int = 5):
+        """Find the k closest matches of a given embedding
 
         Args:
             prediction: model prediction.
             k: Number of nearest neighboors to lookup. Defaults to 5.
         Returns
-            list(dicts): [{"embedding", "distance", "label", "data"}]
-
+            list of the k nearest neigboors info: `{"embedding", "distance", "label", "data"}`  # noqa
         """
 
         embedding = self._get_embedding(prediction)
@@ -266,13 +275,14 @@ class Indexer():
                      threads: int = None,
                      verbose: int = 1):
 
-        """Find the k closest match of a set of embeddings
+        """Find the k closest matches for a set of embeddings
 
         Args:
             predictions: model predictions.
             k: Number of nearest neighboors to lookup. Defaults to 5.
         Returns
-            list(dicts): list([{"embedding", "distance", "label", "data"}])
+            list of list of k nearest neighboors:
+            list([{"embedding", "distance", "label", "data"}])
 
         """
 
@@ -314,7 +324,25 @@ class Indexer():
         return lookups
 
     # evaluation related functions
-    def evaluate(self, predictions, y, metrics, k: int = 1, verbose: int = 1):
+    def evaluate(self,
+                 predictions: FloatTensor,
+                 y: List[int],
+                 metrics: List[Union[str, EvalMetric]],
+                 k: int = 1,
+                 verbose: int = 1) -> Dict[str, Union[float, int]]:
+        """Evaluate the quality of the index against a test dataset.
+
+        Args:
+            predictions: Test emebddings computed by the SimilarityModel.
+            y: Expected labels for the nearest neighboors.
+            metrics: List of [Metric()](metrics/overview.md) to compute.
+            k: How many neighboors to use during the evaluation. Defaults to 1.
+            verbose: Be verbose. Defaults to 1.
+
+        Returns:
+            Dictionary of metric results where keys are the metric names and
+            values are the metrics values.
+        """
         # Find NN
         lookups = self.batch_lookup(predictions, verbose=verbose)
 
@@ -328,11 +356,40 @@ class Indexer():
                   predictions: FloatTensor,
                   y: List[int],
                   thresholds_targets: Dict[str, float],
-                  k: int = 1,
                   calibration_metric: Union[str, EvalMetric] = "f1_score",
-                  extra_metrics: List[Union[str, EvalMetric]] = ['precision', 'recall'],  # noqa
+                  k: int = 1,
+                  extra_metrics: List[Union[str, EvalMetric]] = ['accuracy', 'recall'],  # noqa
                   rounding: int = 2,
-                  verbose: int = 1):
+                  verbose: int = 1
+                  ) -> Dict[str, Union[Dict[str, float], List[float]]]:
+        """Calibrate model thresholds using a test dataset.
+
+        FIXME: more detailed explaination.
+
+        Args:
+
+            predictions: Test emebddings computed by the SimilarityModel.
+
+            y: Expected labels for the nearest neighboors.
+
+            thresholds_targets: Dict of performance targets to (if possible)
+            meet with respect to the `calibration_metric`.
+
+            calibration_metric: [Metric()](metrics/overview.md) used to
+            evaluate the performance of the index.
+
+            k: How many neighboors to use during the calibration. Defaults to 1.
+
+            extra_metrics: List of additional [Metric()](metrics/overview.md)
+            to compute and report.
+
+            rounding: Metric rounding. Default to 2 digits.
+
+            verbose: Be verbose and display calibration results. Defaults to 1.
+
+        Returns:
+           Calibration results: `{"cutpoints": {}, "thresholds": {}}`
+        """
 
         # find NN
         lookups = self.batch_lookup(predictions, verbose=verbose)
@@ -368,7 +425,7 @@ class Indexer():
             rows = []
             for data in cutpoints.values():
                 rows.append([data[v] for v in headers])
-            print(tabulate(rows, headers=headers))
+            print("\n", tabulate(rows, headers=headers))
 
         # store info for serialization purpose
         self.is_calibrated = True
@@ -380,7 +437,7 @@ class Indexer():
     def match(self,
               predictions: FloatTensor,
               no_match_label: int = -1,
-              verbose: int = 1):
+              verbose: int = 1) -> Dict[str, List[int]]:
         """Match embeddings against the various cutpoints thresholds
 
         Args:
@@ -392,17 +449,19 @@ class Indexer():
             verbose (int): display progression. Default to 1.
 
         Notes:
-            1. its up to the `Model.match()` code to decide which of
-            cutpoints results to use / show to the users.
-            This function returns all of them as there is little performance
-            downside to do so and it makes code clearer and simpler.
 
-            2. the function is responsible to return the list of class matched
-            to allows implementation to use additional criterias if they choose
-            to.
+            1. It is up to the [`SimilarityModel.match()`](similarity_model.md)
+            code to decide which of cutpoints results to use / show to the
+            users. This function returns all of them as there is little
+            performance downside to do so and it makes the code clearer
+            and simpler.
+
+            2. The calling function is responsible to return the list of class
+            matched to allows implementation to use additional criterias
+            if they choose to.
 
         Returns:
-            dict:{cutpoint: list(bool)}
+            Dict of matches list keyed by cutpoint names.
         """
         lookups = self.batch_lookup(predictions, k=1, verbose=verbose)
 
@@ -417,7 +476,7 @@ class Indexer():
             pb = tqdm(total=len(distances) * len(self.cutpoints),
                       desc='matching embeddings')
 
-        matches = defaultdict(list)
+        matches: Dict = defaultdict(list)
         for name, cp in self.cutpoints.items():
             threshold = float(cp['distance'])
             for idx, distance in enumerate(distances):
@@ -435,13 +494,12 @@ class Indexer():
 
         return matches
 
-    def save(self, path, compression=True):
+    def save(self, path: str, compression: bool = True):
         """Save the index to disk
 
         Args:
-            path (str): directory where to save the index
-            compression (bool, optional): Store index data compressed.
-            Defaults to True.
+            path: directory where to save the index
+            compression: Store index data compressed. Defaults to True.
         """
         path = str(path)
         # saving metadata
@@ -465,7 +523,17 @@ class Indexer():
         self.matcher.save(path)
 
     @staticmethod
-    def load(path, verbose=1):
+    def load(path: str, verbose: int = 1):
+        """Load Index data from a checkpoint and initialize underlying
+        structure with the reloaded data.
+
+        Args:
+            path: Directory where the checkpoint is located.
+            verbose ([type], optional): [description]. Defaults to 1.
+
+        Returns:
+            Initialized index
+        """
         path = str(path)
         # recreate the index from metadata
         metadata_fname = Indexer.__make_metadata_fname(path)
@@ -490,7 +558,6 @@ class Indexer():
         index.matcher.load(path)
 
         # reload calibration data if any
-
         index.is_calibrated = md['is_calibrated']
         if index.is_calibrated:
             if verbose:
