@@ -25,8 +25,7 @@ class EvalCallback(Callback):
                  distance: str = 'cosine',
                  metrics: List[Union[str, EvalMetric]] = ['accuracy', 'mean_rank'],  # noqa
                  tb_logdir: str = None,
-                 k: int = 1,
-                 embedding_output: int = None):
+                 k: int = 1):
         """Evaluate model matching quality against a validation dataset at
         epoch end.
 

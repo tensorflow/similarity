@@ -10,7 +10,7 @@ class Matcher(ABC):
             embedding: FloatTensor,
             idx: int,
             build: bool = True,
-            verbose: int = 1) -> int:
+            verbose: int = 1):
         """Add a single embedding to the matcher.
 
         Args:

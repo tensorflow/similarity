@@ -340,7 +340,8 @@ class Indexer():
             verbose: Be verbose. Defaults to 1.
 
         Returns:
-            [type]: [description]
+            Dictionary of metric results where keys are the metric names and
+            values are the metrics values.
         """
         # Find NN
         lookups = self.batch_lookup(predictions, verbose=verbose)

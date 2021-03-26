@@ -15,7 +15,6 @@
 """Metric losses
 
 References
-    - o
     - : FaceNet: A Unified Embedding for Face Recognition
     and Clustering: https://arxiv.org/abs/1503.03832
 

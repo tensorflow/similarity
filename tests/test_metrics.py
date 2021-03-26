@@ -54,7 +54,7 @@ def compute_vector(m, v):
 
 
 def test_mean_rank():
-    expected = [1]
+    expected = [1.67]
     m = MeanRank()
 
     # check name
@@ -63,7 +63,7 @@ def test_mean_rank():
     # check computation
     for idx, v in enumerate(TEST_VECTORS):
         res = compute_vector(m, v)
-        assert res == expected[idx]
+        assert round(res, 2) == expected[idx]
 
 
 def test_min_rank():
