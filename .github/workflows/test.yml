@@ -1,4 +1,4 @@
-name: Package
+name: Testing
 
 on:
   push:

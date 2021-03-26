@@ -59,8 +59,13 @@ def test_euclidean_same():
     assert tf.round(tf.reduce_sum(vals)) == 0
 
 
-def test_euclidean_opposite():
-    a = tf.convert_to_tensor([[0.0, 1.0], [0.0, -1.0]])
-    d = EuclidianDistance()
-    vals = d(a)
-    assert tf.reduce_all(tf.math.equal(vals, tf.constant([[1e-8, 2.0],[2.0, 1e-8]])))
+class DistancesTest(tf.test.TestCase):
+
+    def test_euclidean_opposite(self):
+        a = tf.convert_to_tensor([[0.0, 1.0], [0.0, -1.0]])
+        d = EuclidianDistance()
+        vals = d(a)
+        self.assertAllClose(
+            vals,
+            tf.constant([[1e-8, 2.0], [2.0, 1e-8]]),
+        )
