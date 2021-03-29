@@ -1,20 +1,19 @@
-from collections import defaultdict
 import random
+from collections import defaultdict
 from typing import Optional, Tuple
 
 import tensorflow as tf
-from tensorflow.types import experimental as tf_types
-from .samplers import Augmenter
-from .samplers import Sampler
-from .samplers import Scheduler
+from tensorflow_similarity.types import Tensor
 from tqdm.auto import tqdm
+
+from .samplers import Augmenter, Sampler, Scheduler
 
 
 class MultiShotMemorySampler(Sampler):
 
     def __init__(self,
-                 x: tf_types.TensorLike,
-                 y: tf_types.TensorLike,
+                 x: Tensor,
+                 y: Tensor,
                  class_per_batch: int,
                  batch_size: int = 32,
                  batch_per_epoch: int = 1000,
@@ -47,7 +46,7 @@ class MultiShotMemorySampler(Sampler):
                      batch_id: int,
                      num_classes: int,
                      example_per_class: int
-                     ) -> Tuple[tf_types.TensorLike, tf_types.TensorLike]:
+                     ) -> Tuple[Tensor, Tensor]:
 
         # select class at ramdom
         class_list = random.sample(self.class_list, k=num_classes)
@@ -67,7 +66,7 @@ class MultiShotMemorySampler(Sampler):
 
 class SingleShotMemorySampler(Sampler):
     def __init__(self,
-                 x: tf_types.TensorLike,
+                 x: Tensor,
                  augmenter: Augmenter,
                  class_per_batch: int,
                  batch_size: int = 32,
@@ -88,7 +87,7 @@ class SingleShotMemorySampler(Sampler):
                      batch_id: int,
                      num_classes: int,
                      example_per_class: int
-                     ) -> Tuple[tf_types.TensorLike, tf_types.TensorLike]:
+                     ) -> Tuple[Tensor, Tensor]:
         _ = batch_id
         _ = example_per_class
 
@@ -98,8 +97,8 @@ class SingleShotMemorySampler(Sampler):
                                  minval=0,
                                  maxval=self.num_elts,
                                  dtype='int32')
-        # don't forget to cast for speed
-        y = [int(i) for i in idxs]
-        x = [self.x[idx] for idx in y]
+        # ! don't cast data as different model use different type.
+        y = tf.constant([int(i) for i in idxs])
+        x = tf.constant([self.x[idx] for idx in y])
 
         return x, y

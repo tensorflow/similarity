@@ -6,7 +6,7 @@ def test_index_match():
     target = np.array([1, 1, 2], dtype='float32')
     embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
 
-    matcher = NMSLibMatcher()
+    matcher = NMSLibMatcher('cosine')
     matcher.add(embs[0], 0)
     matcher.add(embs[1], 1)
 
@@ -20,7 +20,7 @@ def test_index_save(tmp_path):
     target = np.array([1, 1, 2], dtype='float32')
     embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
 
-    matcher = NMSLibMatcher()
+    matcher = NMSLibMatcher('cosine')
     matcher.add(embs[0], 0)
     matcher.add(embs[1], 1)
 
@@ -31,7 +31,7 @@ def test_index_save(tmp_path):
 
     matcher.save(tmp_path)
 
-    matcher2 = NMSLibMatcher()
+    matcher2 = NMSLibMatcher('cosine')
     matcher2.load(tmp_path)
 
     idxs2, embs2 = matcher.lookup(target)

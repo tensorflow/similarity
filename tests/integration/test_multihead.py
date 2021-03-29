@@ -3,6 +3,7 @@ import pytest
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.model import SimilarityModel
+from tensorflow_similarity.callbacks import EvalCallback
 
 
 def generate_dataset(num_classes, num_examples_per_class, reps=4, outputs=1):
@@ -68,8 +69,11 @@ def test_default_multi_output():
     # compile
     model.compile(optimizer='adam', loss=triplet_loss)
 
+    # callback
+    callbacks = [EvalCallback(x, y[0], x, y[0])]
+
     # train
-    model.fit(x, y, batch_size=BATCH_SIZE, epochs=1)
+    model.fit(x, y, batch_size=BATCH_SIZE, epochs=1, callbacks=callbacks)
 
     assert model._index.embedding_output == 0
     model.index(x, y[0])

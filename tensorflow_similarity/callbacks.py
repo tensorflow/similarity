@@ -9,6 +9,13 @@ from tensorflow_similarity.metrics import EvalMetric, make_metric
 
 
 class EvalCallback(Callback):
+    """Epoch end evaluation callback that build a test index and evaluate
+    model performance on it.
+
+    This evaluation only run at epoch_end as it is computationally very
+    expensive.
+
+    """
 
     def __init__(self,
                  queries: Tensor,
@@ -23,23 +30,25 @@ class EvalCallback(Callback):
         epoch end.
 
         Args:
-            queries: [description]
+            queries: Test examples that will be tested against the built index.
 
-            query_labels: [description]
+            query_labels: Queries nearest neighboors expected labels.
 
-            targets: [description]
+            targets: Examples that are indexed.
 
-            target_labels: [description]
+            target_labels: Target examples labels.
 
-            distance: [description]
+            distance: Distance function used to compute pairwise distance
+            between examples embeddings.
 
-            metrics: [description]. Defaults to ['accuracy', 'mean_rank'].
-            embedding to evaluate. Defaults to None which is for model
-            with a single head.
+            metrics: List of [EvalMetrics](eval_metrics.md) to be computed
+            during the evaluation. Defaults to ['accuracy', 'mean_rank'].
+            embedding to evaluate.
 
             tb_logdir: Where to write TensorBoard logs. Defaults to None.
 
-            k: [description].
+            k: How many neigboors to retrive for evaluation. Defaults to 1.
+
         """
         super().__init__()
         self.queries = queries
@@ -54,7 +63,6 @@ class EvalCallback(Callback):
         self.metrics: List[Union[str, EvalMetric]] = [make_metric(m) for m in metrics] # noqa
 
         if tb_logdir:
-
             tb_logdir = str(Path(tb_logdir) / 'match_rate/')
             self.tb_writer = tf.summary.create_file_writer(tb_logdir)
             print('TensorBoard logging enable in %s' % tb_logdir)
@@ -68,11 +76,7 @@ class EvalCallback(Callback):
         # rebuild the index
         self.model.index(self.targets, self.targets_labels, verbose=0)
 
-        lookups = []
-        for idx in range(len(self.queries_labels)):
-            # FIXME batch lookup when ready
-            nn = self.model.single_lookup(self.queries[idx], k=1)
-            lookups.append(nn)
+        lookups = self.model.lookup(self.queries)
         results = self.evaluator.evaluate(self.index_size, self.metrics,
                                           self.queries_labels, lookups)
 
