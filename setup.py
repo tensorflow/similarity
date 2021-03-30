@@ -49,6 +49,12 @@ setup(
         'numpy<=1.19.2', 'tabulate', 'nmslib', 'tensorflow>=2.4', 'tqdm',
         'matplotlib', 'pandas'
     ],
+    extras_require={
+        "dev": [
+            'setuptools', 'wheel', 'mypy', 'pytest', 'flake8', 'pytest-cov',
+            'pytype', 'twine', 'setuptools', 'nmslib', 'tensorflow'
+        ],
+    },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console', 'Framework :: Jupyter',
