@@ -15,7 +15,6 @@
 """Core TensorFlow types."""
 
 from typing import Iterable, Union, Optional, List, Tuple, Optional  # noqa
-import numpy as np
 
 
 class PandasDataFrame(object):
@@ -73,4 +72,3 @@ class Value(Tensor):
   """
     def numpy(self):
         pass
-
