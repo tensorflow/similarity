@@ -126,8 +126,8 @@ class MemoryEvaluator(Evaluator):
 
         # data preparation: flatten and rounding
         distances = []
-        for l in lookups:
-            for n in l:
+        for lu in lookups:
+            for n in lu:
                 distances.append(round(n['distance'], distance_rounding))
 
         targets_labels = [int(i) for i in targets_labels]

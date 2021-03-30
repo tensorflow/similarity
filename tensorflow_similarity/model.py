@@ -90,7 +90,7 @@ class SimilarityModel(functional.Functional):
         # check if we we need to set the embedding head
         num_outputs = len(self.output_names)
         if embedding_output and embedding_output > num_outputs:
-                raise("Embedding_output value exceed number of model outputs")
+            raise("Embedding_output value exceed number of model outputs")
 
         if not embedding_output and num_outputs > 1:
             print("Embedding output set to be model output 0",
