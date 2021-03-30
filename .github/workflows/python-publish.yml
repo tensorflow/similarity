@@ -20,11 +20,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools
         pip install setuptools wheel twine
-        pip install -U -r test-requirements.txt
         
     - name: Install package
       run: |
-        pip install "."
+        pip install ".[dev]"
         
     - name: Linting
       run: |
