@@ -1,7 +1,7 @@
 "Set of useful algebric functions used through the package"
 from typing import Tuple
 import tensorflow as tf
-from .types import FloatTensor
+from .types import FloatTensor, IntTensor
 
 
 def masked_maximum(distances: FloatTensor,
@@ -54,13 +54,12 @@ def masked_minimum(distances: FloatTensor,
     return tf.cast(masked_min, dtype=tf.float32), arg_min
 
 
-def build_masks(labels: FloatTensor,
+def build_masks(labels: IntTensor,
                 batch_size: int) -> Tuple[FloatTensor, FloatTensor]:
     """Build masks that allows to select only the positive or negatives
     embeddings.
-
     Args:
-        labels (Tensor): 1D int `Tensor` that contains the class ids.
+        labels (IntTensor): 1D int `Tensor` that contains the class ids.
         batch_size (int): size of the batch.
 
     Returns:

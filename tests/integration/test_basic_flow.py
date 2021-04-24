@@ -7,6 +7,10 @@ from tensorflow_similarity.samplers import MultiShotMemorySampler
 from tensorflow_similarity.distance_metrics import dist_gap, min_neg, max_pos
 
 
+# Set seed to fix flaky tests.
+tf.random.set_seed(303)
+
+
 def generate_dataset(num_classes, num_examples_per_class, reps=4):
     """Generate a dummy datset
 

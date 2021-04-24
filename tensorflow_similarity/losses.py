@@ -28,13 +28,13 @@ import tensorflow as tf
 from .utils import is_tensor_or_variable
 from .distances import Distance, distance_canonicalizer
 from .algebra import masked_maximum, masked_minimum, build_masks
-from .types import FloatTensor
-from typing import Callable, List, Union
+from .types import FloatTensor, IntTensor
+from typing import Callable, Union
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
-def triplet_loss(labels: List[int],
+def triplet_loss(labels: IntTensor,
                  embeddings: FloatTensor,
                  distance: Callable,
                  positive_mining_strategy: str = 'hard',
@@ -119,7 +119,8 @@ def triplet_loss(labels: List[int],
 
     # [Triplet loss computation]
     if soft_margin:
-        triplet_loss = tf.math.exp(positive_distances - negative_distances)
+        triplet_loss = tf.math.subtract(positive_distances, negative_distances)
+        triplet_loss = tf.math.exp(triplet_loss)
         triplet_loss = tf.math.log1p(triplet_loss)
     else:
         triplet_loss = tf.math.subtract(positive_distances, negative_distances)
