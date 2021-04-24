@@ -45,6 +45,7 @@ def test_basic_flow(tmp_path):
     negative_mining_strategy = 'semi-hard'
 
     x, y = generate_dataset(NUM_CLASSES, EXAMPLES_PER_CLASS)
+    tf.print(y.shape)
     sampler = MultiShotMemorySampler(x,
                                      y,
                                      class_per_batch=CLASS_PER_BATCH,

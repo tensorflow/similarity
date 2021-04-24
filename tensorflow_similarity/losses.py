@@ -77,21 +77,26 @@ def triplet_loss(labels: List[int],
 
     # [Positivie distance computation]
     if positive_mining_strategy == 'hard':
-        positive_distances = masked_maximum(pairwise_distances, positive_mask)
+        positive_distances, _ = (
+                masked_maximum(pairwise_distances, positive_mask))
+        tf.print(tf.reduce_sum(positive_distances))
     elif positive_mining_strategy == 'easy':
-        positive_distances = masked_minimum(pairwise_distances, positive_mask)
+        positive_distances, _ = (
+                masked_minimum(pairwise_distances, positive_mask))
     else:
         raise ValueError('Invalid positive mining strategy')
 
     # [Negative distances computation]
     if negative_mining_strategy == 'hard':
         # find the *non-zero* minimal distance between negative labels
-        negative_distances = masked_minimum(pairwise_distances, negative_mask)
+        negative_distances, _ = (
+                masked_minimum(pairwise_distances, negative_mask))
+        tf.print(tf.reduce_sum(negative_distances))
     elif negative_mining_strategy == 'semi-hard':
         # find the minimal distance between negative label gt than max distance
         # between positive labels
         # find max value of positive distance
-        max_positive = masked_maximum(pairwise_distances, positive_mask)
+        max_positive, _ = masked_maximum(pairwise_distances, positive_mask)
 
         # select distance that are above the max positive distance
         greater_distances = tf.math.greater(pairwise_distances, max_positive)
@@ -102,11 +107,13 @@ def triplet_loss(labels: List[int],
         semi_hard_mask = tf.where(greater_distances, negative_mask, empty)
 
         # find the  minimal distance between negative labels above threshold
-        negative_distances = masked_minimum(pairwise_distances, semi_hard_mask)
+        negative_distances, _ = (
+                masked_minimum(pairwise_distances, semi_hard_mask))
 
     elif negative_mining_strategy == 'easy':
         # find the maximal distance between negative labels
-        negative_distances = masked_maximum(pairwise_distances, negative_mask)
+        negative_distances, _ = (
+                masked_maximum(pairwise_distances, negative_mask))
     else:
         raise ValueError('Invalid negative mining strategy')
 

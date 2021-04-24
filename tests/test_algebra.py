@@ -21,18 +21,59 @@ def test_masked_maximum():
     distances = tf.constant([[1.0, 2.0, 3.0, 0.0], [4.0, 2.0, 1.0, 0.0]],
                             dtype=tf.float32)
     mask = tf.constant([[0, 1, 1, 1], [0, 1, 1, 1]], dtype=tf.float32)
-    vals = masked_maximum(distances, mask)
+    vals, arg_max = masked_maximum(distances, mask)
+
     assert vals.shape == (2, 1)
+    assert arg_max.shape == (2,)
     assert vals[0] == [3.0]
     assert vals[1] == [2.0]
+    assert arg_max[0] == [2]
+    assert arg_max[1] == [1]
+
+
+def test_arg_max_all_unmasked_vals_lt_zero():
+    # Ensure reduce_max works when all unmasked vals < 0.0.
+    distances = tf.constant([
+             [-7.0, -2.0, 7.0, -9.0],
+             [-7.0, 1e-05, 7.0, -9.0]],
+            dtype=tf.float32)
+    mask = tf.constant([[0, 0, 0, 1], [0, 1, 0, 0]], dtype=tf.float32)
+    vals, arg_max = masked_maximum(distances, mask)
+
+    assert vals.shape == (2, 1)
+    assert arg_max.shape == (2,)
+    assert vals[0] == [-9.0]
+    assert vals[1] == [1e-05]
+    assert arg_max[0] == [3]
+    assert arg_max[1] == [1]
 
 
 def test_masked_minimum():
     distances = tf.constant([[1.0, 2.0, 3.0, 0.0], [4.0, 0.0, 1.0, 0.0]],
                             dtype=tf.float32)
     mask = tf.constant([[0, 1, 1, 0], [1, 0, 1, 0]], dtype=tf.float32)
-    vals = masked_minimum(distances, mask)
-    print(vals)
+    vals, arg_min = masked_minimum(distances, mask)
+
     assert vals.shape == (2, 1)
+    assert arg_min.shape == (2,)
     assert vals[0] == [2.0]
     assert vals[1] == [1.0]
+    assert arg_min[0] == [1]
+    assert arg_min[1] == [2]
+
+
+def test_arg_min_all_unmasked_vals_gt_zero():
+    # Ensure reduce_max works when all unmasked vals > 0.0.
+    distances = tf.constant([
+             [-7.0, -2.0, 7.0, -9.0],
+             [-1e-06, -2.0, 7.0, -9.0]],
+            dtype=tf.float32)
+    mask = tf.constant([[0, 0, 1, 0], [1, 0, 0, 0]], dtype=tf.float32)
+    vals, arg_min = masked_minimum(distances, mask)
+
+    assert vals.shape == (2, 1)
+    assert arg_min.shape == (2,)
+    assert vals[0] == [7.0]
+    assert vals[1] == [-1e-06]
+    assert arg_min[0] == [2]
+    assert arg_min[1] == [0]

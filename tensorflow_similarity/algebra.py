@@ -1,8 +1,12 @@
 "Set of useful algebric functions used through the package"
+from typing import Tuple
 import tensorflow as tf
+from .types import FloatTensor
 
 
-def masked_maximum(distances, mask, dim=1):
+def masked_maximum(distances: FloatTensor,
+                   mask: FloatTensor,
+                   dim: int = 1) -> Tuple[FloatTensor, FloatTensor]:
     """Computes the maximum values over masked pairwise distances.
 
     We need to use this formula to make sure all values are >=0.
@@ -15,13 +19,20 @@ def masked_maximum(distances, mask, dim=1):
     Returns:
       Tensor: The maximum distance value
     """
-    axis_min = tf.math.reduce_min(distances, dim, keepdims=True)
+    # Convert to dbl to avoid precision error in offset
+    distances = tf.cast(distances, dtype=tf.float64)
+    mask = tf.cast(mask, dtype=tf.float64)
+
+    axis_min = tf.math.reduce_min(distances, dim, keepdims=True) - 1e-6
     masked_max = tf.math.multiply(distances - axis_min, mask)
+    arg_max = tf.math.argmax(masked_max, dim)
     masked_max = tf.math.reduce_max(masked_max, dim, keepdims=True) + axis_min
-    return masked_max
+    return tf.cast(masked_max, dtype=tf.float32), arg_max
 
 
-def masked_minimum(data, mask, dim=1):
+def masked_minimum(distances: FloatTensor,
+                   mask: FloatTensor,
+                   dim: int = 1) -> Tuple[FloatTensor, FloatTensor]:
     """Computes the mimimal values over masked pairwise distances.
 
     Args:
@@ -32,14 +43,19 @@ def masked_minimum(data, mask, dim=1):
     Returns:
       Tensor: The minimal distance value
     """
-    axis_max = tf.math.reduce_max(data, dim, keepdims=True)
-    masked_min = tf.math.multiply(data - axis_max, mask)
-    masked_min = tf.math.reduce_min(masked_min, dim, keepdims=True)
-    masked_min = masked_min + axis_max
-    return masked_min
+    # Convert to dbl to avoid precision error in offset
+    distances = tf.cast(distances, dtype=tf.float64)
+    mask = tf.cast(mask, dtype=tf.float64)
+
+    axis_max = tf.math.reduce_max(distances, dim, keepdims=True) + 1e-6
+    masked_min = tf.math.multiply(distances - axis_max, mask)
+    arg_min = tf.math.argmin(masked_min, dim)
+    masked_min = tf.math.reduce_min(masked_min, dim, keepdims=True) + axis_max
+    return tf.cast(masked_min, dtype=tf.float32), arg_min
 
 
-def build_masks(labels, batch_size):
+def build_masks(labels: FloatTensor,
+                batch_size: int) -> Tuple[FloatTensor, FloatTensor]:
     """Build masks that allows to select only the positive or negatives
     embeddings.
 
@@ -50,6 +66,9 @@ def build_masks(labels, batch_size):
     Returns:
         list: positive_mask, negative_mask
     """
+    if tf.rank(labels) == 1:
+        labels = tf.reshape(labels, (-1, 1))
+
     # same class mask
     positive_mask = tf.math.equal(labels, tf.transpose(labels))
     # not the same class

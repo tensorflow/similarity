@@ -53,14 +53,14 @@ class DistanceMetric(Metric):
 
         if self.anchor == "positive":
             if self.positive_mining_strategy == "hard":
-                distances = masked_maximum(pairwise_distances, positive_mask)
+                distances, _ = masked_maximum(pairwise_distances, positive_mask)
             else:
-                distances = masked_minimum(pairwise_distances, positive_mask)
+                distances, _ = masked_minimum(pairwise_distances, positive_mask)
         else:
             if self.negative_mining_strategy == 'easy':
-                distances = masked_minimum(pairwise_distances, negative_mask)
+                distances, _ = masked_minimum(pairwise_distances, negative_mask)
             else:
-                distances = masked_maximum(pairwise_distances, negative_mask)
+                distances, _ = masked_maximum(pairwise_distances, negative_mask)
 
         # reduce
         if self.aggregate == 'mean' or self.aggregate == 'avg':
