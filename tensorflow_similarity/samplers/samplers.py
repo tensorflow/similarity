@@ -25,7 +25,7 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
     def __init__(self,
                  class_per_batch: int,
                  example_per_class: int = 2,
-                 batch_per_epoch: int = 1000,
+                 steps_per_epoch: int = 1000,
                  augmenter: Optional[Augmenter] = None,
                  # scheduler: Optional[Scheduler] = None,
                  warmup: int = 0) -> None:
@@ -48,7 +48,7 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
             example_per_class: how many example of each class to use per batch.
             Defaults to 2.
 
-            batch_per_epoch: How many batch per epoch. Defaults to 1000.
+            steps_per_epoch: How many steps/batches per epoch. Defaults to 1000.
 
             augmenter: A function that takes a batch in and return a batch out.
             Can alters the number of examples returned which in turn change the
@@ -63,15 +63,17 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
         self.class_per_batch = class_per_batch
         self.example_per_class = example_per_class
         self.batch_size = class_per_batch * example_per_class
-        self.batch_per_epoch = batch_per_epoch
+        self.steps_per_epoch = steps_per_epoch
         self.augmenter = augmenter
         self.warmup = warmup
         self.is_warmup = True if warmup else False
 
         # Tell the users what to expect as they might be unsure what the batch
         # size will be
-        print("\nBatch size is %d (%d class X %d example per class" %
-              (self.batch_size, self.class_per_batch, self.example_per_class))
+        print("\nBatch size is %d (%d class X %d example per class\
+             pre-augmentation" % (self.batch_size,
+                                  self.class_per_batch,
+                                  self.example_per_class))
 
     @abc.abstractmethod
     def get_examples(self,
@@ -102,7 +104,7 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
     # [Shared mechanics]
     def __len__(self) -> int:
         "Return the number of batch per epoch"
-        return self.batch_per_epoch
+        return self.steps_per_epoch
 
     def on_epoch_end(self) -> None:
         "Keep track of warmup epochs"

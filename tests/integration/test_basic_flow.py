@@ -35,7 +35,7 @@ def test_basic_flow(tmp_path):
     REPS = 4
     EXAMPLES_PER_CLASS = 64
     CLASS_PER_BATCH = 8
-    BATCH_PER_EPOCH = 500
+    STEPS_PER_EPOCH = 500
     K = 5
     NUM_MATCHES = 3
 
@@ -47,7 +47,7 @@ def test_basic_flow(tmp_path):
     sampler = MultiShotMemorySampler(x,
                                      y,
                                      class_per_batch=CLASS_PER_BATCH,
-                                     batch_per_epoch=BATCH_PER_EPOCH)
+                                     steps_per_epoch=STEPS_PER_EPOCH)
 
     # model
     inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS, ))

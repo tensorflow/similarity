@@ -16,7 +16,7 @@ class MultiShotMemorySampler(Sampler):
                  y: Tensor,
                  class_per_batch: int,
                  example_per_class: int = 2,
-                 batch_per_epoch: int = 1000,
+                 steps_per_epoch: int = 1000,
                  augmenter: Optional[Augmenter] = None,
                  warmup: int = -1):
 
@@ -48,13 +48,12 @@ class MultiShotMemorySampler(Sampler):
             y: labels.
 
             class_per_batch: Numbers of class to include in a single batch
-            example_per_class: How many example to include for each class per
-            batch.
 
-            example_per_class: how many example of each class to use per batch.
+            example_per_class: How many example of each class to use per batch.
             Defaults to 2.
 
-            batch_per_epoch: How many batch per epoch. Defaults to 1000.
+            steps_per_epoch: How many steps/batches per epoch.
+            Defaults to 1000.
 
             augmenter: A function that takes a batch in and return a batch out.
             Can alters the number of examples returned which in turn change the
@@ -67,7 +66,7 @@ class MultiShotMemorySampler(Sampler):
 
         super().__init__(class_per_batch,
                          example_per_class=example_per_class,
-                         batch_per_epoch=batch_per_epoch,
+                         steps_per_epoch=steps_per_epoch,
                          augmenter=augmenter,
                          warmup=warmup)
         self.x = x
@@ -112,7 +111,7 @@ class SingleShotMemorySampler(Sampler):
                  x: Tensor,
                  augmenter: Augmenter,
                  class_per_batch: int,
-                 batch_per_epoch: int = 1000,
+                 steps_per_epoch: int = 1000,
                  warmup: int = -1) -> None:
 
         """Create a single shot in memory sampler.
@@ -143,7 +142,7 @@ class SingleShotMemorySampler(Sampler):
             augmenter: A function that takes a batch of single examples and
             return a batch out with additional examples per class.
 
-            batch_per_epoch: How many batch per epoch. Defaults to 1000.
+            steps_per_epoch: How many steps/batch per epoch. Defaults to 1000.
 
             class_per_batch: effectively the number of element to pass to the
             augmenter for each batch request in the single shot setting.
@@ -154,7 +153,7 @@ class SingleShotMemorySampler(Sampler):
         """
 
         super().__init__(class_per_batch,
-                         batch_per_epoch=batch_per_epoch,
+                         steps_per_epoch=steps_per_epoch,
                          augmenter=augmenter,
                          warmup=warmup)
         self.x = x
