@@ -20,7 +20,7 @@ class MultiShotMemorySampler(Sampler):
                  augmenter: Optional[Augmenter] = None,
                  warmup: int = -1):
 
-        """Create a Multishot in memory sampler that ensure that each batch is
+        """Create a Multishot in memory sampler that ensures that each batch is
         well balanced. That is is each batch aim to contain
         `example_per_class` examples of `class_per_batch`
         classes.
