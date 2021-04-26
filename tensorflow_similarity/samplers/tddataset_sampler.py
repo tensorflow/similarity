@@ -32,7 +32,7 @@ def TFRecordDatasetSampler(shard_path: str,
         in a non orthodox way: we use its `block_length` to control the
         number of example per class and rely on the parallelize &
         non_deterministic version of the API to do the sampling efficiently
-        for us. Relying on pure tf.data ops also unsure good compatibility with
+        for us. Relying on pure tf.data ops also ensure good compatibility with
         distribution strategy.
 
 
