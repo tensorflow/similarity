@@ -21,7 +21,7 @@ class MultiShotMemorySampler(Sampler):
                  warmup: int = -1):
 
         """Create a Multishot in memory sampler that ensures that each batch is
-        well balanced. That is is each batch aim to contain
+        well balanced. That is, each batch aims to contain
         `example_per_class` examples of `class_per_batch`
         classes.
 
