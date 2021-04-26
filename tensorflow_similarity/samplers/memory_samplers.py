@@ -33,7 +33,7 @@ class MultiShotMemorySampler(Sampler):
 
 
         Multishot samplers are to be used when you have multiple
-        examples for the same class. If you don't then see
+        examples for the same class. If this is not the case, then see
         the [SingleShotMemorySampler()](single_memory.md) for using single
         example with augmentation.
 
