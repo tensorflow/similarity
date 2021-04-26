@@ -5,9 +5,9 @@ import tensorflow as tf
 
 def TFRecordDatasetSampler(shard_path: str,
                            deserialization_fn: Callable,
+                           num_shards: int = None,
                            example_per_class: int = 2,
                            batch_size: int = 32,
-                           batchs_per_epoch: int = 1000,
                            compression: str = None,
                            parallelism: int = -1,
                            file_parallelism: int = 1,
@@ -42,8 +42,12 @@ def TFRecordDatasetSampler(shard_path: str,
             deserialization_fn: Function used to deserialize the tfRecord and
             construct a valid example.
 
+            num_shards: How many shards to use overall. If None use all
+            the shards.
+
             example_per_class: Number of example per class in each batch.
             Defaults to 2.
+
             batch_size: How many examples in each batch. The number of class in
             the batch will be `batch_size // example_per_class`.
             Defaults to 32.
@@ -60,7 +64,7 @@ def TFRecordDatasetSampler(shard_path: str,
             file_parallelism: How many parallel shards to read increase number
             if IO bound. Defaults to 1.
 
-            prefetch_size: How many batch to precache. Defaults to 10%.
+            prefetch_size: How many batch to precache. Defaults to 10.
 
             shard_suffix: Glog pattern used to collect the shard files list.
             Defaults to "*.tfrec".
@@ -73,21 +77,21 @@ def TFRecordDatasetSampler(shard_path: str,
             raise ValueError('make sure to add a wild card to shard suffix')
 
         shards_list = [str(i) for i in Path(shard_path).glob(shard_suffix)]
-        num_shards = len(shards_list)
+        total_shards = len(shards_list)
         print("found ", len(shards_list), 'shards')
 
         if not parallelism:
             parallelism = tf.data.AUTOTUNE,
 
         if not prefetch_size:
-            prefetch_size = max(batchs_per_epoch // 10, 5)
+            prefetch_size = 10
 
         with tf.device('/cpu:0'):
             # shuffle the shard order
             ds = tf.data.Dataset.from_tensor_slices(shards_list)
 
             # shuffle shard order
-            ds = ds.shuffle(num_shards)
+            ds = ds.shuffle(total_shards)
 
             # This is the tricky part, we are using the interleave function to
             # do the sampling as requested by the user. This is not the
@@ -98,12 +102,13 @@ def TFRecordDatasetSampler(shard_path: str,
             # create random batch
             ds = ds.interleave(
                                lambda x: tf.data.TFRecordDataset(x, compression_type=compression),  # noqa
+                               cycle_length=num_shards,
                                block_length=example_per_class,
                                num_parallel_calls=file_parallelism,
                                deterministic=False
                             )
             ds = ds.map(deserialization_fn, num_parallel_calls=parallelism)
             ds = ds.batch(batch_size)
-            ds = ds.take(batchs_per_epoch)
+            ds = ds.repeat()
             ds = ds.prefetch(prefetch_size)
             return ds

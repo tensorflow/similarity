@@ -1,8 +1,21 @@
 # Tensorflow Similarity releases notes
 
+## 0.11.x - Support for TF dataset
+
+This release focuses on adding TF dataset support.
+
+## New features
+
+- Added Efficient Sampling from TF.data.TFRecordDataset now supported via the
+TFDatasetSampler.
+
+## Major improvements
+
+- Improved the API documentation
+
 ## 0.10.x - Getting ready for release
 
-This release focuses on code quality and documentation
+This release focuses on code quality, API consistency, and documentation
 to be ready for initial  release.
 
 ## New features
@@ -13,6 +26,7 @@ to be ready for initial  release.
 
 ## Major improvements
 
+- Simplified the MemorySampler prototype and made them more consistent.
 - Distance refactored to be object
 - Refactored tensor types
 - All major classes are properly documented
