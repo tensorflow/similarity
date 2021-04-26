@@ -1,4 +1,4 @@
-"Set of useful algebric functions used through the package"
+"Set of useful algebraic functions used through the package"
 from typing import Tuple
 import tensorflow as tf
 from .types import FloatTensor, IntTensor
@@ -12,12 +12,13 @@ def masked_maximum(distances: FloatTensor,
     We need to use this formula to make sure all values are >=0.
 
     Args:
-      distances (Tensor): 2-D float `Tensor` of [n, n] pairwise distances
-      mask (Tensor): 2-D Boolean `Tensor` of [n, n] valid distance size.
-      dim: The dimension over which to compute the maximum.
+      distances: 2-D float `Tensor` of [n, n] pairwise distances
+      mask: 2-D Boolean `Tensor` of [n, n] valid distance size.
+      dim: The dimension over which to compute the maximum. Defaults to 1.
 
     Returns:
-      Tensor: The maximum distance value
+      A Tuple of Tensors containing the maximum distance value and the arg_max
+      for each example.
     """
     # Convert to dbl to avoid precision error in offset
     distances = tf.cast(distances, dtype=tf.float64)
@@ -33,15 +34,16 @@ def masked_maximum(distances: FloatTensor,
 def masked_minimum(distances: FloatTensor,
                    mask: FloatTensor,
                    dim: int = 1) -> Tuple[FloatTensor, FloatTensor]:
-    """Computes the mimimal values over masked pairwise distances.
+    """Computes the minimal values over masked pairwise distances.
 
     Args:
-      distances (Tensor): 2-D float `Tensor` of [n, n] pairwise distances
-      mask (Tensor): 2-D Boolean `Tensor` of [n, n] valid distance size.
-      dim: The dimension over which to compute the maximum.
+      distances: 2-D float `Tensor` of [n, n] pairwise distances
+      mask: 2-D Boolean `Tensor` of [n, n] valid distance size.
+      dim: The dimension over which to compute the minimum. Defaults to 1.
 
     Returns:
-      Tensor: The minimal distance value
+      A Tuple of Tensors containing the minimal distance value and the arg_min
+      for each example.
     """
     # Convert to dbl to avoid precision error in offset
     distances = tf.cast(distances, dtype=tf.float64)
@@ -59,11 +61,11 @@ def build_masks(labels: IntTensor,
     """Build masks that allows to select only the positive or negatives
     embeddings.
     Args:
-        labels (IntTensor): 1D int `Tensor` that contains the class ids.
-        batch_size (int): size of the batch.
+        labels: 1D int `Tensor` that contains the class ids.
+        batch_size: size of the batch.
 
     Returns:
-        list: positive_mask, negative_mask
+        Tuple of Tensors containing the positive_mask and negative_mask
     """
     if tf.rank(labels) == 1:
         labels = tf.reshape(labels, (-1, 1))
@@ -77,7 +79,7 @@ def build_masks(labels: IntTensor,
     positive_mask = tf.cast(positive_mask, tf.float32)
     negative_mask = tf.cast(negative_mask, tf.float32)
 
-    # we need to remove the diagonal from postivie mask
+    # we need to remove the diagonal from positive mask
     diag = tf.linalg.diag(tf.ones(batch_size))
     positive_mask = positive_mask - tf.cast(diag, tf.float32)
     return positive_mask, negative_mask
