@@ -9,7 +9,7 @@ def TFRecordDatasetSampler(shard_path: str,
                            example_per_class: int = 2,
                            batch_size: int = 32,
                            compression: str = None,
-                           parallelism: int = -1,
+                           parallelism: int = tf.data.AUTOTUNE,
                            file_parallelism: int = 1,
                            prefetch_size: int = None,
                            shard_suffix: str = "*.tfrec") -> tf.data.Dataset:
@@ -79,9 +79,6 @@ def TFRecordDatasetSampler(shard_path: str,
         shards_list = [str(i) for i in Path(shard_path).glob(shard_suffix)]
         total_shards = len(shards_list)
         print("found ", len(shards_list), 'shards')
-
-        if not parallelism:
-            parallelism = tf.data.AUTOTUNE,
 
         if not prefetch_size:
             prefetch_size = 10
