@@ -30,7 +30,7 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
                  # scheduler: Optional[Scheduler] = None,
                  warmup: int = 0) -> None:
         """Create a dataset sampler that ensure that each batch contains at
-        contains at least `example_per_class` examples of `class_per_batch`
+        least `example_per_class` examples of `class_per_batch`
         classes. Sampling is needed as contrastive loss requires at
         least two examples of the same class present in a batch.
         The batch_size used during training will be equal to:
