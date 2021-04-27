@@ -63,7 +63,7 @@ class EvalCallback(Callback):
         self.metrics: List[Union[str, EvalMetric]] = [make_metric(m) for m in metrics] # noqa
 
         if tb_logdir:
-            tb_logdir = str(Path(tb_logdir) / 'match_rate/')
+            tb_logdir = str(Path(tb_logdir) / 'index/')
             self.tb_writer = tf.summary.create_file_writer(tb_logdir)
             print('TensorBoard logging enable in %s' % tb_logdir)
         else:
