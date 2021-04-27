@@ -34,7 +34,7 @@ sampler = MultiShotMemorySampler(x_restricted,
                                  y_restricted,
                                  class_per_batch=CLASS_PER_BATCH,
                                  batch_size=BATCH_SIZE,
-                                 batch_per_epoch=BATCH_PER_EPOCH)
+                                 steps_per_epoch=BATCH_PER_EPOCH)
 
 
 def get_model():

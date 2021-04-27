@@ -35,8 +35,7 @@ def test_basic_flow(tmp_path):
     REPS = 4
     EXAMPLES_PER_CLASS = 64
     CLASS_PER_BATCH = 8
-    BATCH_PER_EPOCH = 500
-    BATCH_SIZE = 16
+    STEPS_PER_EPOCH = 500
     K = 5
     NUM_MATCHES = 3
 
@@ -48,8 +47,7 @@ def test_basic_flow(tmp_path):
     sampler = MultiShotMemorySampler(x,
                                      y,
                                      class_per_batch=CLASS_PER_BATCH,
-                                     batch_size=BATCH_SIZE,
-                                     batch_per_epoch=BATCH_PER_EPOCH)
+                                     steps_per_epoch=STEPS_PER_EPOCH)
 
     # model
     inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS, ))
@@ -69,7 +67,7 @@ def test_basic_flow(tmp_path):
     model.compile(optimizer='adam', metrics=metrics, loss=triplet_loss)
 
     # train
-    history = model.fit(sampler, batch_size=BATCH_SIZE, epochs=2)
+    history = model.fit(sampler, epochs=5)
 
     # check that history is properly filled
     assert 'loss' in history.history
