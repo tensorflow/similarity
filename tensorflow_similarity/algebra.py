@@ -1,12 +1,12 @@
 "Set of useful algebraic functions used through the package"
 from typing import Tuple
 import tensorflow as tf
-from .types import FloatTensor, IntTensor
+from .types import BoolTensor, FloatTensor, IntTensor
 
 
-def masked_maximum(distances: FloatTensor,
-                   mask: FloatTensor,
-                   dim: int = 1) -> Tuple[FloatTensor, FloatTensor]:
+def masked_max(distances: FloatTensor,
+               mask: BoolTensor,
+               dim: int = 1) -> Tuple[FloatTensor, FloatTensor]:
     """Computes the maximum values over masked pairwise distances.
 
     We need to use this formula to make sure all values are >=0.
@@ -31,9 +31,9 @@ def masked_maximum(distances: FloatTensor,
     return tf.cast(masked_max, dtype=tf.float32), arg_max
 
 
-def masked_minimum(distances: FloatTensor,
-                   mask: FloatTensor,
-                   dim: int = 1) -> Tuple[FloatTensor, FloatTensor]:
+def masked_min(distances: FloatTensor,
+               mask: BoolTensor,
+               dim: int = 1) -> Tuple[FloatTensor, FloatTensor]:
     """Computes the minimal values over masked pairwise distances.
 
     Args:
@@ -57,7 +57,7 @@ def masked_minimum(distances: FloatTensor,
 
 
 def build_masks(labels: IntTensor,
-                batch_size: int) -> Tuple[FloatTensor, FloatTensor]:
+                batch_size: int) -> Tuple[BoolTensor, BoolTensor]:
     """Build masks that allows to select only the positive or negatives
     embeddings.
     Args:
@@ -75,11 +75,8 @@ def build_masks(labels: IntTensor,
     # not the same class
     negative_mask = tf.math.logical_not(positive_mask)
 
-    # masks are treated as float32 moving forward
-    positive_mask = tf.cast(positive_mask, tf.float32)
-    negative_mask = tf.cast(negative_mask, tf.float32)
-
     # we need to remove the diagonal from positive mask
-    diag = tf.linalg.diag(tf.ones(batch_size))
-    positive_mask = positive_mask - tf.cast(diag, tf.float32)
+    diag = tf.logical_not(tf.linalg.diag(tf.ones(batch_size, dtype=tf.bool)))
+    positive_mask = tf.math.logical_and(positive_mask, diag)
+
     return positive_mask, negative_mask

@@ -2,7 +2,7 @@
 import tensorflow as tf
 from tensorflow.keras.metrics import Metric
 from tensorflow_similarity.algebra import build_masks
-from tensorflow_similarity.algebra import masked_minimum, masked_maximum
+from tensorflow_similarity.algebra import masked_min, masked_max
 from tensorflow_similarity.distances import distance_canonicalizer
 
 
@@ -53,14 +53,14 @@ class DistanceMetric(Metric):
 
         if self.anchor == "positive":
             if self.positive_mining_strategy == "hard":
-                distances, _ = masked_maximum(pairwise_distances, positive_mask)
+                distances, _ = masked_max(pairwise_distances, positive_mask)
             else:
-                distances, _ = masked_minimum(pairwise_distances, positive_mask)
+                distances, _ = masked_min(pairwise_distances, positive_mask)
         else:
             if self.negative_mining_strategy == 'easy':
-                distances, _ = masked_minimum(pairwise_distances, negative_mask)
+                distances, _ = masked_min(pairwise_distances, negative_mask)
             else:
-                distances, _ = masked_maximum(pairwise_distances, negative_mask)
+                distances, _ = masked_max(pairwise_distances, negative_mask)
 
         # reduce
         if self.aggregate == 'mean' or self.aggregate == 'avg':
