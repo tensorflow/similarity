@@ -47,12 +47,16 @@ class Tensor(List):
         pass
 
 
-class IntTensor(Tensor):
-    """Integer tensor"""
+class BoolTensor(Tensor):
+    """Bool tensor """
 
 
 class FloatTensor(Tensor):
     """Float tensor """
+
+
+class IntTensor(Tensor):
+    """Integer tensor"""
 
 
 class Symbol(Tensor):

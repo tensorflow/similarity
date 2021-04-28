@@ -8,6 +8,8 @@ This release focuses on adding TF dataset support.
 
 - Added Efficient Sampling from TF.data.TFRecordDataset now supported via the
 TFDatasetSampler.
+- masked_minimum and masked_maximum now return the arg_min and arg_max for 
+each example in the batch. 
 
 ## Major improvements
 

@@ -27,14 +27,14 @@ References
 import tensorflow as tf
 from .utils import is_tensor_or_variable
 from .distances import Distance, distance_canonicalizer
-from .algebra import masked_maximum, masked_minimum, build_masks
-from .types import FloatTensor
-from typing import Callable, List, Union
+from .algebra import masked_max, masked_min, build_masks
+from .types import FloatTensor, IntTensor
+from typing import Callable, Union
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
-def triplet_loss(labels: List[int],
+def triplet_loss(labels: IntTensor,
                  embeddings: FloatTensor,
                  distance: Callable,
                  positive_mining_strategy: str = 'hard',
@@ -77,42 +77,43 @@ def triplet_loss(labels: List[int],
 
     # [Positivie distance computation]
     if positive_mining_strategy == 'hard':
-        positive_distances = masked_maximum(pairwise_distances, positive_mask)
+        positive_distances, _ = masked_max(pairwise_distances, positive_mask)
     elif positive_mining_strategy == 'easy':
-        positive_distances = masked_minimum(pairwise_distances, positive_mask)
+        positive_distances, _ = masked_min(pairwise_distances, positive_mask)
     else:
         raise ValueError('Invalid positive mining strategy')
 
     # [Negative distances computation]
     if negative_mining_strategy == 'hard':
         # find the *non-zero* minimal distance between negative labels
-        negative_distances = masked_minimum(pairwise_distances, negative_mask)
+        negative_distances, _ = masked_min(pairwise_distances, negative_mask)
     elif negative_mining_strategy == 'semi-hard':
         # find the minimal distance between negative label gt than max distance
         # between positive labels
         # find max value of positive distance
-        max_positive = masked_maximum(pairwise_distances, positive_mask)
+        max_positive, _ = masked_max(pairwise_distances, positive_mask)
 
         # select distance that are above the max positive distance
         greater_distances = tf.math.greater(pairwise_distances, max_positive)
 
         # combine with negative mask: keep negative value if greater,
         # zero otherwise
-        empty = tf.cast(tf.zeros((batch_size, batch_size)), tf.dtypes.float32)
+        empty = tf.zeros((batch_size, batch_size), dtype=tf.bool)
         semi_hard_mask = tf.where(greater_distances, negative_mask, empty)
 
         # find the  minimal distance between negative labels above threshold
-        negative_distances = masked_minimum(pairwise_distances, semi_hard_mask)
+        negative_distances, _ = masked_min(pairwise_distances, semi_hard_mask)
 
     elif negative_mining_strategy == 'easy':
         # find the maximal distance between negative labels
-        negative_distances = masked_maximum(pairwise_distances, negative_mask)
+        negative_distances, _ = masked_max(pairwise_distances, negative_mask)
     else:
         raise ValueError('Invalid negative mining strategy')
 
     # [Triplet loss computation]
     if soft_margin:
-        triplet_loss = tf.math.exp(positive_distances - negative_distances)
+        triplet_loss = tf.math.subtract(positive_distances, negative_distances)
+        triplet_loss = tf.math.exp(triplet_loss)
         triplet_loss = tf.math.log1p(triplet_loss)
     else:
         triplet_loss = tf.math.subtract(positive_distances, negative_distances)
