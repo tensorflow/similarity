@@ -68,7 +68,7 @@ class SimilarityModel(functional.Functional):
             a function or a [tensorflow_similairty.metrics.*](../metrics.md)
             instance. Note that the metrics used for some type of
             metric-learning such as distance learning (e.g via triplet loss)
-            have a different different prototype than the metrics used in
+            have a different prototype than the metrics used in
             standard models and you can't use the `tf.keras.metrics` for those
             type of learning.
 
