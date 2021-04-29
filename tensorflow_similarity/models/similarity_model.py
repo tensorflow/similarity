@@ -33,6 +33,16 @@ class SimilarityModel(functional.Functional):
     core features.
     """
 
+    @property
+    def index(self):
+        if not hasattr(self, '_index'):
+            ValueError("Index doesn't exist: index data before quering it")
+        return self._index
+
+    @index.setter
+    def index(self, index):
+        self._index = index
+
     def compile(self,
                 optimizer: Union[Optimizer, str, Dict, List] = 'rmsprop',  # noqa
                 distance: Union[Distance, str] = 'auto',
