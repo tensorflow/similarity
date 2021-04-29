@@ -2,7 +2,7 @@ import tensorflow as tf
 import pytest
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.layers import MetricEmbedding
-from tensorflow_similarity.model import SimilarityModel
+from tensorflow_similarity.models import SimilarityModel
 from tensorflow_similarity.callbacks import EvalCallback
 
 

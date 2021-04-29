@@ -1,57 +1,59 @@
 from collections import defaultdict
-from tqdm.auto import tqdm
-from tabulate import tabulate
-from pathlib import Path
 from copy import copy
+from pathlib import Path
+from typing import Dict, List, Union
+
 import tensorflow as tf
+from tabulate import tabulate
 from tensorflow.python.keras.engine import functional
+from tqdm.auto import tqdm
+
 from tensorflow_similarity.indexer import Indexer
 from tensorflow_similarity.metrics import EvalMetric, make_metric
 
-
-from typing import List, Dict, Union
-from .types import FloatTensor, PandasDataFrame
 from .distances import distance_canonicalizer
+from .types import FloatTensor, PandasDataFrame
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class SimilarityModel(functional.Functional):
-    """Sub-classing Keras.Model to allow access to the forward pass values for
-    efficient metric-learning.
+    """Specialized Keras.Model with additional features needed for
+    metric learning. In particular, `SimilarityModel()` supports indexing,
+    searching and saving the embeddings predicted by the network.
     """
 
     def __init__(self, *args, **kwargs):
         super(SimilarityModel, self).__init__(*args, **kwargs)
         self._index: Indexer = None  # index reference
 
-    def train_step(self, data):
-        # Unpack the data. Its structure depends on your model and
-        # on what you pass to `fit()`.
-        x, y = data
+    # def train_step(self, data):
+    #     # Unpack the data. Its structure depends on your model and
+    #     # on what you pass to `fit()`.
+    #     x, y = data
 
-        with tf.GradientTape() as tape:
-            y_pred = self(x, training=True)  # Forward pass
-            # Compute the loss value
-            # (the loss function is configured in `compile()`)
-            loss = self.compiled_loss(y,
-                                      y_pred,
-                                      regularization_losses=self.losses)
+    #     with tf.GradientTape() as tape:
+    #         y_pred = self(x, training=True)  # Forward pass
+    #         # Compute the loss value
+    #         # (the loss function is configured in `compile()`)
+    #         loss = self.compiled_loss(y,
+    #                                   y_pred,
+    #                                   regularization_losses=self.losses)
 
-            # FIXME: callback
-            # self.distances = cosine_distance(y_pred)
+    #         # FIXME: callback
+    #         # self.distances = cosine_distance(y_pred)
 
-        # Compute gradients
-        trainable_vars = self.trainable_variables
-        gradients = tape.gradient(loss, trainable_vars)
+    #     # Compute gradients
+    #     trainable_vars = self.trainable_variables
+    #     gradients = tape.gradient(loss, trainable_vars)
 
-        # Update weights
-        self.optimizer.apply_gradients(zip(gradients, trainable_vars))
+    #     # Update weights
+    #     self.optimizer.apply_gradients(zip(gradients, trainable_vars))
 
-        # Update metrics (includes the metric that tracks the loss)
-        self.compiled_metrics.update_state(y, y_pred)
+    #     # Update metrics (includes the metric that tracks the loss)
+    #     self.compiled_metrics.update_state(y, y_pred)
 
-        # Return a dict mapping metric names to current value
-        return {m.name: m.result() for m in self.metrics}
+    #     # Return a dict mapping metric names to current value
+    #     return {m.name: m.result() for m in self.metrics}
 
     def compile(self,
                 optimizer='rmsprop',

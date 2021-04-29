@@ -15,9 +15,9 @@ from .types import FloatTensor, PandasDataFrame, Tensor
 
 # internal
 from .distances import distance_canonicalizer, Distance
-from .matchers import NMSLibMatcher
-from .tables import MemoryTable
-from .evaluators import MemoryEvaluator
+from .matchers import Matcher, NMSLibMatcher
+from .tables import Table, MemoryTable
+from .evaluators import Evaluator, MemoryEvaluator
 from .metrics import EvalMetric, make_metric, F1Score
 
 
@@ -41,9 +41,9 @@ class Indexer():
 
     def __init__(self,
                  distance: Union[Distance, str] = 'cosine',
-                 table: str = 'memory',
-                 match_algorithm: str = 'nmslib_hnsw',
-                 evaluator: str = 'memory',
+                 table: Union[Table, str] = 'memory',
+                 match_algorithm: Union[Matcher, str] = 'nmslib_hnsw',
+                 evaluator: Union[Evaluator, str] = 'memory',
                  embedding_output: int = None,
                  stat_buffer_size: int = 1000) -> None:
         """Index embeddings to make them searchable via KNN
@@ -102,7 +102,8 @@ class Indexer():
         "(re)intialize internal storage structure"
 
         if self.match_algorithm == 'nmslib_hnsw':
-            self.matcher = NMSLibMatcher(self.distance, self.match_algorithm)
+            algo: str = str(self.match_algorithm)  # needed for typing
+            self.matcher = NMSLibMatcher(self.distance, algo)
         else:
             raise ValueError('Unknown matching_algorithm')
 
@@ -378,7 +379,8 @@ class Indexer():
             calibration_metric: [Metric()](metrics/overview.md) used to
             evaluate the performance of the index.
 
-            k: How many neighboors to use during the calibration. Defaults to 1.
+            k: How many neighboors to use during the calibration.
+            Defaults to 1.
 
             extra_metrics: List of additional [Metric()](metrics/overview.md)
             to compute and report.
@@ -523,13 +525,13 @@ class Indexer():
         self.matcher.save(path)
 
     @staticmethod
-    def load(path: str, verbose: int = 1):
+    def load(path: Union[str, Path], verbose: int = 1):
         """Load Index data from a checkpoint and initialize underlying
         structure with the reloaded data.
 
         Args:
             path: Directory where the checkpoint is located.
-            verbose ([type], optional): [description]. Defaults to 1.
+            verbose: Be verbose. Defaults to 1.
 
         Returns:
             Initialized index

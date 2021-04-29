@@ -1,5 +1,21 @@
 # Tensorflow Similarity releases notes
 
+## 0.12.x - Q/A release
+
+This release focuses on on code quality, API consistency, testing, and
+documentation to get TF.similarity ready for production.
+
+## Major improvements
+
+- Refactored Class model to allows easy sub-classing and pave
+the way to support a wider range of model type that requires different
+`train_step()`.
+
+- Improved TFDataset samplers to make it more robust when dealing with very
+large datasets (500M+ examples).
+
+
+
 ## 0.11.x - Support for TF dataset
 
 This release focuses on adding TF dataset support.
@@ -8,17 +24,17 @@ This release focuses on adding TF dataset support.
 
 - Added Efficient Sampling from TF.data.TFRecordDataset now supported via the
 TFDatasetSampler.
-- masked_minimum and masked_maximum now return the arg_min and arg_max for 
-each example in the batch. 
+- masked_minimum and masked_maximum now return the arg_min and arg_max for
+each example in the batch.
 
 ## Major improvements
 
 - Improved the API documentation
 
-## 0.10.x - Getting ready for release
+## 0.10.x - Q/A release
 
 This release focuses on code quality, API consistency, and documentation
-to be ready for initial  release.
+to get TF.similarity ready for production.
 
 ## New features
 
