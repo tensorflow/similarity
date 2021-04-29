@@ -14,6 +14,11 @@ the way to support a wider range of model type that requires different
 - Improved TFDataset samplers to make it more robust when dealing with very
 large datasets (500M+ examples).
 
+## Breaking changes
+
+- `model.SimilarityModel` moved to `models/` and made base class to pave the
+way to subclass for specific type of similiarty model that requires to override
+things like `train_step()`. Import is now: `from tfsim.models import SimilarityModel`
 
 
 ## 0.11.x - Support for TF dataset
