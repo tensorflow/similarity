@@ -103,22 +103,30 @@ class Indexer():
 
         if self.match_algorithm == 'nmslib_hnsw':
             algo: str = str(self.match_algorithm)  # needed for typing
-            self.matcher = NMSLibMatcher(self.distance, algo)
+            self.matcher: Matcher = NMSLibMatcher(self.distance, algo)
+        elif isinstance(self.match_algorithm, Matcher):
+            self.matcher = self.match_algorithm
         else:
-            raise ValueError('Unknown matching_algorithm')
+            raise ValueError("You need to either supply a known matcher name\
+                or a Matcher() object")
 
         # mapper from id to record data
         if self.table_type == 'memory':
-            self.table: MemoryTable = MemoryTable()
+            self.table: Table = MemoryTable()
+        elif isinstance(self.table_type, Table):
+            self.table = self.table_type
         else:
-            raise ValueError("Unknown table type")
+            raise ValueError("You need to either supply a know table name\
+                or a Table() object")
 
         # code used to evaluate indexer performance
         if self.evaluator_type == 'memory':
-            self.evaluator: MemoryEvaluator = MemoryEvaluator()
+            self.evaluator: Evaluator = MemoryEvaluator()
+        elif isinstance(self.evaluator_type, Evaluator):
+            self.evaluator = self.evaluator_type
         else:
-            raise ValueError("Unknown scorer type")
-
+            raise ValueError("You need to either supply a know evaluator name\
+                or an Evaluator() object")
         # stats
         self._stats: DefaultDict[str, int] = defaultdict(int)
         self._lookup_timings_buffer: Deque = deque([], maxlen=self.stat_buffer_size)  # noqa

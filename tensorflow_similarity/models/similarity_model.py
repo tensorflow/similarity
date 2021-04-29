@@ -526,9 +526,9 @@ class SimilarityModel(functional.Functional):
         """
         return self._index.to_data_frame(num_items=num_items)
 
+    # We don't need from_config as the index is reloaded separatly.
+    # this is kept as a reminder that it was looked into and decided to split
+    # the index reloading instead of overloading this method.
     # @classmethod
     # def from_config(cls, config):
-    #     print('here')
-    #     print(config)
-    #     del config['name']
     #     return super().from_config(**config)
