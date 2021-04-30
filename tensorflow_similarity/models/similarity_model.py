@@ -33,15 +33,15 @@ class SimilarityModel(functional.Functional):
     core features.
     """
 
-    @property
-    def index(self):
-        if not hasattr(self, '_index'):
-            ValueError("Index doesn't exist: index data before quering it")
-        return self._index
+    # @property
+    # def _index(self):
+    #     if not hasattr(self, '_index'):
+    #         ValueError("Index doesn't exist: index data before quering it")
+    #     return self._index
 
-    @index.setter
-    def index(self, index):
-        self._index = index
+    # @index.setter
+    # def _index(self, index):
+    #     self._index: Indexer = index
 
     def compile(self,
                 optimizer: Union[Optimizer, str, Dict, List] = 'rmsprop',  # noqa
@@ -166,11 +166,11 @@ class SimilarityModel(functional.Functional):
             embedding_output = 0
 
         # init index
-        self._index: Indexer = Indexer(distance=distance,
-                                       table=table,
-                                       match_algorithm=matcher,
-                                       embedding_output=embedding_output,
-                                       stat_buffer_size=stat_buffer_size)
+        self._index = Indexer(distance=distance,
+                              table=table,
+                              match_algorithm=matcher,
+                              embedding_output=embedding_output,
+                              stat_buffer_size=stat_buffer_size)
 
         # call underlying keras method
         super().compile(optimizer=optimizer,
