@@ -11,8 +11,7 @@ documentation to get TF.similarity ready for production.
 the way to support a wider range of model type that requires different
 `train_step()`.
 
-- Improved TFDataset samplers to make it more robust when dealing with very
-large datasets (500M+ examples).
+- Improved typing coverage
 
 ## Breaking changes
 
