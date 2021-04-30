@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow_similarity.model import SimilarityModel
+from tensorflow_similarity.models import SimilarityModel
 from tensorflow_similarity.callbacks import EvalCallback
 
 

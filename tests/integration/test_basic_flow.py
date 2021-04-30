@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.python.keras.saving.save import load_model
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.layers import MetricEmbedding
-from tensorflow_similarity.model import SimilarityModel
+from tensorflow_similarity.models import SimilarityModel
 from tensorflow_similarity.samplers import MultiShotMemorySampler
 from tensorflow_similarity.distance_metrics import dist_gap, min_neg, max_pos
 
@@ -72,7 +72,7 @@ def test_basic_flow(tmp_path):
     model.compile(optimizer='adam', metrics=metrics, loss=triplet_loss)
 
     # train
-    history = model.fit(sampler, epochs=5)
+    history = model.fit(sampler, epochs=10)
 
     # check that history is properly filled
     assert 'loss' in history.history

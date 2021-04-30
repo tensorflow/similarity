@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.python.keras.saving.save import load_model
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.layers import MetricEmbedding
-from tensorflow_similarity.model import SimilarityModel
+from tensorflow_similarity.models import SimilarityModel
 
 
 def test_save_and_reload(tmp_path):

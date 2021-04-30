@@ -90,6 +90,10 @@ def TFRecordDatasetSampler(shard_path: str,
             # shuffle shard order
             ds = ds.shuffle(total_shards)
 
+            # select X shards
+            if num_shards:
+                ds = ds.take(num_shards)
+
             # This is the tricky part, we are using the interleave function to
             # do the sampling as requested by the user. This is not the
             # standard use of the function or an obvious way to do it but
@@ -99,7 +103,7 @@ def TFRecordDatasetSampler(shard_path: str,
             # create random batch
             ds = ds.interleave(
                                lambda x: tf.data.TFRecordDataset(x, compression_type=compression),  # noqa
-                               cycle_length=num_shards,
+                               # cycle_length=num_shards,   # use take() above.
                                block_length=example_per_class,
                                num_parallel_calls=file_parallelism,
                                deterministic=False
