@@ -2,7 +2,7 @@ tmp/
 tmp.py
 tensorflow_similarity.egg-info/
 logs/
-models/
+notebooks/models/
 .vscode/
 site/
 release.sh

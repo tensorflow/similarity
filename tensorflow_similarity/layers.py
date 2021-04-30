@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Layer
 from tensorflow.keras import layers
-# from tensorflow.keras.layers.Inputsec ###
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
