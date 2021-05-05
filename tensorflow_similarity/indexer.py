@@ -11,7 +11,7 @@ from tqdm.auto import tqdm
 
 # types
 from typing import Dict, List, Union, DefaultDict, Deque, Optional
-from .types import FloatTensor, PandasDataFrame, Tensor
+from .types import FloatTensor, Lookup, PandasDataFrame, Tensor
 
 # internal
 from .distances import distance_canonicalizer, Distance
@@ -248,14 +248,15 @@ class Indexer():
     def single_lookup(
             self,
             prediction: FloatTensor,
-            k: int = 5):
+            k: int = 5) -> List[Lookup]:
         """Find the k closest matches of a given embedding
 
         Args:
             prediction: model prediction.
             k: Number of nearest neighboors to lookup. Defaults to 5.
         Returns
-            list of the k nearest neigboors info: `{"embedding", "distance", "label", "data"}`  # noqa
+            list of the k nearest neigboors info:
+            List[Lookup]
         """
 
         embedding = self._get_embedding(prediction)
@@ -267,13 +268,13 @@ class Indexer():
         results = []
         for i in range(len(nn_embeddings)):
             # ! casting is needed to avoid slowness down the line
-            results.append({
-                "rank": i + 1,
-                "embedding": nn_embeddings[i],
-                "distance": float(distances[i]),
-                "label": self._cast_label(labels[i]),
-                "data": data[i]
-            })
+            results.append(Lookup(
+                rank=i + 1,
+                embedding=nn_embeddings[i],
+                distance=float(distances[i]),
+                label=self._cast_label(labels[i]),
+                data=data[i]
+                ))
         self._lookup_timings_buffer.append(lookup_time)
         self._stats['num_lookups'] += 1
         return results
@@ -282,7 +283,7 @@ class Indexer():
                      predictions: FloatTensor,
                      k: int = 5,
                      threads: int = None,
-                     verbose: int = 1):
+                     verbose: int = 1) -> List[List[Lookup]]:
 
         """Find the k closest matches for a set of embeddings
 
@@ -291,8 +292,7 @@ class Indexer():
             k: Number of nearest neighboors to lookup. Defaults to 5.
         Returns
             list of list of k nearest neighboors:
-            list([{"embedding", "distance", "label", "data"}])
-
+            List[List[Lookup]]
         """
 
         embeddings = self._get_embeddings(predictions)
@@ -310,13 +310,13 @@ class Indexer():
 
             lookup = []
             for i in range(len(nn_embeddings)):
-                lookup.append({
-                    "rank": i + 1,
-                    "embedding": nn_embeddings[i],
-                    "distance": float(distances[i]),
-                    "label": self._cast_label(labels[i]),
-                    "data": data[i]
-                })
+                lookup.append(Lookup(
+                    rank=i + 1,
+                    embedding=nn_embeddings[i],
+                    distance=float(distances[i]),
+                    label=self._cast_label(labels[i]),
+                    data=data[i]
+                    ))
             lookups.append(lookup)
             if verbose:
                 pb.update()
@@ -479,8 +479,8 @@ class Indexer():
         distances = []
         labels = []
         for lookup in lookups:
-            distances.append(lookup[0]['distance'])
-            labels.append(lookup[0]['label'])
+            distances.append(lookup[0].distance)
+            labels.append(lookup[0].label)
 
         if verbose:
             pb = tqdm(total=len(distances) * len(self.cutpoints),
