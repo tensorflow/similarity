@@ -20,8 +20,6 @@ from typing import Any, Callable, Iterable, Union, Optional, List, Tuple, Option
 import numpy as np
 import tensorflow as tf
 
-EqFunc = Callable[[Any, Any], bool]
-
 
 class PandasDataFrame(object):
     """Symbolic pandas frame
@@ -85,6 +83,9 @@ class Value(Tensor):
         pass
 
 
+EqFunc = Callable[[Any, Any], bool]
+
+
 def _optional_eq(a: Any, b: Any, eq_fun: EqFunc) -> bool:
     """__eq__ for Optional[Any] types."""
     if a is None:
@@ -95,12 +96,19 @@ def _optional_eq(a: Any, b: Any, eq_fun: EqFunc) -> bool:
     return eq_fun(a, b)
 
 
+def _basic_eq(a: Any, b: Any) -> bool:
+    eq: bool = a == b
+    return eq
+
+
 def _ndarray_eq(a: np.ndarray, b: np.ndarray) -> bool:
-    return np.allclose(a, b, rtol=0, atol=0, equal_nan=True)
+    eq: bool = np.allclose(a, b, rtol=0, atol=0, equal_nan=True)
+    return eq
 
 
 def _tf_eq(a: Tensor, b: Tensor) -> bool:
-    return tf.math.reduce_all(tf.math.equal(a, b))
+    eq: bool = tf.math.reduce_all(tf.math.equal(a, b))
+    return eq
 
 
 @dataclasses.dataclass
@@ -109,29 +117,34 @@ class Lookup:
 
     Attributes:
         rank: Rank of the match with respect to the query distance.
+
         distance: The distance from the match to the query.
-        label: The label associated with the match.
-        embedding: The embedded match vector.
+
+        label: The label associated with the match. Default None.
+
+        embedding: The embedded match vector. Default None.
+
         data: The original Tensor representation of the match result.
+        Default None.
     """
     rank: int
     distance: float
-    label: int
+    label: Optional[int] = None
     embedding: Optional[np.ndarray] = None
-    data: Optional[FloatTensor] = None
+    data: Optional[Tensor] = None
 
     def __eq__(self, other) -> bool:
         if other.__class__ is not self.__class__:
-            return False
-        if not _optional_eq(self.embedding, other.embedding, _ndarray_eq):
-            return False
-        if not _optional_eq(self.data, other.data, _tf_eq):
             return False
         if self.rank != other.rank:
             return False
         if self.distance != other.distance:
             return False
-        if self.label != other.label:
+        if not _optional_eq(self.label, other.label, _basic_eq):
+            return False
+        if not _optional_eq(self.embedding, other.embedding, _ndarray_eq):
+            return False
+        if not _optional_eq(self.data, other.data, _tf_eq):
             return False
 
         return True
