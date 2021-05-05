@@ -13,6 +13,8 @@ the way to support a wider range of model type that requires different
 
 - Improved typing coverage
 
+- lookup is now a Lookup type with attributes.
+
 ## Breaking changes
 
 - `model.SimilarityModel` moved to `models/` and made base class to pave the

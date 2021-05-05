@@ -1,7 +1,8 @@
-import tensorflow as tf
-from tensorflow_similarity.evaluators import MemoryEvaluator
 import random
+
+from tensorflow_similarity.evaluators import MemoryEvaluator
 from tensorflow_similarity.metrics import MinRank, MaxRank
+from tensorflow_similarity.types import Lookup
 
 
 def generate_lookups(num_classes, examples_per_class=10, match_rate=0.7):
@@ -26,16 +27,17 @@ def generate_lookups(num_classes, examples_per_class=10, match_rate=0.7):
                     label += 1
                     label %= num_classes
 
-            e = {
-                    'distance': round(random.uniform(0.0, 1.0), 3),
-                    'label': label,
-                    'label_true': class_id  # added for debug, code don't use that
-                }
+            e = Lookup(
+                    rank=0,
+                    distance=round(random.uniform(0.0, 1.0), 3),
+                    label=label,
+                )
             lookups.append([e])
             total += 1
 
     effective_match_rate = num_match / total
     return target_labels, lookups, effective_match_rate
+
 
 def test_evaluate_2():
     NUM_CLASSES = 2
@@ -62,20 +64,20 @@ def test_evaluate():
             [1, 2, 3, 4, 5, 6, 7],  # targets_labels
             [  # lookups
                 [
-                    {'label': 21, 'distance': 0.01},
-                    {'label': 1, 'distance': 0.1}
+                    Lookup(rank=0, label=21, distance=0.01),
+                    Lookup(rank=1, label=1, distance=0.1)
                 ],
                 [
-                    {'label': 2, 'distance': 0.2},
-                    {'label': 22, 'distance': 0.22}
+                    Lookup(rank=0, label=2, distance=0.2),
+                    Lookup(rank=1, label=22, distance=0.22)
                 ],
                 [
-                 {'label': 23, 'distance': 0.01},
-                 {'label': 3, 'distance': 0.3}
+                    Lookup(rank=0, label=23, distance=0.01),
+                    Lookup(rank=1, label=3, distance=0.3)
                 ],
                 [
-                 {'label': 4, 'distance': 0.4},
-                 {'label': 24, 'distance': 0.44}
+                    Lookup(rank=0, label=4, distance=0.4),
+                    Lookup(rank=1, label=24, distance=0.44)
                 ]
             ]
         ]

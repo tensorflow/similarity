@@ -48,7 +48,6 @@ def test_basic_flow(tmp_path):
     negative_mining_strategy = 'semi-hard'
 
     x, y = generate_dataset(NUM_CLASSES, EXAMPLES_PER_CLASS)
-    tf.print(y.shape)
     sampler = MultiShotMemorySampler(x,
                                      y,
                                      class_per_batch=CLASS_PER_BATCH,
@@ -87,13 +86,13 @@ def test_basic_flow(tmp_path):
     neighboors = model.single_lookup(x[0], k=K)
     assert len(neighboors) == K
     # check the model returns reasonable matching
-    assert neighboors[0]['label'] == 0
+    assert neighboors[0].label == 0
 
     # check also the last x example which should be for the last class
     neighboors = model.single_lookup(x[-1], k=K)
     assert len(neighboors) == K
     # check the model returns reasonable matching
-    assert neighboors[0]['label'] == NUM_CLASSES - 1
+    assert neighboors[0].label == NUM_CLASSES - 1
 
     # calibration
     calibration = model.calibrate(x, y, verbose=0)

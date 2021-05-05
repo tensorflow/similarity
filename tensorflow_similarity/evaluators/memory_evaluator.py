@@ -6,6 +6,7 @@ from collections import defaultdict
 import tensorflow as tf
 from typing import DefaultDict, List, Dict, Union
 from tensorflow_similarity.metrics import EvalMetric, make_metric
+from tensorflow_similarity.types import Lookup
 
 
 class MemoryEvaluator(Evaluator):
@@ -15,7 +16,7 @@ class MemoryEvaluator(Evaluator):
                  index_size: int,
                  metrics: List[Union[str, EvalMetric]],
                  targets_labels: List[int],
-                 lookups: List[List[Dict[str, Union[float, int]]]],
+                 lookups: List[List[Lookup]],
                  distance_rounding: int = 8
                  ) -> Dict[str, Union[float, int]]:
         """Evaluates lookup performances against a supplied set of metrics
@@ -55,11 +56,11 @@ class MemoryEvaluator(Evaluator):
             true_label = targets_labels[lidx]
             for nidx, n in enumerate(lookup):
                 rank = nidx + 1
-                if n['label'] == true_label:
+                if n.label == true_label:
                     # print(n['label'], true_label, lookup)
                     match_ranks[lidx] = rank
-                    match_distances[lidx] = round(n['distance'],
-                                                  distance_rounding)
+                    match_distances[lidx] = (
+                            round(n.distance, distance_rounding))
                     num_matched += 1
 
         # compute metrics
@@ -81,7 +82,7 @@ class MemoryEvaluator(Evaluator):
                   calibration_metric: EvalMetric,
                   thresholds_targets: Dict[str, float],
                   targets_labels: List[int],
-                  lookups: List[List[Dict[str, Union[float, int]]]],
+                  lookups: List[List[Lookup]],
                   extra_metrics: List[Union[str, EvalMetric]] = [],
                   distance_rounding: int = 8,
                   metric_rounding: int = 6,
@@ -128,7 +129,7 @@ class MemoryEvaluator(Evaluator):
         distances = []
         for lu in lookups:
             for n in lu:
-                distances.append(round(n['distance'], distance_rounding))
+                distances.append(round(n.distance, distance_rounding))
 
         targets_labels = [int(i) for i in targets_labels]
 
