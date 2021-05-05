@@ -1,7 +1,8 @@
 from abc import abstractmethod
 import tensorflow as tf
 from abc import ABC
-from typing import List, Dict, Union, Tuple
+from typing import List, Union, Tuple
+from .types import Lookup
 
 
 class EvalMetric(ABC):
@@ -43,15 +44,13 @@ class EvalMetric(ABC):
         return metric
 
     @abstractmethod
-    def compute(
-        self,
-        max_k: int,
-        targets_labels: List[int],
-        index_size: int,
-        match_ranks: List[int],
-        match_distances: List[float],
-        lookups: List[List[Dict[str, Union[float, int]]]]
-                ) -> Union[int, float]:
+    def compute(self,
+                max_k: int,
+                targets_labels: List[int],
+                index_size: int,
+                match_ranks: List[int],
+                match_distances: List[float],
+                lookups: List[List[Lookup]]) -> Union[int, float]:
         """Compute the metric
 
         Args:
@@ -136,7 +135,7 @@ class EvalMetric(ABC):
 
     def compute_retrival_metrics(self,
                                  targets_labels: List[int],
-                                 lookups: List[List[Dict[str, Union[float, int]]]],  # noqa
+                                 lookups: List[List[Lookup]],  # noqa
                                  ) -> Tuple[int, int, int, int]:
         true_positives = 0
         false_positives = 0
@@ -144,13 +143,13 @@ class EvalMetric(ABC):
         false_negative = 0
         for lidx, lookup in enumerate(lookups):
             for n in lookup[:self.k]:
-                if self.distance_threshold and n['distance'] > self.distance_threshold:  # noqa
-                    if n['label'] == targets_labels[lidx]:
+                if self.distance_threshold and n.distance > self.distance_threshold:  # noqa
+                    if n.label == targets_labels[lidx]:
                         false_negative += 1
                     else:
                         true_negative += 1
                 else:
-                    if n['label'] == targets_labels[lidx]:
+                    if n.label == targets_labels[lidx]:
                         true_positives += 1
                     else:
                         false_positives += 1
@@ -166,7 +165,7 @@ class MeanRank(EvalMetric):
     def compute(self, max_k: int, targets_labels: List[int], index_size: int,
                 match_ranks: List[int],
                 match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
+                lookups: List[List[Lookup]]) -> float:
 
         # remove unmatched elements (rank 0)
         matches = self.filter_ranks(match_ranks,
@@ -183,7 +182,7 @@ class MinRank(EvalMetric):
     def compute(self, max_k: int, targets_labels: List[int],
                 index_size: int, match_ranks: List[int],
                 match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]) -> int:
+                lookups: List[List[Lookup]]) -> int:
 
         # remove unmatched elements (rank 0)
         matches = self.filter_ranks(match_ranks,
@@ -199,7 +198,7 @@ class MaxRank(EvalMetric):
     def compute(self, max_k: int, targets_labels: List[int],
                 index_size: int, match_ranks: List[int],
                 match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]) -> int:
+                lookups: List[List[Lookup]]) -> int:
 
         # remove unmatched elements (rank 0)
         matches = self.filter_ranks(match_ranks,
@@ -228,7 +227,7 @@ class Accuracy(EvalMetric):
 
     def compute(self, max_k: int, targets_labels: List[int], index_size: int,
                 match_ranks: List[int], match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
+                lookups: List[List[Lookup]]) -> float:
         matches = self.filter_ranks(match_ranks,
                                     match_distances,
                                     max_rank=self.k,
@@ -266,7 +265,7 @@ class FIXMEPrecision(EvalMetric):
 
     def compute(self, max_k: int, targets_labels: List[int], index_size: int,
                 match_ranks: List[int], match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
+                lookups: List[List[Lookup]]) -> float:
 
         tp, fp, _, _ = self.compute_retrival_metrics(targets_labels, lookups)
 
@@ -294,7 +293,7 @@ class Recall(EvalMetric):
 
     def compute(self, max_k: int, targets_labels: List[int], index_size: int,
                 match_ranks: List[int], match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
+                lookups: List[List[Lookup]]) -> float:
 
         matches = self.filter_ranks(match_ranks,
                                     match_distances,
@@ -333,7 +332,7 @@ class F1Score(EvalMetric):
 
     def compute(self, max_k: int, targets_labels: List[int], index_size: int,
                 match_ranks: List[int], match_distances: List[float],
-                lookups: List[List[Dict[str, Union[float, int]]]]) -> float:
+                lookups: List[List[Lookup]]) -> float:
 
         matches = self.filter_ranks(match_ranks,
                                     match_distances,
