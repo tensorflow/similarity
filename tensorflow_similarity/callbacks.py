@@ -1,11 +1,14 @@
-from tensorflow.keras.callbacks import Callback
-import tensorflow as tf
+from typing import List, Union
 from pathlib import Path
 
-from typing import List, Union
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.callbacks import Callback
+
 from tensorflow_similarity.types import Tensor
 from tensorflow_similarity.evaluators import MemoryEvaluator
 from tensorflow_similarity.metrics import EvalMetric, make_metric
+from .types import FloatTensor, IntTensor
 
 
 class EvalCallback(Callback):
@@ -89,3 +92,57 @@ class EvalCallback(Callback):
             with self.tb_writer.as_default():
                 for k, v in results.items():
                     tf.summary.scalar(k, v, step=epoch)
+
+
+class SplitValidationLoss(Callback):
+    """A split validation callback.
+
+    This callback will split the validation data into two sets.
+
+        1) The set of classes seen during training.
+        2) The set of classes not seen during training.
+
+    The callback will then compute a separate validation for each split.
+
+    Attributes:
+        history:
+        x_known:
+        y_known:
+        x_unkown:
+        y_unkown:
+    """
+    def __init__(self,
+                 x: FloatTensor,
+                 y: IntTensor,
+                 known_classes: np.ndarray):
+        """Creates the validation callbacks.
+
+        Args:
+            x: Validation data.
+            y: Validation labels.
+            known_classes: The set of classes seen during training.
+        """
+        super().__init__()
+        self.history = {}
+
+        # Create separate validation sets for the known and unknon classes
+        broadcast_classes = known_classes[np.newaxis, :]
+        broadcast_labels = y[:, np.newaxis]
+        known_mask = np.any(broadcast_classes == broadcast_labels, axis=1)
+        known_idxs = np.argwhere(known_mask)
+        unknown_idxs = np.argwhere(~known_mask)
+
+        self.x_known = tf.gather(x, indices=known_idxs.reshape(-1))
+        self.y_known = y[known_idxs]
+        self.x_unknown = tf.gather(x, indices=unknown_idxs.reshape(-1))
+        self.y_unkown = y[unknown_idxs]
+
+    def on_epoch_end(self, epoch, logs=None):
+        logs = logs or {}
+        known_eval = self.model.evaluate(self.x_known, self.y_known, verbose=0)
+        unknown_eval = (
+                self.model.evaluate(self.x_unknown, self.y_unkown, verbose=0))
+        print(f'val_los - known_classes: {known_eval:.4f} - '
+              f'unkown_classes: {unknown_eval:.4f}')
+        logs['known_val_loss'] = known_eval
+        logs['unknown_val_loss'] = unknown_eval
