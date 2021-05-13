@@ -1,17 +1,17 @@
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional
 import tensorflow as tf
 
 
 def TFRecordDatasetSampler(shard_path: str,
                            deserialization_fn: Callable,
-                           num_shards: int = None,
+                           num_shards: Optional[int] = None,
                            example_per_class: int = 2,
                            batch_size: int = 32,
-                           compression: str = None,
+                           compression: Optional[str] = None,
                            parallelism: int = tf.data.AUTOTUNE,
                            file_parallelism: int = 1,
-                           prefetch_size: int = None,
+                           prefetch_size: Optional[int] = None,
                            shard_suffix: str = "*.tfrec") -> tf.data.Dataset:
     """Create a [TFRecordDataset](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
     based sampler
@@ -78,9 +78,12 @@ def TFRecordDatasetSampler(shard_path: str,
 
     shards_list = [str(i) for i in Path(shard_path).glob(shard_suffix)]
     total_shards = len(shards_list)
-    print("found ", len(shards_list), 'shards')
+    print(f'found {total_shards} shards')
 
-    if not prefetch_size:
+    if num_shards is None:
+        num_shards = total_shards
+
+    if prefetch_size is None:
         prefetch_size = 10
 
     with tf.device('/cpu:0'):
@@ -97,14 +100,13 @@ def TFRecordDatasetSampler(shard_path: str,
         # we are favoring for once those factors over readability
         # deterministic=False is not an error, it is what allows us to
         # create random batch
-        ds = ds.interleave(
-                           lambda x: tf.data.TFRecordDataset(x, compression_type=compression),  # noqa
+        ds = ds.interleave(lambda x: tf.data.TFRecordDataset(x, compression_type=compression),  # noqa
                            cycle_length=num_shards,
                            block_length=example_per_class,
                            num_parallel_calls=file_parallelism,
-                           deterministic=False
-                        )
+                           deterministic=False)
         ds = ds.map(deserialization_fn, num_parallel_calls=parallelism)
+        ds = ds.cache()
         ds = ds.batch(batch_size)
         ds = ds.repeat()
         ds = ds.prefetch(prefetch_size)
