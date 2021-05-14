@@ -73,8 +73,8 @@ def TFRecordDatasetSampler(shard_path: str,
             A `TF.data.dataset` ready to be consumed by the model.
         """
 
-        if '*' not in shard_suffix:
-            raise ValueError('make sure to add a wild card to shard suffix')
+        # if '*' not in shard_suffix:
+        #     raise ValueError('make sure to add a wild card to shard suffix')
 
         shards_list = [str(i) for i in Path(shard_path).glob(shard_suffix)]
         total_shards = len(shards_list)
