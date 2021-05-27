@@ -1,5 +1,4 @@
 import tensorflow as tf
-from tensorflow.python.keras.saving.save import load_model
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.models import SimilarityModel
@@ -32,5 +31,5 @@ def test_save_no_compile(tmp_path):
     model = SimilarityModel(inputs, outputs)
 
     model.save(tmp_path)
-    model2 = load_model(tmp_path)
+    model2 = tf.keras.models.load_model(tmp_path)
     assert isinstance(model2, type(model))
