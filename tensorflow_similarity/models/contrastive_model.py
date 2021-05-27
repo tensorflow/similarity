@@ -15,7 +15,7 @@ from .types import FloatTensor, Lookup, PandasDataFrame
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class SimilarityModel(tf.keras.models.Model):
+class SimilarityModel(tf.keras.Model):
     """Specialized Keras.Model with additional features needed for
     metric learning. In particular, `SimilarityModel()` supports indexing,
     searching and saving the embeddings predicted by the network.

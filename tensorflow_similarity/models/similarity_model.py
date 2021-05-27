@@ -23,7 +23,7 @@ from tensorflow_similarity.types import PandasDataFrame
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class SimilarityModel(tf.keras.models.Model):
+class SimilarityModel(tf.keras.Model):
     """Specialized Keras.Model which implement the core features needed for
     metric learning. In particular, `SimilarityModel()` supports indexing,
     searching and saving the embeddings predicted by the network.
