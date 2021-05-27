@@ -6,7 +6,6 @@ from tabulate import tabulate
 from tqdm.auto import tqdm
 
 import tensorflow as tf
-from tensorflow.python.keras.engine import functional
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.losses import Loss
@@ -24,7 +23,7 @@ from tensorflow_similarity.types import PandasDataFrame
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class SimilarityModel(functional.Functional):
+class SimilarityModel(tf.keras.models.Model):
     """Specialized Keras.Model which implement the core features needed for
     metric learning. In particular, `SimilarityModel()` supports indexing,
     searching and saving the embeddings predicted by the network.
