@@ -7,6 +7,9 @@ documentation to get TF.similarity ready for production.
 
 ## Major improvements
 
+- Refactored the `index()` to support storing arbitrary Tensor as data in the
+index instead of being restricted to model input.
+
 - Refactored Class model to allows easy sub-classing and pave
 the way to support a wider range of model type that requires different
 `train_step()`.
