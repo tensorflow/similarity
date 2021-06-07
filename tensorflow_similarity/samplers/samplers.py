@@ -71,9 +71,9 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
         # Tell the users what to expect as they might be unsure what the batch
         # size will be
         print("\nBatch size is %d (%d class X %d example per class\
-            pre-augmentation" % (self.batch_size,
-                                  self.class_per_batch,
-                                  self.example_per_class))
+              pre-augmentation" % (self.batch_size,
+                                   self.class_per_batch,
+                                   self.example_per_class))
 
     @abc.abstractmethod
     def get_examples(self,
