@@ -28,13 +28,13 @@ def viz_neigbors_imgs(example,
 
     for nbg in neighbors:
         plt.subplot(1, num_cols, plt_idx)
-        val = labels[nbg['label']] if labels else nbg['label']
-        legend = "%s - d:%.5f" % (val, nbg['distance'])
-        if nbg['label'] == example_class:
+        val = labels[nbg.label] if labels else nbg.label
+        legend = "%s - d:%.5f" % (val, nbg.distance)
+        if nbg.label == example_class:
             color = cmap
         else:
             color = 'Reds'
-        plt.imshow(nbg['data'], cmap=color)
+        plt.imshow(nbg.data, cmap=color)
         plt.title(legend)
         plt.xticks([])
         plt.yticks([])

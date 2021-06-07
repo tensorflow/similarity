@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Union
 from tensorflow_similarity.metrics import EvalMetric
+from tensorflow_similarity.types import Lookup
 
 
 class Evaluator(ABC):
@@ -17,7 +18,7 @@ class Evaluator(ABC):
                  index_size: int,
                  metrics: List[Union[str, EvalMetric]],
                  targets_labels: List[int],
-                 lookups: List[List[Dict[str, Union[float, int]]]],
+                 lookups: List[List[Lookup]],
                  distance_rounding: int = 8
                  ) -> Dict[str, Union[float, int]]:
         """Evaluates lookup performances against a supplied set of metrics
@@ -46,7 +47,7 @@ class Evaluator(ABC):
                   calibration_metric: EvalMetric,
                   thresholds_targets: Dict[str, float],
                   targets_labels: List[int],
-                  lookups: List[List[Dict[str, Union[float, int]]]],
+                  lookups: List[List[Lookup]],
                   extra_metrics: List[Union[str, EvalMetric]] = [],
                   distance_rounding: int = 8,
                   metric_rounding: int = 6,

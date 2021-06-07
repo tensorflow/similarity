@@ -6,7 +6,6 @@ from tabulate import tabulate
 from tqdm.auto import tqdm
 
 import tensorflow as tf
-from tensorflow.python.keras.engine import functional
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.losses import Loss
@@ -19,12 +18,12 @@ from tensorflow_similarity.distances import Distance
 from tensorflow_similarity.distances import distance_canonicalizer
 from tensorflow_similarity.distance_metrics import DistanceMetric
 from tensorflow_similarity.losses import MetricLoss
-from tensorflow_similarity.types import FloatTensor, IntTensor, Tensor
+from tensorflow_similarity.types import FloatTensor, Lookup, IntTensor, Tensor
 from tensorflow_similarity.types import PandasDataFrame
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class SimilarityModel(functional.Functional):
+class SimilarityModel(tf.keras.Model):
     """Specialized Keras.Model which implement the core features needed for
     metric learning. In particular, `SimilarityModel()` supports indexing,
     searching and saving the embeddings predicted by the network.
@@ -157,8 +156,8 @@ class SimilarityModel(functional.Functional):
         # check if we we need to set the embedding head
         num_outputs = len(self.output_names)
         if embedding_output and embedding_output > num_outputs:
-            raise Exception("Embedding_output value exceed number of model\
-                outputs"                                                )
+            raise Exception("Embedding_output value exceed number of model "
+                            "outputs")
 
         if not embedding_output and num_outputs > 1:
             print("Embedding output set to be model output 0",
@@ -198,9 +197,9 @@ class SimilarityModel(functional.Functional):
             Defaults to True.
 
             build: Rebuild the index after indexing. This is needed to make the
-            new samples searchable. Set it to false to save processing time when
-            calling indexing repeatidly without the need to search between the
-            indexing requests. Defaults to True.
+            new samples searchable. Set it to false to save processing time
+            when calling indexing repeatidly without the need to search between
+            the indexing requests. Defaults to True.
 
             verbose: Output indexing progress info. Defaults to 1.
         """
@@ -218,7 +217,7 @@ class SimilarityModel(functional.Functional):
                x: Tensor,
                k: int = 5,
                threads: int = 4,
-               verbose: int = 1):
+               verbose: int = 1) -> List[List[Lookup]]:
         """Find the k closest matches in the index for a set of samples.
 
         Args:
@@ -232,7 +231,7 @@ class SimilarityModel(functional.Functional):
 
         Returns
             list of list of k nearest neighboors:
-            list([{"embedding", "distance", "label", "data"}])
+            List[List[Lookup]]
         """
         predictions = self.predict(x)
         return self._index.batch_lookup(predictions,
@@ -240,7 +239,9 @@ class SimilarityModel(functional.Functional):
                                         threads=threads,
                                         verbose=verbose)
 
-    def single_lookup(self, x: Tensor, k: int = 5):
+    def single_lookup(self,
+                      x: Tensor,
+                      k: int = 5) -> List[Lookup]:
         """Find the k closest matches in the index for a given sample.
 
         Args:
@@ -250,8 +251,7 @@ class SimilarityModel(functional.Functional):
 
         Returns
             list of the k nearest neigboors info:
-            `{"embedding", "distance", "label", "data"}`
-
+            List[Lookup]
         """
         x = tf.expand_dims(x, axis=0)
         prediction = self.predict(x)

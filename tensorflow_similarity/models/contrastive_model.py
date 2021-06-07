@@ -5,18 +5,17 @@ from typing import Dict, List, Union
 
 import tensorflow as tf
 from tabulate import tabulate
-from tensorflow.python.keras.engine import functional
 from tqdm.auto import tqdm
 
 from tensorflow_similarity.indexer import Indexer
 from tensorflow_similarity.metrics import EvalMetric, make_metric
 
 from .distances import distance_canonicalizer
-from .types import FloatTensor, PandasDataFrame
+from .types import FloatTensor, Lookup, PandasDataFrame
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class SimilarityModel(functional.Functional):
+class SimilarityModel(tf.keras.Model):
     """Specialized Keras.Model with additional features needed for
     metric learning. In particular, `SimilarityModel()` supports indexing,
     searching and saving the embeddings predicted by the network.
@@ -127,14 +126,14 @@ class SimilarityModel(functional.Functional):
                               build=build,
                               verbose=verbose)
 
-    def lookup(self, x, k=5, threads=4, verbose=1):
+    def lookup(self, x, k=5, threads=4, verbose=1) -> List[List[Lookup]]:
         predictions = self.predict(x)
         return self._index.batch_lookup(predictions,
                                         k=k,
                                         threads=threads,
                                         verbose=verbose)
 
-    def single_lookup(self, x, k=5):
+    def single_lookup(self, x, k=5) -> List[Lookup]:
         x = tf.expand_dims(x, axis=0)
         prediction = self.predict(x)
         return self._index.single_lookup(prediction, k=k)

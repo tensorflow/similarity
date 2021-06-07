@@ -48,7 +48,8 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
             example_per_class: how many example of each class to use per batch.
             Defaults to 2.
 
-            steps_per_epoch: How many steps/batches per epoch. Defaults to 1000.
+            steps_per_epoch: How many steps/batches per epoch. Defaults to
+            1000.
 
             augmenter: A function that takes a batch in and return a batch out.
             Can alters the number of examples returned which in turn change the
@@ -70,10 +71,10 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
 
         # Tell the users what to expect as they might be unsure what the batch
         # size will be
-        print("\nBatch size is %d (%d class X %d example per class\
-              pre-augmentation" % (self.batch_size,
-                                   self.class_per_batch,
-                                   self.example_per_class))
+        print("\nBatch size is %d (%d class X %d example per class "
+              "pre-augmentation" % (self.batch_size,
+                                    self.class_per_batch,
+                                    self.example_per_class))
 
     @abc.abstractmethod
     def get_examples(self,
