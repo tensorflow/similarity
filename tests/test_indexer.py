@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.lib import index_tricks
 from tensorflow_similarity.indexer import Indexer
 from . import DATA_DIR
 
@@ -40,11 +39,11 @@ def test_indexer_basic_flow():
     matches = indexer.single_lookup(prediction)
 
     assert isinstance(matches, list)
-    assert matches[0]['distance'] < 0.016
+    assert matches[0].distance < 0.016
 
-    assert np.array_equal(matches[0]['embedding'], embs[0])
-    assert matches[0]['label'] == 0
-    assert matches[0]['data'] == 'test'
+    assert np.array_equal(matches[0].embedding, embs[0])
+    assert matches[0].label == 0
+    assert matches[0].data == 'test'
 
 
 def test_indexer_batch_add():
@@ -61,11 +60,11 @@ def test_indexer_batch_add():
     matches = indexer.single_lookup(prediction)
 
     assert isinstance(matches, list)
-    assert matches[0]['distance'] < 0.016
+    assert matches[0].distance < 0.016
 
-    assert np.array_equal(matches[0]['embedding'], embs[0])
-    assert matches[0]['label'] == 0
-    assert matches[0]['data'] == 'test'
+    assert np.array_equal(matches[0].embedding, embs[0])
+    assert matches[0].label == 0
+    assert matches[0].data == 'test'
 
 
 def test_multiple_add():
@@ -132,9 +131,9 @@ def test_index_reset():
 
     # check results
     assert len(matches) == 3
-    assert len(matches[0]['embedding']) == 3
-    assert matches[0]['label'] == 0
-    assert list(matches[0]['embedding']) == list(embs[0])
+    assert len(matches[0].embedding) == 3
+    assert matches[0].label == 0
+    assert list(matches[0].embedding) == list(embs[0])
 
     # reset
     indexer.reset()
@@ -150,11 +149,11 @@ def test_index_reset():
     stats = indexer.stats()
 
     assert len(matches) == 2
-    assert len(matches[0]['embedding']) == 3
-    assert matches[0]['label'] == 42
-    assert matches[1]['label'] == 43
-    assert list(matches[0]['embedding']) == list(embs[0])
-    assert list(matches[1]['embedding']) == list(embs[1])
+    assert len(matches[0].embedding) == 3
+    assert matches[0].label == 42
+    assert matches[1].label == 43
+    assert list(matches[0].embedding) == list(embs[0])
+    assert list(matches[1].embedding) == list(embs[1])
     assert stats['num_lookups'] == 1
 
 
