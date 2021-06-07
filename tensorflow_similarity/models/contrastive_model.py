@@ -5,7 +5,6 @@ from typing import Dict, List, Union
 
 import tensorflow as tf
 from tabulate import tabulate
-from tensorflow.python.keras.engine import functional
 from tqdm.auto import tqdm
 
 from tensorflow_similarity.indexer import Indexer
@@ -16,7 +15,7 @@ from .types import FloatTensor, Lookup, PandasDataFrame
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class SimilarityModel(functional.Functional):
+class SimilarityModel(tf.keras.Model):
     """Specialized Keras.Model with additional features needed for
     metric learning. In particular, `SimilarityModel()` supports indexing,
     searching and saving the embeddings predicted by the network.

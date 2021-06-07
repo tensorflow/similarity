@@ -1,12 +1,11 @@
 from collections import defaultdict
 from copy import copy
 from pathlib import Path
-from typing import Dict, List, Union, DefaultDict
+from typing import Dict, List, Union, DefaultDict, Optional
 from tabulate import tabulate
 from tqdm.auto import tqdm
 
 import tensorflow as tf
-from tensorflow.python.keras.engine import functional
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.losses import Loss
@@ -24,7 +23,7 @@ from tensorflow_similarity.types import PandasDataFrame
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class SimilarityModel(functional.Functional):
+class SimilarityModel(tf.keras.Model):
     """Specialized Keras.Model which implement the core features needed for
     metric learning. In particular, `SimilarityModel()` supports indexing,
     searching and saving the embeddings predicted by the network.
@@ -185,7 +184,7 @@ class SimilarityModel(functional.Functional):
     def index(self,
               x: Tensor,
               y: IntTensor = None,
-              store_data: bool = True,
+              data: Optional[Tensor] = None,
               build: bool = True,
               verbose: int = 1):
         """Index data.
@@ -208,7 +207,6 @@ class SimilarityModel(functional.Functional):
             print('[Indexing %d points]' % len(x))
             print('|-Computing embeddings')
         predictions = self.predict(x)
-        data = x if store_data else None
         self._index.batch_add(predictions,
                               y,
                               data,
@@ -326,19 +324,19 @@ class SimilarityModel(functional.Functional):
         calibrate().
 
         Args:
-            x (tensor): examples to be matched against the index.
+            x: Batch of examples to be matched against the index.
 
-            cutpoint (str, optional): What calibration threshold to use.
+            cutpoint: Which calibration threshold to use.
             Defaults to 'optimal' which is the optimal F1 threshold computed
-            with calibrate().
+            using calibrate().
 
-            no_match_label (int, optional): What label value to assign when
-            there is no match. Defaults to -1.
+            no_match_label: Which label value to assign when there is no
+            match. Defaults to -1.
 
-            verbose (int, optional). Defaults to 0.
+            verbose. Be verbose. Defaults to 0.
 
         Returns:
-            list(int): Return which class matches for each supplied example
+            List of class ids that matches for each supplied example
 
         Notes:
             This function matches all the cutpoints at once internally as there
@@ -370,20 +368,25 @@ class SimilarityModel(functional.Functional):
                           k: int = 1,
                           extra_metrics: List[Union[EvalMetric, str]] = ['accuracy', 'recall'],  # noqa
                           verbose: int = 1):
-        """Evaluate model matching accuracy on a given dataset.
+        """Evaluate model matching accuracy on a given evaluation dataset.
 
         Args:
-            x (tensor): Examples to be matched against the index.
-            y (tensor): [description]
+            x: Examples to be matched against the index.
 
-            no_match_label (int, optional):  What class value to assign when
-            there is no match. Defaults to -1.
+            y: Label associated with the examples supplied.
+
+            k: How many neigboors to use to perform the evaluation.
+            Defaults to 1.
+
+            extra_metrics: Additional (distance_metrics.mde)[distance metrics]
+            to be computed during the evaluation. Defaut to accuracy and
+            recall.
 
             verbose (int, optional): Display results if set to 1 otherwise
             results are returned silently. Defaults to 1.
 
         Returns:
-            dict: evaluation metrics
+            Dictionnary of (distance_metrics.md)[evaluation metrics]
         """
         # There is some code duplication in this function but that is the best
         # solution to keep the end-user API clean and doing inferences once.
