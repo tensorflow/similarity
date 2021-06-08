@@ -142,14 +142,12 @@ class SplitValidationLoss(Callback):
         self.y_unknown = tf.gather(y, indices=unknown_idxs)
 
     def on_epoch_end(self, _, logs=None):
-        logs = logs or {}
+        if logs is None:
+            logs = {}
         known_eval = self.model.evaluate(self.x_known, self.y_known, verbose=0)
         unknown_eval = (
                 self.model.evaluate(self.x_unknown, self.y_unknown, verbose=0))
         print(f'val_los - known_classes: {known_eval:.4f} - '
               f'unknown_classes: {unknown_eval:.4f}')
-        # This assumes that logs is not None or {}. Otherwise we won't produce
-        # a side effect in the external log object. This is usually true as the
-        # log at least contains the loss.
         logs['known_val_loss'] = known_eval
         logs['unknown_val_loss'] = unknown_eval

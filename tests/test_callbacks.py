@@ -1,4 +1,3 @@
-import pdb
 import numpy as np
 import tensorflow as tf
 from tensorflow_similarity.models import SimilarityModel
@@ -48,7 +47,7 @@ def test_split_val_loss_callback(tmp_path):
     callback.model = MockModel()
 
     # call the only callback method implemented
-    logs = {'loss': 1.0}
+    logs = {}
     callback.on_epoch_end(0, logs=logs)
 
     assert logs['known_val_loss'] == 1.0
