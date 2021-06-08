@@ -3,6 +3,7 @@ import tensorflow as tf
 from abc import ABC
 from typing import List, Union, Tuple
 from .types import Lookup
+from .samplers.samplers import Sampler
 
 
 class EvalMetric(ABC):
@@ -407,3 +408,27 @@ def make_metrics(metrics: List[Union[str, EvalMetric]]) -> List[EvalMetric]:
     for m in metrics:
         eval_metrics.append(make_metric(m))
     return eval_metrics
+
+
+def batch_class_ratio(sampler: Sampler, num_batches: int = 100) -> float:
+    """Computes the average number of examples per class within each batch.
+
+    The ratio should be >= 2. Useful for debugging.
+
+    Args:
+        sampler: A tf.similarity sampler object.
+        num_batches: The number of batches to sample.
+
+    Returns:
+        The average number of examples per class.
+    """
+    ratio = 0
+    for batch_count, (_, y) in enumerate(sampler):
+        if batch_count < num_batches:
+            batch_size = tf.shape(y)[0]
+            num_classes = tf.shape(tf.unique(y)[0])[0]
+            ratio += tf.math.divide(batch_size, num_classes)
+        else:
+            break
+
+    return float(ratio/(batch_count+1))

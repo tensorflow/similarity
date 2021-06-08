@@ -123,26 +123,33 @@ class SplitValidationLoss(Callback):
             known_classes: The set of classes seen during training.
         """
         super().__init__()
-        self.history = {}
 
         # Create separate validation sets for the known and unknon classes
-        broadcast_classes = known_classes[np.newaxis, :]
-        broadcast_labels = y[:, np.newaxis]
-        known_mask = np.any(broadcast_classes == broadcast_labels, axis=1)
-        known_idxs = np.argwhere(known_mask)
-        unknown_idxs = np.argwhere(~known_mask)
+        y = tf.cast(y, dtype=tf.int32)
+        known_classes = tf.cast(known_classes, dtype=tf.int32)
+        known_classes = tf.reshape(known_classes, (-1))
 
-        self.x_known = tf.gather(x, indices=known_idxs.reshape(-1))
-        self.y_known = y[known_idxs]
-        self.x_unknown = tf.gather(x, indices=unknown_idxs.reshape(-1))
-        self.y_unkown = y[unknown_idxs]
+        broadcast_classes = tf.expand_dims(known_classes, axis=0)
+        broadcast_labels = tf.expand_dims(y, axis=-1)
+        known_mask = tf.math.reduce_any(
+                broadcast_classes == broadcast_labels, axis=1)
+        known_idxs = tf.reshape(tf.where(known_mask), (-1))
+        unknown_idxs = tf.reshape(tf.where(~known_mask), (-1))
 
-    def on_epoch_end(self, epoch, logs=None):
+        self.x_known = tf.gather(x, indices=known_idxs)
+        self.y_known = tf.gather(y, indices=known_idxs)
+        self.x_unknown = tf.gather(x, indices=unknown_idxs)
+        self.y_unknown = tf.gather(y, indices=unknown_idxs)
+
+    def on_epoch_end(self, _, logs=None):
         logs = logs or {}
         known_eval = self.model.evaluate(self.x_known, self.y_known, verbose=0)
         unknown_eval = (
-                self.model.evaluate(self.x_unknown, self.y_unkown, verbose=0))
+                self.model.evaluate(self.x_unknown, self.y_unknown, verbose=0))
         print(f'val_los - known_classes: {known_eval:.4f} - '
-              f'unkown_classes: {unknown_eval:.4f}')
+              f'unknown_classes: {unknown_eval:.4f}')
+        # This assumes that logs is not None or {}. Otherwise we won't produce
+        # a side effect in the external log object. This is usually true as the
+        # log at least contains the loss.
         logs['known_val_loss'] = known_eval
         logs['unknown_val_loss'] = unknown_eval

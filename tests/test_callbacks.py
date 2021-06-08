@@ -1,6 +1,9 @@
+import pdb
+import numpy as np
 import tensorflow as tf
 from tensorflow_similarity.models import SimilarityModel
 from tensorflow_similarity.callbacks import EvalCallback
+from tensorflow_similarity.callbacks import SplitValidationLoss
 
 
 def test_eval_callback(tmp_path):
@@ -28,3 +31,25 @@ def test_eval_callback(tmp_path):
 
     # call the only callback method implemented
     callback.on_epoch_end(0, {})
+
+
+def test_split_val_loss_callback(tmp_path):
+    x = tf.constant([[-1]]*5+[[1]]*5)
+    y = tf.constant([0]*5+[1]*5)
+    known_classes = np.array([1])
+
+    callback = SplitValidationLoss(x, y, known_classes)
+
+    class MockModel:
+        def evaluate(self, x, y, verbose=0):
+            _, _ = x, verbose
+            return float(tf.math.reduce_sum(y) / tf.shape(y)[0])
+
+    callback.model = MockModel()
+
+    # call the only callback method implemented
+    logs = {'loss': 1.0}
+    callback.on_epoch_end(0, logs=logs)
+
+    assert logs['known_val_loss'] == 1.0
+    assert logs['unknown_val_loss'] == 0.0
