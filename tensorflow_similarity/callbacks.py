@@ -72,7 +72,10 @@ class EvalCallback(Callback):
         else:
             self.tb_writer = None
 
-    def on_epoch_end(self, epoch: int, logs: dict):
+    def on_epoch_end(self, epoch: int, logs: dict = None):
+        if logs is None:
+            logs = {}
+
         # reset the index
         self.model.reset_index()
 
@@ -83,15 +86,15 @@ class EvalCallback(Callback):
         results = self.evaluator.evaluate(self.index_size, self.metrics,
                                           self.queries_labels, lookups)
 
-        # for now just display till tensorflow logs allows to write
-        mstr = ['%s:%0.4f' % (k, v) for k, v in results.items()]
-        print(' - '.join(mstr))
-
-        # Tensorboard if configured
-        if self.tb_writer:
-            with self.tb_writer.as_default():
-                for k, v in results.items():
+        mstr = []
+        for k, v in results.items():
+            logs[k] = v
+            mstr.append(f'{k}:{v:0.4f}')
+            if self.tb_writer:
+                with self.tb_writer.as_default():
                     tf.summary.scalar(k, v, step=epoch)
+
+        print(' - '.join(mstr))
 
 
 class SplitValidationLoss(Callback):
@@ -150,7 +153,8 @@ class SplitValidationLoss(Callback):
         self.x_unknown = tf.gather(x, indices=unknown_idxs)
         self.y_unknown = tf.gather(y, indices=unknown_idxs)
 
-    def on_epoch_end(self, _, logs=None):
+    def on_epoch_end(self, epoch: int, logs: dict = None):
+        _ = epoch
         if logs is None:
             logs = {}
         known_eval = self.model.evaluate(self.x_known, self.y_known, verbose=0)
