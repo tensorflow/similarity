@@ -82,7 +82,7 @@ class EvalCallback(Callback):
         # rebuild the index
         self.model.index(self.targets, self.targets_labels, verbose=0)
 
-        lookups = self.model.lookup(self.queries)
+        lookups = self.model.lookup(self.queries, verbose=0)
         results = self.evaluator.evaluate(self.index_size, self.metrics,
                                           self.queries_labels, lookups)
 
