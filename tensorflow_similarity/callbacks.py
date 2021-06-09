@@ -104,12 +104,15 @@ class SplitValidationLoss(Callback):
 
     The callback will then compute a separate validation for each split.
 
+    This is useful for separately tracking the validation loss on the seen and
+    unseen classes and may provide insight into how well the embedding will
+    generalize to new classes.
+
     Attributes:
-        history:
-        x_known:
-        y_known:
-        x_unkown:
-        y_unkown:
+        x_known: The set of examples from the known classes.
+        y_known: The labels associated with the known examples.
+        x_unknown: The set of examples from the unknown classes.
+        y_unknown: The labels associated with the unknown examples.
     """
     def __init__(self,
                  x: FloatTensor,
@@ -124,17 +127,23 @@ class SplitValidationLoss(Callback):
         """
         super().__init__()
 
-        # Create separate validation sets for the known and unknon classes
+        # Create separate validation sets for the known and unknown classes
         y = tf.cast(y, dtype=tf.int32)
         known_classes = tf.cast(known_classes, dtype=tf.int32)
-        known_classes = tf.reshape(known_classes, (-1))
+        known_classes = tf.squeeze(known_classes)
 
+        # Use broadcasting to do a y X known_classes equality check. By adding
+        # a dim to the start of known_classes and a dim to the end of y, this
+        # essentially checks `for ck in known_classes: for cy in y: ck == cy`.
+        # We then reduce_any to find all rows in y that match at least one
+        # class in known_classes.
+        # See https://numpy.org/doc/stable/user/basics.broadcasting.html
         broadcast_classes = tf.expand_dims(known_classes, axis=0)
         broadcast_labels = tf.expand_dims(y, axis=-1)
         known_mask = tf.math.reduce_any(
                 broadcast_classes == broadcast_labels, axis=1)
-        known_idxs = tf.reshape(tf.where(known_mask), (-1))
-        unknown_idxs = tf.reshape(tf.where(~known_mask), (-1))
+        known_idxs = tf.squeeze(tf.where(known_mask))
+        unknown_idxs = tf.squeeze(tf.where(~known_mask))
 
         self.x_known = tf.gather(x, indices=known_idxs)
         self.y_known = tf.gather(y, indices=known_idxs)
