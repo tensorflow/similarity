@@ -1,6 +1,11 @@
-from tensorflow_similarity.metrics import MinRank, MeanRank, MaxRank
-# from tensorflow_similarity.metrics import F1Score
-from tensorflow_similarity.types import Lookup
+from typing import Tuple
+import tensorflow as tf
+from tensorflow_similarity.metrics import batch_class_ratio
+from tensorflow_similarity.metrics import MaxRank
+from tensorflow_similarity.metrics import MeanRank
+from tensorflow_similarity.metrics import MinRank
+from tensorflow_similarity.samplers.samplers import Sampler
+from tensorflow_similarity.types import Lookup, Tensor
 
 
 MAX_K = 0
@@ -122,3 +127,22 @@ def test_filter_rank_distance():
                                  max_rank=10,
                                  distance=distance)
         assert len(matches) == i
+
+
+def test_batch_class_ratio():
+    class MockSampler(Sampler):
+
+        def __init__(self):
+            pass
+
+        def __len__(self):
+            return 1
+
+        def __getitem__(self, *args) -> Tuple[Tensor, Tensor]:
+            return (tf.ones(8),  tf.constant([0, 0, 1, 1, 2, 2, 3, 3]))
+
+        def get_examples(self):
+            pass
+
+    result = batch_class_ratio(MockSampler())
+    assert result == 2.0
