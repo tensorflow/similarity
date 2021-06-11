@@ -1,4 +1,4 @@
-import nmslib
+import hnswlib
 from pathlib import Path
 from typing import List, Tuple
 
@@ -7,7 +7,7 @@ from .matcher import Matcher
 from tensorflow_similarity.types import FloatTensor
 
 
-class NMSLibMatcher(Matcher):
+class HNSWLibMatcher(Matcher):
     """
     Efficiently find nearest embeddings by indexing known embeddings and make
     them searchable using the  [Approximate Nearest Neigboors Search](https://en.wikipedia.org/wiki/Nearest_neighbor_search)
@@ -22,11 +22,11 @@ class NMSLibMatcher(Matcher):
         distance = distance_canonicalizer(distance)
 
         if distance.name == 'cosine':
-            space = 'cosinesimil'
+            space = 'cosine'
         elif distance.name == 'euclidean':
             space = 'l2'
-        elif distance.name == 'manhattan':
-            space = 'l1'
+        elif distance.name == 'inner_product':
+            space = 'ip'
         else:
             raise ValueError('Unsupported metric space')
 
@@ -123,15 +123,11 @@ class NMSLibMatcher(Matcher):
         batch_distances = []
 
         # FIXME: make it parallel or use the batch api
-        # for emb in embeddings:
-        #     dist, idxs = self._matcher.knnQuery(emb, k=k)
-        #     batch_idxs.append(idxs)
-        #     batch_distances.append(dist)
+        for emb in embeddings:
+            dist, idxs = self._matcher.knnQuery(emb, k=k)
+            batch_idxs.append(idxs)
+            batch_distances.append(dist)
 
-        nn = self._matcher.knnQueryBatch(embeddings, k=k)
-        for n in nn:
-            batch_idxs.append(n[0])
-            batch_distances.append(n[1])
         return batch_idxs, batch_distances
 
     def save(self, path: str):
