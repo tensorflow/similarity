@@ -129,9 +129,9 @@ class Lookup:
     """
     rank: int
     distance: float
-    label: Optional[int] = None
-    embedding: Optional[np.ndarray] = None
-    data: Optional[Tensor] = None
+    label: Optional[int] = dataclasses.field(default=None)
+    embedding: Optional[np.ndarray] = dataclasses.field(default=None)
+    data: Optional[Tensor] = dataclasses.field(default=None)
 
     def __eq__(self, other) -> bool:
         if other.__class__ is not self.__class__:
