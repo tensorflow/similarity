@@ -52,7 +52,8 @@ setup(
     extras_require={
         "dev": [
             'setuptools', 'wheel', 'mypy', 'pytest', 'flake8', 'pytest-cov',
-            'pytype', 'twine', 'setuptools', 'nmslib', 'tensorflow'
+            'pytype', 'twine', 'setuptools', 'nmslib', 'tensorflow', 'mkdocs',
+            'mkdocs-material', 'mkdocs-autorefs', 'mkdocstrings'
         ],
     },
     classifiers=[

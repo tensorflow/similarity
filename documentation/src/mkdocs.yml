@@ -1,6 +1,7 @@
 site_name: TensorFlow Similarity
 repo_url: https://github.com/tensorflow/similarity
 site_dir: '../site/'
+site_url: ""
 theme:
   features:
     - navigation.tracking

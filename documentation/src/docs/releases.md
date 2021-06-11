@@ -1,4 +1,4 @@
-# Tensorflow Similarity releases notes
+# Releases notes
 
 ## 0.12.x - Q/A release
 
