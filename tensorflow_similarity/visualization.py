@@ -10,7 +10,16 @@ def viz_neigbors_imgs(example,
                       labels=None,
                       fig_size=(24, 4),
                       cmap='viridis'):
-    "Show the neighboor"
+    """Display images nearest neighboors
+
+    Args:
+        example ([type]): [description]
+        example_class ([type]): [description]
+        neighbors ([type]): [description]
+        labels ([type], optional): [description]. Defaults to None.
+        fig_size ([type], optional): [description]. Defaults to (24, 4).
+        cmap ([type], optional): [description]. Defaults to 'viridis'.
+    """
     num_cols = len(neighbors) + 1
     plt.subplots(1, num_cols, figsize=fig_size)
     plt_idx = 1
@@ -49,6 +58,23 @@ def confusion_matrix(y_pred,
                      labels=None,
                      title='Confusion matrix',
                      cmap='Blues'):
+    """Plot confusion matrix
+
+    Args:
+        y_pred: Model prediction returned by `model.match()`
+
+        y_true: Expected class_id.
+
+        normalize: Normalizes matrix values between 0 and 1.
+        Defaults to True.
+
+        labels: List of class string label to display instead of the class
+        numerical ids. Defaults to None.
+
+        title: Title of the confusion matrix. Defaults to 'Confusion matrix'.
+
+        cmap: Color schema as CMAP. Defaults to 'Blues'.
+    """
 
     cm = np.array(tf.math.confusion_matrix(y_true, y_pred))
     accuracy = np.trace(cm) / np.sum(cm).astype('float')
