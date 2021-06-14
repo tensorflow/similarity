@@ -1,29 +1,39 @@
-# Tensorflow Similarity releases notes
+# Releases notes
 
 ## 0.12.x - Q/A release
 
 This release focuses on on code quality, API consistency, testing, and
 documentation to get TF.similarity ready for production.
 
+## New features
+
+- Advanced colab with use of callbacks and TFRecordDataset sampler added. (v0.12.6)
+
+- Callback to track progress on known vs unknown classes added. (v0.12.6)
+
+
 ## Major improvements
 
+- Multi-thread `lookup()` working with linear scale speedup in number of core
+used. (v0.12.8)
+
 - Refactored the `index()` to support storing arbitrary Tensor as data in the
-index instead of being restricted to model input.
+index instead of being restricted to model input. (v0.12.5)
 
 - Refactored Class model to allows easy sub-classing and pave
 the way to support a wider range of model type that requires different
-`train_step()`.
+`train_step()`. (v0.12.1)
 
-- Improved typing coverage
+- Improved typing coverage (v0.12.2)
 
-- lookup is now a Lookup type with attributes.
+- Lookup results are now arrays of Lookup() type with attributes. (v0.12.0)
 
 ## Breaking changes
 
 - `model.SimilarityModel` moved to `models/` and made base class to pave the
 way to subclass for specific type of similiarty model that requires to override
 things like `train_step()`. Import is now: `from tfsim.models import SimilarityModel`
-
+(v0.12.0)
 
 ## 0.11.x - Support for TF dataset
 
