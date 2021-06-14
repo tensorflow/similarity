@@ -85,7 +85,9 @@ class SimilarityModel(tf.keras.Model):
             [Indexer()](../indexer.md) performance. E.g Matching Top 1
             accuracy. For technical and performance reasons, indexing data at
             each training batch to compute those is impractical so
-            those metrics are computed at epoch end via the [EvalCallback](../callbacks.md)
+            those metrics are computed at epoch end via
+            the [EvalCallback](../callbacks.md)
+
             See [Evaluation Metrics](../eval_metrics.md) for a list of
             available metrics.
 
@@ -216,7 +218,6 @@ class SimilarityModel(tf.keras.Model):
     def lookup(self,
                x: Tensor,
                k: int = 5,
-               threads: int = 4,
                verbose: int = 1) -> List[List[Lookup]]:
         """Find the k closest matches in the index for a set of samples.
 
@@ -224,8 +225,6 @@ class SimilarityModel(tf.keras.Model):
             x: Samples to match.
 
             k: Number of nearest neighboors to lookup. Defaults to 5.
-
-            threads: How many thread to use. Default to 4.
 
             verbose: display progress. Default to 1.
 
@@ -236,7 +235,6 @@ class SimilarityModel(tf.keras.Model):
         predictions = self.predict(x)
         return self._index.batch_lookup(predictions,
                                         k=k,
-                                        threads=threads,
                                         verbose=verbose)
 
     def single_lookup(self,

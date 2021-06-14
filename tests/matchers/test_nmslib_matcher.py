@@ -43,3 +43,31 @@ def test_index_save(tmp_path):
     idxs3, embs3 = matcher2.lookup(target)
     assert len(embs3) == 3
     assert list(idxs3) == [0, 3, 1]
+
+
+def test_batch_vs_single(tmp_path):
+    num_targets = 10
+    index_size = 100
+    vect_dim = 16
+
+    # gen
+    idxs = [i for i in range(index_size)]
+    targets = np.random.random((num_targets, vect_dim)).astype('float32')
+    embs = np.random.random((index_size, vect_dim)).astype('float32')
+    # build matcher
+    matcher = NMSLibMatcher('cosine')
+    matcher.batch_add(embs, idxs)
+
+    # batch
+    batch_idxs, _ = matcher.batch_lookup(targets)
+
+    # single
+    singles_idxs = []
+    for t in targets:
+        idxs, embs = matcher.lookup(t)
+        singles_idxs.append(idxs)
+
+    for i in range(num_targets):
+        # k neigboors are the same?
+        for k in range(3):
+            assert batch_idxs[i][k] == singles_idxs[i][k]

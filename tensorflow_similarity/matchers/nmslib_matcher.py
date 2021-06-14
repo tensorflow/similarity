@@ -88,13 +88,13 @@ class NMSLibMatcher(Matcher):
         """
         # !addDataPoint and addDataPointBAtch have inverted parameters
         if verbose:
-            print('|-Adding embeddings to fast NN matcher index.')
+            print('|-Adding embeddings to index.')
         self._matcher.addDataPointBatch(embeddings, idxs)
 
         if build:
-            self._build()
             if verbose:
-                print('|-Optimizing NN matcher index.')
+                print('|-Building index.')
+            self._build(verbose=verbose)
 
     def lookup(self,
                embedding: FloatTensor,
@@ -123,11 +123,15 @@ class NMSLibMatcher(Matcher):
         batch_distances = []
 
         # FIXME: make it parallel or use the batch api
-        for emb in embeddings:
-            dist, idxs = self._matcher.knnQuery(emb, k=k)
-            batch_idxs.append(idxs)
-            batch_distances.append(dist)
+        # for emb in embeddings:
+        #     dist, idxs = self._matcher.knnQuery(emb, k=k)
+        #     batch_idxs.append(idxs)
+        #     batch_distances.append(dist)
 
+        nn = self._matcher.knnQueryBatch(embeddings, k=k)
+        for n in nn:
+            batch_idxs.append(n[0])
+            batch_distances.append(n[1])
         return batch_idxs, batch_distances
 
     def save(self, path: str):

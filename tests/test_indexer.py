@@ -157,14 +157,32 @@ def test_index_reset():
     assert stats['num_lookups'] == 1
 
 
-# def broken_feature_test_indexer_batch_lookup():
-#     NUM_ELTS = 100
-#     NUM_DIMS = 10
-#     K = 3
-#     data = np.random.randn(NUM_ELTS, NUM_DIMS).astype(np.float32)
-#     indexer = Indexer()
-#     indexer.batch_add(data)
-#     results = indexer.batch_lookup(data, k=K)
-#     indexer.stats()
-#     assert len(results) == 100
-#     assert len(results[0]) == K
+def test_indexer_batch_ops():
+    NUM_ELTS = 100
+    NUM_DIMS = 10
+    K = 3
+    data = np.random.randn(NUM_ELTS, NUM_DIMS).astype(np.float32)
+    indexer = Indexer()
+    indexer.batch_add(data)
+    results = indexer.batch_lookup(data, k=K)
+    indexer.stats()
+    assert len(results) == 100
+    assert len(results[0]) == K
+
+
+def test_single_vs_batch_ops():
+    "ensure batch and single ops are consistent"
+    NUM_ELTS = 100
+    NUM_DIMS = 10
+    K = 3
+    data = np.random.randn(NUM_ELTS, NUM_DIMS).astype(np.float32)
+    indexer = Indexer()
+    indexer.batch_add(data)
+    batch_results = indexer.batch_lookup(data, k=K)
+
+    single_results = []
+    for d in data:
+        single_results.append(indexer.single_lookup([d], k=K))
+
+    for idx in range(len(single_results)):
+        assert single_results[idx][0].label == batch_results[idx][0].label

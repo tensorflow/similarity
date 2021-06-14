@@ -94,6 +94,10 @@ def test_basic_flow(tmp_path):
     # check the model returns reasonable matching
     assert neighboors[0].label == NUM_CLASSES - 1
 
+    # batch lookup
+    batch_neighboors = model.lookup(x[:10], k=K)
+    assert len(batch_neighboors) == 10
+
     # calibration
     calibration = model.calibrate(x, y, verbose=0)
     assert 'thresholds' in calibration
