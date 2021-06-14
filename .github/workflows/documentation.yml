@@ -46,4 +46,4 @@ jobs:
     - name: building documentation
       run: |
         cd documentation/src/
-        mkdocs build
+        mkdocs gh-deploy
