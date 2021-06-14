@@ -25,11 +25,13 @@ jobs:
       uses: actions/setup-python@v2
       with:
           python-version: '3.8.x'
-    - name: Environement setup
+    - name: Install dependencies
       run: |
-        cd documentation
-        chmod +x build.sh
-    - name: Build documentation
+        pip install documentation/requirements.txt
+    - name: copy readme as index
       run: |
-        ./buid.sh
-        
+        cp README.md documentation/src/docs/index.md
+    - name: build doc
+      run: |
+        cd documentation/src/
+        mkdocs build
