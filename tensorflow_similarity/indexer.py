@@ -265,10 +265,10 @@ class Indexer():
         nn_embeddings, labels, data = self.table.batch_get(idxs)
 
         lookup_time = time() - start
-        results = []
+        lookups = []
         for i in range(len(nn_embeddings)):
             # ! casting is needed to avoid slowness down the line
-            results.append(Lookup(
+            lookups.append(Lookup(
                 rank=i + 1,
                 embedding=nn_embeddings[i],
                 distance=float(distances[i]),
@@ -277,12 +277,11 @@ class Indexer():
                 ))
         self._lookup_timings_buffer.append(lookup_time)
         self._stats['num_lookups'] += 1
-        return results
+        return lookups
 
     def batch_lookup(self,
                      predictions: FloatTensor,
                      k: int = 5,
-                     threads: int = None,
                      verbose: int = 1) -> List[List[Lookup]]:
 
         """Find the k closest matches for a set of embeddings
@@ -290,6 +289,8 @@ class Indexer():
         Args:
             predictions: model predictions.
             k: Number of nearest neighboors to lookup. Defaults to 5.
+            verbose: Be verbose. Defaults to 1.
+
         Returns
             list of list of k nearest neighboors:
             List[List[Lookup]]
@@ -298,28 +299,34 @@ class Indexer():
         embeddings = self._get_embeddings(predictions)
         num_embeddings = len(embeddings)
         start = time()
+        batch_lookups = []
 
         if verbose:
-            pb = tqdm(total=num_embeddings, desc='Finding NN')
+            print("\nPerforming NN search\n")
+        batch_idxs, batch_distances = self.matcher.batch_lookup(embeddings, k=k)
 
-        lookups = []
+        if verbose:
+            pb = tqdm(total=num_embeddings, desc='Building NN list')
         for eidx in range(num_embeddings):
-            # FIXME: threading / or get nsmw batch to work reliablys
-            lidxs, distances = self.matcher.lookup(embeddings[eidx], k=k)
-            nn_embeddings, labels, data = self.table.batch_get(lidxs)
+            lidxs = batch_idxs[eidx]   # list of nn idxs
+            distances = batch_distances[eidx]
 
-            lookup = []
+            nn_embeddings, labels, data = self.table.batch_get(lidxs)
+            lookups = []
             for i in range(len(nn_embeddings)):
-                lookup.append(Lookup(
+                # ! casting is needed to avoid slowness down the line
+                lookups.append(Lookup(
                     rank=i + 1,
                     embedding=nn_embeddings[i],
                     distance=float(distances[i]),
                     label=self._cast_label(labels[i]),
                     data=data[i]
-                    ))
-            lookups.append(lookup)
+                ))
+            batch_lookups.append(lookups)
+
             if verbose:
                 pb.update()
+
         if verbose:
             pb.close()
 
@@ -330,7 +337,7 @@ class Indexer():
             self._lookup_timings_buffer.append(per_lookup_time)
         self._stats['num_lookups'] += num_embeddings
 
-        return lookups
+        return batch_lookups
 
     # evaluation related functions
     def evaluate(self,
