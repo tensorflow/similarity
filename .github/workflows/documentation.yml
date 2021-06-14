@@ -25,8 +25,11 @@ jobs:
       uses: actions/setup-python@v2
       with:
           python-version: '3.8.x'
-    - name: Build documentation
+    - name: Environement setup
       run: |
         cd documentation
+        chmod +x build.sh
+    - name: Build documentation
+      run: |
         ./buid.sh
         
