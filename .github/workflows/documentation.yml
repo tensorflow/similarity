@@ -27,7 +27,7 @@ jobs:
           python-version: '3.8.x'
     - name: Install dependencies
       run: |
-        pip install documentation/requirements.txt
+        pip install -r documentation/requirements.txt
     - name: copy readme as index
       run: |
         cp README.md documentation/src/docs/index.md
