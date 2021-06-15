@@ -1,9 +1,23 @@
-import numpy as np
 import tensorflow as tf
 
 from tensorflow_similarity.distances import CosineDistance
 from tensorflow_similarity.distances import EuclideanDistance
 from tensorflow_similarity.distances import ManhattanDistance
+from tensorflow_similarity.distances import distance_canonicalizer
+from tensorflow_similarity.distances import DISTANCES
+
+
+def test_distance_mapping():
+    for d in DISTANCES:
+
+        # self naming
+        d2 = distance_canonicalizer(d.name)
+        assert d2.name == d.name
+
+        # aliases
+        for a in d.aliases:
+            d2 = distance_canonicalizer(a)
+            assert d2.name == d.name
 
 
 def angular_distance_np(feature):

@@ -1,13 +1,21 @@
-from abc import ABC
-from typing import Union
+from abc import ABC, abstractmethod
+from os import name
+from typing import Union, List
 import tensorflow as tf
 from .types import FloatTensor
 
 
 class Distance(ABC):
-    def __init__(self, name: str):
-        self.name = name
+    """
+    Note: don't forget to add your distance to the DISTANCES list
+    and add aliase names in it.
 
+    """
+    def __init__(self, name: str, aliases: List[str] = []):
+        self.name = name
+        self.aliases = aliases
+
+    @abstractmethod
     def call(self, embeddings: FloatTensor) -> FloatTensor:
         """Compute pairwise distances for a given batch.
 
@@ -26,7 +34,8 @@ class Distance(ABC):
 
     def get_config(self):
         return {
-            "name": self.name
+            "name": self.name,
+            "aliases": self.aliases
         }
 
 
@@ -74,7 +83,8 @@ class EuclideanDistance(Distance):
     def __init__(self, name: str = None):
         "Init Euclidean distance"
         name = name if name else 'euclidean'
-        super().__init__(name)
+        aliases = ['l1', 'pythagorean']
+        super().__init__(name, aliases)
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
@@ -122,7 +132,8 @@ class ManhattanDistance(Distance):
     def __init__(self, name: str = None):
         "Init Manhattan distance"
         name = name if name else 'manhattan'
-        super().__init__(name)
+        aliases = ['l2', 'taxicab']
+        super().__init__(name, aliases)
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
@@ -140,42 +151,46 @@ class ManhattanDistance(Distance):
         return distances
 
 
-def distance_canonicalizer(distance: Union[Distance, str]) -> Distance:
+# List of implemented distances
+DISTANCES = [
+             EuclideanDistance(),
+             ManhattanDistance(),
+             CosineDistance()
+            ]
+
+
+def distance_canonicalizer(user_distance: Union[Distance, str]) -> Distance:
     """Normalize user requested distance to its matching Distance object.
 
     Args:
-        distance: Requested distance either by name or by object
+        user_distance: Requested distance either by name or by object
 
     Returns:
         Distance: Requested object name.
     """
-    mapping = {
-        'cosine': 'cosine',
-        'euclidean': 'euclidean',
-        'pythagorean': 'euclidean',
-        'l2': 'euclidean',
-        'l1': 'manhattan',
-        'taxicab': 'manhattan',
-    }
 
-    if isinstance(distance, str):
-        distance_name = distance.lower().strip()
-        if distance_name in mapping:
-            distance_name = mapping[distance_name]
+    mapping = {}
+    name2fn = {}
+    for distance in DISTANCES:
+        # self reference
+        mapping[distance.name] = distance.name
+        name2fn[distance.name] = distance
+        # aliasing
+        for alias in distance.aliases:
+            mapping[alias] = distance.name
+
+    if isinstance(user_distance, str):
+        user_distance = user_distance.lower().strip()
+        if user_distance in mapping:
+            user_distance = mapping[user_distance]
         else:
             raise ValueError('Metric not supported by the framework')
 
-        # instantiating
-        if distance_name == 'cosine':
-            return CosineDistance()
-        elif distance_name == 'euclidean':
-            return EuclideanDistance()
-        elif distance_name == 'manhattan':
-            return ManhattanDistance()
+        return name2fn[user_distance]
 
     elif isinstance(distance, Distance):
         # user supplied distance function
         return distance
 
     raise ValueError('Unknown distance: must either be a MetricDistance\
-                          or a known distance function')
+                          or a known distance function'                                                                                                              )
