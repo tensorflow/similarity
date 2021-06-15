@@ -1,6 +1,6 @@
 import tensorflow as tf
-
-from tensorflow_similarity.distances import CosineDistance
+import numpy as np
+from tensorflow_similarity.distances import CosineDistance, InnerProductDistance
 from tensorflow_similarity.distances import EuclideanDistance
 from tensorflow_similarity.distances import ManhattanDistance
 from tensorflow_similarity.distances import distance_canonicalizer
@@ -80,6 +80,7 @@ def test_euclidean_opposite():
     vals = d(a)
     assert tf.round(tf.reduce_sum(vals)) == 4
 
+
 def test_manhattan():
     a = tf.convert_to_tensor([
         [0.0, 0.0],
@@ -97,6 +98,7 @@ def test_manhattan():
     ])
     assert tf.reduce_all(tf.math.equal(vals, expected))
 
+
 def test_manhattan_same():
     a = tf.convert_to_tensor([[1.0, 1.0], [1.0, 1.0]])
     d = ManhattanDistance()
@@ -109,3 +111,10 @@ def test_manhattan_opposite():
     d = ManhattanDistance()
     vals = d(a)
     assert tf.round(tf.reduce_sum(vals)) == 4
+
+
+def test_innerprod():
+    a = [[1, 2, 3], [1, 3, 3]]
+    d = InnerProductDistance()
+    vals = d(a)
+    assert tf.round(tf.reduce_sum(vals)) == 65

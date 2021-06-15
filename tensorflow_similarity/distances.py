@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from os import name
 from typing import Union, List
 import tensorflow as tf
 from .types import FloatTensor
@@ -37,6 +36,35 @@ class Distance(ABC):
             "name": self.name,
             "aliases": self.aliases
         }
+
+
+@tf.keras.utils.register_keras_serializable(package="Similarity")
+class InnerProductDistance(Distance):
+    """Compute the pairwise inner product between embeddings.
+
+    The [Inner product](https://en.wikipedia.org/wiki/Inner_product_space) is
+    a distance that varies from 0 (similar) to inf (dissimilar).
+    """
+    def __init__(self, name: str = None):
+        "Init Inner product distance"
+        name = name if name else 'inner_product'
+        aliases = ['ip']
+        super().__init__(name, aliases=aliases)
+
+    @tf.function
+    def call(self, embeddings: FloatTensor) -> FloatTensor:
+        """Compute pairwise distances for a given batch of embeddings.
+
+        Args:
+            embeddings: Embeddings to compute the pairwise one.
+
+        Returns:
+            FloatTensor: Pairwise distance tensor.
+        """
+
+        tensor = tf.linalg.matmul(embeddings, embeddings, transpose_b=True)
+        distances = tf.reduce_sum(tensor, axis=1, keepdims=True)
+        return distances
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -153,6 +181,7 @@ class ManhattanDistance(Distance):
 
 # List of implemented distances
 DISTANCES = [
+             InnerProductDistance(),
              EuclideanDistance(),
              ManhattanDistance(),
              CosineDistance()
@@ -193,4 +222,4 @@ def distance_canonicalizer(user_distance: Union[Distance, str]) -> Distance:
         return distance
 
     raise ValueError('Unknown distance: must either be a MetricDistance\
-                          or a known distance function'                                                                                                              )
+                     or a known distance function')
