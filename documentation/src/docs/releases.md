@@ -1,5 +1,18 @@
 # Releases notes
 
+## 0.13.x - Matching refactoring
+
+Tis release focuses on refactoring and improving the NN matching components and associated classes such that the API makes it easy to add additional backend and ensuring that the components are better tested.
+
+## Breaking changes
+
+The `__init__()` of the matcher has been refactored to be implementation agnostic. Should not have any impact on user facing API but makes it incompatible with previous internal components.
+
+## Major improvements
+
+Distance aliasing is now delegated to the Distance implementation which makes it more modular and removed many bugs due to naming duplication.
+
+
 ## 0.12.x - Q/A release
 
 This release focuses on on code quality, API consistency, testing, and
