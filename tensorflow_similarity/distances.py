@@ -7,7 +7,7 @@ from .types import FloatTensor
 class Distance(ABC):
     """
     Note: don't forget to add your distance to the DISTANCES list
-    and add aliase names in it.
+    and add alias names in it.
 
     """
     def __init__(self, name: str, aliases: List[str] = []):
