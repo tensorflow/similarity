@@ -1,3 +1,4 @@
+import pytest
 import tensorflow as tf
 import numpy as np
 from tensorflow_similarity.distances import CosineDistance, InnerProductDistance
@@ -18,6 +19,18 @@ def test_distance_mapping():
         for a in d.aliases:
             d2 = distance_canonicalizer(a)
             assert d2.name == d.name
+
+
+def test_distance_passthrough():
+    "Canonilizer is expected to return distance object as is"
+    d = EuclideanDistance()
+    d2 = distance_canonicalizer(d)
+    assert d == d2
+
+
+def test_non_existing_distance():
+    with pytest.raises(ValueError):
+        distance_canonicalizer('notadistance')
 
 
 def angular_distance_np(feature):

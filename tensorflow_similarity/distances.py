@@ -106,7 +106,7 @@ class EuclideanDistance(Distance):
 
     def __init__(self):
         "Init Euclidean distance"
-        super().__init__('euclidean', ['l1', 'pythagorean'])
+        super().__init__('euclidean', ['l2', 'taxicab'])
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
@@ -151,7 +151,7 @@ class ManhattanDistance(Distance):
 
     def __init__(self):
         "Init Manhattan distance"
-        super().__init__('manhattan', ['l2', 'taxicab'])
+        super().__init__('manhattan', ['l1', 'pythagorean'])
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
@@ -188,6 +188,11 @@ def distance_canonicalizer(user_distance: Union[Distance, str]) -> Distance:
         Distance: Requested object name.
     """
 
+    # just return Distance object
+    if isinstance(user_distance, Distance):
+        # user supplied distance function
+        return user_distance
+
     mapping = {}
     name2fn = {}
     for distance in DISTANCES:
@@ -206,10 +211,6 @@ def distance_canonicalizer(user_distance: Union[Distance, str]) -> Distance:
             raise ValueError('Metric not supported by the framework')
 
         return name2fn[user_distance]
-
-    elif isinstance(distance, Distance):
-        # user supplied distance function
-        return distance
 
     raise ValueError('Unknown distance: must either be a MetricDistance\
                      or a known distance function')
