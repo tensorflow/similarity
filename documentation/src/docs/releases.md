@@ -2,7 +2,7 @@
 
 ## 0.13.x - Matching refactoring
 
-This release focuses on refactoring and improving the NN matching components and associated classes such that the API makes it easy to add additional backend and ensuring that the components are better tested.
+This release focuses on refactoring and improving the NN matching components and associated classes. The changes to the API make it easier to add additional backends and ensures that the components are better tested.
 
 ## New features
 
