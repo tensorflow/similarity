@@ -1,6 +1,7 @@
+from os import name
 import nmslib
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from .matcher import Matcher
@@ -15,17 +16,19 @@ class NMSLibMatcher(Matcher):
     """
 
     def __init__(self,
-                 distance: Distance,
+                 distance: Union[Distance, str],
+                 dims: int,
                  algorithm: str = 'nmslib_hnsw',
-                 verbose: int = 1):
+                 **kwargs):
 
-        distance = distance_canonicalizer(distance)
+        distance_obj: Distance = distance_canonicalizer(distance)
 
-        if distance.name == 'cosine':
+        # convert to nmslib word
+        if distance_obj.name == 'cosine':
             space = 'cosinesimil'
-        elif distance.name == 'euclidean':
+        elif distance_obj.name == 'euclidean':
             space = 'l2'
-        elif distance.name == 'manhattan':
+        elif distance_obj.name == 'manhattan':
             space = 'l1'
         else:
             raise ValueError('Unsupported metric space')
@@ -35,16 +38,16 @@ class NMSLibMatcher(Matcher):
         else:
             raise ValueError('Unsupported algorithm')
 
-        show_prog = True if verbose else False
-
         self._matcher = nmslib.init(method=method, space=space)
-        self._matcher.createIndex(print_progress=show_prog)
+        self._matcher.createIndex()
+
 
     def add(self,
             embedding: FloatTensor,
             idx: int,
+            verbose: int = 1,
             build: bool = True,
-            verbose: int = 1):
+            **kwargs):
         """Add an embedding to the index
 
         Args:
@@ -55,12 +58,13 @@ class NMSLibMatcher(Matcher):
             Returned with the embedding to allow to lookup
             the data associated with a given embedding.
 
+            verbose: Be verbose. Defaults to 1.
+
             build: Rebuild the index after the addition.
             Required to make the embedding searchable.
             Set to false to save time between successive addition.
             Defaults to True.
 
-            verbose: Be verbose. Defaults to 1.
         """
         self._matcher.addDataPoint(idx, embedding)
         if build:
@@ -69,8 +73,9 @@ class NMSLibMatcher(Matcher):
     def batch_add(self,
                   embeddings: FloatTensor,
                   idxs: List[int],
+                  verbose: int = 1,
                   build: bool = True,
-                  verbose: int = 1):
+                  **kwargs):
         """Add a batch of embeddings to the matcher.
 
         Args:
@@ -80,11 +85,11 @@ class NMSLibMatcher(Matcher):
             the embeddings to allow to lookup the data associated
             with the returned embeddings.
 
+            verbose: Be verbose. Defaults to 1.
+
             build: Rebuild the index after the addition. Required to
             make the embeddings searchable. Set to false to save
             time between successive addition. Defaults to True.
-
-            verbose: Be verbose. Defaults to 1.
         """
         # !addDataPoint and addDataPointBAtch have inverted parameters
         if verbose:
@@ -121,12 +126,6 @@ class NMSLibMatcher(Matcher):
         """
         batch_idxs = []
         batch_distances = []
-
-        # FIXME: make it parallel or use the batch api
-        # for emb in embeddings:
-        #     dist, idxs = self._matcher.knnQuery(emb, k=k)
-        #     batch_idxs.append(idxs)
-        #     batch_distances.append(dist)
 
         nn = self._matcher.knnQueryBatch(embeddings, k=k)
         for n in nn:

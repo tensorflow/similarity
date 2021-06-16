@@ -1,16 +1,34 @@
 from abc import ABC, abstractmethod
 from tensorflow_similarity.types import FloatTensor
-from typing import List, Tuple
+from typing import List, Tuple, Union
+from tensorflow_similarity.distances import Distance
 
 
 class Matcher(ABC):
 
     @abstractmethod
+    def __init__(self,
+                 distance: Union[Distance, str],
+                 dim: int,
+                 verbose: bool,
+                 **kwargs):
+        """Initializes a nearest neigboors matcher.
+
+        Args:
+            distance: the distance used to compute the distance between
+            embeddings.
+
+            dim: the size of the embeddings.
+
+            verbose: be verbose.
+        """
+
+    @abstractmethod
     def add(self,
             embedding: FloatTensor,
             idx: int,
-            build: bool = True,
-            verbose: int = 1):
+            verbose: int = 1,
+            **kwargs):
         """Add a single embedding to the matcher.
 
         Args:
@@ -21,18 +39,14 @@ class Matcher(ABC):
             Returned with the embedding to allow to lookup
             the data associated with a given embedding.
 
-            build: Rebuild the index after the addition.
-            Required to make the embedding searchable.
-            Set to false to save time between successive addition.
-            Defaults to True.
         """
 
     @abstractmethod
     def batch_add(self,
                   embeddings: FloatTensor,
                   idxs: List[int],
-                  build: bool = True,
-                  verbose: int = 1):
+                  verbose: int = 1,
+                  **kwargs):
         """Add a batch of embeddings to the matcher.
 
         Args:
@@ -41,10 +55,6 @@ class Matcher(ABC):
             idxs (int): Embedding ids as in the index table. Returned with
             the embeddings to allow to lookup the data associated
             with the returned embeddings.
-
-            build: Rebuild the index after the addition. Required to
-            make the embeddings searchable. Set to false to save
-            time between successive addition. Defaults to True.
 
             verbose: Be verbose. Defaults to 1.
         """

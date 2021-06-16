@@ -4,9 +4,19 @@
 
 Tis release focuses on refactoring and improving the NN matching components and associated classes such that the API makes it easy to add additional backend and ensuring that the components are better tested.
 
+## New features
+
+- Inner Product distance available.
+
+
 ## Breaking changes
 
-The `__init__()` of the matcher has been refactored to be implementation agnostic. Should not have any impact on user facing API but makes it incompatible with previous internal components.
+The `__init__()` of the matcher has been refactored to be implementation
+agnostic. Should not have any impact on user facing API but makes it
+incompatible with previous internal components.
+
+The `__init__()` of the Indexer API has been refactored.
+Will break code that directly calls it.
 
 ## Major improvements
 

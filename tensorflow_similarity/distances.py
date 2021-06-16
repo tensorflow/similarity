@@ -32,10 +32,7 @@ class Distance(ABC):
         return self.name
 
     def get_config(self):
-        return {
-            "name": self.name,
-            "aliases": self.aliases
-        }
+        return {}
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -43,13 +40,13 @@ class InnerProductDistance(Distance):
     """Compute the pairwise inner product between embeddings.
 
     The [Inner product](https://en.wikipedia.org/wiki/Inner_product_space) is
-    a distance that varies from 0 (similar) to inf (dissimilar).
+    a distance where the more similar vectors have the closest values to each
+    other.
     """
-    def __init__(self, name: str = None):
+
+    def __init__(self):
         "Init Inner product distance"
-        name = name if name else 'inner_product'
-        aliases = ['ip']
-        super().__init__(name, aliases=aliases)
+        super().__init__('inner_product', ['ip'])
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
@@ -63,7 +60,7 @@ class InnerProductDistance(Distance):
         """
 
         tensor = tf.linalg.matmul(embeddings, embeddings, transpose_b=True)
-        distances = tf.reduce_sum(tensor, axis=1, keepdims=True)
+        distances: FloatTensor = tf.reduce_sum(tensor, axis=1, keepdims=True)
         return distances
 
 
@@ -74,10 +71,9 @@ class CosineDistance(Distance):
     The [Cosine Distance](https://en.wikipedia.org/wiki/Cosine_similarity) is
     an angular distance that varies from 0 (similar) to 1 (dissimilar).
     """
-    def __init__(self, name: str = None):
+    def __init__(self):
         "Init Cosine distance"
-        name = name if name else 'cosine'
-        super().__init__(name)
+        super().__init__('cosine')
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
@@ -108,11 +104,9 @@ class EuclideanDistance(Distance):
     **Alias**: L2 Norm, Pythagorean
     """
 
-    def __init__(self, name: str = None):
+    def __init__(self):
         "Init Euclidean distance"
-        name = name if name else 'euclidean'
-        aliases = ['l1', 'pythagorean']
-        super().__init__(name, aliases)
+        super().__init__('euclidean', ['l1', 'pythagorean'])
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
@@ -153,15 +147,11 @@ class ManhattanDistance(Distance):
     is the sum of the lengths of the projections of the line segment between
     two embeddings onto the Cartesian axes. The larger the distance the more
     dissimilar the embeddings are.
-
-    **Alias**: L1 Norm, taxicab
     """
 
-    def __init__(self, name: str = None):
+    def __init__(self):
         "Init Manhattan distance"
-        name = name if name else 'manhattan'
-        aliases = ['l2', 'taxicab']
-        super().__init__(name, aliases)
+        super().__init__('manhattan', ['l2', 'taxicab'])
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
