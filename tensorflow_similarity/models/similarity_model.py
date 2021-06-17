@@ -1,6 +1,7 @@
 from collections import defaultdict
 from copy import copy
 from pathlib import Path
+from tensorflow_similarity.evaluators.evaluator import Evaluator
 from typing import Dict, List, Union, DefaultDict, Optional
 from tabulate import tabulate
 from tqdm.auto import tqdm
@@ -49,7 +50,8 @@ class SimilarityModel(tf.keras.Model):
                 metrics: Union[Metric, DistanceMetric, str, Dict, List] = None,
                 embedding_output: int = None,
                 table: Union[Table, str] = 'memory',
-                matcher: Union[Matcher, str] = 'nmslib_hnsw',
+                matcher: Union[Matcher, str] = 'nmslib',
+                evaluator: Union[Evaluator, str] = 'memory',
                 stat_buffer_size: int = 1000,
                 loss_weights: List = None,
                 weighted_metrics: List = None,
@@ -166,11 +168,19 @@ class SimilarityModel(tf.keras.Model):
                   "Use the embedding_output arg to override this")
             embedding_output = 0
 
+        # fetch embedding size as some ANN libs requires it for init
+        if num_outputs > 1:
+            self.embedding_size = self.outputs[embedding_output].shape[1]
+        else:
+            self.embedding_size = self.outputs[0].shape[1]
+
         # init index
         self._index = Indexer(distance=distance,
-                              table=table,
-                              match_algorithm=matcher,
+                              embedding_size=self.embedding_size,
                               embedding_output=embedding_output,
+                              table=table,
+                              matcher=matcher,
+                              evaluator=evaluator,
                               stat_buffer_size=stat_buffer_size)
 
         # call underlying keras method
@@ -441,17 +451,6 @@ class SimilarityModel(tf.keras.Model):
     def index_size(self) -> int:
         "Return the index size"
         return self._index.size()
-
-    def init_index(self,
-                   distance: Union[Distance, str],
-                   table: Union[Table, str] = 'memory',
-                   matcher: Union[Matcher, str] = 'nmslib_hnsw',
-                   stat_buffer_size: int = 1000):
-        "Init the index manually"
-        self._index = Indexer(distance=distance,
-                              table=table,
-                              match_algorithm=matcher,
-                              stat_buffer_size=stat_buffer_size)
 
     def load_index(self, filepath: str):
         """Load Index data from a checkpoint and initialize underlying
