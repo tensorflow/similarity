@@ -1,5 +1,28 @@
 # Releases notes
 
+## 0.13.x - Matching refactoring
+
+This release focuses on refactoring and improving the NN matching components and associated classes. The changes to the API make it easier to add additional backends and ensures that the components are better tested.
+
+## New features
+
+- Inner Product distance available.
+
+
+## Breaking changes
+
+The `__init__()` of the matcher has been refactored to be implementation
+agnostic. Should not have any impact on user facing API but makes it
+incompatible with previous internal components.
+
+The `__init__()` of the Indexer API has been refactored.
+Will break code that directly calls it.
+
+## Major improvements
+
+Distance aliasing is now delegated to the Distance implementation which makes it more modular and removed many bugs due to naming duplication.
+
+
 ## 0.12.x - Q/A release
 
 This release focuses on on code quality, API consistency, testing, and

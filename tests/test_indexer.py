@@ -11,7 +11,7 @@ def test_calibration():
     data = np.load(FNAME, allow_pickle=True)
     thresholds_targets = {'0.5': 0.5}
 
-    index = Indexer()
+    index = Indexer(3)
     index.batch_add(data['embeddings_idx'][:SIZE], labels=data['y_idx'][:SIZE])
     calibration = index.calibrate(data['embeddings_cal'][:SIZE],
                                   data['y_cal'][:SIZE],
@@ -30,7 +30,7 @@ def test_indexer_basic_flow():
     prediction = np.array([[1, 1, 2]], dtype='float32')
     embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
 
-    indexer = Indexer()
+    indexer = Indexer(3)
 
     # index data
     indexer.batch_add(embs, labels=[0, 1], data=['test', 'test2'])
@@ -51,7 +51,7 @@ def test_indexer_batch_add():
     prediction = np.array([[1, 1, 2]], dtype='float32')
     embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
 
-    indexer = Indexer()
+    indexer = Indexer(3)
 
     # index data
     indexer.batch_add(embs, [0, 1], data=['test', 'test2'])
@@ -72,7 +72,7 @@ def test_multiple_add():
     # arrays of preds which contains a single embedding list(list(embedding))
     predictions = np.array([[[1, 1, 3]], [[3, 1, 2]]], dtype='float32')
 
-    indexer = Indexer()
+    indexer = Indexer(3)
     indexer.add(predictions[0])
     assert indexer.size() == 1
 
@@ -84,7 +84,7 @@ def test_multiple_add_mix_data():
 
     embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
 
-    indexer = Indexer()
+    indexer = Indexer(3)
     indexer.batch_add(embs)
     assert indexer.size() == 2
 
@@ -96,7 +96,7 @@ def test_reload(tmp_path):
 
     embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
 
-    indexer = Indexer()
+    indexer = Indexer(3)
     indexer.batch_add(embs, verbose=0)
     assert indexer.size() == 2
 
@@ -118,7 +118,7 @@ def test_index_reset():
     prediction = np.array([[1, 1, 2]], dtype='float32')
     embs = np.array([[1, 1, 3], [3, 1, 2], [3, 2, 3]], dtype='float32')
 
-    indexer = Indexer()
+    indexer = Indexer(3)
 
     # index data
     indexer.batch_add(embs, labels=[0, 1, 2])
@@ -162,7 +162,7 @@ def test_indexer_batch_ops():
     NUM_DIMS = 10
     K = 3
     data = np.random.randn(NUM_ELTS, NUM_DIMS).astype(np.float32)
-    indexer = Indexer()
+    indexer = Indexer(NUM_DIMS)
     indexer.batch_add(data)
     results = indexer.batch_lookup(data, k=K)
     indexer.stats()
@@ -176,7 +176,7 @@ def test_single_vs_batch_ops():
     NUM_DIMS = 10
     K = 3
     data = np.random.randn(NUM_ELTS, NUM_DIMS).astype(np.float32)
-    indexer = Indexer()
+    indexer = Indexer(NUM_DIMS)
     indexer.batch_add(data)
     batch_results = indexer.batch_lookup(data, k=K)
 
