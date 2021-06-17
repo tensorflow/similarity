@@ -151,7 +151,7 @@ class ManhattanDistance(Distance):
 
     def __init__(self):
         "Init Manhattan distance"
-        super().__init__('manhattan', ['l1', 'pythagorean'])
+        super().__init__('manhattan', ['l1', 'taxicab'])
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
