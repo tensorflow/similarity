@@ -106,7 +106,7 @@ class EuclideanDistance(Distance):
 
     def __init__(self):
         "Init Euclidean distance"
-        super().__init__('euclidean', ['l2', 'taxicab'])
+        super().__init__('euclidean', ['l2', 'pythagorean'])
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
