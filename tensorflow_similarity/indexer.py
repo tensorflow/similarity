@@ -521,6 +521,8 @@ class Indexer():
         path = str(path)
         # saving metadata
         metadata = {
+            "size": self.size(),
+            "compression": compression,
             "distance": self.distance.name,
             "table": self.table_type,
             "evaluator": self.evaluator_type,
