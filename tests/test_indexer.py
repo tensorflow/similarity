@@ -118,7 +118,7 @@ def test_uncompress_reload(tmp_path):
 
     embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
 
-    indexer = Indexer()
+    indexer = Indexer(3)
     indexer.batch_add(embs, verbose=0)
     assert indexer.size() == 2
 
