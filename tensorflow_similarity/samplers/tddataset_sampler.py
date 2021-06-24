@@ -7,6 +7,7 @@ def TFRecordDatasetSampler(shard_path: str,
                            deserialization_fn: Callable,
                            example_per_class: int = 2,
                            batch_size: int = 32,
+                           shards_per_cycle: int = None,
                            compression: Optional[str] = None,
                            parallelism: int = tf.data.AUTOTUNE,
                            file_parallelism: int = 1,
@@ -48,8 +49,8 @@ def TFRecordDatasetSampler(shard_path: str,
         the batch will be `batch_size // example_per_class`.
         Defaults to 32.
 
-        batchs_per_epoch ([type], optional): How many batch per epoch.
-        Defaults to 1000.
+        shards_per_cycle: How many shards to use concurrently per cycle.
+        Default is None which is all of them. Can cause segv if too many shards.
 
         compression: Which compression was used when creating the dataset. `{None, "ZLIB", or "GZIP"}` as specified in [TFRecordDataset documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
         Defaults to None.
@@ -75,6 +76,9 @@ def TFRecordDatasetSampler(shard_path: str,
     if not prefetch_size:
         prefetch_size = 10
 
+    # how many shard to iterate over in parallels.
+    cycle_length = shards_per_cycle if shards_per_cycle else total_shards
+
     with tf.device('/cpu:0'):
         # shuffle the shard order
         ds = tf.data.Dataset.from_tensor_slices(shards_list)
@@ -94,7 +98,7 @@ def TFRecordDatasetSampler(shard_path: str,
                 x,
                 compression_type=compression,
             ),  # noqa
-            cycle_length=total_shards,  # using all shards
+            cycle_length=cycle_length,
             block_length=example_per_class,
             num_parallel_calls=file_parallelism,
             deterministic=False,
