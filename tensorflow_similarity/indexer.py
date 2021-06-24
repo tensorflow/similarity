@@ -528,6 +528,8 @@ class Indexer():
         path = str(path)
         # saving metadata
         metadata = {
+            "size": self.size(),
+            "compression": compression,
             "distance": self.distance.name,
             "embedding_output": self.embedding_output,
             "embedding_size": self.embedding_size,

@@ -113,6 +113,24 @@ def test_reload(tmp_path):
     assert indexer2.size() == 4
 
 
+def test_uncompress_reload(tmp_path):
+    "Ensure uncompressed index work"
+
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
+
+    indexer = Indexer(3)
+    indexer.batch_add(embs, verbose=0)
+    assert indexer.size() == 2
+
+    # save
+    path = tmp_path / "test_save_and_add/"
+    indexer.save(path, compression=False)
+
+    # reload
+    indexer2 = Indexer.load(path)
+    assert indexer2.size() == 2
+
+
 def test_index_reset():
 
     prediction = np.array([[1, 1, 2]], dtype='float32')
