@@ -40,23 +40,27 @@ class Indexer():
     RANKS = 4
 
     def __init__(self,
+                 embedding_size: int,
                  distance: Union[Distance, str] = 'cosine',
+                 matcher: Union[Matcher, str] = 'nmslib',
                  table: Union[Table, str] = 'memory',
-                 match_algorithm: Union[Matcher, str] = 'nmslib_hnsw',
                  evaluator: Union[Evaluator, str] = 'memory',
                  embedding_output: int = None,
                  stat_buffer_size: int = 1000) -> None:
         """Index embeddings to make them searchable via KNN
 
         Args:
+            embedding_size: Size of the embeddings that will be stored.
+            It is usually equivalent to the size of the output layer.
+
             distance: Distance used to compute embeddings proximity.
             Defaults to 'cosine'.
 
             table: How to store the index records.
             Defaults to 'memory'.
 
-            match_algorithm: Which `Matcher()` framework to use to perfom KNN
-            search. Defaults to 'hnsw'.
+            matcher: Which `Matcher()` framework to use to perfom KNN
+            search. Defaults to 'nmslib'.
 
             evaluator: What type of `Evaluator()` to use to evaluate index
             performance. Defaults to in-memory one.
@@ -76,9 +80,11 @@ class Indexer():
         distance = distance_canonicalizer(distance)
         self.distance = distance  # needed for save()/load()
         self.embedding_output = embedding_output
+        self.embedding_size = embedding_size
 
         # internal structure naming
-        self.match_algorithm = match_algorithm
+        # FIXME support custom objects
+        self.matcher_type = matcher
         self.table_type = table
         self.evaluator_type = evaluator
 
@@ -101,11 +107,11 @@ class Indexer():
     def _init_structures(self) -> None:
         "(re)intialize internal storage structure"
 
-        if self.match_algorithm == 'nmslib_hnsw':
-            algo: str = str(self.match_algorithm)  # needed for typing
-            self.matcher: Matcher = NMSLibMatcher(self.distance, algo)
-        elif isinstance(self.match_algorithm, Matcher):
-            self.matcher = self.match_algorithm
+        if self.matcher_type == 'nmslib':
+            self.matcher: Matcher = NMSLibMatcher(distance=self.distance,
+                                                  dims=self.embedding_size)
+        elif isinstance(self.matcher_type, Matcher):
+            self.matcher = self.matcher_type
         else:
             raise ValueError("You need to either supply a known matcher name\
                 or a Matcher() object")
@@ -303,7 +309,8 @@ class Indexer():
 
         if verbose:
             print("\nPerforming NN search\n")
-        batch_idxs, batch_distances = self.matcher.batch_lookup(embeddings, k=k)
+        batch_idxs, batch_distances = self.matcher.batch_lookup(embeddings,
+                                                                k=k)
 
         if verbose:
             pb = tqdm(total=num_embeddings, desc='Building NN list')
@@ -524,12 +531,16 @@ class Indexer():
             "size": self.size(),
             "compression": compression,
             "distance": self.distance.name,
+            "embedding_output": self.embedding_output,
+            "embedding_size": self.embedding_size,
+
             "table": self.table_type,
             "evaluator": self.evaluator_type,
-            "match_algorithm": self.match_algorithm,
-            "embedding_output": self.embedding_output,
+            "matcher": self.matcher_type,
+
             "stat_buffer_size": self.stat_buffer_size,
             "is_calibrated": self.is_calibrated,
+
             "calibration_metric_config": self.calibration_metric.get_config(),
             "cutpoints": self.cutpoints,
             "calibration_thresholds": self.calibration_thresholds
@@ -560,10 +571,11 @@ class Indexer():
         metadata = tf.keras.backend.eval(metadata)
         md = json.loads(metadata)
         index = Indexer(distance=md['distance'],
-                        table=md['table'],
+                        embedding_size=md['embedding_size'],
                         embedding_output=md['embedding_output'],
+                        table=md['table'],
                         evaluator=md['evaluator'],
-                        match_algorithm=md['match_algorithm'],
+                        matcher=md['matcher'],
                         stat_buffer_size=md['stat_buffer_size'])
 
         # reload the tables
@@ -626,7 +638,7 @@ class Indexer():
         rows = [
             ['distance', self.distance],
             ['index table', self.table_type],
-            ['matching algorithm', self.match_algorithm],
+            ['matching algorithm', self.matcher_type],
             ['evaluator', self.evaluator_type],
             ['index size', self.size()],
             ['calibrated', self.is_calibrated],
