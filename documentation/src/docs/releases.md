@@ -8,6 +8,9 @@ This release focuses on refactoring and improving the NN matching components and
 
 - Inner Product distance available.
 
+### Major improvements
+
+- Better Index serialization meta_data that now include the size of the index and if it was compressed.
 
 ## Breaking changes
 
@@ -20,7 +23,9 @@ Will break code that directly calls it.
 
 ## Major improvements
 
-Distance aliasing is now delegated to the Distance implementation which makes it more modular and removed many bugs due to naming duplication.
+- Distance aliasing is now delegated to the Distance implementation which makes it more modular and removed many bugs due to naming duplication.
+- - Allows to configure the number of shards used during an dataset interleave cycle via `shard_per_cycle` in TFRecordDataset.
+
 
 
 ## 0.12.x - Q/A release
@@ -28,14 +33,14 @@ Distance aliasing is now delegated to the Distance implementation which makes it
 This release focuses on on code quality, API consistency, testing, and
 documentation to get TF.similarity ready for production.
 
-## New features
+### New features
 
 - Advanced colab with use of callbacks and TFRecordDataset sampler added. (v0.12.6)
 
 - Callback to track progress on known vs unknown classes added. (v0.12.6)
 
 
-## Major improvements
+### Major improvements
 
 - Multi-thread `lookup()` working with linear scale speedup in number of core
 used. (v0.12.8)
@@ -51,7 +56,7 @@ the way to support a wider range of model type that requires different
 
 - Lookup results are now arrays of Lookup() type with attributes. (v0.12.0)
 
-## Breaking changes
+### Breaking changes
 
 - `model.SimilarityModel` moved to `models/` and made base class to pave the
 way to subclass for specific type of similiarty model that requires to override
@@ -62,14 +67,14 @@ things like `train_step()`. Import is now: `from tfsim.models import SimilarityM
 
 This release focuses on adding TF dataset support.
 
-## New features
+### New features
 
 - Added Efficient Sampling from TF.data.TFRecordDataset now supported via the
 TFDatasetSampler.
 - masked_minimum and masked_maximum now return the arg_min and arg_max for
 each example in the batch.
 
-## Major improvements
+### Major improvements
 
 - Improved the API documentation
 
@@ -78,13 +83,13 @@ each example in the batch.
 This release focuses on code quality, API consistency, and documentation
 to get TF.similarity ready for production.
 
-## New features
+### New features
 
 - Package documentation is available
 - Manhattan distance is available.
 - nmslib matcher now supports l2 and l1 distances.
 
-## Major improvements
+### Major improvements
 
 - Simplified the MemorySampler prototype and made them more consistent.
 - Distance refactored to be object
@@ -92,7 +97,7 @@ to get TF.similarity ready for production.
 - All major classes are properly documented
 - All major classes are typed.
 
-## Major fixes
+### Major fixes
 
 - Mean metric now properly return fractional ranks.
 - Evaluation Callback properly work on multioutput.
