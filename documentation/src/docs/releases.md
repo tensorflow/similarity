@@ -1,16 +1,32 @@
 # Releases notes
 
-## 0.13.0 - Better Index
+## 0.13.x - Matching refactoring
 
-This release focuses on improving the index system
+This release focuses on refactoring and improving the NN matching components and associated classes. The changes to the API make it easier to add additional backends and ensures that the components are better tested.
+
+## New features
+
+- Inner Product distance available.
 
 ### Major improvements
 
 - Better Index serialization meta_data that now include the size of the index and if it was compressed.
 
-### Major fixes
+## Breaking changes
 
-- Allows to configure the number of shards used during an dataset interleave cycle via `shard_per_cycle` in TFRecordDataset.
+The `__init__()` of the matcher has been refactored to be implementation
+agnostic. Should not have any impact on user facing API but makes it
+incompatible with previous internal components.
+
+The `__init__()` of the Indexer API has been refactored.
+Will break code that directly calls it.
+
+## Major improvements
+
+- Distance aliasing is now delegated to the Distance implementation which makes it more modular and removed many bugs due to naming duplication.
+- - Allows to configure the number of shards used during an dataset interleave cycle via `shard_per_cycle` in TFRecordDataset.
+
+
 
 ## 0.12.x - Q/A release
 

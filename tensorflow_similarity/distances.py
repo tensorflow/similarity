@@ -1,13 +1,20 @@
-from abc import ABC
-from typing import Union
+from abc import ABC, abstractmethod
+from typing import Union, List
 import tensorflow as tf
 from .types import FloatTensor
 
 
 class Distance(ABC):
-    def __init__(self, name: str):
-        self.name = name
+    """
+    Note: don't forget to add your distance to the DISTANCES list
+    and add alias names in it.
 
+    """
+    def __init__(self, name: str, aliases: List[str] = []):
+        self.name = name
+        self.aliases = aliases
+
+    @abstractmethod
     def call(self, embeddings: FloatTensor) -> FloatTensor:
         """Compute pairwise distances for a given batch.
 
@@ -25,9 +32,36 @@ class Distance(ABC):
         return self.name
 
     def get_config(self):
-        return {
-            "name": self.name
-        }
+        return {}
+
+
+@tf.keras.utils.register_keras_serializable(package="Similarity")
+class InnerProductDistance(Distance):
+    """Compute the pairwise inner product between embeddings.
+
+    The [Inner product](https://en.wikipedia.org/wiki/Inner_product_space) is
+    a distance where the more similar vectors have the closest values to each
+    other.
+    """
+
+    def __init__(self):
+        "Init Inner product distance"
+        super().__init__('inner_product', ['ip'])
+
+    @tf.function
+    def call(self, embeddings: FloatTensor) -> FloatTensor:
+        """Compute pairwise distances for a given batch of embeddings.
+
+        Args:
+            embeddings: Embeddings to compute the pairwise one.
+
+        Returns:
+            FloatTensor: Pairwise distance tensor.
+        """
+
+        tensor = tf.linalg.matmul(embeddings, embeddings, transpose_b=True)
+        distances: FloatTensor = tf.reduce_sum(tensor, axis=1, keepdims=True)
+        return distances
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -37,10 +71,9 @@ class CosineDistance(Distance):
     The [Cosine Distance](https://en.wikipedia.org/wiki/Cosine_similarity) is
     an angular distance that varies from 0 (similar) to 1 (dissimilar).
     """
-    def __init__(self, name: str = None):
+    def __init__(self):
         "Init Cosine distance"
-        name = name if name else 'cosine'
-        super().__init__(name)
+        super().__init__('cosine')
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
@@ -71,10 +104,9 @@ class EuclideanDistance(Distance):
     **Alias**: L2 Norm, Pythagorean
     """
 
-    def __init__(self, name: str = None):
+    def __init__(self):
         "Init Euclidean distance"
-        name = name if name else 'euclidean'
-        super().__init__(name)
+        super().__init__('euclidean', ['l2', 'pythagorean'])
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
@@ -115,14 +147,11 @@ class ManhattanDistance(Distance):
     is the sum of the lengths of the projections of the line segment between
     two embeddings onto the Cartesian axes. The larger the distance the more
     dissimilar the embeddings are.
-
-    **Alias**: L1 Norm, taxicab
     """
 
-    def __init__(self, name: str = None):
+    def __init__(self):
         "Init Manhattan distance"
-        name = name if name else 'manhattan'
-        super().__init__(name)
+        super().__init__('manhattan', ['l1', 'taxicab'])
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
@@ -140,42 +169,48 @@ class ManhattanDistance(Distance):
         return distances
 
 
-def distance_canonicalizer(distance: Union[Distance, str]) -> Distance:
+# List of implemented distances
+DISTANCES = [
+             InnerProductDistance(),
+             EuclideanDistance(),
+             ManhattanDistance(),
+             CosineDistance()
+            ]
+
+
+def distance_canonicalizer(user_distance: Union[Distance, str]) -> Distance:
     """Normalize user requested distance to its matching Distance object.
 
     Args:
-        distance: Requested distance either by name or by object
+        user_distance: Requested distance either by name or by object
 
     Returns:
         Distance: Requested object name.
     """
-    mapping = {
-        'cosine': 'cosine',
-        'euclidean': 'euclidean',
-        'pythagorean': 'euclidean',
-        'l2': 'euclidean',
-        'l1': 'manhattan',
-        'taxicab': 'manhattan',
-    }
 
-    if isinstance(distance, str):
-        distance_name = distance.lower().strip()
-        if distance_name in mapping:
-            distance_name = mapping[distance_name]
+    # just return Distance object
+    if isinstance(user_distance, Distance):
+        # user supplied distance function
+        return user_distance
+
+    mapping = {}
+    name2fn = {}
+    for distance in DISTANCES:
+        # self reference
+        mapping[distance.name] = distance.name
+        name2fn[distance.name] = distance
+        # aliasing
+        for alias in distance.aliases:
+            mapping[alias] = distance.name
+
+    if isinstance(user_distance, str):
+        user_distance = user_distance.lower().strip()
+        if user_distance in mapping:
+            user_distance = mapping[user_distance]
         else:
             raise ValueError('Metric not supported by the framework')
 
-        # instantiating
-        if distance_name == 'cosine':
-            return CosineDistance()
-        elif distance_name == 'euclidean':
-            return EuclideanDistance()
-        elif distance_name == 'manhattan':
-            return ManhattanDistance()
-
-    elif isinstance(distance, Distance):
-        # user supplied distance function
-        return distance
+        return name2fn[user_distance]
 
     raise ValueError('Unknown distance: must either be a MetricDistance\
-                          or a known distance function')
+                     or a known distance function')

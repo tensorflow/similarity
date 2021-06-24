@@ -1,9 +1,36 @@
-import numpy as np
+import pytest
 import tensorflow as tf
-
-from tensorflow_similarity.distances import CosineDistance
+import numpy as np
+from tensorflow_similarity.distances import CosineDistance, InnerProductDistance
 from tensorflow_similarity.distances import EuclideanDistance
 from tensorflow_similarity.distances import ManhattanDistance
+from tensorflow_similarity.distances import distance_canonicalizer
+from tensorflow_similarity.distances import DISTANCES
+
+
+def test_distance_mapping():
+    for d in DISTANCES:
+
+        # self naming
+        d2 = distance_canonicalizer(d.name)
+        assert d2.name == d.name
+
+        # aliases
+        for a in d.aliases:
+            d2 = distance_canonicalizer(a)
+            assert d2.name == d.name
+
+
+def test_distance_passthrough():
+    "Canonilizer is expected to return distance object as is"
+    d = EuclideanDistance()
+    d2 = distance_canonicalizer(d)
+    assert d == d2
+
+
+def test_non_existing_distance():
+    with pytest.raises(ValueError):
+        distance_canonicalizer('notadistance')
 
 
 def angular_distance_np(feature):
@@ -66,6 +93,7 @@ def test_euclidean_opposite():
     vals = d(a)
     assert tf.round(tf.reduce_sum(vals)) == 4
 
+
 def test_manhattan():
     a = tf.convert_to_tensor([
         [0.0, 0.0],
@@ -83,6 +111,7 @@ def test_manhattan():
     ])
     assert tf.reduce_all(tf.math.equal(vals, expected))
 
+
 def test_manhattan_same():
     a = tf.convert_to_tensor([[1.0, 1.0], [1.0, 1.0]])
     d = ManhattanDistance()
@@ -95,3 +124,10 @@ def test_manhattan_opposite():
     d = ManhattanDistance()
     vals = d(a)
     assert tf.round(tf.reduce_sum(vals)) == 4
+
+
+def test_innerprod():
+    a = [[1, 2, 3], [1, 3, 3]]
+    d = InnerProductDistance()
+    vals = d(a)
+    assert tf.round(tf.reduce_sum(vals)) == 65
