@@ -1,6 +1,7 @@
 # How to Contribute
+Thanks for considering contributing to TF similarity!
 
-We'd love to accept your patches and contributions to this project. There are
+Here is what you need to know to make a successful contribution. There are
 just a few small guidelines you need to follow.
 
 ## Contributor License Agreement
@@ -29,11 +30,18 @@ pull request:
 
 - Ideally one PR corespond to one feature or improvement to make it easier to
   review. So **try** to split your contribution in meaning logical units.
-- Your code **must** pass the unit-tests. We use `pytest` so simply run it at the
-  root of the project
+- Your code **must** pass the unit-tests. We use `pytest` so simply run it at the root of the project.
+- Your code **must** passs static analyis. We use `mypy` so simply run `mypy tensorflow_similarity/` from the root of the project.
 - Your code **must** comes with unit-tests to ensure long term quality
-- Your functions **must** be documented except obvious ones.
+- Your functions **must** be documented except obvious ones using the Google style.
+- Your functions **must** be typed.
 - Your code must pass `flake8` to ensure you follow Python coding standards.
+- You **must** provide documentation (located in documentation/src) edits that document any new function/features you added.
+- You **should** provide reference to research papers that describe the feature added if any.
+- Please **try** to include a notebook in `notebooks/` that demonstrates the features/model if possible or extend an existing one. If you add a new notebook, make sure to provide an edit to the `README.md` that link to it.
+- You **must** update the documentation/src/changelog.md that document the changes triggered by the PR.
+
+
 
 ## Community Guidelines
 

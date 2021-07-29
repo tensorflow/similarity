@@ -215,6 +215,9 @@ class SimilarityModel(tf.keras.Model):
 
             verbose: Output indexing progress info. Defaults to 1.
         """
+
+        if not self._index:
+            raise Exception('You need to compile the model with a valid distance to be able to use the indexing')
         if verbose:
             print('[Indexing %d points]' % len(x))
             print('|-Computing embeddings')
