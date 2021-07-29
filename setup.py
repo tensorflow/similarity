@@ -58,7 +58,7 @@ setup(
     },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
-        'Environment :: Console', 'Framework :: TensorFlow',
+        'Environment :: Console',
         'License :: OSI Approved :: Apache Software License',
         'Intended Audience :: Science/Research',
         'Programming Language :: Python :: 3',
