@@ -34,7 +34,7 @@ def get_version(rel_path):
     raise RuntimeError("Unable to find version string.")
 
 
-long_description = read("README.md")
+long_description = "FIXME"
 
 setup(
     name="tensorflow_similarity",
