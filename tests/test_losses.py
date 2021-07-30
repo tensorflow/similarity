@@ -1,8 +1,10 @@
 import tensorflow as tf
 import numpy as np
 from tensorflow_similarity.losses import TripletLoss
+from tensorflow_similarity.losses import PNLoss
 
 
+# [triplet loss]
 def test_triplet_loss_serialization():
     loss = TripletLoss()
     config = loss.get_config()
@@ -100,3 +102,25 @@ def test_triplet_loss_hard():
     # y_true, y_preds
     loss = tpl(y_true, y_preds)
     assert loss
+
+
+# [pn loss]
+def test_pn_loss_serialization():
+    loss = PNLoss()
+    config = loss.get_config()
+    print(config)
+    loss2 = PNLoss.from_config(config)
+    assert loss.name == loss2.name
+    assert loss.distance == loss2.distance
+
+
+def test_np_loss():
+    num_inputs = 10
+    # y_true: labels
+    y_true = tf.random.uniform((num_inputs, ), 0, 10, dtype=tf.int32)
+    # y_preds: embedding
+    y_preds = tf.random.uniform((num_inputs, 20), 0, 1)
+    pnl = PNLoss()
+    # y_true, y_preds
+    loss = pnl(y_true, y_preds)
+    assert loss > 0.9
