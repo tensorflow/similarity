@@ -22,29 +22,153 @@ References
     https://openaccess.thecvf.com/content_WACV_2020/papers/Xuan_Improved_Embeddings_with_Easy_Positive_Triplet_Mining_WACV_2020_paper.pdf
 
     - https://arxiv.org/pdf/1712.07682.pdf
+
+    - PN Loss Ivis:
+    Szubert, B., Cole, J.E., Monaco, C. et al.
+    Structure-preserving visualisation of high dimensional single-cell dataset
+    Sci Rep 9, 8914 (2019). https://doi.org/10.1038/s41598-019-45301-0
 """
 
 import tensorflow as tf
 from .utils import is_tensor_or_variable
 from .distances import Distance, distance_canonicalizer
 from .algebra import masked_max, masked_min, build_masks
-from .types import FloatTensor, IntTensor
-from typing import Callable, Union
+from .types import FloatTensor, IntTensor, BoolTensor
+from typing import Any, Callable, Tuple, Union
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
-def triplet_loss(labels: IntTensor,
-                 embeddings: FloatTensor,
-                 distance: Callable,
-                 positive_mining_strategy: str = 'hard',
-                 negative_mining_strategy: str = 'semi-hard',
-                 soft_margin: bool = False,
-                 margin: float = 1.0):
-    """Triplet loss computations
+def positive_distances(positive_mining_strategy: str,
+                       distances: FloatTensor,
+                       positive_mask: BoolTensor
+                       ) -> Tuple[FloatTensor, FloatTensor]:
+    """Positive distance computation.
 
     Args:
-        labels (list(int)): labels associted with the embed
+        positive_mining_strategy (str, optional): [description].
+        distances: 2-D float `Tensor` of [n, n] pairwise distances.
+        positive_mask: 2-D Boolean `Tensor` of [n, n] valid distance size.
+
+    Raises:
+        ValueError: Invalid positive mining strategy
+
+    Returns:
+      A Tuple of Tensors containing the positive distance values
+      and the index for each example.
+    """
+    if positive_mining_strategy == 'hard':
+        positive_distances, pos_idxs = (
+                masked_max(distances, positive_mask))
+    elif positive_mining_strategy == 'easy':
+        positive_distances, pos_idxs = (
+                masked_min(distances, positive_mask))
+    else:
+        raise ValueError('Invalid positive mining strategy')
+
+    return positive_distances, pos_idxs
+
+
+@tf.keras.utils.register_keras_serializable(package="Similarity")
+@tf.function
+def negative_distances(negative_mining_strategy: str,
+                       distances: FloatTensor,
+                       negative_mask: BoolTensor,
+                       positive_mask: BoolTensor,
+                       batch_size: int) -> Tuple[FloatTensor, FloatTensor]:
+    """Negative distance computation.
+
+    Args:
+        negative_mining_strategy (str, optional): [description].
+        distances: 2-D float `Tensor` of [n, n] pairwise distances.
+        negative_mask: 2-D Boolean `Tensor` of [n, n] valid distance size.
+        positive_mask: 2-D Boolean `Tensor` of [n, n] valid distance size.
+        batch_size: The current batch size.
+
+    Raises:
+        ValueError: Invalid negative mining strategy
+
+    Returns:
+      A Tuple of Tensors containing the negative distance values
+      and the index for each example.
+    """
+    if negative_mining_strategy == 'hard':
+        # find the *non-zero* minimal distance between negative labels
+        negative_distances, neg_idxs = (
+                masked_min(distances, negative_mask))
+    elif negative_mining_strategy == 'semi-hard':
+        # find the minimal distance between negative label gt than max distance
+        # between positive labels
+        # find max value of positive distance
+        max_positive, _ = masked_max(distances, positive_mask)
+
+        # select distance that are above the max positive distance
+        greater_distances = tf.math.greater(distances, max_positive)
+
+        # combine with negative mask: keep negative value if greater,
+        # zero otherwise
+        empty = tf.zeros((batch_size, batch_size), dtype=tf.bool)
+        semi_hard_mask = tf.where(greater_distances, negative_mask, empty)
+
+        # find the  minimal distance between negative labels above threshold
+        negative_distances, neg_idxs = (
+                masked_min(distances, semi_hard_mask))
+
+    elif negative_mining_strategy == 'easy':
+        # find the maximal distance between negative labels
+        negative_distances, neg_idxs = (
+                masked_max(distances, negative_mask))
+    else:
+        raise ValueError('Invalid negative mining strategy')
+
+    return negative_distances, neg_idxs
+
+
+@tf.keras.utils.register_keras_serializable(package="Similarity")
+@tf.function
+def compute_loss(positive_distances: FloatTensor,
+                 negative_distances: FloatTensor,
+                 soft_margin: bool,
+                 margin: float) -> Any:
+    """Compute the final loss.
+
+    Args:
+        positive_distances: An [n,1] FloatTensor of positive distances.
+        negative_distances: An [n,1] FloatTensor of negative distances.
+        soft_margin (bool, optional): [description]. Defaults to False.
+        margin (float, optional): [description]. Defaults to 1.0.
+
+    Returns:
+        An [n,1] FloatTensor containing the loss for each example.
+    """
+    if soft_margin:
+        loss = tf.math.subtract(positive_distances, negative_distances)
+        loss = tf.math.exp(loss)
+        loss = tf.math.log1p(loss)
+    else:
+        loss = tf.math.subtract(positive_distances, negative_distances)
+        loss = tf.math.add(loss, margin)
+        loss = tf.maximum(loss, 0.0)  # numeric stability
+
+    return loss
+
+
+@tf.keras.utils.register_keras_serializable(package="Similarity")
+@tf.function
+def pn_loss(labels: IntTensor,
+            embeddings: FloatTensor,
+            distance: Callable,
+            positive_mining_strategy: str = 'hard',
+            negative_mining_strategy: str = 'semi-hard',
+            soft_margin: bool = False,
+            margin: float = 1.0):
+    """Positive Negative loss computations
+
+    Based on the pn loss used in IVIS. See:
+
+
+    Args:
+        labels (list(int)): labels associated with the embed
         embeddings ([type]): [description]
         distance (str, optional): [description]. Defaults to 'cosine'.
         positive_mining_strategy (str, optional): [description].
@@ -53,10 +177,6 @@ def triplet_loss(labels: IntTensor,
         Defaults to 'semi-hard'.
         soft_margin (bool, optional): [description]. Defaults to False.
         margin (float, optional): [description]. Defaults to 1.0.
-
-    Raises:
-        ValueError: [description]
-        ValueError: [description]
 
     Returns:
         [type]: [description]
@@ -75,50 +195,96 @@ def triplet_loss(labels: IntTensor,
     # [masks]
     positive_mask, negative_mask = build_masks(labels, batch_size)
 
-    # [Positivie distance computation]
-    if positive_mining_strategy == 'hard':
-        positive_distances, _ = masked_max(pairwise_distances, positive_mask)
-    elif positive_mining_strategy == 'easy':
-        positive_distances, _ = masked_min(pairwise_distances, positive_mask)
-    else:
-        raise ValueError('Invalid positive mining strategy')
+    # [Positive distance computation]
+    pos_distances, pos_idxs = positive_distances(
+            positive_mining_strategy,
+            pairwise_distances,
+            positive_mask,
+    )
 
     # [Negative distances computation]
-    if negative_mining_strategy == 'hard':
-        # find the *non-zero* minimal distance between negative labels
-        negative_distances, _ = masked_min(pairwise_distances, negative_mask)
-    elif negative_mining_strategy == 'semi-hard':
-        # find the minimal distance between negative label gt than max distance
-        # between positive labels
-        # find max value of positive distance
-        max_positive, _ = masked_max(pairwise_distances, positive_mask)
+    neg_distances, neg_idxs = negative_distances(
+            negative_mining_strategy,
+            pairwise_distances,
+            negative_mask,
+            positive_mask,
+            batch_size,
+    )
 
-        # select distance that are above the max positive distance
-        greater_distances = tf.math.greater(pairwise_distances, max_positive)
+    # Compute the distance between the pairs of positive and negative examples.
+    # Then take the min(pos_neg_dist, anchor_neg_dist) as the neg_distances.
+    # This encourages both the anchor and the positives to be far from the
+    # negative.
+    pn_pairs = tf.stack([pos_idxs, neg_idxs], axis=1)
+    pn_distances = tf.gather_nd(pairwise_distances, pn_pairs)
+    pn_distances = tf.reshape(pn_distances, [-1, 1])
+    neg_distances = tf.math.minimum(pn_distances, neg_distances)
 
-        # combine with negative mask: keep negative value if greater,
-        # zero otherwise
-        empty = tf.zeros((batch_size, batch_size), dtype=tf.bool)
-        semi_hard_mask = tf.where(greater_distances, negative_mask, empty)
+    # [PN loss computation]
+    pn_loss = compute_loss(pos_distances, neg_distances, soft_margin, margin)
 
-        # find the  minimal distance between negative labels above threshold
-        negative_distances, _ = masked_min(pairwise_distances, semi_hard_mask)
+    pn_loss = tf.reduce_mean(pn_loss)
+    return pn_loss
 
-    elif negative_mining_strategy == 'easy':
-        # find the maximal distance between negative labels
-        negative_distances, _ = masked_max(pairwise_distances, negative_mask)
-    else:
-        raise ValueError('Invalid negative mining strategy')
+
+@tf.keras.utils.register_keras_serializable(package="Similarity")
+@tf.function
+def triplet_loss(labels: IntTensor,
+                 embeddings: FloatTensor,
+                 distance: Callable,
+                 positive_mining_strategy: str = 'hard',
+                 negative_mining_strategy: str = 'semi-hard',
+                 soft_margin: bool = False,
+                 margin: float = 1.0):
+    """Triplet loss computations
+
+    Args:
+        labels (list(int)): labels associated with the embed
+        embeddings ([type]): [description]
+        distance (str, optional): [description]. Defaults to 'cosine'.
+        positive_mining_strategy (str, optional): [description].
+        Defaults to 'hard'.
+        negative_mining_strategy (str, optional): [description].
+        Defaults to 'semi-hard'.
+        soft_margin (bool, optional): [description]. Defaults to False.
+        margin (float, optional): [description]. Defaults to 1.0.
+
+    Returns:
+        [type]: [description]
+    """
+
+    # [Label]
+    # ! Weirdness to be investigated
+    # do not remove this code. It is actually needed for specific situation
+    # Reshape label tensor to [batch_size, 1] if not already in that format.
+    # labels = tf.reshape(labels, (labels.shape[0], 1))
+    batch_size = tf.size(labels)
+
+    # [distances]
+    pairwise_distances = distance(embeddings)
+
+    # [masks]
+    positive_mask, negative_mask = build_masks(labels, batch_size)
+
+    # [Positive distance computation]
+    pos_distances, pos_idxs = positive_distances(
+            positive_mining_strategy,
+            pairwise_distances,
+            positive_mask,
+    )
+
+    # [Negative distances computation]
+    neg_distances, neg_idxs = negative_distances(
+            negative_mining_strategy,
+            pairwise_distances,
+            negative_mask,
+            positive_mask,
+            batch_size,
+    )
 
     # [Triplet loss computation]
-    if soft_margin:
-        triplet_loss = tf.math.subtract(positive_distances, negative_distances)
-        triplet_loss = tf.math.exp(triplet_loss)
-        triplet_loss = tf.math.log1p(triplet_loss)
-    else:
-        triplet_loss = tf.math.subtract(positive_distances, negative_distances)
-        triplet_loss = tf.math.add(triplet_loss, margin)
-        triplet_loss = tf.maximum(triplet_loss, 0.0)  # numeric stability
+    triplet_loss = (
+            compute_loss(pos_distances, neg_distances, soft_margin, margin))
 
     triplet_loss = tf.reduce_mean(triplet_loss)
     return triplet_loss
@@ -174,6 +340,98 @@ class MetricLoss(tf.keras.losses.Loss):
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
+class PNLoss(MetricLoss):
+    """Computes the PN loss in an online fashion.
+
+    This loss encourages the positive distances between a pair of embeddings
+    with the same labels to be smaller than the minimum negative distances
+    between pair of embeddings of different labels. Additionally, both the
+    anchor and the positive embeddings are encouraged to be far from the
+    negative embeddings. This is accomplished by taking the
+    min(pos_neg_dist, anchor_neg_dist) and using that as the negative distance
+    in the triplet loss.
+
+    See PN Loss Ivis:
+    Szubert, B., Cole, J.E., Monaco, C. et al.
+    Structure-preserving visualisation of high dimensional single-cell dataset
+    Sci Rep 9, 8914 (2019). https://doi.org/10.1038/s41598-019-45301-0
+
+    `y_true` must be  a 1-D integer `Tensor` of shape (batch_size,).
+    It's values represent the classes associated with the examples as
+    **integer  values**.
+
+    `y_pred` must be 2-D float `Tensor`  of L2 normalized embedding vectors.
+    you can use the layer `tensorflow_similarity.layers.L2Embedding()` as the
+    last layer of your model to ensure your model output is properly
+    normalized.
+    """
+
+    def __init__(self,
+                 distance: Union[Distance, str] = 'cosine',
+                 positive_mining_strategy: str = 'hard',
+                 negative_mining_strategy: str = 'hard',
+                 soft_margin: bool = False,
+                 margin: float = 1.0,
+                 name: str = None):
+        """Initializes the PN Loss
+
+        Args:
+            distance (Un, optional): Which distance function to use to compute
+            the pairwise distances between embeddings. Defaults to 'cosine'.
+
+            positive_mining_strategy (str, optional): What mining strategy to
+            use to select embedding from the same class. Defaults to 'hard'.
+            available: {'easy', 'hard'}
+
+            negative_mining_strategy (str, optional): What mining strategy to
+            use for select the embedding from the different class.
+            Defaults to 'semi-hard'. Available: {'hard', 'semi-hard', 'easy'}
+
+            soft_margin (bool, optional): [description]. Defaults to True.
+            Use a soft margin instead of an explicit one.
+
+            margin (float, optional): Use an explicit value for the margin
+            term. Defaults to 1.0.
+
+            reducer (str, optional): How to accumulate the triplet values
+            as a single loss value. Defaults to 'sum'.
+
+            name (str, optional): Loss name. Defaults to None.
+
+        Raises:
+            ValueError: Invalid positive mining strategy.
+            ValueError: Invalid negative mining strategy.
+            ValueError: Margin value is not used when soft_margin is set
+                        to True.
+        """
+
+        # distance canonicalization
+        distance = distance_canonicalizer(distance)
+        self.distance = distance
+        # sanity checks
+
+        if positive_mining_strategy not in ['easy', 'hard']:
+            raise ValueError('Invalid positive mining strategy.')
+
+        if negative_mining_strategy not in ['easy', 'hard', 'semi-hard']:
+            raise ValueError('Invalid negative mining strategy.')
+
+        # Ensure users knows its one or the other
+        if margin != 1.0 and soft_margin:
+            raise ValueError('Margin value is not used when soft_margin is\
+                              set to True')
+
+        super().__init__(pn_loss,
+                         name=name,
+                         reduction=tf.keras.losses.Reduction.NONE,
+                         distance=distance,
+                         positive_mining_strategy=positive_mining_strategy,
+                         negative_mining_strategy=negative_mining_strategy,
+                         soft_margin=soft_margin,
+                         margin=margin)
+
+
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 class TripletLoss(MetricLoss):
     """Computes the triplet loss in an online fashion.
 
@@ -211,11 +469,11 @@ class TripletLoss(MetricLoss):
             available: {'easy', 'hard'}
 
             negative_mining_strategy (str, optional): What mining strategy to
-            use for select the embedding from the differents class.
+            use for select the embedding from the different class.
             Defaults to 'semi-hard'. Available: {'hard', 'semi-hard', 'easy'}
 
             soft_margin (bool, optional): [description]. Defaults to True.
-            Use a soft margin instad of an explict one.
+            Use a soft margin instead of an explicit one.
 
             margin (float, optional): Use an explicit value for the margin
             term. Defaults to 1.0.
@@ -224,6 +482,12 @@ class TripletLoss(MetricLoss):
             as a single loss value. Defaults to 'sum'.
 
             name (str, optional): Loss name. Defaults to None.
+
+        Raises:
+            ValueError: Invalid positive mining strategy.
+            ValueError: Invalid negative mining strategy.
+            ValueError: Margin value is not used when soft_margin is set
+                        to True.
         """
 
         # distance canonicalization
