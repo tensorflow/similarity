@@ -108,12 +108,12 @@ def compute_loss(positive_distances: FloatTensor,
     Returns:
         An [n,1] FloatTensor containing the loss for each example.
     """
+
+    loss = tf.math.subtract(positive_distances, negative_distances)
+
     if soft_margin:
-        loss = tf.math.subtract(positive_distances, negative_distances)
-        loss = tf.math.exp(loss)
-        loss = tf.math.log1p(loss)
+        loss = tf.reduce_logsumexp(loss)
     else:
-        loss = tf.math.subtract(positive_distances, negative_distances)
         loss = tf.math.add(loss, margin)
         loss = tf.maximum(loss, 0.0)  # numeric stability
 

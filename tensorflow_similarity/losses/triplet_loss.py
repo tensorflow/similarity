@@ -83,8 +83,8 @@ def triplet_loss(labels: IntTensor,
     )
 
     # [Triplet loss computation]
-    triplet_loss = (
-            compute_loss(pos_distances, neg_distances, soft_margin, margin))
+    triplet_loss = compute_loss(pos_distances, neg_distances,
+                                soft_margin, margin)
 
     triplet_loss = tf.reduce_mean(triplet_loss)
     return triplet_loss
