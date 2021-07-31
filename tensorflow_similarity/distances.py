@@ -43,7 +43,6 @@ class InnerProductDistance(Distance):
     a distance where the more similar vectors have the closest values to each
     other.
     """
-
     def __init__(self):
         "Init Inner product distance"
         super().__init__('inner_product', ['ip'])
@@ -86,8 +85,8 @@ class CosineDistance(Distance):
             FloatTensor: Pairwise distance tensor.
         """
         tensor = tf.nn.l2_normalize(embeddings, axis=1)
-        distances: FloatTensor = 1 - tf.linalg.matmul(tensor,
-                                                      tensor, transpose_b=True)
+        distances: FloatTensor = 1 - tf.linalg.matmul(
+            tensor, tensor, transpose_b=True)
         distances = tf.math.maximum(distances, 0.0)
         return distances
 
@@ -103,7 +102,6 @@ class EuclideanDistance(Distance):
 
     **Alias**: L2 Norm, Pythagorean
     """
-
     def __init__(self):
         "Init Euclidean distance"
         super().__init__('euclidean', ['l2', 'pythagorean'])
@@ -119,13 +117,10 @@ class EuclideanDistance(Distance):
             FloatTensor: Pairwise distance tensor.
         """
         squared_norm = tf.math.square(embeddings)
-        squared_norm = tf.math.reduce_sum(squared_norm,
-                                          axis=1,
-                                          keepdims=True)
+        squared_norm = tf.math.reduce_sum(squared_norm, axis=1, keepdims=True)
 
-        distances: FloatTensor = 2.0 * tf.linalg.matmul(embeddings,
-                                                        embeddings,
-                                                        transpose_b=True)
+        distances: FloatTensor = 2.0 * tf.linalg.matmul(
+            embeddings, embeddings, transpose_b=True)
         distances = squared_norm - distances + tf.transpose(squared_norm)
 
         # Avoid NaN and inf gradients when back propagating through the sqrt.
@@ -140,6 +135,33 @@ class EuclideanDistance(Distance):
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
+class SquaredEuclideanDistance(Distance):
+    """Compute pairwise squared Euclidean distance.
+
+    The [Sequared Euclidean Distance](https://en.wikipedia.org/wiki/Euclidean_distance#Squared_Euclidean_distance) is
+    an distance that varies from 0 (similar) to infinity (dissimilar).
+    """
+    def __init__(self):
+        super().__init__('squared_euclidean', ['sql2', 'sqeuclidean'])
+
+    @tf.function
+    def call(self, embeddings: FloatTensor) -> FloatTensor:
+        """Compute pairwise distances for a given batch of embeddings.
+
+        Args:
+            embeddings: Embeddings to compute the pairwise one.
+
+        Returns:
+            FloatTensor: Pairwise distance tensor.
+        """
+        distances: FloatTensor = tf.linalg.matmul(embeddings,
+                                                  embeddings,
+                                                  transpose_b=True)
+        distances = tf.math.maximum(distances, 0.0)
+        return distances
+
+
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 class ManhattanDistance(Distance):
     """Compute pairwise Manhattan distances between embeddings.
 
@@ -148,7 +170,6 @@ class ManhattanDistance(Distance):
     two embeddings onto the Cartesian axes. The larger the distance the more
     dissimilar the embeddings are.
     """
-
     def __init__(self):
         "Init Manhattan distance"
         super().__init__('manhattan', ['l1', 'taxicab'])
@@ -171,11 +192,12 @@ class ManhattanDistance(Distance):
 
 # List of implemented distances
 DISTANCES = [
-             InnerProductDistance(),
-             EuclideanDistance(),
-             ManhattanDistance(),
-             CosineDistance()
-            ]
+    InnerProductDistance(),
+    EuclideanDistance(),
+    SquaredEuclideanDistance(),
+    ManhattanDistance(),
+    CosineDistance()
+]
 
 
 def distance_canonicalizer(user_distance: Union[Distance, str]) -> Distance:

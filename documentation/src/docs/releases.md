@@ -1,16 +1,29 @@
 # Releases notes
 
-## 0.13.x - Matching refactoring
+## 0.14.x - Serving
+This release focuses on refactoring and improving the serving component.
 
-This release focuses on refactoring and improving the NN matching components and associated classes. The changes to the API make it easier to add additional backends and ensures that the components are better tested.
+
+
+## major improvements
+
+
+
+## 0.13.x - Improved supervised contrastive learning support
+
+Supporting additional losses and distances used for Pair-wise learning.
+Preparing for serving implementation by refactoring index API.
 
 ## New features
 
-- Inner Product distance available.
+- New distances:
+  1. Inner Product distance
+  2. Squared Euclidean
 
-### Major improvements
+- New losses:
+  1. [PN loss](https://doi.org/10.1038/s41598-019-45301-0)
+  2. [Circle loss](https://arxiv.org/pdf/2002.10857.pdf)
 
-- Better Index serialization meta_data that now include the size of the index and if it was compressed.
 
 ## Breaking changes
 
@@ -24,8 +37,8 @@ Will break code that directly calls it.
 ## Major improvements
 
 - Distance aliasing is now delegated to the Distance implementation which makes it more modular and removed many bugs due to naming duplication.
-- - Allows to configure the number of shards used during an dataset interleave cycle via `shard_per_cycle` in TFRecordDataset.
-
+- Allows to configure the number of shards used during an dataset interleave cycle via `shard_per_cycle` in TFRecordDataset.
+- Better Index serialization meta_data that now include the size of the index and if it was compressed.
 
 
 ## 0.12.x - Q/A release
