@@ -20,12 +20,9 @@
 import tensorflow as tf
 from typing import Callable, Union
 
-from tensorflow.python.framework.ops import get_name_scope
-
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.algebra import build_masks
 from tensorflow_similarity.types import FloatTensor, IntTensor
-from .utils import negative_distances, positive_distances, compute_loss
 from .metric_loss import MetricLoss
 
 
@@ -54,54 +51,53 @@ def circle_loss(labels: IntTensor,
         loss
     """
 
-    # [delta]
-    delta_pos = 1 - margin
-    delta_neg = margin
-
-    # [labels]
+    # label
     batch_size = tf.size(labels)
 
     # [distances]
     pairwise_distances = distance(embeddings)
 
-    # [masks]
+    # [masks] -> filter to keep only the relevant value - zero the rest
     positive_mask, negative_mask = build_masks(labels, batch_size)
+    positive_mask = tf.cast(positive_mask, dtype='float32')
+    negative_mask = tf.cast(negative_mask, dtype='float32')
 
-    # [flattening]
-    flat_shape = [batch_size *  batch_size]
+    # [weights] from  (5) in 3.1 using optim values of 3.2
+    # Implementation note: we do all the computation on the full pairwise and
+    # filter at then end to keep only relevant values.
 
-    zeros_tensor = tf.zeros(flat_shape)
-    flat_pairwise = tf.reshape(pairwise_distances, flat_shape)
-    flat_pos_mask = tf.reshape(positive_mask, flat_shape)
-    flat_neg_mask = tf.reshape(negative_mask, flat_shape)
+    # positive weights
+    optim_pos = 1 + margin  # as in 3.2
+    pos_weights = optim_pos - pairwise_distances  # (5) in 3.1
+    pos_weights = tf.maximum(pos_weights, 0.0)  # clip at zero
+    pos_weights = pos_weights * positive_mask  # filter
 
-    # [posivites]
-    # FIXME: more efficient way to select only positive in 1d dim?
-    pos_dists = tf.where(flat_pos_mask, flat_pairwise, zeros_tensor)
-    opti_pos = pos_dists * -1 + 1  # inverting distance
-    opti_pos = opti_pos + margin  # add margin
-    opti_pos = tf.clip_by_value(opti_pos, 0, 1 + margin)  # clip
-    opti_pos = tf.where(flat_pos_mask, opti_pos, zeros_tensor)
-    opti_pos *= -1  # flip again
+    # negative weights
+    optim_neg = -1 * margin  # as in 3.2
+    neg_weights = pairwise_distances - optim_neg  # (5) in 3.1
+    neg_weights = tf.maximum(neg_weights, 0.0)  # clip at zero
+    neg_weights = neg_weights * negative_mask  # filter
 
-    # positive logits
-    logit_pos = opti_pos * (pos_dists - delta_pos) * gamma
-    logit_pos = tf.reduce_logsumexp(logit_pos)
+    # distances filtering
+    # /2 because we have a pairwise so each distance is counted twice
+    pos_dists = (pairwise_distances * positive_mask) / 2
+    neg_dists = (pairwise_distances * negative_mask) / 2
 
-    # [negatives]
-    # FIXME: more efficient way to select only negative in 1d dim?
-    neg_dists = tf.where(flat_neg_mask, flat_pairwise, zeros_tensor)
-    opti_neg = neg_dists + margin  # add margin
-    opti_neg = tf.where(flat_neg_mask, opti_neg, zeros_tensor)
+    # applying weights as in (4) in 3.1
+    pos_wdists = pos_weights * pos_dists
+    neg_wdists = neg_weights * neg_dists
 
-    # negative logits
-    logit_neg = opti_neg * (neg_dists - delta_neg) * gamma
-    logit_neg = tf.reduce_logsumexp(logit_neg)
+    # as in (4) in 3.1 reduce
+    # ! paper is wrong they inverted positive and negatives
+    loss = tf.math.subtract(pos_wdists, neg_wdists)
 
-    # compute the loss
-    loss = tf.nn.softplus(logit_neg + logit_pos)
+    # scale
+    loss = gamma * loss
+
+    # reduce
+    loss = tf.reduce_logsumexp(loss)
+
     return loss
-
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class CircleLoss(MetricLoss):
