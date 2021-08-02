@@ -154,10 +154,14 @@ class SquaredEuclideanDistance(Distance):
         Returns:
             FloatTensor: Pairwise distance tensor.
         """
-        distances: FloatTensor = tf.linalg.matmul(embeddings,
-                                                  embeddings,
-                                                  transpose_b=True)
+        squared_norm = tf.math.square(embeddings)
+        squared_norm = tf.math.reduce_sum(squared_norm, axis=1, keepdims=True)
+
+        distances: FloatTensor = 2.0 * tf.linalg.matmul(
+            embeddings, embeddings, transpose_b=True)
+        distances = squared_norm - distances + tf.transpose(squared_norm)
         distances = tf.math.maximum(distances, 0.0)
+
         return distances
 
 
