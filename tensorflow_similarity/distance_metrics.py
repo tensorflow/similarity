@@ -74,7 +74,7 @@ class DistanceMetric(Metric):
 
         self.aggregated_distances = aggregated_distances
 
-    def reset_states(self):
+    def reset_state(self):
         self.aggregated_distances = tf.Variable(0, dtype='float32')
 
     def result(self):
