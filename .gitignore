@@ -2,10 +2,12 @@ tmp/
 tmp.py
 tensorflow_similarity.egg-info/
 logs/
-notebooks/models/
+examples/models/
+examples/logs/
 .vscode/
 site/
 release.sh
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
