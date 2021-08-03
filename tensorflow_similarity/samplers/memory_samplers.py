@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import Optional, Tuple
 
 import tensorflow as tf
-from tensorflow_similarity.types import Tensor
+from tensorflow_similarity.types import FloatTensor, IntTensor
 from tqdm.auto import tqdm
 
 from .samplers import Augmenter, Sampler
@@ -12,8 +12,8 @@ from .samplers import Augmenter, Sampler
 class MultiShotMemorySampler(Sampler):
 
     def __init__(self,
-                 x: Tensor,
-                 y: Tensor,
+                 x: FloatTensor,
+                 y: IntTensor,
                  class_per_batch: int,
                  example_per_class: int = 2,
                  steps_per_epoch: int = 1000,
@@ -88,7 +88,7 @@ class MultiShotMemorySampler(Sampler):
                      batch_id: int,
                      num_classes: int,
                      example_per_class: int
-                     ) -> Tuple[Tensor, Tensor]:
+                     ) -> Tuple[FloatTensor, IntTensor]:
 
         # select class at ramdom
         class_list = random.sample(self.class_list, k=num_classes)
@@ -108,7 +108,7 @@ class MultiShotMemorySampler(Sampler):
 
 class SingleShotMemorySampler(Sampler):
     def __init__(self,
-                 x: Tensor,
+                 x: FloatTensor,
                  augmenter: Augmenter,
                  class_per_batch: int,
                  steps_per_epoch: int = 1000,
@@ -163,7 +163,7 @@ class SingleShotMemorySampler(Sampler):
                      batch_id: int,
                      num_classes: int,
                      example_per_class: int
-                     ) -> Tuple[Tensor, Tensor]:
+                     ) -> Tuple[FloatTensor, IntTensor]:
         _ = batch_id
         _ = example_per_class
 

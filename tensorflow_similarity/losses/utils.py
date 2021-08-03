@@ -46,10 +46,16 @@ def negative_distances(negative_mining_strategy: str,
     """Negative distance computation.
 
     Args:
-        negative_mining_strategy (str, optional): [description].
+        negative_mining_strategy: What mining strategy to use for select the
+        embedding from the different class.
+        Available: {'hard', 'semi-hard', 'easy'}
+
         distances: 2-D float `Tensor` of [n, n] pairwise distances.
+
         negative_mask: 2-D Boolean `Tensor` of [n, n] valid distance size.
+
         positive_mask: 2-D Boolean `Tensor` of [n, n] valid distance size.
+
         batch_size: The current batch size.
 
     Raises:
@@ -101,9 +107,12 @@ def compute_loss(positive_distances: FloatTensor,
 
     Args:
         positive_distances: An [n,1] FloatTensor of positive distances.
+
         negative_distances: An [n,1] FloatTensor of negative distances.
-        soft_margin (bool, optional): [description]. Defaults to False.
-        margin (float, optional): [description]. Defaults to 1.0.
+
+        soft_margin: [description]. Defaults to False.
+
+        margin: [description]. Defaults to 1.0.
 
     Returns:
         An [n,1] FloatTensor containing the loss for each example.

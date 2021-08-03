@@ -18,7 +18,7 @@
 """
 
 import tensorflow as tf
-from typing import Callable, Union
+from typing import Any, Callable, Union
 
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.algebra import build_masks
@@ -32,7 +32,7 @@ def circle_loss(labels: IntTensor,
                 embeddings: FloatTensor,
                 distance: Callable,
                 gamma: float = 128,
-                margin: float = 0.25):
+                margin: float = 0.25) -> Any:
     """Circle loss computations
 
     Args:
@@ -48,7 +48,7 @@ def circle_loss(labels: IntTensor,
         margin: Distance minimal margin. Defaults to 0.25
 
     Returns:
-        loss
+        Loss: The loss value for the current batch.
     """
 
     # label
@@ -99,6 +99,7 @@ def circle_loss(labels: IntTensor,
 
     return loss
 
+
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class CircleLoss(MetricLoss):
     """Computes the CircleLoss
@@ -133,7 +134,6 @@ class CircleLoss(MetricLoss):
             margin: Margin term. Defaults to 0.25 as in the paper.
 
             name: Loss name. Defaults to None.
-
         """
 
         # distance canonicalization

@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""PN Loss foudn in Ivis
-    Szubert, B., Cole, J.E., Monaco, C. et al.
-    Structure-preserving visualisation of high dimensional single-cell dataset
-    Sci Rep 9, 8914 (2019). https://doi.org/10.1038/s41598-019-45301-0
+"""Lifted Structured Loss
+    Deep Metric Learning via Lifted Structured Feature Embedding.
+    https://arxiv.org/abs/1511.06452
 """
 
 import tensorflow as tf
@@ -24,23 +23,20 @@ from typing import Any, Callable, Union
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.algebra import build_masks
 from tensorflow_similarity.types import FloatTensor, IntTensor
-from .utils import negative_distances, positive_distances, compute_loss
+from .utils import negative_distances
 from .metric_loss import MetricLoss
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
-def pn_loss(labels: IntTensor,
-            embeddings: FloatTensor,
-            distance: Callable,
-            positive_mining_strategy: str = 'hard',
-            negative_mining_strategy: str = 'semi-hard',
-            soft_margin: bool = False,
-            margin: float = 1.0) -> Any:
-    """Positive Negative loss computations
-
-    Based on the pn loss used in IVIS.
-
+def lifted_struct_loss(labels: IntTensor,
+                       embeddings: FloatTensor,
+                       distance: Callable,
+                       positive_mining_strategy: str = 'hard',
+                       negative_mining_strategy: str = 'easy',
+                       soft_margin: bool = False,
+                       margin: float = 1.0) -> Any:
+    """Lifted Struct loss computations
 
     Args:
         labels: labels associated with the embed
@@ -55,7 +51,7 @@ def pn_loss(labels: IntTensor,
         Available: {'easy', 'hard'}
 
         negative_mining_strategy: What mining strategy to use for select the
-        embedding from the different class. Defaults to 'semi-hard'.
+        embedding from the different class. Defaults to 'easy'.
         Available: {'hard', 'semi-hard', 'easy'}
 
         soft_margin: [description]. Defaults to True. Use a soft margin
@@ -76,58 +72,69 @@ def pn_loss(labels: IntTensor,
 
     # [distances]
     pairwise_distances = distance(embeddings)
+    diff = margin - pairwise_distances
 
     # [masks]
     positive_mask, negative_mask = build_masks(labels, batch_size)
-
-    # [Positive distance computation]
-    pos_distances, pos_idxs = positive_distances(
-            positive_mining_strategy,
-            pairwise_distances,
-            positive_mask,
-    )
+    positive_mask = tf.cast(positive_mask, dtype='float32')
+    negative_mask = tf.cast(negative_mask, dtype='float32')
 
     # [Negative distances computation]
-    neg_distances, neg_idxs = negative_distances(
+    neg_distances, _ = negative_distances(
             negative_mining_strategy,
-            pairwise_distances,
+            diff,
             negative_mask,
             positive_mask,
             batch_size,
     )
 
-    # Compute the distance between the pairs of positive and negative examples.
-    # Then take the min(pos_neg_dist, anchor_neg_dist) as the neg_distances.
-    # This encourages both the anchor and the positives to be far from the
-    # negative.
-    pn_pairs = tf.stack([pos_idxs, neg_idxs], axis=1)
-    pn_distances = tf.gather_nd(pairwise_distances, pn_pairs)
-    pn_distances = tf.reshape(pn_distances, [-1, 1])
-    neg_distances = tf.math.minimum(pn_distances, neg_distances)
+    max_elements = tf.math.maximum(
+            neg_distances, tf.transpose(neg_distances)
+    )
+    diff_tiled = tf.tile(diff, [batch_size, 1])
+    neg_mask_tiled = tf.tile(negative_mask, [batch_size, 1])
+    max_elements_vect = tf.reshape(tf.transpose(max_elements), [-1, 1])
 
-    # [PN loss computation]
-    pn_loss = compute_loss(pos_distances, neg_distances, soft_margin, margin)
+    loss_exp_left = tf.math.multiply(
+        tf.math.exp(diff_tiled - max_elements_vect),
+        neg_mask_tiled
+    )
+    loss_exp_left = tf.reshape(
+        tf.math.reduce_sum(loss_exp_left, 1, keepdims=True,),
+        [batch_size, batch_size],
+    )
 
-    pn_loss = tf.reduce_mean(pn_loss)
-    return pn_loss
+    loss_mat = loss_exp_left + tf.transpose(loss_exp_left)
+    loss_mat = max_elements + tf.math.log(loss_mat)
+    # Add the positive distance.
+    loss_mat += pairwise_distances
+
+    # *0.5 for upper triangular, and another *0.5 for 1/2 factor for loss^2.
+    num_positives = tf.math.reduce_sum(positive_mask) / 2.0
+
+    lifted_loss = tf.math.truediv(
+        0.25
+        * tf.math.reduce_sum(
+            tf.math.square(
+                tf.math.maximum(tf.math.multiply(loss_mat, positive_mask), 0.0)
+            )
+        ),
+        num_positives,
+    )
+
+    return lifted_loss
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class PNLoss(MetricLoss):
-    """Computes the PN loss in an online fashion.
+class LiftedStructLoss(MetricLoss):
+    """Computes the lifted struct loss in an online fashion.
 
     This loss encourages the positive distances between a pair of embeddings
     with the same labels to be smaller than the minimum negative distances
-    between pair of embeddings of different labels. Additionally, both the
-    anchor and the positive embeddings are encouraged to be far from the
-    negative embeddings. This is accomplished by taking the
-    min(pos_neg_dist, anchor_neg_dist) and using that as the negative distance
-    in the triplet loss.
+    between pair of embeddings of different labels.
+    TDOD: Explain how this is different than standard triplet loss.
+    See: https://arxiv.org/abs/1511.06452 for details.
 
-    See PN Loss Ivis:
-    Szubert, B., Cole, J.E., Monaco, C. et al.
-    Structure-preserving visualisation of high dimensional single-cell dataset
-    Sci Rep 9, 8914 (2019). https://doi.org/10.1038/s41598-019-45301-0
 
     `y_true` must be  a 1-D integer `Tensor` of shape (batch_size,).
     It's values represent the classes associated with the examples as
@@ -142,11 +149,11 @@ class PNLoss(MetricLoss):
     def __init__(self,
                  distance: Union[Distance, str] = 'cosine',
                  positive_mining_strategy: str = 'hard',
-                 negative_mining_strategy: str = 'semi-hard',
+                 negative_mining_strategy: str = 'easy',
                  soft_margin: bool = False,
                  margin: float = 1.0,
                  name: str = None):
-        """Initializes the PN Loss
+        """Initializes the LiftedStuctLoss
 
         Args:
             distance: Which distance function to use to compute
@@ -158,9 +165,9 @@ class PNLoss(MetricLoss):
 
             negative_mining_strategy: What mining strategy to
             use for select the embedding from the different class.
-            Defaults to 'semi-hard'. Available: {'hard', 'semi-hard', 'easy'}
+            Defaults to 'easy'. Available: {'hard', 'semi-hard', 'easy'}
 
-            soft_margin: [description]. Defaults to True.
+            soft_margi: [description]. Defaults to True.
             Use a soft margin instead of an explicit one.
 
             margin: Use an explicit value for the margin
@@ -181,17 +188,17 @@ class PNLoss(MetricLoss):
         # sanity checks
 
         if positive_mining_strategy not in ['easy', 'hard']:
-            raise ValueError('Invalid positive mining strategy.')
+            raise ValueError('Invalid positive mining strategy')
 
         if negative_mining_strategy not in ['easy', 'hard', 'semi-hard']:
-            raise ValueError('Invalid negative mining strategy.')
+            raise ValueError('Invalid negative mining strategy')
 
         # Ensure users knows its one or the other
         if margin != 1.0 and soft_margin:
             raise ValueError('Margin value is not used when soft_margin is\
                               set to True')
 
-        super().__init__(pn_loss,
+        super().__init__(lifted_struct_loss,
                          name=name,
                          reduction=tf.keras.losses.Reduction.NONE,
                          distance=distance,
