@@ -4,6 +4,18 @@ from tensorflow_similarity.samplers import MultiShotMemorySampler
 import pytest
 
 
+def test_valid_class_numbers():
+    "Check that sampler properly detect if num_class requests >> class avail"
+    y = tf.constant([1, 2, 3, 1, 2, 3, 1])
+    x = tf.constant([10, 20, 30, 10, 20, 30, 10])
+
+    class_per_batch = 42
+
+    with pytest.raises(ValueError):
+        MultiShotMemorySampler(x=x, y=y,
+                               classes_per_batch=class_per_batch)
+
+
 @pytest.mark.parametrize("example_per_class", [2, 20])
 def test_select_examples(example_per_class):
     """Test select_examples with various sizes.
@@ -44,8 +56,8 @@ def test_multi_shot_memory_sampler(example_per_class):
 
     ms_sampler = MultiShotMemorySampler(x=x,
                                         y=y,
-                                        class_per_batch=class_per_batch,
-                                        example_per_class=example_per_class)
+                                        classes_per_batch=class_per_batch,
+                                        examples_per_class_per_batch=example_per_class)  # noqa
 
     batch_x, batch_y = ms_sampler.generate_batch(batch_id=606)
 
