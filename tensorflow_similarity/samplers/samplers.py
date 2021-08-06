@@ -21,14 +21,14 @@ Scheduler = Callable[[Any], Any]
 
 
 class Sampler(Sequence, metaclass=abc.ABCMeta):
-
-    def __init__(self,
-                 class_per_batch: int,
-                 example_per_class: int = 2,
-                 steps_per_epoch: int = 1000,
-                 augmenter: Optional[Augmenter] = None,
-                 # scheduler: Optional[Scheduler] = None,
-                 warmup: int = 0) -> None:
+    def __init__(
+            self,
+            classes_per_batch: int,
+            examples_per_class_per_batch: int = 2,
+            steps_per_epoch: int = 1000,
+            augmenter: Optional[Augmenter] = None,
+            # scheduler: Optional[Scheduler] = None,
+            warmup: int = 0) -> None:
         """Create a dataset sampler that ensure that each batch contains at
         least `example_per_class` examples of `class_per_batch`
         classes. Sampling is needed as contrastive loss requires at
@@ -61,9 +61,9 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
         """
 
         self.epoch = 0  # track epoch count
-        self.class_per_batch = class_per_batch
-        self.example_per_class = example_per_class
-        self.batch_size = class_per_batch * example_per_class
+        self.classes_per_batch = classes_per_batch
+        self.examples_per_class_per_batch = examples_per_class_per_batch
+        self.batch_size = classes_per_batch * examples_per_class_per_batch
         self.steps_per_epoch = steps_per_epoch
         self.augmenter = augmenter
         self.warmup = warmup
@@ -72,16 +72,13 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
         # Tell the users what to expect as they might be unsure what the batch
         # size will be
         print("\nBatch size is %d (%d class X %d example per class "
-              "pre-augmentation" % (self.batch_size,
-                                    self.class_per_batch,
-                                    self.example_per_class))
+              "pre-augmentation" % (self.batch_size, self.classes_per_batch,
+                                    self.examples_per_class_per_batch))
 
     @abc.abstractmethod
-    def get_examples(self,
-                     batch_id: int,
-                     num_classes: int,
-                     example_per_class: int
-                     ) -> Tuple[Any, Any]:  # FIXME: Tensor type cause errors.
+    def get_examples(
+        self, batch_id: int, num_classes: int, example_per_class: int
+    ) -> Tuple[Any, Any]:  # FIXME: Tensor type cause errors.
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -115,7 +112,7 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
         #     self.scheduler(self.epoch)
 
         self.epoch += 1
-        if self.epoch >= self.warmup and self.is_warmup:
+        if self.epoch >= self.warmup and self.is_warmup > 0:
             print("Warmup complete")
             self.is_warmup = False
 
@@ -133,8 +130,8 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
             x, y: batch
         """
 
-        x, y = self.get_examples(batch_id, self.class_per_batch,
-                                 self.example_per_class)
+        x, y = self.get_examples(batch_id, self.classes_per_batch,
+                                 self.examples_per_class_per_batch)
 
         # strip examples if needed. This might happen due to rounding
         if len(x) != self.batch_size:
@@ -142,5 +139,6 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
             y = y[:self.batch_size]
 
         if self.augmenter:
-            x, y = self.augmenter(x, y, self.example_per_class, self.is_warmup)
+            x, y = self.augmenter(x, y, self.examples_per_class_per_batch,
+                                  self.is_warmup)
         return x, y

@@ -50,7 +50,7 @@ def test_basic_flow(tmp_path):
     x, y = generate_dataset(NUM_CLASSES, EXAMPLES_PER_CLASS)
     sampler = MultiShotMemorySampler(x,
                                      y,
-                                     class_per_batch=CLASS_PER_BATCH,
+                                     classes_per_batch=CLASS_PER_BATCH,
                                      steps_per_epoch=STEPS_PER_EPOCH)
 
     # model
