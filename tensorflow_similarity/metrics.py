@@ -121,14 +121,11 @@ class EvalMetric(ABC):
         if not distance:
             distance = max(match_distances)
 
-        # print('max_rank', max_rank, 'max_distance', distance)
-        for idx, r in enumerate(match_ranks):
-            elt_distance = match_distances[idx]
-            if (min_rank <= r <= max_rank) and (elt_distance <= distance):
-                # print(distance, elt_distance)
-                filtered_ranks.append(r)
-            # else:
-            #    print('missed', idx, r, elt_distance)
+        # min_rank is 1 by default. This will filter out the initial 0 values
+        # that represent the "no_match" case.
+        for elt_rank, elt_dist in zip(match_ranks, match_distances):
+            if (min_rank <= elt_rank <= max_rank) and (elt_dist <= distance):
+                filtered_ranks.append(elt_rank)
         if not len(filtered_ranks):
             return [-1]
 
@@ -208,13 +205,25 @@ class MaxRank(EvalMetric):
         return int(tf.reduce_max(matches))
 
 
-class Accuracy(EvalMetric):
+class MatchAccuracy(EvalMetric):
     """How many correct matches are returned for the given set pf parameters
     Probably the most important metric. Binary accuracy and match() is when
     k=1.
 
     num_matches / num_queries
 
+    Accuracy is technically (TP+TN)/(TP+FP+TN+FN), but here we filter all
+    queries above the distance threshold. In the case of binary matching,
+    this makes all the TPs and FPs below the distance threshold and all the TNs
+    and FNs above the distance threshold. As we are only concerned with the
+    matches below the distance threshold, the accuracy simplifies to TP/(TP+FP)
+    and is equivelent to the precision with respect to the unfiltered queries.
+    However, we also want to consider the query coverage at the distance
+    threshold, i.e., the predicted positive rate computed as
+    (TP+FP)/(TP+FP+TN+FN). Therefore, we can take precision * query_coverage to
+    produce a measure that capture the precision scaled by the query coverage.
+    This simplifies down to the accuracy presented here, giving
+    TP/(TP+FP+TN+FN).
     """
     def __init__(self,
                  distance_threshold: float = None,
@@ -234,6 +243,7 @@ class Accuracy(EvalMetric):
                                     max_rank=self.k,
                                     distance=self.distance_threshold)
 
+        # NOTE: here we are computing TP/(TP+FP+TN+FN)
         num_queries = len(targets_labels)
         num_matches = len(matches)
         return num_matches / num_queries
@@ -242,14 +252,13 @@ class Accuracy(EvalMetric):
 # FIXME:precision@k and precision:T to be written.
 # ThresholdPrecision and RankPrecision()
 class FIXMEPrecision(EvalMetric):
-    """ Compute the precision of the matches.
+    """Compute the precision of the matches.
 
-    Notes: precision computation for similarity is different from
-    the classic version and also tricky to get right so please refers
-    to the tf.similarity paper for a complete discussion of how it works.
+    Precision formula: `TP / (TP + FP)`
 
-    Precision formula: `true_positives / (true_positives + false_positives)`
-
+    Every match below the distance threshold is treated as a predicted positive
+    match. Therfore, the precision is the measure of performance within the
+    distance threshold.
 
     Reference: TBD
     """
@@ -277,10 +286,23 @@ class FIXMEPrecision(EvalMetric):
             return 1.0
 
 
-class Recall(EvalMetric):
-    """Computing matcher recall at k for a given distance threshold
+class RetrivalRecall(EvalMetric):
+    """Information Retrieval recall.
 
-    Recall formula: num_misses / num_queries
+    This one is function of the quality of the match result set and the size
+    of K. This is a measure of how noisy the result set.
+    count of positive match / all potential match in index.
+    """
+    pass
+
+
+class RecallAtK(EvalMetric):
+    """Metric Learning Recall.
+
+    Ordering efficiency estimation. Increasing K will increase the recall. The
+    closer to the upper left corner, the more optimal the embedding is.
+
+    Count a positive when ANY in top K match, 0 otherwise.
     """
     def __init__(self,
                  distance_threshold: float = 0.5,
@@ -302,6 +324,8 @@ class Recall(EvalMetric):
                                     distance=self.distance_threshold)
         num_queries = len(targets_labels)
         num_matches = len(matches)
+        # NOTE: I think misses should be the FN otherwise we are computing
+        # TP/(FP+TN+FN)
         misses = num_queries - num_matches
         return misses / num_queries
 
@@ -342,6 +366,7 @@ class F1Score(EvalMetric):
 
         num_queries = len(targets_labels)
         num_matches = len(matches)
+        # NOTE: same here, num_misses will include TN which are not a miss.
         num_misses = num_queries - num_matches
 
         precision = num_matches / num_queries
@@ -365,10 +390,10 @@ def make_metric(metric: Union[str, EvalMetric]) -> EvalMetric:
     # ! Metrics must be non-instanciated.
     METRICS_ALIASES = {
         # accuracy
-        "accuracy": Accuracy(),
-        "acc": Accuracy(),
+        "accuracy": MatchAccuracy(),
+        "acc": MatchAccuracy(),
         # recall
-        "recall": Recall(),
+        "recall": RecallAtK(),
         # f1 score
         "f1_score": F1Score(),
         "f1": F1Score(),
