@@ -49,19 +49,23 @@ class MemoryEvaluator(Evaluator):
         # ! metrics. Those goes into the metrics themselves.
         # compute intermediate representations used by metrics
         # rank 0 == no match / distance 0 == unknown
-        num_matched = 0
+
+        # match_ranks and match_distances will be zeros like
+        # len(targets_labels). The max matching rank will be stored if a match
+        # exists. On the first non-matching neighbor, the code will move onto
+        # the next set of lookups.
         match_ranks = [0] * len(targets_labels)
         match_distances = [0.0] * len(targets_labels)
         for lidx, lookup in enumerate(lookups):
             true_label = targets_labels[lidx]
             for nidx, n in enumerate(lookup):
                 rank = nidx + 1
-                if n.label == true_label:
-                    # print(n['label'], true_label, lookup)
+                if n.label != true_label:
+                    break
+                else:
                     match_ranks[lidx] = rank
                     match_distances[lidx] = (
                             round(n.distance, distance_rounding))
-                    num_matched += 1
 
         # compute metrics
         evaluation = {}
@@ -126,6 +130,8 @@ class MemoryEvaluator(Evaluator):
         combined_metrics.append(calibration_metric)
 
         # data preparation: flatten and rounding
+        # lookups will be shape(num_queries, num_neighbors)
+        # distances will be len(num_queries x num_neighbors)
         distances = []
         for lu in lookups:
             for n in lu:
@@ -134,6 +140,9 @@ class MemoryEvaluator(Evaluator):
         targets_labels = [int(i) for i in targets_labels]
 
         # sorting them
+        # distances is in contiguous blocks of neighbor distances
+        # [q1n1, q1n2, q1n3, q2n1, q2n2, q2n3...]
+        # sorted_distance_values is in ascending distance order.
         # !keep the casting to int() or it will be awefully slow
         sorted_distances_idxs = [int(i) for i in list(tf.argsort(distances))]
         sorted_distances_values = [distances[i] for i in sorted_distances_idxs]
@@ -144,6 +153,7 @@ class MemoryEvaluator(Evaluator):
         if verbose:
             pb = tqdm(total=num_distances, desc='Evaluating')
 
+        # TODO(ovallis): Only iterate over the unique distances.
         for dist in sorted_distances_values:
             # update distance theshold for metrics
             for m in combined_metrics:
