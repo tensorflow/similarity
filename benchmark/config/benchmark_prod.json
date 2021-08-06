@@ -1,0 +1,22 @@
+{
+    "version": "1.0.0",
+
+    "datasets": {
+        "cars196": {
+            "x_key": "image",
+            "y_key": "label",
+            "splits": ["train", "test"],
+            "train_classes": [0, 98],
+            "test_classes": [98, 196],
+            "image_size": 360,
+            "architecture": "B0",
+            "batch_size": 256,
+            "index_shots": 10,
+            "query_shots": 10,
+            "ways": [5, 10, 20, 40, 80, 100, 200, 400, 800, 1000],
+            "shots":[1, 5, 10],
+            "epochs": 20,
+            "LR": 0.001
+        }
+    }
+}
