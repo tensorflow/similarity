@@ -10,6 +10,9 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 from termcolor import cprint
 from tqdm.auto import tqdm
+
+from benchmark import clean_dir
+
 tf.config.set_visible_devices([], 'GPU')
 cprint('Tensorflow set to CPU', 'green')
 
@@ -30,7 +33,7 @@ def run(config):
         splits = dconf['splits']
         train_classes = dconf['train_classes']
         test_classes = dconf['test_classes']
-        img_size = dconf['image_size']
+        img_size = dconf['shape'][0]
         index_shots = dconf['index_shots']
         query_shots = dconf['query_shots']
 
@@ -80,10 +83,10 @@ def run(config):
         else:
             if cl in train_cls:
                 x_train.append(e)
-                y_train.append(e)
+                y_train.append(cl)
             else:
                 x_test.append(e)
-                y_test.append(e)
+                y_test.append(cl)
 
     # flatten the index
     x_index = []
@@ -125,11 +128,10 @@ def run(config):
     # save
     fpath = "datasets/%s/%s/" % (version, dataset_name)
     cprint("Save files in %s" % fpath, "blue")
-    dpath = Path(fpath)
-    if dpath.exists():
-        shutil.rmtree(fpath)
-    dpath = dpath.mkdir(parents=True)
-    files = [['train', x_train, y_train], ['test', x_test, y_test],
+    clean_dir(fpath)
+
+    files = [['train', x_train, y_train],
+             ['test', x_test, y_test],
              ['index', x_index, y_index],
              ['unseen_queries', x_unseen_queries, y_unseen_queries],
              ['seen_queries', x_seen_queries, y_seen_queries]]
