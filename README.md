@@ -84,6 +84,57 @@ the examples immediately in Google Colab by clicking the Google colab icon.
 For more information about specific functions, you can [check the API documentation -- FIXME]()
 
 
+## Example: MNIST similarity
+
+### Preparing data
+
+```python
+from tensorflow_similarity.samplers import TFDatasetMultiShotMemorySampler
+spl = TFDatasetMultiShotMemorySampler(dataset_name='mnist', class_per_batch=10)
+```
+
+### Building a Similarity model
+
+```python
+from tensorflow.keras import layers
+from tensorflow_similarity.layers import MetricEmbedding
+from tensorflow_similarity.models import SimilarityModel
+inputs = layers.Input(shape=(spl.x[0].shape))
+x = layers.experimental.preprocessing.Rescaling(1/255)(inputs)
+x = layers.Conv2D(32, 7, activation='relu')(x)
+x = layers.MaxPool2D()(x)
+x = layers.Conv2D(64, 3, activation='relu')(x)
+x = layers.Flatten()(x)
+x = MetricEmbedding(64)(x)
+model = SimilarityModel(inputs, x)
+```
+
+### Training model via contrastive learning
+
+```python
+from tensorflow_similarity.losses import TripletLoss
+# using Tripletloss to project in metric space
+tloss = TripletLoss()
+model.compile('adam', loss=tloss)
+model.fit(sampler, epochs=5)
+```
+
+### Building images index and querying it
+
+```python
+from tensorflow_similarity.visualization import viz_neigbors_imgs
+
+# index emneddings for fast retrivial via ANN
+model.index(x=sampler.x[:100], y=sampler.y[:100], data=sampler.x[:100])
+
+# Lookup examples nearest indexed images
+nns = model.single_lookup(sampler.x[4242])
+
+# visualize results result
+viz_neigbors_imgs(sampler.x[4242], sampler.y[4242], nns)
+```
+
+
 ## Supported Algorithms
 
 

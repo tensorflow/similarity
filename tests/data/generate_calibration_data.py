@@ -32,7 +32,7 @@ x_test = tf.constant(x_test / 255.0, dtype='float32')
 x_restricted, y_restricted = select_examples(x_train, y_train, list(range(6)), 30000)
 sampler = MultiShotMemorySampler(x_restricted,
                                  y_restricted,
-                                 class_per_batch=CLASS_PER_BATCH,
+                                 classes_per_batch=CLASS_PER_BATCH,
                                  batch_size=BATCH_SIZE,
                                  steps_per_epoch=BATCH_PER_EPOCH)
 
