@@ -86,9 +86,7 @@ def EfficientNetSim(input_shape: Tuple[int],
     # augmentation
     if augmentation == "basic":
         # augs usually used in benchmark and work almost always well
-        over_size = int(img_size * 1.5)
         augmentation = tf.keras.Sequential([
-            layers.experimental.preprocessing.Resizing(over_size, over_size),
             layers.experimental.preprocessing.RandomCrop(img_size, img_size),
             layers.experimental.preprocessing.RandomFlip("horizontal")
         ])

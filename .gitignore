@@ -8,7 +8,8 @@ examples/logs/
 site/
 release.sh
 .DS_Store
-benchmark/datasets/
+benchmark/supervised/datasets/
+benchmark/supervised/models/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,0 +1,40 @@
+{
+    "version": "1.0.0",
+
+    "datasets": {
+        "cars196": {
+            "x_key": "image",
+            "y_key": "label",
+            "splits": ["train", "test"],
+            "train_classes": [0, 98],
+            "test_classes": [98, 196],
+            "shape": [360, 360, 3],
+            "embedding_size": 256,
+            "architecture": "B0",
+            "trainable": "frozen",
+            "distance": "cosine",
+            "batch_size": 128,
+            "train_steps": 100,
+            "val_steps": 10,
+            "index_shots": 10,
+            "query_shots": 10,
+            "shots":[1, 5, 10],
+            "epochs": 10,
+            "losses": [
+                        {
+                            "name": "pn_loss_semi",
+                            "loss": "pn_loss",
+                            "negative_mining": "semi-hard",
+                            "lr": 0.001
+                        },
+                        {
+                            "name": "circle_loss",
+                            "loss": "circle_loss",
+                            "gamma": 256,
+                            "margin": 0.25,
+                            "lr": 0.001
+                        }
+            ]
+        }
+    }
+}
