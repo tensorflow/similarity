@@ -19,6 +19,7 @@ $ python build_tf_org_api_docs.py --output_dir=/tmp/tfsim
 """
 
 import os
+import pathlib
 
 from absl import app
 from absl import flags
@@ -30,21 +31,7 @@ from tensorflow_docs.api_generator import generate_lib
 from tensorflow_docs.api_generator import public_api
 from tensorflow_docs.api_generator import utils
 
-import tensorflow_similarity as tfsim
-
-import tensorflow_similarity.callbacks
-import tensorflow_similarity.distance_metrics
-import tensorflow_similarity.distances
-import tensorflow_similarity.evaluators
-import tensorflow_similarity.indexer
-import tensorflow_similarity.losses
-import tensorflow_similarity.matchers
-import tensorflow_similarity.metrics
-import tensorflow_similarity.models
-import tensorflow_similarity.samplers
-import tensorflow_similarity.tables
-import tensorflow_similarity.visualization
-
+import tensorflow_similarity.api as tfsim
 
 flags.DEFINE_string('output_dir', '/tmp/tfsim',
                     'Where to output the docs.')
@@ -100,12 +87,14 @@ def gen_api_docs():
   doc_generator = generate_lib.DocGenerator(
       root_title=PROJECT_FULL_NAME,
       py_modules=[(PROJECT_SHORT_NAME, tfsim)],
-      base_dir=os.path.dirname(tfsim.__file__),
+      base_dir=pathlib.Path(tfsim.__file__).parents[1],
       code_url_prefix=FLAGS.code_url_prefix,
       site_path=FLAGS.site_path,
       search_hints=FLAGS.search_hints,
-      # This callback cleans up a lot of aliases caused by internal imports.
-      callbacks=[public_api.local_definitions_filter])
+      # This filter ensures that only objects in init files are only
+      # documented if they are explicitly imported. (implicit imports are
+      # skipped)
+      callbacks=[public_api.explicit_package_contents_filter])
 
   doc_generator.build(output_dir)
   print('Output docs to: ', output_dir)
