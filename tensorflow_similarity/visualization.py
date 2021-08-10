@@ -31,7 +31,6 @@ def viz_neigbors_imgs(example,
     plt.yticks([])
 
     val = labels[example_class] if labels else example_class
-
     plt.title('class %s' % val)
     plt_idx += 1
 
