@@ -18,7 +18,7 @@ import tensorflow as tf
 from typing import Any, Callable, Union
 
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
-from tensorflow_similarity.algebra import build_masks
+from tensorflow_similarity.algebra import build_masks, masked_max, masked_min
 from tensorflow_similarity.types import FloatTensor, IntTensor
 from .metric_loss import MetricLoss
 
@@ -29,8 +29,9 @@ def multisimilarity_loss(labels: IntTensor,
                          embeddings: FloatTensor,
                          distance: Callable,
                          alpha: float = 2.0,
-                         beta: float = 50,
-                         base: float = 0.0) -> Any:
+                         beta: float = 40,
+                         epsilon: float = 0.2,
+                         lmda: float = 1.0) -> Any:
     """Multi Similarity loss computations
 
     Args:
@@ -38,18 +39,29 @@ def multisimilarity_loss(labels: IntTensor,
 
         embeddings: Embedded examples.
 
-        distance: Which distance function to use to compute the pairwise
+        distance: Which distance function to use to compute the pairwise.
 
-        alpha: The exponential weight for the positive pairs.
+        alpha: The exponential weight for the positive pairs. Increasing alpha
+        makes the logsumexp softmax closer to the max positive pair distance,
+        while decreasing it makes it closer to max(P) + log(batch_size).
 
-        beta: The exponential weight for the negative pairs.
+        beta: The exponential weight for the negative pairs. Increasing beta
+        makes the logsumexp softmax closer to the max negative pair distance,
+        while decreasing it makes the softmax closer to
+        max(N) + log(batch_size).
 
-        base: The shift in exponent for both pos and neg pairs.
+        epsilon: Used to remove easy positive and negative pairs. We only keep
+        positives that we greater than the (smallest negative pair - epsilon)
+        and we only keep negatives that are less than the
+        (largest positive pair + epsilon).
+
+        lmda: Used to weight the distance. Below this distance, negatives are
+        up weighted and positives are down weighted. Similarly, above this
+        distance negatives are down weighted and positive are up weighted.
 
     Returns:
         Loss: The loss value for the current batch.
     """
-
     # [Label]
     # ! Weirdness to be investigated
     # do not remove this code. It is actually needed for specific situation
@@ -62,53 +74,59 @@ def multisimilarity_loss(labels: IntTensor,
 
     # [masks]
     positive_mask, negative_mask = build_masks(labels, batch_size)
-    positive_mask_f32 = tf.cast(positive_mask, dtype='float32')
-    negative_mask_f32 = tf.cast(negative_mask, dtype='float32')
 
-    padding = tf.constant([[0, 0], [0, 1]])
+    # [pair mining using Similarity-P]
+    # This is essentially hard mining the negative and positive pairs.
 
-    # keep_mask=pos_mask.bool()
-    pos_exp = pairwise_distances - base
-    pos_exp = tf.math.multiply(pos_exp, positive_mask_f32)
-    pos_exp_zero = tf.math.multiply(
-            tf.fill(tf.shape(pos_exp), -1e6),
-            tf.cast(tf.math.logical_not(positive_mask), dtype='float32')
+    # Keep all positives > Min(neg_dist - epsilon).
+    neg_min, _ = masked_min(pairwise_distances, negative_mask)
+    pos_sim_p_mask = tf.math.greater(pairwise_distances, neg_min - epsilon)
+    pos_sim_p_mask = tf.math.logical_and(pos_sim_p_mask, positive_mask)
+
+    # Keep all negatives < Max(pos_dist + epsilon).
+    pos_max, _ = masked_max(pairwise_distances, positive_mask)
+    neg_sim_p_mask = tf.math.less(pairwise_distances, pos_max + epsilon)
+    neg_sim_p_mask = tf.math.logical_and(neg_sim_p_mask, negative_mask)
+
+    # Mark all pairs where we have both valid negative and positive pairs.
+    valid_anchors = tf.math.logical_and(
+            tf.math.reduce_any(pos_sim_p_mask, axis=1),
+            tf.math.reduce_any(neg_sim_p_mask, axis=1)
     )
-    # add_one=True
-    pos_exp = tf.pad(pos_exp + pos_exp_zero, padding, "CONSTANT")
 
-    # keep_mask=neg_mask.bool()
-    neg_exp = base - pairwise_distances
-    neg_exp = tf.math.multiply(neg_exp, negative_mask_f32)
-    neg_exp_zero = tf.math.multiply(
-            tf.fill(tf.shape(neg_exp), -1e6),
-            tf.cast(tf.math.logical_not(negative_mask), dtype='float32')
-    )
-    # add_one=True
-    neg_exp = tf.pad(neg_exp + neg_exp_zero, padding, "CONSTANT")
+    # Cast masks as floats to support multiply
+    valid_anchors = tf.cast(valid_anchors, dtype='float32')
+    pos_sim_p_mask_f32 = tf.cast(pos_sim_p_mask, dtype='float32')
+    neg_sim_p_mask_f32 = tf.cast(neg_sim_p_mask, dtype='float32')
+
+    # [Weight the remaining pairs using Similarity-S and Similarity-N]
+    shifted_distances = pairwise_distances - lmda
 
     # [compute loss]
-    pos_loss = tf.math.reduce_logsumexp(alpha * pos_exp, axis=1, keepdims=True)
-    pos_loss = tf.math.multiply(
-            pos_loss,
-            tf.cast(
-                tf.math.reduce_any(positive_mask, axis=1, keepdims=True),
-                dtype='float32'
-            )
-    )
-    pos_loss *= (1.0/alpha)
 
-    neg_loss = tf.math.reduce_logsumexp(beta * neg_exp, axis=1, keepdims=True)
-    neg_loss = tf.math.multiply(
-            neg_loss,
-            tf.cast(
-                tf.math.reduce_any(negative_mask, axis=1, keepdims=True),
-                dtype='float32'
-            )
-    )
-    neg_loss *= (1.0/beta)
+    # Positive pairs with a distance above 0 will be up weighted.
+    pos_loss = tf.math.exp(alpha * shifted_distances)
+    # Mask out the pos_pairs
+    pos_loss = tf.math.multiply(pos_loss, pos_sim_p_mask_f32)
+    pos_loss = tf.math.reduce_sum(pos_loss, axis=1, keepdims=True)
+    pos_loss = tf.math.log(1+pos_loss)
+    pos_loss = pos_loss / alpha
 
-    multisim_loss = pos_loss + neg_loss
+    # Negative pairs with a distance below 0 will be up weighted.
+    neg_loss = tf.math.exp(beta * -1 * shifted_distances)
+    # Mask out the neg_pairs
+    neg_loss = tf.math.multiply(neg_loss, neg_sim_p_mask_f32)
+    neg_loss = tf.math.reduce_sum(neg_loss, axis=1, keepdims=True)
+    neg_loss = tf.math.log(1+neg_loss)
+    neg_loss = neg_loss / beta
+
+    # Remove any anchors that have empty neg or pos pairs.
+    multisim_loss = tf.math.multiply(
+            pos_loss + neg_loss,
+            tf.transpose(valid_anchors)
+    )
+    # reduce and scale loss so it isn't a function of the batch size.
+    multisim_loss = tf.math.reduce_mean(multisim_loss)
 
     return multisim_loss
 
@@ -130,9 +148,10 @@ class MultiSimilarityLoss(MetricLoss):
 
     def __init__(self,
                  distance: Union[Distance, str] = 'cosine',
-                 alpha: float = 2.0,
-                 beta: float = 50,
-                 base: float = 0.0,
+                 alpha: float = 1.0,
+                 beta: float = 20,
+                 epsilon: float = 0.2,
+                 lmda: float = 0.5,
                  name: str = None):
         """Initializes the Multi Similarity Loss
 
@@ -140,11 +159,25 @@ class MultiSimilarityLoss(MetricLoss):
             distance: Which distance function to use to compute the pairwise
             distances between embeddings. Defaults to 'cosine'.
 
-            alpha: The exponential weight for the positive pairs.
+            alpha: The exponential weight for the positive pairs. Increasing
+            alpha makes the logsumexp softmax closer to the max positive pair
+            distance, while decreasing it makes it closer to
+            max(P) + log(batch_size).
 
-            beta: The exponential weight for the negative pairs.
+            beta: The exponential weight for the negative pairs. Increasing
+            beta makes the logsumexp softmax closer to the max negative pair
+            distance, while decreasing it makes the softmax closer to
+            max(N) + log(batch_size).
 
-            base: The shift in exponent for both pos and neg pairs.
+            epsilon: Used to remove easy positive and negative pairs. We only
+            keep positives that we greater than the (smallest negative pair -
+            epsilon) and we only keep negatives that are less than the
+            (largest positive pair + epsilon).
+
+            lmda: Used to weight the distance. Below this distance, negatives
+            are up weighted and positives are down weighted. Similarly, above
+            this distance negatives are down weighted and positive are up
+            weighted.
 
             name: Loss name. Defaults to None.
         """
@@ -152,7 +185,6 @@ class MultiSimilarityLoss(MetricLoss):
         # distance canonicalization
         distance = distance_canonicalizer(distance)
         self.distance = distance
-        # sanity checks
 
         super().__init__(multisimilarity_loss,
                          name=name,
@@ -160,4 +192,5 @@ class MultiSimilarityLoss(MetricLoss):
                          distance=distance,
                          alpha=alpha,
                          beta=beta,
-                         base=base)
+                         epsilon=epsilon,
+                         lmda=lmda)
