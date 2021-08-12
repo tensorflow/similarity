@@ -1,7 +1,7 @@
 import pytest
 import tensorflow as tf
 import numpy as np
-from tensorflow_similarity.distances import CosineDistance, InnerProductDistance
+from tensorflow_similarity.distances import CosineDistance, InnerProductSimilarity
 from tensorflow_similarity.distances import EuclideanDistance
 from tensorflow_similarity.distances import ManhattanDistance
 from tensorflow_similarity.distances import distance_canonicalizer
@@ -128,6 +128,6 @@ def test_manhattan_opposite():
 
 def test_innerprod():
     a = [[1, 2, 3], [1, 3, 3]]
-    d = InnerProductDistance()
+    d = InnerProductSimilarity()
     vals = d(a)
     assert tf.round(tf.reduce_sum(vals)) == 65
