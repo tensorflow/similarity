@@ -36,20 +36,25 @@ class Distance(ABC):
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class InnerProductDistance(Distance):
+class InnerProductSimilarity(Distance):
     """Compute the pairwise inner product between embeddings.
 
     The [Inner product](https://en.wikipedia.org/wiki/Inner_product_space) is
-    a distance where the more similar vectors have the closest values to each
-    other.
+    a measure of similarity where the more similar vectors have the largest
+    values.
+
+    NOTE! This is not a distance and is likely not what you want to use with
+    the built in losses. At the very least this will flip the sign on the
+    margin in many of the losses. This is likely meant to be used with custom
+    loss functions that expect a similarity instead of a distance.
     """
     def __init__(self):
-        "Init Inner product distance"
+        "Init Inner product similarity"
         super().__init__('inner_product', ['ip'])
 
     @tf.function
     def call(self, embeddings: FloatTensor) -> FloatTensor:
-        """Compute pairwise distances for a given batch of embeddings.
+        """Compute pairwise similarities for a given batch of embeddings.
 
         Args:
             embeddings: Embeddings to compute the pairwise one.
@@ -59,8 +64,8 @@ class InnerProductDistance(Distance):
         """
 
         tensor = tf.linalg.matmul(embeddings, embeddings, transpose_b=True)
-        distances: FloatTensor = tf.reduce_sum(tensor, axis=1, keepdims=True)
-        return distances
+        sims: FloatTensor = tf.reduce_sum(tensor, axis=1, keepdims=True)
+        return sims
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -196,7 +201,7 @@ class ManhattanDistance(Distance):
 
 # List of implemented distances
 DISTANCES = [
-    InnerProductDistance(),
+    InnerProductSimilarity(),
     EuclideanDistance(),
     SquaredEuclideanDistance(),
     ManhattanDistance(),
