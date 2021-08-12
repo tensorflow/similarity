@@ -127,3 +127,45 @@ def compute_loss(positive_distances: FloatTensor,
         loss = tf.maximum(loss, 0.0)  # numeric stability
 
     return loss
+
+
+@tf.keras.utils.register_keras_serializable(package="Similarity")
+@tf.function
+def logsumexp(pairwise_distances: FloatTensor,
+              mask: FloatTensor) -> FloatTensor:
+    """Compute the LogSumExp across axis 1 of the pairwise distance matrix.
+
+    This function:
+    * Avoids numerical instablity when the inputs are large or small.
+    * Adds 1 to the reduce_sum of the exp to ensure the loss is positive
+    * masks out the result of exp to ensure that masked values are not included
+      in the log sum.
+
+    Args:
+        pairwise_distance: A 2D FloatTensor of the pairwise distances.
+
+        mask: A 2D FloatTensor with 1.0 for all valid values and 0.0
+        everywhere else.
+
+    returns:
+        A [n, 1] FloatTensor containing the per example LogSumExp values.
+    """
+    raw_max = tf.math.reduce_max(
+        pairwise_distances,
+        axis=1,
+        keepdims=True
+    )
+    my_max = tf.stop_gradient(
+        tf.where(
+            tf.math.is_finite(raw_max),
+            raw_max,
+            tf.zeros_like(raw_max)
+        )
+    )
+    x = tf.math.subtract(pairwise_distances, my_max)
+    x = tf.math.exp(x) * mask
+    x = tf.math.reduce_sum(x, axis=1, keepdims=True)
+    x = tf.math.log(1 + x)
+    x = tf.math.add(x, my_max)
+
+    return x

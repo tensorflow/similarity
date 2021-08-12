@@ -21,6 +21,7 @@ from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.algebra import build_masks, masked_max, masked_min
 from tensorflow_similarity.types import FloatTensor, IntTensor
 from .metric_loss import MetricLoss
+from .utils import logsumexp
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -101,29 +102,25 @@ def multisimilarity_loss(labels: IntTensor,
 
     # [Weight the remaining pairs using Similarity-S and Similarity-N]
     shifted_distances = pairwise_distances - lmda
+    pos_dists = alpha * shifted_distances
+    neg_dists = -1 * beta * shifted_distances
 
     # [compute loss]
 
     # Positive pairs with a distance above 0 will be up weighted.
-    pos_loss = tf.math.exp(alpha * shifted_distances)
-    # Mask out the pos_pairs
-    pos_loss = tf.math.multiply(pos_loss, pos_sim_p_mask_f32)
-    pos_loss = tf.math.reduce_sum(pos_loss, axis=1, keepdims=True)
-    pos_loss = tf.math.log(1+pos_loss)
-    pos_loss = pos_loss / alpha
+    p_loss = logsumexp(pos_dists, pos_sim_p_mask_f32)
+    p_loss = p_loss / alpha
 
     # Negative pairs with a distance below 0 will be up weighted.
-    neg_loss = tf.math.exp(beta * -1 * shifted_distances)
-    # Mask out the neg_pairs
-    neg_loss = tf.math.multiply(neg_loss, neg_sim_p_mask_f32)
-    neg_loss = tf.math.reduce_sum(neg_loss, axis=1, keepdims=True)
-    neg_loss = tf.math.log(1+neg_loss)
-    neg_loss = neg_loss / beta
+    n_loss = logsumexp(neg_dists, neg_sim_p_mask_f32)
+    n_loss = n_loss / beta
 
     # Remove any anchors that have empty neg or pos pairs.
+    # NOTE: reshape is required here because valid_anchors is [m] and
+    #       p_loss + n_loss is [m, 1].
     multisim_loss = tf.math.multiply(
-            pos_loss + neg_loss,
-            tf.transpose(valid_anchors)
+            p_loss + n_loss,
+            tf.reshape(valid_anchors, (-1, 1))
     )
     # reduce and scale loss so it isn't a function of the batch size.
     multisim_loss = tf.math.reduce_mean(multisim_loss)
