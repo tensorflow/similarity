@@ -36,7 +36,7 @@ def multisimilarity_loss(labels: IntTensor,
     """Multi Similarity loss computations
 
     Args:
-        labels: labels associated with the embed
+        labels: labels associated with the embed.
 
         embeddings: Embedded examples.
 
