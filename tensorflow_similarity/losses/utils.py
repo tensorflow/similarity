@@ -132,7 +132,7 @@ def compute_loss(positive_distances: FloatTensor,
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
 def logsumexp(pairwise_distances: FloatTensor,
-              mask: FloatTensor) -> FloatTensor:
+              mask: FloatTensor) -> Any:
     """Compute the LogSumExp across axis 1 of the pairwise distance matrix.
 
     This function:

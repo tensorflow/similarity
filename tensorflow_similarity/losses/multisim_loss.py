@@ -81,12 +81,14 @@ def multisimilarity_loss(labels: IntTensor,
 
     # Keep all positives > Min(neg_dist - epsilon).
     neg_min, _ = masked_min(pairwise_distances, negative_mask)
-    pos_sim_p_mask = tf.math.greater(pairwise_distances, neg_min - epsilon)
+    neg_min = tf.math.subtract(neg_min, epsilon)
+    pos_sim_p_mask = tf.math.greater(pairwise_distances, neg_min)
     pos_sim_p_mask = tf.math.logical_and(pos_sim_p_mask, positive_mask)
 
     # Keep all negatives < Max(pos_dist + epsilon).
     pos_max, _ = masked_max(pairwise_distances, positive_mask)
-    neg_sim_p_mask = tf.math.less(pairwise_distances, pos_max + epsilon)
+    pos_max = tf.math.add(pos_max, epsilon)
+    neg_sim_p_mask = tf.math.less(pairwise_distances, pos_max)
     neg_sim_p_mask = tf.math.logical_and(neg_sim_p_mask, negative_mask)
 
     # Mark all pairs where we have both valid negative and positive pairs.
