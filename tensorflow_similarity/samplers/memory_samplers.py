@@ -134,7 +134,7 @@ class MultiShotMemorySampler(Sampler):
 
 class SingleShotMemorySampler(Sampler):
     def __init__(self,
-                 x: Tensor,
+                 x: FloatTensor,
                  augmenter: Augmenter,
                  class_per_batch: int,
                  steps_per_epoch: int = 1000,
