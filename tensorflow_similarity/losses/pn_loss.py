@@ -19,7 +19,7 @@
 """
 
 import tensorflow as tf
-from typing import Callable, Union
+from typing import Any, Callable, Union
 
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.algebra import build_masks
@@ -36,25 +36,35 @@ def pn_loss(labels: IntTensor,
             positive_mining_strategy: str = 'hard',
             negative_mining_strategy: str = 'semi-hard',
             soft_margin: bool = False,
-            margin: float = 1.0):
+            margin: float = 1.0) -> Any:
     """Positive Negative loss computations
 
-    Based on the pn loss used in IVIS. See:
+    Based on the pn loss used in IVIS.
 
 
     Args:
-        labels (list(int)): labels associated with the embed
-        embeddings ([type]): [description]
-        distance (str, optional): [description]. Defaults to 'cosine'.
-        positive_mining_strategy (str, optional): [description].
-        Defaults to 'hard'.
-        negative_mining_strategy (str, optional): [description].
-        Defaults to 'semi-hard'.
-        soft_margin (bool, optional): [description]. Defaults to False.
-        margin (float, optional): [description]. Defaults to 1.0.
+        labels: labels associated with the embed
+
+        embeddings: Embedded examples.
+
+        distance: Which distance function to use to compute the pairwise
+        distances between embeddings. Defaults to 'cosine'.
+
+        positive_mining_strategy: What mining strategy to use to select
+        embedding from the same class. Defaults to 'hard'.
+        Available: {'easy', 'hard'}
+
+        negative_mining_strategy: What mining strategy to use for select the
+        embedding from the different class. Defaults to 'semi-hard'.
+        Available: {'hard', 'semi-hard', 'easy'}
+
+        soft_margin: [description]. Defaults to True. Use a soft margin
+        instead of an explicit one.
+
+        margin: Use an explicit value for the margin term. Defaults to 1.0.
 
     Returns:
-        [type]: [description]
+        Loss: The loss value for the current batch.
     """
 
     # [Label]
@@ -132,34 +142,31 @@ class PNLoss(MetricLoss):
     def __init__(self,
                  distance: Union[Distance, str] = 'cosine',
                  positive_mining_strategy: str = 'hard',
-                 negative_mining_strategy: str = 'hard',
+                 negative_mining_strategy: str = 'semi-hard',
                  soft_margin: bool = False,
                  margin: float = 1.0,
                  name: str = None):
         """Initializes the PN Loss
 
         Args:
-            distance (Un, optional): Which distance function to use to compute
+            distance: Which distance function to use to compute
             the pairwise distances between embeddings. Defaults to 'cosine'.
 
-            positive_mining_strategy (str, optional): What mining strategy to
+            positive_mining_strategy: What mining strategy to
             use to select embedding from the same class. Defaults to 'hard'.
             available: {'easy', 'hard'}
 
-            negative_mining_strategy (str, optional): What mining strategy to
+            negative_mining_strategy: What mining strategy to
             use for select the embedding from the different class.
             Defaults to 'semi-hard'. Available: {'hard', 'semi-hard', 'easy'}
 
-            soft_margin (bool, optional): [description]. Defaults to True.
+            soft_margin: [description]. Defaults to True.
             Use a soft margin instead of an explicit one.
 
-            margin (float, optional): Use an explicit value for the margin
+            margin: Use an explicit value for the margin
             term. Defaults to 1.0.
 
-            reducer (str, optional): How to accumulate the triplet values
-            as a single loss value. Defaults to 'sum'.
-
-            name (str, optional): Loss name. Defaults to None.
+            name: Loss name. Defaults to None.
 
         Raises:
             ValueError: Invalid positive mining strategy.
