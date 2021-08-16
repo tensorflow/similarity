@@ -1,6 +1,6 @@
 import base64
 import io
-from typing import List, Dict
+from typing import List, Dict, Union, Any
 
 from distinctipy import distinctipy
 import numpy as np
@@ -9,7 +9,7 @@ import umap
 from bokeh.plotting import ColumnDataSource, figure, show, output_notebook
 from tqdm.auto import tqdm
 
-from tensorflow_similarity.types import FloatTensor, IntTensor, Tensor
+from tensorflow_similarity.types import FloatTensor, Tensor
 
 
 def tensor2images(tensor: Tensor, size: int = 64) -> List[str]:
@@ -54,7 +54,7 @@ def tensor2images(tensor: Tensor, size: int = 64) -> List[str]:
 
 
 def projector(embeddings: FloatTensor,
-              labels: IntTensor = None,
+              labels: List[Any] = None,
               class_mapping: List[int] = None,
               images: Tensor = None,
               image_size: int = 64,

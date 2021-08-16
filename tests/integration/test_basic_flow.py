@@ -57,6 +57,7 @@ def test_basic_flow(tmp_path):
     inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS, ))
     # dont use x as variable
     m = tf.keras.layers.Dense(8, activation='relu')(inputs)
+    m = tf.keras.layers.Dense(4, activation='relu')(m)
     outputs = MetricEmbedding(4)(m)
     model = SimilarityModel(inputs, outputs)
 
@@ -71,7 +72,7 @@ def test_basic_flow(tmp_path):
     model.compile(optimizer='adam', metrics=metrics, loss=triplet_loss)
 
     # train
-    history = model.fit(sampler, epochs=10)
+    history = model.fit(sampler, epochs=15)
 
     # check that history is properly filled
     assert 'loss' in history.history
