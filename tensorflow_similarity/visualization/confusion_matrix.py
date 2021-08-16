@@ -8,7 +8,7 @@ from tensorflow_similarity.types import IntTensor
 def confusion_matrix(y_pred: IntTensor,
                      y_true: IntTensor,
                      normalize: bool = True,
-                     labels: bool = None,
+                     labels: IntTensor = None,
                      title: str = 'Confusion matrix',
                      cmap: str = 'Blues'):
     """Plot confusion matrix
