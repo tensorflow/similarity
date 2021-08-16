@@ -58,11 +58,11 @@ are doing research or building innovative products.
 
 ## What's new
 
-- August 2021 (v0.13.x): Added many new contrastives losses
-including Circle Loss, PNLoss, LiftedStructure Loss and
-Multisimilarity Loss.
+August 2021 (v0.13.x):
+- Added many new contrastives losses including Circle Loss, PNLoss, LiftedStructure Loss and Multisimilarity Loss
+- Added interactive notebook/colab embeddings projector
 
-For previous changes - see the [changelog -- Fixme](FIXME)
+For previous changes - see [the release changelog](.releases.md)
 
 ## Getting Started
 
@@ -90,7 +90,7 @@ For more information about specific functions, you can [check the API documentat
 
 ```python
 from tensorflow_similarity.samplers import TFDatasetMultiShotMemorySampler
-spl = TFDatasetMultiShotMemorySampler(dataset_name='mnist', class_per_batch=10)
+sampler = TFDatasetMultiShotMemorySampler(dataset_name='mnist', class_per_batch=10)
 ```
 
 ### Building a Similarity model
@@ -128,10 +128,10 @@ from tensorflow_similarity.visualization import viz_neigbors_imgs
 model.index(x=sampler.x[:100], y=sampler.y[:100], data=sampler.x[:100])
 
 # Lookup examples nearest indexed images
-nns = model.single_lookup(sampler.x[4242])
+nns = model.single_lookup(sampler.x[3713])
 
 # visualize results result
-viz_neigbors_imgs(sampler.x[4242], sampler.y[4242], nns)
+viz_neigbors_imgs(sampler.x[3713], sampler.y[3713], nns)
 ```
 
 

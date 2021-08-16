@@ -1,7 +1,7 @@
 from tensorflow_similarity.types import FloatTensor, IntTensor
 from tqdm.auto import tqdm
 import tensorflow_datasets as tfds
-from typing import Optional, Union, List, Sequence
+from typing import Callable, Optional, Union, List, Sequence
 
 from .samplers import Augmenter
 from .memory_samplers import MultiShotMemorySampler
@@ -10,7 +10,7 @@ from .memory_samplers import MultiShotMemorySampler
 class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
     def __init__(self,
                  dataset_name: str,
-                 class_per_batch: int,
+                 classes_per_batch: int,
                  x_key: str = "image",
                  y_key: str = "label",
                  splits: Union[str, List[str]] = ["train", "test"],
@@ -18,6 +18,7 @@ class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
                  steps_per_epoch: int = 1000,
                  class_list: Sequence[int] = None,
                  total_examples_per_class: int = None,
+                 preprocess_fn: Optional[Callable] = None,
                  augmenter: Optional[Augmenter] = None,
                  warmup: int = -1):
         """Create a Multishot in memory sampler from a dataset downloaded from
@@ -25,10 +26,10 @@ class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
 
         The sampler ensures that each batch is well balanced by ensure that
         each batch aims to contains `example_per_class` examples
-        of `class_per_batch` classes.
+        of `classes_per_batch` classes.
 
         The `batch_size` used during training will be equal to:
-        `class_per_batch * example_per_class` unless an `augmenter` that alters
+        `classes_per_batch * example_per_class` unless an `augmenter` that alters
         the number of examples returned is used. Then the batch_size is a
         function of how many augmented examples are returned by
         the `augmenter`.
@@ -71,6 +72,10 @@ class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
             class to total_examples_per_class if set. If not set, all the
             available examples are selected. Defaults to None - no selection.
 
+            preprocess_fn: Preprocess function to apply to the dataset after
+            download e.g to resize images. Takes an x and a y.
+            Defaults to None.
+
             augmenter: A function that takes a batch in and return a batch out.
             Can alters the number of examples returned which in turn change the
             batch_size used. Defaults to None.
@@ -108,10 +113,22 @@ class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
                 pb.update()
             pb.close()
 
+        # apply preprocess if needed.
+        if preprocess_fn:
+            x_pre = []
+            y_pre = []
+            for idx in tqdm(range(len(x)), desc="Preprocessing data"):
+                xb, yb = preprocess_fn(x[idx], y[idx])
+                x_pre.append(xb)
+                y_pre.append(yb)
+
+            x = x_pre
+            y = y_pre
+
         # delegate to the base memorysample
         super().__init__(x,
                          y,
-                         classes_per_batch=class_per_batch,
+                         classes_per_batch=classes_per_batch,
                          examples_per_class_per_batch=examples_per_class_per_batch,  # noqa
                          steps_per_epoch=steps_per_epoch,
                          class_list=class_list,
