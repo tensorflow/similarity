@@ -47,7 +47,8 @@ setup(
     license='Apache License 2.0',
     install_requires=[
         'numpy', 'tabulate', 'nmslib', 'tensorflow>=2.4', 'tqdm',
-        'matplotlib', 'pandas', 'tensorflow-datasets>=4.2'
+        'matplotlib', 'pandas', 'tensorflow-datasets>=4.2', 'umap-learn',
+        'bokeh', 'Pillow', 'distinctipy'
     ],
     extras_require={
         "dev": [

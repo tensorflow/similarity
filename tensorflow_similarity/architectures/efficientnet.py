@@ -86,14 +86,14 @@ def EfficientNetSim(input_shape: Tuple[int],
     # augmentation
     if augmentation == "basic":
         # augs usually used in benchmark and work almost always well
-        augmentation = tf.keras.Sequential([
+        augmentation_layers = tf.keras.Sequential([
             layers.experimental.preprocessing.RandomCrop(img_size, img_size),
             layers.experimental.preprocessing.RandomFlip("horizontal")
         ])
 
     # add the basic version or the suppplied one.
     if augmentation:
-        x = augmentation(x)
+        x = augmentation_layers(x)
 
     x = build_effnet(x, variant, weights, trainable)
     x = layers.GlobalAveragePooling2D()(x)

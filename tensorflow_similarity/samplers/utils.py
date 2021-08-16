@@ -41,7 +41,7 @@ def select_examples(x: FloatTensor,
     index_per_class = defaultdict(list)
     cls = [int(c) for c in y]
 
-    for idx in tqdm(range(len(x)), desc="filtering classes"):
+    for idx in tqdm(range(len(x)), desc="filtering examples"):
         cl = cls[idx]  # need to cast tensor
 
         # if user provided a class_list, check it's part of it.
@@ -53,7 +53,7 @@ def select_examples(x: FloatTensor,
 
     # restrict numbers of samples
     idxs = []
-    for class_id in tqdm(class_list_int, desc="selecting examples"):
+    for class_id in tqdm(class_list_int, desc="selecting classes"):
         class_idxs = index_per_class[class_id]
 
         # restrict num examples?
@@ -63,7 +63,8 @@ def select_examples(x: FloatTensor,
             idxs.extend(class_idxs)
 
     random.shuffle(idxs)
-    batch_x = tf.gather(x, idxs)
-    batch_y = tf.gather(y, idxs)
+    with tf.device("/cpu:0"):
+        batch_x = tf.gather(x, idxs)
+        batch_y = tf.gather(y, idxs)
 
     return batch_x, batch_y
