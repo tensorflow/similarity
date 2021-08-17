@@ -1,12 +1,11 @@
 import tensorflow as tf
 from tensorflow_similarity.losses import TripletLoss
-from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.models import SimilarityModel
 
 
 def test_save_and_reload(tmp_path):
     inputs = tf.keras.layers.Input(shape=(3,))
-    outputs = MetricEmbedding(2)(inputs)
+    outputs = tf.keras.layers.Dense(2)(inputs)
     model = SimilarityModel(inputs, outputs)
     model.compile(optimizer='adam', loss=TripletLoss())
 
@@ -27,7 +26,7 @@ def test_save_and_reload(tmp_path):
 def test_save_no_compile(tmp_path):
 
     inputs = tf.keras.layers.Input(shape=(3,))
-    outputs = MetricEmbedding(2)(inputs)
+    outputs = tf.keras.layers.Dense(2)(inputs)
     model = SimilarityModel(inputs, outputs)
 
     model.save(tmp_path)
