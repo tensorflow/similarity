@@ -9,7 +9,7 @@ def test_eval_callback(tmp_path):
     queries = tf.constant([[1, 2], [1, 2]])
     query_labels = tf.constant([1, 2])
     targets = tf.constant([[1, 2], [1, 2]])
-    targets_labels = tf.constant([1, 2])
+    target_labels = tf.constant([1, 2])
 
     log_dir = tmp_path / 'sec/'
     if not log_dir.exists():
@@ -18,7 +18,7 @@ def test_eval_callback(tmp_path):
     callback = EvalCallback(queries,
                             query_labels,
                             targets,
-                            targets_labels,
+                            target_labels,
                             tb_logdir=str(log_dir))
     # manually set model ^^
     tf.keras.backend.clear_session()

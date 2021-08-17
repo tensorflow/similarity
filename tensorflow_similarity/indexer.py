@@ -372,7 +372,7 @@ class Indexer():
         # Evaluate them
         return self.evaluator.evaluate(index_size=self.size(),
                                        metrics=metrics,
-                                       targets_labels=y,
+                                       target_labels=y,
                                        lookups=lookups)
 
     def calibrate(self,
@@ -427,7 +427,7 @@ class Indexer():
             self.size(),
             calibration_metric=calibration_metric,
             thresholds_targets=thresholds_targets,
-            targets_labels=y,
+            target_labels=y,
             lookups=lookups,
             extra_metrics=extra_eval_metrics,
             metric_rounding=rounding,

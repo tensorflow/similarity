@@ -57,7 +57,7 @@ class EvalCallback(Callback):
         self.queries = queries
         self.queries_labels = query_labels
         self.targets = targets
-        self.targets_labels = target_labels
+        self.target_labels = target_labels
         self.distance = distance
         self.k = k
         self.index_size = len(target_labels)
@@ -80,7 +80,7 @@ class EvalCallback(Callback):
         self.model.reset_index()
 
         # rebuild the index
-        self.model.index(self.targets, self.targets_labels, verbose=0)
+        self.model.index(self.targets, self.target_labels, verbose=0)
 
         lookups = self.model.lookup(self.queries, verbose=0)
         results = self.evaluator.evaluate(self.index_size, self.metrics,
