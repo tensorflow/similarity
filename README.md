@@ -58,9 +58,11 @@ are doing research or building innovative products.
 
 ## What's new
 
-August 2021 (v0.13.x):
-- Added many new contrastives losses including Circle Loss, PNLoss, LiftedStructure Loss and Multisimilarity Loss
-- Added interactive notebook/colab embeddings projector
+- [Aug 21]: Interactive embedding `projector()` added. See this [notebook](examples/supervized_visualization/)
+- [Aug 21]: `CircleLoss()` added
+- [Aug 21]: `PNLoss()` added.
+- [Aug 21]: `MultiSimilarityLoss()` added.
+
 
 For previous changes - see [the release changelog](.releases.md)
 
@@ -97,7 +99,6 @@ sampler = TFDatasetMultiShotMemorySampler(dataset_name='mnist', class_per_batch=
 
 ```python
 from tensorflow.keras import layers
-from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.models import SimilarityModel
 inputs = layers.Input(shape=(spl.x[0].shape))
 x = layers.experimental.preprocessing.Rescaling(1/255)(inputs)
@@ -105,7 +106,7 @@ x = layers.Conv2D(32, 7, activation='relu')(x)
 x = layers.MaxPool2D()(x)
 x = layers.Conv2D(64, 3, activation='relu')(x)
 x = layers.Flatten()(x)
-x = MetricEmbedding(64)(x)
+x = layers.Dense(64)(x)
 model = SimilarityModel(inputs, x)
 ```
 

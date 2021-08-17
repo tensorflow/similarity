@@ -90,6 +90,8 @@ def EfficientNetSim(input_shape: Tuple[int],
             layers.experimental.preprocessing.RandomCrop(img_size, img_size),
             layers.experimental.preprocessing.RandomFlip("horizontal")
         ])
+    else:
+        augmentation_layers = augmentation
 
     # add the basic version or the suppplied one.
     if augmentation:

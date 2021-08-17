@@ -1,6 +1,6 @@
 import base64
 import io
-from typing import List, Dict, Union, Any
+from typing import List, Dict, Union, Any, Optional
 
 from distinctipy import distinctipy
 import numpy as np
@@ -12,7 +12,7 @@ from tqdm.auto import tqdm
 from tensorflow_similarity.types import FloatTensor, Tensor
 
 
-def tensor2images(tensor: Tensor, size: int = 64) -> List[str]:
+def tensor2images(tensor: Tensor, size: Optional[int] = 64) -> List[str]:
     """Convert tensor images back to in memory images
     encoded in base 64.
 
@@ -47,7 +47,8 @@ def tensor2images(tensor: Tensor, size: int = 64) -> List[str]:
         buffer = io.BytesIO()
         img_resized.save(buffer, format='JPEG')
         img_bytes = buffer.getvalue()
-        img64 = 'data:image/png;base64,%s' % str(base64.b64encode(img_bytes))[2:-1]
+        img64 = 'data:image/png;base64,%s' % str(
+            base64.b64encode(img_bytes))[2:-1]
         imgs_b64.append(img64)
 
     return imgs_b64
@@ -55,10 +56,10 @@ def tensor2images(tensor: Tensor, size: int = 64) -> List[str]:
 
 def projector(embeddings: FloatTensor,
               labels: List[Any] = None,
-              class_mapping: List[int] = None,
-              images: Tensor = None,
+              class_mapping: Optional[List[int]] = None,
+              images: Optional[Tensor] = None,
               image_size: int = 64,
-              tooltips_info: Dict[str, List[str]] = None,
+              tooltips_info: Optional[Dict[str, List[str]]] = None,
               pt_size: int = 3,
               colorize: bool = True,
               pastel_factor: float = 0.1,
@@ -68,17 +69,31 @@ def projector(embeddings: FloatTensor,
     """Visualize the embeddings in 2D or 3D using UMAP projection
 
     Args:
-        embeddings: [description]
-        labels: [description]
-        class_mapping: [description]
+        embeddings: The embeddings outputed by the model that
+        are to be visualized
+
+        labels: Labels associated with the embeddings. If not supplied treat
+        each example as its own classes.
+
+        class_mapping: Dictionary or list that maps the class numerical ids
+        to their name.
+
         images: Images to display in tooltip on hover. Usually x_test tensor.
-        pt_size: Size of the points displayed,
-        image_size:
-        tooltips_info:
-        colorize:
-        pastel_factor:
+
+        image_size: size of the images displayed in the tool tip.
+        Defaults to 64.
+
+        pt_size: Size of the points displayed on the visualization.
+        Defaults to 3.
+
+        tooltips_info: Dictionary of information to display in the tooltips.
+
+        colorize: Colorize the clusters. Defaults to true.
+
+        pastel_factor: Modify the color palette to be more pastel.
+
         densmap: Use UMAP dense mapper which provides better density
-        estimation but is a little slower.
+        estimation but is a little slower. Defaults to True.
     """
 
     print("perfoming projection using UMAP")
@@ -122,10 +137,11 @@ def projector(embeddings: FloatTensor,
     if labels is not None and colorize:
         # generate colors
         colors = {}
-        for idx, c in enumerate(distinctipy.get_colors(num_classes,
-                                                       pastel_factor=pastel_factor)):
+        for idx, c in enumerate(
+                distinctipy.get_colors(num_classes,
+                                       pastel_factor=pastel_factor)):
             # this is needed as labels can be strings or int or else
-            cls_id  = class_list[idx]
+            cls_id = class_list[idx]
             colors[cls_id] = distinctipy.get_hex(c)
 
         # map point to their color
