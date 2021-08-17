@@ -9,7 +9,7 @@ from tensorflow_similarity.types import Lookup, Tensor
 
 
 MAX_K = 0
-TARGETS_LABELS = 1
+TARGET_LABELS = 1
 NUM_MATCHED = 2
 NUM_UNMATCHED = 3
 INDEX_SIZE = 4
@@ -19,7 +19,7 @@ MATCH_LABELS = 7
 
 TEST_VECTORS = [[
     3,  # max_k
-    [1, 2, 3, 4],  # targets_labels
+    [1, 2, 3, 4],  # target_labels
     30,  # index size
     [2, 1, 2, 0],  # match_ranks
     [0.1, 0.2, 0.3, 0],  # match_distances

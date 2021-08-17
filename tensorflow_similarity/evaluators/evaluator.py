@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Union
-from tensorflow_similarity.metrics import EvalMetric
+from tensorflow_similarity._metrics import EvalMetric
 from tensorflow_similarity.types import Lookup
 
 
@@ -17,7 +17,7 @@ class Evaluator(ABC):
     def evaluate(self,
                  index_size: int,
                  metrics: List[Union[str, EvalMetric]],
-                 targets_labels: List[int],
+                 target_labels: List[int],
                  lookups: List[List[Lookup]],
                  distance_rounding: int = 8
                  ) -> Dict[str, Union[float, int]]:
@@ -28,7 +28,7 @@ class Evaluator(ABC):
 
             metrics: List of `EvalMetric()` to evaluate lookup matches against.
 
-            targets_labels: List of the expected labels to match.
+            target_labels: List of the expected labels to match.
 
             lookups: List of lookup results as produced by the
             `Index().batch_lookup()` method.
@@ -46,7 +46,7 @@ class Evaluator(ABC):
                   index_size: int,
                   calibration_metric: EvalMetric,
                   thresholds_targets: Dict[str, float],
-                  targets_labels: List[int],
+                  target_labels: List[int],
                   lookups: List[List[Lookup]],
                   extra_metrics: List[Union[str, EvalMetric]] = [],
                   distance_rounding: int = 8,
@@ -63,7 +63,7 @@ class Evaluator(ABC):
             thresholds_targets: Calibration metrics thresholds that are
             targeted. The function will find the closed distance value.
 
-            targets_labels: List of expected labels for the lookups.
+            target_labels: List of expected labels for the lookups.
 
             lookup: List of lookup results as produced by the
             `Index.batch_lookup()` method.

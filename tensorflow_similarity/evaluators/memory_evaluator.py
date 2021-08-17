@@ -5,7 +5,7 @@ from .evaluator import Evaluator
 from collections import defaultdict
 import tensorflow as tf
 from typing import DefaultDict, List, Dict, Union
-from tensorflow_similarity.metrics import EvalMetric, make_metric
+from tensorflow_similarity._metrics import EvalMetric, make_metric
 from tensorflow_similarity.types import Lookup
 
 
@@ -15,7 +15,7 @@ class MemoryEvaluator(Evaluator):
     def evaluate(self,
                  index_size: int,
                  metrics: List[Union[str, EvalMetric]],
-                 targets_labels: List[int],
+                 target_labels: List[int],
                  lookups: List[List[Lookup]],
                  distance_rounding: int = 8
                  ) -> Dict[str, Union[float, int]]:
@@ -26,7 +26,7 @@ class MemoryEvaluator(Evaluator):
 
             metrics: List of `EvalMetric()` to evaluate lookup matches against.
 
-            targets_labels: List of the expected labels to match.
+            target_labels: List of the expected labels to match.
 
             lookups: List of lookup results as produced by the
             `Index().batch_lookup()` method.
@@ -51,13 +51,13 @@ class MemoryEvaluator(Evaluator):
         # rank 0 == no match / distance 0 == unknown
 
         # match_ranks and match_distances will be zeros like
-        # len(targets_labels). The max matching rank will be stored if a match
+        # len(target_labels). The max matching rank will be stored if a match
         # exists. On the first non-matching neighbor, the code will move onto
         # the next set of lookups.
-        match_ranks = [0] * len(targets_labels)
-        match_distances = [0.0] * len(targets_labels)
+        match_ranks = [0] * len(target_labels)
+        match_distances = [0.0] * len(target_labels)
         for lidx, lookup in enumerate(lookups):
-            true_label = targets_labels[lidx]
+            true_label = target_labels[lidx]
             for nidx, n in enumerate(lookup):
                 rank = nidx + 1
                 if n.label != true_label:
@@ -72,7 +72,7 @@ class MemoryEvaluator(Evaluator):
         for m in eval_metrics:
             evaluation[m.name] = m.compute(
                 max_k,
-                targets_labels,
+                target_labels,
                 index_size,
                 match_ranks,
                 match_distances,
@@ -85,7 +85,7 @@ class MemoryEvaluator(Evaluator):
                   index_size: int,
                   calibration_metric: EvalMetric,
                   thresholds_targets: Dict[str, float],
-                  targets_labels: List[int],
+                  target_labels: List[int],
                   lookups: List[List[Lookup]],
                   extra_metrics: List[Union[str, EvalMetric]] = [],
                   distance_rounding: int = 8,
@@ -102,7 +102,7 @@ class MemoryEvaluator(Evaluator):
             thresholds_targets: Calibration metrics thresholds that are
             targeted. The function will find the closed distance value.
 
-            targets_labels: List of expected labels for the lookups.
+            target_labels: List of expected labels for the lookups.
 
             lookup: List of lookup results as produced by the
             `Index.batch_lookup()` method.
@@ -137,7 +137,7 @@ class MemoryEvaluator(Evaluator):
             for n in lu:
                 distances.append(round(n.distance, distance_rounding))
 
-        targets_labels = [int(i) for i in targets_labels]
+        target_labels = [int(i) for i in target_labels]
 
         # sorting them
         # distances is in contiguous blocks of neighbor distances
@@ -160,7 +160,7 @@ class MemoryEvaluator(Evaluator):
                 if isinstance(m, EvalMetric):  # typechecking requires this
                     m.distance_threshold = dist
 
-            res = self.evaluate(index_size, combined_metrics, targets_labels,
+            res = self.evaluate(index_size, combined_metrics, target_labels,
                                 lookups, distance_rounding)
             res['distance'] = float(dist)  # ! cast needed for serialization
             evaluations.append(res)

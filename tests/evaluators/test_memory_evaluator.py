@@ -61,7 +61,7 @@ def test_evaluate():
         [
             30,  # index size
             [MinRank(), MaxRank()],  # metrics
-            [1, 2, 3, 4, 5, 6, 7],  # targets_labels
+            [1, 2, 3, 4, 5, 6, 7],  # target_labels
             [  # lookups
                 [
                     Lookup(rank=0, label=21, distance=0.01),
