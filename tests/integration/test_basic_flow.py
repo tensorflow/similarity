@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.python.keras.saving.save import load_model
 from tensorflow_similarity.losses import TripletLoss
-from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.models import SimilarityModel
 from tensorflow_similarity.samplers import MultiShotMemorySampler
 from tensorflow_similarity.distance_metrics import dist_gap, min_neg, max_pos
@@ -57,7 +56,8 @@ def test_basic_flow(tmp_path):
     inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS, ))
     # dont use x as variable
     m = tf.keras.layers.Dense(8, activation='relu')(inputs)
-    outputs = MetricEmbedding(4)(m)
+    m = tf.keras.layers.Dense(4, activation='relu')(m)
+    outputs = tf.keras.layers.Dense(4)(m)
     model = SimilarityModel(inputs, outputs)
 
     # loss
@@ -71,7 +71,7 @@ def test_basic_flow(tmp_path):
     model.compile(optimizer='adam', metrics=metrics, loss=triplet_loss)
 
     # train
-    history = model.fit(sampler, epochs=10)
+    history = model.fit(sampler, epochs=15)
 
     # check that history is properly filled
     assert 'loss' in history.history

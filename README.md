@@ -58,11 +58,13 @@ are doing research or building innovative products.
 
 ## What's new
 
-- August 2021 (v0.13.x): Added many new contrastives losses
-including Circle Loss, PNLoss, LiftedStructure Loss and
-Multisimilarity Loss.
+- [Aug 21]: Interactive embedding `projector()` added. See this [notebook](examples/supervized_visualization/)
+- [Aug 21]: `CircleLoss()` added
+- [Aug 21]: `PNLoss()` added.
+- [Aug 21]: `MultiSimilarityLoss()` added.
 
-For previous changes - see the [changelog -- Fixme](FIXME)
+
+For previous changes - see [the release changelog](.releases.md)
 
 ## Getting Started
 
@@ -90,14 +92,13 @@ For more information about specific functions, you can [check the API documentat
 
 ```python
 from tensorflow_similarity.samplers import TFDatasetMultiShotMemorySampler
-spl = TFDatasetMultiShotMemorySampler(dataset_name='mnist', class_per_batch=10)
+sampler = TFDatasetMultiShotMemorySampler(dataset_name='mnist', class_per_batch=10)
 ```
 
 ### Building a Similarity model
 
 ```python
 from tensorflow.keras import layers
-from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.models import SimilarityModel
 inputs = layers.Input(shape=(spl.x[0].shape))
 x = layers.experimental.preprocessing.Rescaling(1/255)(inputs)
@@ -105,7 +106,7 @@ x = layers.Conv2D(32, 7, activation='relu')(x)
 x = layers.MaxPool2D()(x)
 x = layers.Conv2D(64, 3, activation='relu')(x)
 x = layers.Flatten()(x)
-x = MetricEmbedding(64)(x)
+x = layers.Dense(64)(x)
 model = SimilarityModel(inputs, x)
 ```
 
@@ -128,10 +129,10 @@ from tensorflow_similarity.visualization import viz_neigbors_imgs
 model.index(x=sampler.x[:100], y=sampler.y[:100], data=sampler.x[:100])
 
 # Lookup examples nearest indexed images
-nns = model.single_lookup(sampler.x[4242])
+nns = model.single_lookup(sampler.x[3713])
 
 # visualize results result
-viz_neigbors_imgs(sampler.x[4242], sampler.y[4242], nns)
+viz_neigbors_imgs(sampler.x[3713], sampler.y[3713], nns)
 ```
 
 
