@@ -1,13 +1,13 @@
-from tensorflow_similarity import callbacks
-from tensorflow_similarity import distance_metrics
-from tensorflow_similarity import distances
-from tensorflow_similarity import evaluators
-from tensorflow_similarity import indexer
-from tensorflow_similarity import losses
-from tensorflow_similarity import matchers
-from tensorflow_similarity import metrics
-from tensorflow_similarity import models
-from tensorflow_similarity import samplers
-from tensorflow_similarity import tables
-from tensorflow_similarity import visualization
-
+from tensorflow_similarity import callbacks  # noqa
+from tensorflow_similarity import distance_metrics  # noqa
+from tensorflow_similarity import distances  # noqa
+from tensorflow_similarity import evaluators  # noqa
+from tensorflow_similarity import indexer  # noqa
+from tensorflow_similarity import layers  # noqa
+from tensorflow_similarity import losses  # noqa
+from tensorflow_similarity import matchers  # noqa
+from tensorflow_similarity import metrics  # noqa
+from tensorflow_similarity import models  # noqa
+from tensorflow_similarity import samplers  # noqa
+from tensorflow_similarity import tables  # noqa
+from tensorflow_similarity import visualization  # noqa

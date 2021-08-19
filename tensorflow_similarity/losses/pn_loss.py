@@ -145,7 +145,7 @@ class PNLoss(MetricLoss):
                  negative_mining_strategy: str = 'semi-hard',
                  soft_margin: bool = False,
                  margin: float = 1.0,
-                 name: str = None):
+                 name: str = 'PNLoss'):
         """Initializes the PN Loss
 
         Args:
@@ -166,7 +166,7 @@ class PNLoss(MetricLoss):
             margin: Use an explicit value for the margin
             term. Defaults to 1.0.
 
-            name: Loss name. Defaults to None.
+            name: Loss name. Defaults to PNLoss.
 
         Raises:
             ValueError: Invalid positive mining strategy.
