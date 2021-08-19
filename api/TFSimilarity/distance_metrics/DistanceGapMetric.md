@@ -117,39 +117,42 @@ class BinaryTruePositives(tf.keras.metrics.Metric):
 
 ## Methods
 
-<h3 id="reset_state"><code>reset_state</code></h3>
+<h3 id="reset_state">reset_state</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>reset_state()
-</code></pre>
+```python
+reset_state()
+```
+
 
 Resets all of the metric state variables.
 
 This function is called between epochs/steps,
 when a metric is evaluated during training.
 
-<h3 id="result"><code>result</code></h3>
+<h3 id="result">result</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distance_metrics.py#L114-L115">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>result()
-</code></pre>
+```python
+result()
+```
+
 
 Computes and returns the metric value tensor.
 
 Result computation is an idempotent operation that simply calculates the
 metric value using the state variables.
 
-<h3 id="update_state"><code>update_state</code></h3>
+<h3 id="update_state">update_state</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distance_metrics.py#L109-L112">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>update_state(
+```python
+update_state(
     labels, embeddings, sample_weight
 )
-</code></pre>
+```
+
 
 Accumulates statistics for the metric.
 

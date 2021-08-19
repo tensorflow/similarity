@@ -13,8 +13,6 @@ TFSimilarity.indexer.Lookup(
     distance: float,
     label: Optional[int] = None,
     embedding: Optional[np.ndarray] = None,
-```
-
 )
 ```
 
@@ -119,15 +117,16 @@ Default None.
 
 ## Methods
 
-<h3 id="__eq__"><code>__eq__</code></h3>
+<h3 id="__eq__">__eq__</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/types.py#L136-L150">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__eq__(
+```python
+__eq__(
     other
 ) -> bool
-</code></pre>
+```
+
 
 Return self==value.
 

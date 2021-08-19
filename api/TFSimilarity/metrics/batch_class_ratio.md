@@ -8,8 +8,6 @@ Computes the average number of examples per class within each batch.
 
 ```python
 TFSimilarity.metrics.batch_class_ratio(
-```
-
     num_batches: int = 100
 ) -> float
 ```

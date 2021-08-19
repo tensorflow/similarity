@@ -100,120 +100,131 @@ Return len(self).
 
 ## Methods
 
-<h3 id="append"><code>append</code></h3>
+<h3 id="append">append</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>append(
+```python
+append(
     object, /
 )
-</code></pre>
+```
+
 
 Append object to the end of the list.
 
 
-<h3 id="clear"><code>clear</code></h3>
+<h3 id="clear">clear</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>clear()
-</code></pre>
+```python
+clear()
+```
+
 
 Remove all items from list.
 
 
-<h3 id="copy"><code>copy</code></h3>
+<h3 id="copy">copy</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>copy()
-</code></pre>
+```python
+copy()
+```
+
 
 Return a shallow copy of the list.
 
 
-<h3 id="count"><code>count</code></h3>
+<h3 id="count">count</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>count(
+```python
+count(
     value, /
 )
-</code></pre>
+```
+
 
 Return number of occurrences of value.
 
 
-<h3 id="extend"><code>extend</code></h3>
+<h3 id="extend">extend</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>extend(
+```python
+extend(
     iterable, /
 )
-</code></pre>
+```
+
 
 Extend list by appending elements from the iterable.
 
 
-<h3 id="index"><code>index</code></h3>
+<h3 id="index">index</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>index(
+```python
+index(
     value, start, stop, /
 )
-</code></pre>
+```
+
 
 Return first index of value.
 
 Raises ValueError if the value is not present.
 
-<h3 id="insert"><code>insert</code></h3>
+<h3 id="insert">insert</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>insert(
+```python
+insert(
     index, object, /
 )
-</code></pre>
+```
+
 
 Insert object before index.
 
 
-<h3 id="pop"><code>pop</code></h3>
+<h3 id="pop">pop</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>pop(
+```python
+pop(
     index, /
 )
-</code></pre>
+```
+
 
 Remove and return item at index (default last).
 
 Raises IndexError if list is empty or index is out of range.
 
-<h3 id="remove"><code>remove</code></h3>
+<h3 id="remove">remove</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>remove(
+```python
+remove(
     value, /
 )
-</code></pre>
+```
+
 
 Remove first occurrence of value.
 
 Raises ValueError if the value is not present.
 
-<h3 id="reverse"><code>reverse</code></h3>
+<h3 id="reverse">reverse</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>reverse()
-</code></pre>
+```python
+reverse()
+```
+
 
 Reverse *IN PLACE*.
 
 
-<h3 id="sort"><code>sort</code></h3>
+<h3 id="sort">sort</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>sort(
+```python
+sort(
     *, key=None, reverse=False
 )
-</code></pre>
+```
+
 
 Sort the list in ascending order and return None.
 
@@ -225,121 +236,132 @@ ascending or descending, according to their function values.
 
 The reverse flag can be set to sort in descending order.
 
-<h3 id="__add__"><code>__add__</code></h3>
+<h3 id="__add__">__add__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__add__(
+```python
+__add__(
     value, /
 )
-</code></pre>
+```
+
 
 Return self+value.
 
 
-<h3 id="__contains__"><code>__contains__</code></h3>
+<h3 id="__contains__">__contains__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__contains__(
+```python
+__contains__(
     key, /
 )
-</code></pre>
+```
+
 
 Return key in self.
 
 
-<h3 id="__eq__"><code>__eq__</code></h3>
+<h3 id="__eq__">__eq__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__eq__(
+```python
+__eq__(
     value, /
 )
-</code></pre>
+```
+
 
 Return self==value.
 
 
-<h3 id="__ge__"><code>__ge__</code></h3>
+<h3 id="__ge__">__ge__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__ge__(
+```python
+__ge__(
     value, /
 )
-</code></pre>
+```
+
 
 Return self>=value.
 
 
-<h3 id="__getitem__"><code>__getitem__</code></h3>
+<h3 id="__getitem__">__getitem__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__getitem__()
-</code></pre>
+```python
+__getitem__()
+```
+
 
 x.__getitem__(y) <==> x[y]
 
 
-<h3 id="__gt__"><code>__gt__</code></h3>
+<h3 id="__gt__">__gt__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__gt__(
+```python
+__gt__(
     value, /
 )
-</code></pre>
+```
+
 
 Return self>value.
 
 
-<h3 id="__le__"><code>__le__</code></h3>
+<h3 id="__le__">__le__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__le__(
+```python
+__le__(
     value, /
 )
-</code></pre>
+```
+
 
 Return self<=value.
 
 
-<h3 id="__lt__"><code>__lt__</code></h3>
+<h3 id="__lt__">__lt__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__lt__(
+```python
+__lt__(
     value, /
 )
-</code></pre>
+```
+
 
 Return self<value.
 
 
-<h3 id="__mul__"><code>__mul__</code></h3>
+<h3 id="__mul__">__mul__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__mul__(
+```python
+__mul__(
     value, /
 )
-</code></pre>
+```
+
 
 Return self*value.
 
 
-<h3 id="__ne__"><code>__ne__</code></h3>
+<h3 id="__ne__">__ne__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__ne__(
+```python
+__ne__(
     value, /
 )
-</code></pre>
+```
+
 
 Return self!=value.
 
 
-<h3 id="__rmul__"><code>__rmul__</code></h3>
+<h3 id="__rmul__">__rmul__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__rmul__(
+```python
+__rmul__(
     value, /
 )
-</code></pre>
+```
+
 
 Return value*self.
 

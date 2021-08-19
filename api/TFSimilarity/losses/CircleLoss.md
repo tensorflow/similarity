@@ -10,8 +10,6 @@ Inherits From: [`MetricLoss`](../../TFSimilarity/losses/MetricLoss.md)
 
 ```python
 TFSimilarity.losses.CircleLoss(
-```
-
     gamma: float = 80.0,
     margin: float = 0.4,
     name: str = None
@@ -84,14 +82,17 @@ Loss name. Defaults to None.
 
 ## Methods
 
-<h3 id="from_config"><code>from_config</code></h3>
+<h3 id="from_config">from_config</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@classmethod</code>
-<code>from_config(
+``<b>python
+@classmethod</b>``
+
+```python
+from_config(
     config
 )
-</code></pre>
+```
+
 
 Instantiates a <b>Loss</b> from its config (output of <b>get_config()</b>).
 
@@ -127,24 +128,26 @@ A <b>Loss</b> instance.
 
 
 
-<h3 id="get_config"><code>get_config</code></h3>
+<h3 id="get_config">get_config</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/metric_loss.py#L57-L70">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>get_config() -> Dict[str, Any]
-</code></pre>
+```python
+get_config() -> Dict[str, Any]
+```
+
 
 Returns the config dictionary for a <b>Loss</b> instance.
 
 
-<h3 id="__call__"><code>__call__</code></h3>
+<h3 id="__call__">__call__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__call__(
+```python
+__call__(
     y_true, y_pred, sample_weight=None
 )
-</code></pre>
+```
+
 
 Invokes the <b>Loss</b> instance.
 

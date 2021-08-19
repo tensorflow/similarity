@@ -10,11 +10,7 @@ Inherits From: [`Callback`](../../TFSimilarity/callbacks/Callback.md)
 
 ```python
 TFSimilarity.callbacks.EvalCallback(
-```
-
     query_labels: List[int],
-```
-
     target_labels: List[int],
     distance: str = cosine,
     metrics: List[Union[str, EvalMetric]] = [accuracy, mean_rank],
@@ -102,24 +98,26 @@ How many neigboors to retrive for evaluation. Defaults to 1.
 
 ## Methods
 
-<h3 id="set_model"><code>set_model</code></h3>
+<h3 id="set_model">set_model</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>set_model(
+```python
+set_model(
     model
 )
-</code></pre>
+```
 
 
 
 
-<h3 id="set_params"><code>set_params</code></h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>set_params(
+<h3 id="set_params">set_params</h3>
+
+```python
+set_params(
     params
 )
-</code></pre>
+```
+
 
 
 

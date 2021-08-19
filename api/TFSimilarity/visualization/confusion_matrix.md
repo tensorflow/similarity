@@ -8,13 +8,7 @@ Plot confusion matrix
 
 ```python
 TFSimilarity.visualization.confusion_matrix(
-```
-
-```
-
     normalize: bool = (True),
-```
-
     title: str = Confusion matrix,
     cmap: str = Blues
 )

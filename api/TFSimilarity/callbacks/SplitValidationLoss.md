@@ -10,10 +10,6 @@ Inherits From: [`Callback`](../../TFSimilarity/callbacks/Callback.md)
 
 ```python
 TFSimilarity.callbacks.SplitValidationLoss(
-```
-
-```
-
     known_classes: np.ndarray
 )
 ```
@@ -144,24 +140,26 @@ The labels associated with the unknown examples.
 
 ## Methods
 
-<h3 id="set_model"><code>set_model</code></h3>
+<h3 id="set_model">set_model</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>set_model(
+```python
+set_model(
     model
 )
-</code></pre>
+```
 
 
 
 
-<h3 id="set_params"><code>set_params</code></h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>set_params(
+<h3 id="set_params">set_params</h3>
+
+```python
+set_params(
     params
 )
-</code></pre>
+```
+
 
 
 

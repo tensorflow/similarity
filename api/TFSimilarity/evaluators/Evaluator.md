@@ -17,14 +17,15 @@ a remote database.
 
 ## Methods
 
-<h3 id="calibrate"><code>calibrate</code></h3>
+<h3 id="calibrate">calibrate</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/evaluator.py#L44-L81">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>calibrate(
+```python
+calibrate(
     index_size: int,
-    calibration_metric: <a href="../../TFSimilarity/callbacks/EvalMetric.md"><code>TFSimilarity.callbacks.EvalMetric</code></a>,
+    calibration_metric: <a href="../../TFSimilarity/callbacks/EvalMetric.md">TFSimilarity.callbacks.EvalMetric```
+</a>,
     thresholds_targets: Dict[str, float],
     targets_labels: List[int],
     lookups: List[List[Lookup]],
@@ -33,7 +34,8 @@ a remote database.
     metric_rounding: int = 6,
     verbose: int = 1
 )
-</code></pre>
+```
+
 
 Computes the distances thresholds that the calibration much match to
 meet fixed target.
@@ -116,19 +118,20 @@ Be verbose. Defaults to 1.
 
 
 
-<h3 id="evaluate"><code>evaluate</code></h3>
+<h3 id="evaluate">evaluate</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/evaluator.py#L16-L42">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>evaluate(
+```python
+evaluate(
     index_size: int,
     metrics: List[Union[str, EvalMetric]],
     targets_labels: List[int],
     lookups: List[List[Lookup]],
     distance_rounding: int = 8
 ) -> Dict[str, Union[float, int]]
-</code></pre>
+```
+
 
 Evaluates lookup performances against a supplied set of metrics
 

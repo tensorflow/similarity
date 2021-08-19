@@ -8,12 +8,8 @@ Computes the maximum values over masked pairwise distances.
 
 ```python
 TFSimilarity.distance_metrics.masked_max(
-```
-
     mask: BoolTensor,
     dim: int = 1
-```
-
 ```
 
 

@@ -56,45 +56,51 @@ Public API for read-only member access.
 
 ## Methods
 
-<h3 id="as_completed"><code>as_completed</code></h3>
+<h3 id="as_completed">as_completed</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@classmethod</code>
-<code>as_completed(
+``<b>python
+@classmethod</b>``
+
+```python
+as_completed(
     fs, *, loop=None, timeout=None, total=None, **tqdm_kwargs
 )
-</code></pre>
+```
+
 
 Wrapper for <b>asyncio.as_completed</b>.
 
 
-<h3 id="clear"><code>clear</code></h3>
+<h3 id="clear">clear</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>clear(
+```python
+clear(
     nolock=(False)
 )
-</code></pre>
+```
+
 
 Clear current bar display.
 
 
-<h3 id="close"><code>close</code></h3>
+<h3 id="close">close</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>close()
-</code></pre>
+```python
+close()
+```
+
 
 Cleanup and (if leave=False) close the progressbar.
 
 
-<h3 id="display"><code>display</code></h3>
+<h3 id="display">display</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>display(
+```python
+display(
     msg=None, pos=None
 )
-</code></pre>
+```
+
 
 Use <b>self.sp</b> to display <b>msg</b> in the specified <b>pos</b>.
 
@@ -107,26 +113,32 @@ msg  : str, optional. What to display (default: <b>repr(self)</b>).
 pos  : int, optional. Position to <b>moveto</b>
   (default: <b>abs(self.pos)</b>).
 
-<h3 id="external_write_mode"><code>external_write_mode</code></h3>
+<h3 id="external_write_mode">external_write_mode</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@classmethod</code>
-<code>external_write_mode(
+``<b>python
+@classmethod</b>``
+
+```python
+external_write_mode(
     file=None, nolock=(False)
 )
-</code></pre>
+```
+
 
 Disable tqdm within context and refresh tqdm when exits.
 Useful when writing to standard output stream
 
-<h3 id="format_interval"><code>format_interval</code></h3>
+<h3 id="format_interval">format_interval</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@staticmethod</code>
-<code>format_interval(
+``<b>python
+@staticmethod</b>``
+
+```python
+format_interval(
     t
 )
-</code></pre>
+```
+
 
 Formats a number of seconds as a clock time, [H:]MM:SS
 
@@ -140,16 +152,19 @@ Returns
 out  : str
     [H:]MM:SS
 
-<h3 id="format_meter"><code>format_meter</code></h3>
+<h3 id="format_meter">format_meter</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@staticmethod</code>
-<code>format_meter(
-    n, total, elapsed, ncols=None, prefix=&#x27;&#x27;, ascii=(False),
-    unit=&#x27;it&#x27;, unit_scale=(False), rate=None, bar_format=None,
+``<b>python
+@staticmethod</b>``
+
+```python
+format_meter(
+    n, total, elapsed, ncols=None, prefix=, ascii=(False),
+    unit=it, unit_scale=(False), rate=None, bar_format=None,
     postfix=None, unit_divisor=1000, initial=0, colour=None, **extra_kwargs
 )
-</code></pre>
+```
+
 
 Return a string-based progress bar given some parameters
 
@@ -214,14 +229,17 @@ Returns
 -------
 out  : Formatted meter and stats, ready to display.
 
-<h3 id="format_num"><code>format_num</code></h3>
+<h3 id="format_num">format_num</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@staticmethod</code>
-<code>format_num(
+``<b>python
+@staticmethod</b>``
+
+```python
+format_num(
     n
 )
-</code></pre>
+```
+
 
 Intelligent scientific notation (.3g).
 
@@ -235,12 +253,14 @@ Returns
 out  : str
     Formatted number.
 
-<h3 id="format_sizeof"><code>format_sizeof</code></h3>
+<h3 id="format_sizeof">format_sizeof</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@staticmethod</code>
-<code>format_sizeof(
-    num, suffix=&#x27;&## # Now you can use <b>progress_apply</b> instead of <b>apply</b>
+``<b>python
+@staticmethod</b>``
+
+```python
+format_sizeof(
+    num, suffix=&## # Now you can use <b>progress_apply</b> instead of <b>apply</b>
 >>> df.groupby(0).progress_apply(lambda x: x**2)
 ```
 
@@ -248,13 +268,14 @@ References
 ----------
 <https://stackoverflow.com/questions/18603270/        progress-indicator-during-pandas-operations-python>
 
-<h3 id="refresh"><code>refresh</code></h3>
+<h3 id="refresh">refresh</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>refresh(
+```python
+refresh(
     nolock=(False), lock_args=None
 )
-</code></pre>
+```
+
 
 Force refresh the display of this bar.
 
@@ -267,13 +288,14 @@ lock_args  : tuple, optional
     Passed to internal lock's <b>acquire()</b>.
     If specified, will only <b>display()</b> if <b>acquire()</b> returns <b>True</b>.
 
-<h3 id="reset"><code>reset</code></h3>
+<h3 id="reset">reset</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>reset(
+```python
+reset(
     total=None
 )
-</code></pre>
+```
+
 
 Resets to 0 iterations for repeated use.
 
@@ -283,24 +305,26 @@ Parameters
 ----------
 total  : int or float, optional. Total to use for the new bar.
 
-<h3 id="send"><code>send</code></h3>
+<h3 id="send">send</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>send(
+```python
+send(
     *args, **kwargs
 )
-</code></pre>
+```
 
 
 
 
-<h3 id="set_description"><code>set_description</code></h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>set_description(
+<h3 id="set_description">set_description</h3>
+
+```python
+set_description(
     desc=None, refresh=(True)
 )
-</code></pre>
+```
+
 
 Set/modify description of the progress bar.
 
@@ -310,36 +334,41 @@ desc  : str, optional
 refresh  : bool, optional
     Forces refresh [default: True].
 
-<h3 id="set_description_str"><code>set_description_str</code></h3>
+<h3 id="set_description_str">set_description_str</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>set_description_str(
+```python
+set_description_str(
     desc=None, refresh=(True)
 )
-</code></pre>
+```
+
 
 Set/modify description without ': ' appended.
 
 
-<h3 id="set_lock"><code>set_lock</code></h3>
+<h3 id="set_lock">set_lock</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@classmethod</code>
-<code>set_lock(
+``<b>python
+@classmethod</b>``
+
+```python
+set_lock(
     lock
 )
-</code></pre>
+```
+
 
 Set the global lock.
 
 
-<h3 id="set_postfix"><code>set_postfix</code></h3>
+<h3 id="set_postfix">set_postfix</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>set_postfix(
+```python
+set_postfix(
     ordered_dict=None, refresh=(True), **kwargs
 )
-</code></pre>
+```
+
 
 Set/modify postfix (additional stats)
 with automatic formatting based on datatype.
@@ -351,11 +380,11 @@ refresh  : bool, optional
     Forces refresh [default: True].
 kwargs  : dict, optional
 
-<h3 id="set_postfix_str"><code>set_postfix_str</code></h3>
+<h3 id="set_postfix_str">set_postfix_str</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>set_postfix_str(
-    s=&#x27;&## Initialise
+```python
+set_postfix_str(
+    s=&## Initialise
 >>> for current_buffer in stream:
 ...    ...
 ...    t.update(len(current_buffer))
@@ -377,14 +406,17 @@ Returns
 out  : bool or None
     True if a <b>display()</b> was triggered.
 
-<h3 id="wrapattr"><code>wrapattr</code></h3>
+<h3 id="wrapattr">wrapattr</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@classmethod</code>
-<code>wrapattr(
+``<b>python
+@classmethod</b>``
+
+```python
+wrapattr(
     stream, method, total=None, bytes=(True), **tqdm_kwargs
 )
-</code></pre>
+```
+
 
 stream  : file-like object.
 method  : str, "read" or "write". The result of <b>read()</b> and
@@ -398,136 +430,151 @@ method  : str, "read" or "write". The result of <b>read()</b> and
 ...             break
 ```
 
-<h3 id="write"><code>write</code></h3>
+<h3 id="write">write</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@classmethod</code>
-<code>write(
-    s, file=None, end=&#x27;\n&#x27;, nolock=(False)
+``<b>python
+@classmethod</b>``
+
+```python
+write(
+    s, file=None, end=\n, nolock=(False)
 )
-</code></pre>
+```
+
 
 Print a message via tqdm (without overlap with bars).
 
 
-<h3 id="__bool__"><code>__bool__</code></h3>
+<h3 id="__bool__">__bool__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__bool__()
-</code></pre>
-
-
-
-
-<h3 id="__enter__"><code>__enter__</code></h3>
-
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__enter__()
-</code></pre>
+```python
+__bool__()
+```
 
 
 
 
-<h3 id="__eq__"><code>__eq__</code></h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__eq__(
+<h3 id="__enter__">__enter__</h3>
+
+```python
+__enter__()
+```
+
+
+
+
+
+<h3 id="__eq__">__eq__</h3>
+
+```python
+__eq__(
     other
 )
-</code></pre>
+```
+
 
 Return self==value.
 
 
-<h3 id="__exit__"><code>__exit__</code></h3>
+<h3 id="__exit__">__exit__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__exit__(
+```python
+__exit__(
     exc_type, exc_value, traceback
 )
-</code></pre>
+```
 
 
 
 
-<h3 id="__ge__"><code>__ge__</code></h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__ge__(
+<h3 id="__ge__">__ge__</h3>
+
+```python
+__ge__(
     other
 )
-</code></pre>
+```
+
 
 Return self>=value.
 
 
-<h3 id="__gt__"><code>__gt__</code></h3>
+<h3 id="__gt__">__gt__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__gt__(
+```python
+__gt__(
     other
 )
-</code></pre>
+```
+
 
 Return self>value.
 
 
-<h3 id="__iter__"><code>__iter__</code></h3>
+<h3 id="__iter__">__iter__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__iter__()
-</code></pre>
+```python
+__iter__()
+```
+
 
 Backward-compatibility to use: for x in tqdm(iterable)
 
 
-<h3 id="__le__"><code>__le__</code></h3>
+<h3 id="__le__">__le__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__le__(
+```python
+__le__(
     other
 )
-</code></pre>
+```
+
 
 Return self<=value.
 
 
-<h3 id="__len__"><code>__len__</code></h3>
+<h3 id="__len__">__len__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__len__()
-</code></pre>
-
-
+```python
+__len__()
+```
 
 
-<h3 id="__lt__"><code>__lt__</code></h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__lt__(
+
+
+<h3 id="__lt__">__lt__</h3>
+
+```python
+__lt__(
     other
 )
-</code></pre>
+```
+
 
 Return self<value.
 
 
-<h3 id="__ne__"><code>__ne__</code></h3>
+<h3 id="__ne__">__ne__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__ne__(
+```python
+__ne__(
     other
 )
-</code></pre>
+```
+
 
 Return self!=value.
 
 
-<h3 id="__nonzero__"><code>__nonzero__</code></h3>
+<h3 id="__nonzero__">__nonzero__</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>__nonzero__()
-</code></pre>
+```python
+__nonzero__()
+```
+
 
 
 
