@@ -64,7 +64,7 @@ are doing research or building innovative products.
 - [Aug 21]: `MultiSimilarityLoss()` added.
 
 
-For previous changes - see [the release changelog](.releases.md)
+For previous changes - see [the release changelog](./releases.md)
 
 ## Getting Started
 
@@ -83,7 +83,7 @@ with TensorFlow Similarity. There is likely to be one that is similar to
 your data or your problem (if not, let us know). You can start working with
 the examples immediately in Google Colab by clicking the Google colab icon.
 
-For more information about specific functions, you can [check the API documentation]('api/')
+For more information about specific functions, you can [check the API documentation](api/)
 
 
 ## Example: MNIST similarity
@@ -172,7 +172,7 @@ The default `Index()` sub-compoments run in-memory and are optimized to be used 
 The default implementation can scale up to medium deployement (1M-10M+ points) easily provided the computers used have enough memory. For very large scale deployement you will need to sublcass the compoments to match your own architetctue. See FIXME colab to see how to deploy TF simialrity in production.
 
 
-For more information about a given component head to the [API documentation](FIXME) or read [the TensorFlow Similarity paper](FIXME).
+For more information about a given component head to the [API documentation](api/) or read [the TensorFlow Similarity paper](FIXME).
 
 
 ## Citing
