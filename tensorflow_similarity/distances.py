@@ -91,8 +91,8 @@ class CosineDistance(Distance):
         """
         distances = 1 - tf.linalg.matmul(
                 embeddings, embeddings, transpose_b=True)
-        distances = tf.math.maximum(distances, 0.0)
-        return distances
+        min_clip_distances: FloatTensor = tf.math.maximum(distances, 0.0)
+        return min_clip_distances
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")

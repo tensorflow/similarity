@@ -31,10 +31,12 @@ def test_readme_minimal():
     model.fit(sampler, epochs=5)
 
     # Index 100 embedded MNIST examples to make them searchable
-    model.index(x=sampler.x[:100], y=sampler.y[:100], data=sampler.x[:100])
+    sx, sy = sampler.get_slice(0, 100)
+    model.index(x=sx, y=sy, data=sx)
 
     # Find the top 5 most similar indexed MNIST examples for a given example
-    nns = model.single_lookup(sampler.x[3713])
+    qx, qy = sampler.get_slice(3713, 1)
+    nns = model.single_lookup(qx[0])
 
     # Visualize the query example and its top 5 neighbors
-    viz_neigbors_imgs(sampler.x[3713], sampler.y[3713], nns)
+    viz_neigbors_imgs(qx[0], qy[0], nns)
