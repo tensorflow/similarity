@@ -1,6 +1,7 @@
 # The file is used to list the public API for document generation purpose.
 from tensorflow_similarity import architectures
 from tensorflow_similarity import evaluators
+from tensorflow_similarity import layers
 from tensorflow_similarity import losses
 from tensorflow_similarity import metrics
 from tensorflow_similarity import matchers

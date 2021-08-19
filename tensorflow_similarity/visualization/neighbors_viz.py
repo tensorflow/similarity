@@ -32,7 +32,7 @@ def viz_neigbors_imgs(example: Tensor,
     plt.xticks([])
     plt.yticks([])
 
-    val = class_mapping[example_class] if class_mapping else example_class
+    val = class_mapping[example_class] if class_mapping else str(example_class)
     plt.title(val)
     plt_idx += 1
 

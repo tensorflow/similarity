@@ -63,8 +63,10 @@ def select_examples(x: FloatTensor,
             idxs.extend(class_idxs)
 
     random.shuffle(idxs)
+    idxs = tf.constant(idxs)
+
     with tf.device("/cpu:0"):
-        batch_x = tf.gather(x, idxs)
-        batch_y = tf.gather(y, idxs)
+        batch_x = tf.gather_nd(x, indices=tf.reshape(idxs, (-1, 1)))
+        batch_y = tf.gather(y, indices=idxs)
 
     return batch_x, batch_y

@@ -126,7 +126,7 @@ class TripletLoss(MetricLoss):
                  negative_mining_strategy: str = 'semi-hard',
                  soft_margin: bool = False,
                  margin: float = 1.0,
-                 name: str = None):
+                 name: str = 'TripletLoss'):
         """Initializes the TripletLoss
 
         Args:
@@ -147,7 +147,7 @@ class TripletLoss(MetricLoss):
             margin: Use an explicit value for the margin
             term. Defaults to 1.0.
 
-            name: Loss name. Defaults to None.
+            name: Loss name. Defaults to TripletLoss.
 
         Raises:
             ValueError: Invalid positive mining strategy.
