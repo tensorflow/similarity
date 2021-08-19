@@ -1,14 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.indexer.F1Score" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="compute"/>
-<meta itemprop="property" content="compute_retrival_metrics"/>
-<meta itemprop="property" content="filter_ranks"/>
-<meta itemprop="property" content="from_config"/>
-<meta itemprop="property" content="get_config"/>
-</div>
 # TFSimilarity.indexer.F1Score
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

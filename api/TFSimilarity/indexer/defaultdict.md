@@ -1,32 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.indexer.defaultdict" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__contains__"/>
-<meta itemprop="property" content="__eq__"/>
-<meta itemprop="property" content="__ge__"/>
-<meta itemprop="property" content="__getitem__"/>
-<meta itemprop="property" content="__gt__"/>
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="__iter__"/>
-<meta itemprop="property" content="__le__"/>
-<meta itemprop="property" content="__len__"/>
-<meta itemprop="property" content="__lt__"/>
-<meta itemprop="property" content="__ne__"/>
-<meta itemprop="property" content="__new__"/>
-<meta itemprop="property" content="clear"/>
-<meta itemprop="property" content="copy"/>
-<meta itemprop="property" content="fromkeys"/>
-<meta itemprop="property" content="get"/>
-<meta itemprop="property" content="items"/>
-<meta itemprop="property" content="keys"/>
-<meta itemprop="property" content="pop"/>
-<meta itemprop="property" content="popitem"/>
-<meta itemprop="property" content="setdefault"/>
-<meta itemprop="property" content="update"/>
-<meta itemprop="property" content="values"/>
-<meta itemprop="property" content="default_factory"/>
-</div>
 # TFSimilarity.indexer.defaultdict
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

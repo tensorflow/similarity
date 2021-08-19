@@ -1,7 +1,3 @@
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.architectures" />
-<meta itemprop="path" content="Stable" />
-</div>
 # Module: TFSimilarity.architectures
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">
@@ -16,4 +12,4 @@
 
 
 ## Functions
-[`EfficientNetSim(...)`](../TFSimilarity/architectures/EfficientNetSim.md): Build an EffecientNet Model backbone for similarity learning
+- [`EfficientNetSim(...)`](../TFSimilarity/architectures/EfficientNetSim.md): Build an EffecientNet Model backbone for similarity learning

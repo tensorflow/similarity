@@ -1,8 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.samplers.TFRecordDatasetSampler" />
-<meta itemprop="path" content="Stable" />
-</div>
 # TFSimilarity.samplers.TFRecordDatasetSampler
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">
@@ -42,7 +37,7 @@ there is no need to worry about shuffling. Somewhat contigious means
 its fine to have the same class in multiples shards as long as the
 examples for the same classes are contigious in that shard.
 Overall the way we make the sampling process is by using the
-[tf.dataset.interleaves](https://www.tensorflow.org/api_docs/python/tf/data/Dataset#interleave)
+- [tf.dataset.interleaves](https://www.tensorflow.org/api_docs/python/tf/data/Dataset#interleave)
 in a non orthodox way: we use its `block_length` to control the
 number of example per class and rely on the parallelize &
 non_deterministic version of the API to do the sampling efficiently

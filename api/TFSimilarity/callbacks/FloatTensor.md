@@ -1,32 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.callbacks.FloatTensor" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__add__"/>
-<meta itemprop="property" content="__contains__"/>
-<meta itemprop="property" content="__eq__"/>
-<meta itemprop="property" content="__ge__"/>
-<meta itemprop="property" content="__getitem__"/>
-<meta itemprop="property" content="__gt__"/>
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="__le__"/>
-<meta itemprop="property" content="__lt__"/>
-<meta itemprop="property" content="__mul__"/>
-<meta itemprop="property" content="__ne__"/>
-<meta itemprop="property" content="__new__"/>
-<meta itemprop="property" content="__rmul__"/>
-<meta itemprop="property" content="append"/>
-<meta itemprop="property" content="clear"/>
-<meta itemprop="property" content="copy"/>
-<meta itemprop="property" content="count"/>
-<meta itemprop="property" content="extend"/>
-<meta itemprop="property" content="index"/>
-<meta itemprop="property" content="insert"/>
-<meta itemprop="property" content="pop"/>
-<meta itemprop="property" content="remove"/>
-<meta itemprop="property" content="reverse"/>
-<meta itemprop="property" content="sort"/>
-</div>
 # TFSimilarity.callbacks.FloatTensor
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

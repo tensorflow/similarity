@@ -1,7 +1,3 @@
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.utils" />
-<meta itemprop="path" content="Stable" />
-</div>
 # Module: TFSimilarity.utils
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">
@@ -16,5 +12,5 @@
 
 
 ## Functions
-[`is_tensor_or_variable(...)`](../TFSimilarity/utils/is_tensor_or_variable.md): check if a variable is tf.Tensor or tf.Variable
-[`tf_cap_memory(...)`](../TFSimilarity/utils/tf_cap_memory.md): Avoid TF to hog memory before needing it
+- [`is_tensor_or_variable(...)`](../TFSimilarity/utils/is_tensor_or_variable.md): check if a variable is tf.Tensor or tf.Variable
+- [`tf_cap_memory(...)`](../TFSimilarity/utils/tf_cap_memory.md): Avoid TF to hog memory before needing it

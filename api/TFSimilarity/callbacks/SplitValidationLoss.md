@@ -1,11 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.callbacks.SplitValidationLoss" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="set_model"/>
-<meta itemprop="property" content="set_params"/>
-</div>
 # TFSimilarity.callbacks.SplitValidationLoss
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

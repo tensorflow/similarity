@@ -1,7 +1,3 @@
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.matchers" />
-<meta itemprop="path" content="Stable" />
-</div>
 # Module: TFSimilarity.matchers
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">
@@ -16,5 +12,5 @@
 
 
 ## Classes
-[`class Matcher`](../TFSimilarity/indexer/Matcher.md): Helper class that provides a standard way to create an ABC using
-[`class NMSLibMatcher`](../TFSimilarity/indexer/NMSLibMatcher.md): Efficiently find nearest embeddings by indexing known embeddings and make
+- [`class Matcher`](../TFSimilarity/indexer/Matcher.md): Helper class that provides a standard way to create an ABC using
+- [`class NMSLibMatcher`](../TFSimilarity/indexer/NMSLibMatcher.md): Efficiently find nearest embeddings by indexing known embeddings and make

@@ -1,7 +1,3 @@
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.distance_metrics.sum_neg" />
-<meta itemprop="path" content="Stable" />
-</div>
 # TFSimilarity.distance_metrics.sum_neg
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

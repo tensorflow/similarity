@@ -1,8 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.utils.tf_cap_memory" />
-<meta itemprop="path" content="Stable" />
-</div>
 # TFSimilarity.utils.tf_cap_memory
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

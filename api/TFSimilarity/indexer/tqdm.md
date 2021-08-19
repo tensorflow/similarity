@@ -1,50 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.indexer.tqdm" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__bool__"/>
-<meta itemprop="property" content="__enter__"/>
-<meta itemprop="property" content="__eq__"/>
-<meta itemprop="property" content="__exit__"/>
-<meta itemprop="property" content="__ge__"/>
-<meta itemprop="property" content="__gt__"/>
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="__iter__"/>
-<meta itemprop="property" content="__le__"/>
-<meta itemprop="property" content="__len__"/>
-<meta itemprop="property" content="__lt__"/>
-<meta itemprop="property" content="__ne__"/>
-<meta itemprop="property" content="__new__"/>
-<meta itemprop="property" content="__nonzero__"/>
-<meta itemprop="property" content="as_completed"/>
-<meta itemprop="property" content="clear"/>
-<meta itemprop="property" content="close"/>
-<meta itemprop="property" content="display"/>
-<meta itemprop="property" content="external_write_mode"/>
-<meta itemprop="property" content="format_interval"/>
-<meta itemprop="property" content="format_meter"/>
-<meta itemprop="property" content="format_num"/>
-<meta itemprop="property" content="format_sizeof"/>
-<meta itemprop="property" content="gather"/>
-<meta itemprop="property" content="get_lock"/>
-<meta itemprop="property" content="moveto"/>
-<meta itemprop="property" content="pandas"/>
-<meta itemprop="property" content="refresh"/>
-<meta itemprop="property" content="reset"/>
-<meta itemprop="property" content="send"/>
-<meta itemprop="property" content="set_description"/>
-<meta itemprop="property" content="set_description_str"/>
-<meta itemprop="property" content="set_lock"/>
-<meta itemprop="property" content="set_postfix"/>
-<meta itemprop="property" content="set_postfix_str"/>
-<meta itemprop="property" content="status_printer"/>
-<meta itemprop="property" content="unpause"/>
-<meta itemprop="property" content="update"/>
-<meta itemprop="property" content="wrapattr"/>
-<meta itemprop="property" content="write"/>
-<meta itemprop="property" content="monitor"/>
-<meta itemprop="property" content="monitor_interval"/>
-</div>
 # TFSimilarity.indexer.tqdm
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">
@@ -240,76 +193,7 @@ out  : str
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>@staticmethod</code>
 <code>format_sizeof(
-    num, suffix=&#x27;&#x27;, divisor=1000
-)
-</code></pre>
-Formats a number (greater than unity) with SI Order of Magnitude
-prefixes.
-Parameters
-----------
-num  : float
-    Number ( >= 1) to format.
-suffix  : str, optional
-    Post-postfix [default: ''].
-divisor  : float, optional
-    Divisor between prefixes [default: 1000].
-Returns
--------
-out  : str
-    Number with Order of Magnitude SI unit postfix.
-<h3 id="gather"><code>gather</code></h3>
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>gather(
-    *fs, loop=None, timeout=None, total=None, **tqdm_kwargs
-)
-</code></pre>
-Wrapper for `asyncio.gather`.
-
-<h3 id="get_lock"><code>get_lock</code></h3>
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@classmethod</code>
-<code>get_lock()
-</code></pre>
-Get the global lock. Construct it if it does not exist.
-
-<h3 id="moveto"><code>moveto</code></h3>
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>moveto(
-    n
-)
-</code></pre>
-
-
-<h3 id="pandas"><code>pandas</code></h3>
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@classmethod</code>
-<code>pandas(
-    **tqdm_kwargs
-)
-</code></pre>
-Registers the current `tqdm` class with
-    pandas.core.
-    ( frame.DataFrame
-    | series.Series
-    | groupby.(generic.)DataFrameGroupBy
-    | groupby.(generic.)SeriesGroupBy
-    ).progress_apply
-A new instance will be create every time `progress_apply` is called,
-and each instance will automatically `close()` upon completion.
-Parameters
-----------
-tqdm_kwargs  : arguments for the tqdm instance
-Examples
---------
-```
->>> import pandas as pd
->>> import numpy as np
->>> from tqdm import tqdm
->>> from tqdm.gui import tqdm as tqdm_gui
->>>
->>> df = pd.DataFrame(np.random.randint(0, 100, (100000, 6)))
->>> tqdm.pandas(ncols=50)  # can use tqdm_gui, optional kwargs, etc
->>> # Now you can use `progress_apply` instead of `apply`
+    num, suffix=&#x27;&## # Now you can use `progress_apply` instead of `apply`
 >>> df.groupby(0).progress_apply(lambda x: x**2)
 ```
 References
@@ -395,38 +279,7 @@ kwargs  : dict, optional
 <h3 id="set_postfix_str"><code>set_postfix_str</code></h3>
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>set_postfix_str(
-    s=&#x27;&#x27;, refresh=(True)
-)
-</code></pre>
-Postfix without dictionary expansion, similar to prefix handling.
-
-<h3 id="status_printer"><code>status_printer</code></h3>
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@staticmethod</code>
-<code>status_printer(
-    file
-)
-</code></pre>
-Manage the printing and in-place updating of a line of characters.
-Note that if the string is longer than a line, then in-place
-updating may not work (it will print a new line at each refresh).
-<h3 id="unpause"><code>unpause</code></h3>
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>unpause()
-</code></pre>
-Restart tqdm timer from last print time.
-
-<h3 id="update"><code>update</code></h3>
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>update(
-    n=1
-)
-</code></pre>
-Manually update the progress bar, useful for streams
-such as reading files.
-E.g.:
-```
->>> t = tqdm(total=filesize) # Initialise
+    s=&#x27;&## Initialise
 >>> for current_buffer in stream:
 ...    ...
 ...    t.update(len(current_buffer))

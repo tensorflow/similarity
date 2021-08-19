@@ -1,10 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.evaluators.Evaluator" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="calibrate"/>
-<meta itemprop="property" content="evaluate"/>
-</div>
 # TFSimilarity.evaluators.Evaluator
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

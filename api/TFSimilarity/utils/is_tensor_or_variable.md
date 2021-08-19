@@ -1,8 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.utils.is_tensor_or_variable" />
-<meta itemprop="path" content="Stable" />
-</div>
 # TFSimilarity.utils.is_tensor_or_variable
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

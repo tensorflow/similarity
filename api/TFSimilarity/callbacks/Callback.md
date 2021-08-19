@@ -1,27 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.callbacks.Callback" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="on_batch_begin"/>
-<meta itemprop="property" content="on_batch_end"/>
-<meta itemprop="property" content="on_epoch_begin"/>
-<meta itemprop="property" content="on_epoch_end"/>
-<meta itemprop="property" content="on_predict_batch_begin"/>
-<meta itemprop="property" content="on_predict_batch_end"/>
-<meta itemprop="property" content="on_predict_begin"/>
-<meta itemprop="property" content="on_predict_end"/>
-<meta itemprop="property" content="on_test_batch_begin"/>
-<meta itemprop="property" content="on_test_batch_end"/>
-<meta itemprop="property" content="on_test_begin"/>
-<meta itemprop="property" content="on_test_end"/>
-<meta itemprop="property" content="on_train_batch_begin"/>
-<meta itemprop="property" content="on_train_batch_end"/>
-<meta itemprop="property" content="on_train_begin"/>
-<meta itemprop="property" content="on_train_end"/>
-<meta itemprop="property" content="set_model"/>
-<meta itemprop="property" content="set_params"/>
-</div>
 # TFSimilarity.callbacks.Callback
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

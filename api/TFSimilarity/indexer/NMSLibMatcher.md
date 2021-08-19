@@ -1,15 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.indexer.NMSLibMatcher" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="add"/>
-<meta itemprop="property" content="batch_add"/>
-<meta itemprop="property" content="batch_lookup"/>
-<meta itemprop="property" content="load"/>
-<meta itemprop="property" content="lookup"/>
-<meta itemprop="property" content="save"/>
-</div>
 # TFSimilarity.indexer.NMSLibMatcher
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">
