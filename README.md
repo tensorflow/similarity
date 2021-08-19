@@ -83,7 +83,7 @@ with TensorFlow Similarity. There is likely to be one that is similar to
 your data or your problem (if not, let us know). You can start working with
 the examples immediately in Google Colab by clicking the Google colab icon.
 
-For more information about specific functions, you can [check the API documentation -- FIXME]()
+For more information about specific functions, you can [check the API documentation]('api/')
 
 
 ## Example: MNIST similarity
@@ -151,7 +151,7 @@ viz_neigbors_imgs(sampler.x[3713], sampler.y[3713], nns)
 
 ## Package components
 
-![TensorFlow Similarity Overview](api/images/tfsim_overview.png)
+![TensorFlow Similarity Overview](assets/images/tfsim_overview.png)
 
 TensorFlow Similiarity, as visible in the diagram above, offers the following
 components to help research, train, evaluate and serve metric models:
