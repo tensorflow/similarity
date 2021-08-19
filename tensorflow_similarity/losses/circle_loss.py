@@ -149,7 +149,7 @@ class CircleLoss(MetricLoss):
                  distance: Union[Distance, str] = 'cosine',
                  gamma: float = 80.0,
                  margin: float = 0.40,
-                 name: str = None):
+                 name: str = 'CircleLoss'):
         """Initializes a CircleLoss
 
         Args:
@@ -166,7 +166,7 @@ class CircleLoss(MetricLoss):
             this distance negatives are down weighted and positive are up
             weighted. Defaults to 0.4.
 
-            name: Loss name. Defaults to None.
+            name: Loss name. Defaults to CircleLoss.
         """
 
         # distance canonicalization

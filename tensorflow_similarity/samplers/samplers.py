@@ -112,7 +112,7 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
         #     self.scheduler(self.epoch)
 
         self.epoch += 1
-        if self.epoch >= self.warmup and self.is_warmup > 0:
+        if self.is_warmup and (self.epoch >= self.warmup):
             print("Warmup complete")
             self.is_warmup = False
 
