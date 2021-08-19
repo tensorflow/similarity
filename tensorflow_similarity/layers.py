@@ -21,7 +21,8 @@ class MetricEmbedding(Layer):
 
     def call(self, inputs: FloatTensor) -> FloatTensor:
         x = self.dense(inputs)
-        return tf.math.l2_normalize(x, axis=1)
+        normed_x: FloatTensor = tf.math.l2_normalize(x, axis=1)
+        return normed_x
 
     def get_config(self) -> Dict[str, int]:
         return {'size': self.size}

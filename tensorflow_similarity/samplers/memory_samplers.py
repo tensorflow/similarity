@@ -1,6 +1,6 @@
 import random
 from collections import defaultdict
-from typing import Optional, Tuple, Sequence
+from typing import Optional, Tuple, TypeVar, Sequence
 
 import tensorflow as tf
 from tensorflow_similarity.types import FloatTensor, IntTensor, Tensor
@@ -8,6 +8,8 @@ from tqdm.auto import tqdm
 
 from .samplers import Augmenter, Sampler
 from .utils import select_examples
+
+T = TypeVar('T', FloatTensor, IntTensor)
 
 
 class MultiShotMemorySampler(Sampler):
@@ -154,29 +156,30 @@ class MultiShotMemorySampler(Sampler):
         Returns:
             A Tuple of FloatTensor and IntTensor
         """
-        slice_x = self._get_slice(self._x, begin, size)
-        slice_y = self._get_slice(self._y, begin, size)
+        slice_x: FloatTensor = self._get_slice(self._x, begin, size)
+        slice_y: IntTensor = self._get_slice(self._y, begin, size)
 
         return slice_x, slice_y
 
     def _get_slice(self,
-                   input_: Tensor,
+                   input_: T,
                    begin: int,
-                   size: int) -> Tensor:
+                   size: int) -> T:
         b = [0] * len(tf.shape(input_))
         b[0] = begin
         s = [-1] * len(tf.shape(input_))
         s[0] = size
 
-        return tf.slice(input_, b, s)
+        slice_: T = tf.slice(input_, b, s)
+        return slice_
 
     @property
     def num_examples(self) -> int:
         return len(self._x)
 
     @property
-    def example_shape(self) -> IntTensor:
-        return tf.shape(self._x[0])
+    def example_shape(self):
+        return self._x[0].shape
 
 
 class SingleShotMemorySampler(Sampler):
