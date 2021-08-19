@@ -1,68 +1,72 @@
 # TFSimilarity.callbacks.EvalCallback
-<!-- Insert buttons and diff -->
-<table class="tfo-notebook-buttons tfo-api nocontent" align="left">
-<td>
-  <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/callbacks.py#L14-L97">
-    <img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />
-    View source on GitHub
-  </a>
-</td>
-</table>
+
+
+
+
 
 Epoch end evaluation callback that build a test index and evaluate
+
 Inherits From: [`Callback`](../../TFSimilarity/callbacks/Callback.md)
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>TFSimilarity.callbacks.EvalCallback(
-    queries: <a href="../../TFSimilarity/callbacks/Tensor.md"><code>TFSimilarity.callbacks.Tensor</code></a>,
+
+```python
+TFSimilarity.callbacks.EvalCallback(
+```
+
     query_labels: List[int],
-    targets: <a href="../../TFSimilarity/callbacks/Tensor.md"><code>TFSimilarity.callbacks.Tensor</code></a>,
+```
+
     target_labels: List[int],
-    distance: str = &#x27;cosine&#x27;,
-    metrics: List[Union[str, EvalMetric]] = [&#x27;accuracy&#x27;, &#x27;mean_rank&#x27;],
+    distance: str = cosine,
+    metrics: List[Union[str, EvalMetric]] = [accuracy, mean_rank],
     tb_logdir: str = None,
     k: int = 1
 )
-</code></pre>
+```
+
+
 
 <!-- Placeholder for "Used in" -->
 model performance on it.
+
 This evaluation only run at epoch_end as it is computationally very
 expensive.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2"><h2 class="add-link">Args</h2></th></tr>
+
 <tr>
 <td>
-`queries`
+<b>queries</b>
 </td>
 <td>
 Test examples that will be tested against the built index.
 </td>
 </tr><tr>
 <td>
-`query_labels`
+<b>query_labels</b>
 </td>
 <td>
 Queries nearest neighboors expected labels.
 </td>
 </tr><tr>
 <td>
-`targets`
+<b>targets</b>
 </td>
 <td>
 Examples that are indexed.
 </td>
 </tr><tr>
 <td>
-`target_labels`
+<b>target_labels</b>
 </td>
 <td>
 Target examples labels.
 </td>
 </tr><tr>
 <td>
-`distance`
+<b>distance</b>
 </td>
 <td>
 Distance function used to compute pairwise distance
@@ -70,7 +74,7 @@ between examples embeddings.
 </td>
 </tr><tr>
 <td>
-`metrics`
+<b>metrics</b>
 </td>
 <td>
 List of [EvalMetrics](eval_metrics.md) to be computed
@@ -79,14 +83,14 @@ embedding to evaluate.
 </td>
 </tr><tr>
 <td>
-`tb_logdir`
+<b>tb_logdir</b>
 </td>
 <td>
 Where to write TensorBoard logs. Defaults to None.
 </td>
 </tr><tr>
 <td>
-`k`
+<b>k</b>
 </td>
 <td>
 How many neigboors to retrive for evaluation. Defaults to 1.
@@ -94,8 +98,12 @@ How many neigboors to retrive for evaluation. Defaults to 1.
 </tr>
 </table>
 
+
+
 ## Methods
+
 <h3 id="set_model"><code>set_model</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>set_model(
     model
@@ -103,12 +111,18 @@ How many neigboors to retrive for evaluation. Defaults to 1.
 </code></pre>
 
 
+
+
 <h3 id="set_params"><code>set_params</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>set_params(
     params
 )
 </code></pre>
+
+
+
 
 
 

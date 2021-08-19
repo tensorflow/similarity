@@ -1,112 +1,221 @@
 # All symbols in TensorFlow Similarity
-<!-- Insert buttons and diff -->
+
+
 ## Primary symbols
-*  <a href="../TFSimilarity.md"><code>TFSimilarity</code></a>
-*  <a href="../TFSimilarity/architectures.md"><code>TFSimilarity.architectures</code></a>
-*  <a href="../TFSimilarity/architectures/EfficientNetSim.md"><code>TFSimilarity.architectures.EfficientNetSim</code></a>
-*  <a href="../TFSimilarity/callbacks.md"><code>TFSimilarity.callbacks</code></a>
-*  <a href="../TFSimilarity/callbacks/Callback.md"><code>TFSimilarity.callbacks.Callback</code></a>
-*  <a href="../TFSimilarity/callbacks/EvalCallback.md"><code>TFSimilarity.callbacks.EvalCallback</code></a>
-*  <a href="../TFSimilarity/callbacks/EvalMetric.md"><code>TFSimilarity.callbacks.EvalMetric</code></a>
-*  <a href="../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.callbacks.FloatTensor</code></a>
-*  <a href="../TFSimilarity/callbacks/IntTensor.md"><code>TFSimilarity.callbacks.IntTensor</code></a>
-*  <a href="../TFSimilarity/callbacks/MemoryEvaluator.md"><code>TFSimilarity.callbacks.MemoryEvaluator</code></a>
-*  <a href="../TFSimilarity/callbacks/Path.md"><code>TFSimilarity.callbacks.Path</code></a>
-*  <a href="../TFSimilarity/callbacks/SplitValidationLoss.md"><code>TFSimilarity.callbacks.SplitValidationLoss</code></a>
-*  <a href="../TFSimilarity/callbacks/Tensor.md"><code>TFSimilarity.callbacks.Tensor</code></a>
-*  <a href="../TFSimilarity/callbacks/make_metric.md"><code>TFSimilarity.callbacks.make_metric</code></a>
-*  <a href="../TFSimilarity/distance_metrics.md"><code>TFSimilarity.distance_metrics</code></a>
-*  <a href="../TFSimilarity/distance_metrics/DistanceGapMetric.md"><code>TFSimilarity.distance_metrics.DistanceGapMetric</code></a>
-*  <a href="../TFSimilarity/distance_metrics/DistanceMetric.md"><code>TFSimilarity.distance_metrics.DistanceMetric</code></a>
-*  <a href="../TFSimilarity/distance_metrics/Metric.md"><code>TFSimilarity.distance_metrics.Metric</code></a>
-*  <a href="../TFSimilarity/distance_metrics/avg_neg.md"><code>TFSimilarity.distance_metrics.avg_neg</code></a>
-*  <a href="../TFSimilarity/distance_metrics/avg_pos.md"><code>TFSimilarity.distance_metrics.avg_pos</code></a>
-*  <a href="../TFSimilarity/distance_metrics/build_masks.md"><code>TFSimilarity.distance_metrics.build_masks</code></a>
-*  <a href="../TFSimilarity/distance_metrics/dist_gap.md"><code>TFSimilarity.distance_metrics.dist_gap</code></a>
-*  <a href="../TFSimilarity/distance_metrics/distance_canonicalizer.md"><code>TFSimilarity.distance_metrics.distance_canonicalizer</code></a>
-*  <a href="../TFSimilarity/distance_metrics/masked_max.md"><code>TFSimilarity.distance_metrics.masked_max</code></a>
-*  <a href="../TFSimilarity/distance_metrics/masked_min.md"><code>TFSimilarity.distance_metrics.masked_min</code></a>
-*  <a href="../TFSimilarity/distance_metrics/max_neg.md"><code>TFSimilarity.distance_metrics.max_neg</code></a>
-*  <a href="../TFSimilarity/distance_metrics/max_pos.md"><code>TFSimilarity.distance_metrics.max_pos</code></a>
-*  <a href="../TFSimilarity/distance_metrics/min_neg.md"><code>TFSimilarity.distance_metrics.min_neg</code></a>
-*  <a href="../TFSimilarity/distance_metrics/min_pos.md"><code>TFSimilarity.distance_metrics.min_pos</code></a>
-*  <a href="../TFSimilarity/distance_metrics/sum_neg.md"><code>TFSimilarity.distance_metrics.sum_neg</code></a>
-*  <a href="../TFSimilarity/distance_metrics/sum_pos.md"><code>TFSimilarity.distance_metrics.sum_pos</code></a>
-*  <a href="../TFSimilarity/distances.md"><code>TFSimilarity.distances</code></a>
-*  <a href="../TFSimilarity/distances/ABC.md"><code>TFSimilarity.distances.ABC</code></a>
-*  <a href="../TFSimilarity/distances/CosineDistance.md"><code>TFSimilarity.distances.CosineDistance</code></a>
-*  <a href="../TFSimilarity/distances/Distance.md"><code>TFSimilarity.distances.Distance</code></a>
-*  <a href="../TFSimilarity/distances/EuclideanDistance.md"><code>TFSimilarity.distances.EuclideanDistance</code></a>
-*  <a href="../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.distances.FloatTensor</code></a>
-*  <a href="../TFSimilarity/distances/InnerProductSimilarity.md"><code>TFSimilarity.distances.InnerProductSimilarity</code></a>
-*  <a href="../TFSimilarity/distances/ManhattanDistance.md"><code>TFSimilarity.distances.ManhattanDistance</code></a>
-*  <a href="../TFSimilarity/distances/SquaredEuclideanDistance.md"><code>TFSimilarity.distances.SquaredEuclideanDistance</code></a>
-*  <a href="../TFSimilarity/distance_metrics/distance_canonicalizer.md"><code>TFSimilarity.distances.distance_canonicalizer</code></a>
-*  <a href="../TFSimilarity/evaluators.md"><code>TFSimilarity.evaluators</code></a>
-*  <a href="../TFSimilarity/evaluators/Evaluator.md"><code>TFSimilarity.evaluators.Evaluator</code></a>
-*  <a href="../TFSimilarity/callbacks/MemoryEvaluator.md"><code>TFSimilarity.evaluators.MemoryEvaluator</code></a>
-*  <a href="../TFSimilarity/indexer.md"><code>TFSimilarity.indexer</code></a>
-*  <a href="../TFSimilarity/distances/Distance.md"><code>TFSimilarity.indexer.Distance</code></a>
-*  <a href="../TFSimilarity/callbacks/EvalMetric.md"><code>TFSimilarity.indexer.EvalMetric</code></a>
-*  <a href="../TFSimilarity/evaluators/Evaluator.md"><code>TFSimilarity.indexer.Evaluator</code></a>
-*  <a href="../TFSimilarity/indexer/F1Score.md"><code>TFSimilarity.indexer.F1Score</code></a>
-*  <a href="../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.indexer.FloatTensor</code></a>
-*  <a href="../TFSimilarity/indexer/Indexer.md"><code>TFSimilarity.indexer.Indexer</code></a>
-*  <a href="../TFSimilarity/indexer/Lookup.md"><code>TFSimilarity.indexer.Lookup</code></a>
-*  <a href="../TFSimilarity/indexer/Matcher.md"><code>TFSimilarity.indexer.Matcher</code></a>
-*  <a href="../TFSimilarity/callbacks/MemoryEvaluator.md"><code>TFSimilarity.indexer.MemoryEvaluator</code></a>
-*  <a href="../TFSimilarity/indexer/MemoryTable.md"><code>TFSimilarity.indexer.MemoryTable</code></a>
-*  <a href="../TFSimilarity/indexer/NMSLibMatcher.md"><code>TFSimilarity.indexer.NMSLibMatcher</code></a>
-*  <a href="../TFSimilarity/indexer/PandasDataFrame.md"><code>TFSimilarity.indexer.PandasDataFrame</code></a>
-*  <a href="../TFSimilarity/callbacks/Path.md"><code>TFSimilarity.indexer.Path</code></a>
-*  <a href="../TFSimilarity/indexer/Table.md"><code>TFSimilarity.indexer.Table</code></a>
-*  <a href="../TFSimilarity/callbacks/Tensor.md"><code>TFSimilarity.indexer.Tensor</code></a>
-*  <a href="../TFSimilarity/indexer/defaultdict.md"><code>TFSimilarity.indexer.defaultdict</code></a>
-*  <a href="../TFSimilarity/indexer/deque.md"><code>TFSimilarity.indexer.deque</code></a>
-*  <a href="../TFSimilarity/distance_metrics/distance_canonicalizer.md"><code>TFSimilarity.indexer.distance_canonicalizer</code></a>
-*  <a href="../TFSimilarity/callbacks/make_metric.md"><code>TFSimilarity.indexer.make_metric</code></a>
-*  <a href="../TFSimilarity/indexer/tabulate.md"><code>TFSimilarity.indexer.tabulate</code></a>
-*  <a href="../TFSimilarity/indexer/time.md"><code>TFSimilarity.indexer.time</code></a>
-*  <a href="../TFSimilarity/indexer/tqdm.md"><code>TFSimilarity.indexer.tqdm</code></a>
-*  <a href="../TFSimilarity/losses.md"><code>TFSimilarity.losses</code></a>
-*  <a href="../TFSimilarity/losses/CircleLoss.md"><code>TFSimilarity.losses.CircleLoss</code></a>
-*  <a href="../TFSimilarity/losses/MetricLoss.md"><code>TFSimilarity.losses.MetricLoss</code></a>
-*  <a href="../TFSimilarity/losses/MultiSimilarityLoss.md"><code>TFSimilarity.losses.MultiSimilarityLoss</code></a>
-*  <a href="../TFSimilarity/losses/PNLoss.md"><code>TFSimilarity.losses.PNLoss</code></a>
-*  <a href="../TFSimilarity/losses/TripletLoss.md"><code>TFSimilarity.losses.TripletLoss</code></a>
-*  <a href="../TFSimilarity/matchers.md"><code>TFSimilarity.matchers</code></a>
-*  <a href="../TFSimilarity/indexer/Matcher.md"><code>TFSimilarity.matchers.Matcher</code></a>
-*  <a href="../TFSimilarity/indexer/NMSLibMatcher.md"><code>TFSimilarity.matchers.NMSLibMatcher</code></a>
-*  <a href="../TFSimilarity/metrics.md"><code>TFSimilarity.metrics</code></a>
-*  <a href="../TFSimilarity/distances/ABC.md"><code>TFSimilarity.metrics.ABC</code></a>
-*  <a href="../TFSimilarity/metrics/Accuracy.md"><code>TFSimilarity.metrics.Accuracy</code></a>
-*  <a href="../TFSimilarity/callbacks/EvalMetric.md"><code>TFSimilarity.metrics.EvalMetric</code></a>
-*  <a href="../TFSimilarity/indexer/F1Score.md"><code>TFSimilarity.metrics.F1Score</code></a>
-*  <a href="../TFSimilarity/metrics/FIXMEPrecision.md"><code>TFSimilarity.metrics.FIXMEPrecision</code></a>
-*  <a href="../TFSimilarity/indexer/Lookup.md"><code>TFSimilarity.metrics.Lookup</code></a>
-*  <a href="../TFSimilarity/metrics/MaxRank.md"><code>TFSimilarity.metrics.MaxRank</code></a>
-*  <a href="../TFSimilarity/metrics/MeanRank.md"><code>TFSimilarity.metrics.MeanRank</code></a>
-*  <a href="../TFSimilarity/metrics/MinRank.md"><code>TFSimilarity.metrics.MinRank</code></a>
-*  <a href="../TFSimilarity/metrics/Recall.md"><code>TFSimilarity.metrics.Recall</code></a>
-*  <a href="../TFSimilarity/metrics/Sampler.md"><code>TFSimilarity.metrics.Sampler</code></a>
-*  <a href="../TFSimilarity/metrics/batch_class_ratio.md"><code>TFSimilarity.metrics.batch_class_ratio</code></a>
-*  <a href="../TFSimilarity/callbacks/make_metric.md"><code>TFSimilarity.metrics.make_metric</code></a>
-*  <a href="../TFSimilarity/metrics/make_metrics.md"><code>TFSimilarity.metrics.make_metrics</code></a>
-*  <a href="../TFSimilarity/models.md"><code>TFSimilarity.models</code></a>
-*  <a href="../TFSimilarity/models/SimilarityModel.md"><code>TFSimilarity.models.SimilarityModel</code></a>
-*  <a href="../TFSimilarity/samplers.md"><code>TFSimilarity.samplers</code></a>
-*  <a href="../TFSimilarity/samplers/MultiShotMemorySampler.md"><code>TFSimilarity.samplers.MultiShotMemorySampler</code></a>
-*  <a href="../TFSimilarity/samplers/SingleShotMemorySampler.md"><code>TFSimilarity.samplers.SingleShotMemorySampler</code></a>
-*  <a href="../TFSimilarity/samplers/TFDatasetMultiShotMemorySampler.md"><code>TFSimilarity.samplers.TFDatasetMultiShotMemorySampler</code></a>
-*  <a href="../TFSimilarity/samplers/TFRecordDatasetSampler.md"><code>TFSimilarity.samplers.TFRecordDatasetSampler</code></a>
-*  <a href="../TFSimilarity/samplers/select_examples.md"><code>TFSimilarity.samplers.select_examples</code></a>
-*  <a href="../TFSimilarity/tables.md"><code>TFSimilarity.tables</code></a>
-*  <a href="../TFSimilarity/indexer/MemoryTable.md"><code>TFSimilarity.tables.MemoryTable</code></a>
-*  <a href="../TFSimilarity/indexer/Table.md"><code>TFSimilarity.tables.Table</code></a>
-*  <a href="../TFSimilarity/utils.md"><code>TFSimilarity.utils</code></a>
-*  <a href="../TFSimilarity/utils/is_tensor_or_variable.md"><code>TFSimilarity.utils.is_tensor_or_variable</code></a>
-*  <a href="../TFSimilarity/utils/tf_cap_memory.md"><code>TFSimilarity.utils.tf_cap_memory</code></a>
-*  <a href="../TFSimilarity/visualization.md"><code>TFSimilarity.visualization</code></a>
-*  <a href="../TFSimilarity/visualization/confusion_matrix.md"><code>TFSimilarity.visualization.confusion_matrix</code></a>
-*  <a href="../TFSimilarity/visualization/projector.md"><code>TFSimilarity.visualization.projector</code></a>
-*  <a href="../TFSimilarity/visualization/viz_neigbors_imgs.md"><code>TFSimilarity.visualization.viz_neigbors_imgs</code></a>
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```

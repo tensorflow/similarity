@@ -1,28 +1,22 @@
 # TFSimilarity.callbacks.MemoryEvaluator
-<!-- Insert buttons and diff -->
-<table class="tfo-notebook-buttons tfo-api nocontent" align="left">
-<td>
-  <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/memory_evaluator.py#L12-L255">
-    <img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />
-    View source on GitHub
-  </a>
-</td>
-</table>
+
+
+
+
 
 In memory index performance evaluation and calibration.
+
 Inherits From: [`Evaluator`](../../TFSimilarity/evaluators/Evaluator.md), [`ABC`](../../TFSimilarity/distances/ABC.md)
-<section class="expandable">
-  <h4 class="showalways">View aliases</h4>
-  <p>
-<b>Main aliases</b>
-<p>`TFSimilarity.evaluators.MemoryEvaluator`, `TFSimilarity.indexer.MemoryEvaluator`</p>
-</p>
-</section>
+
 <!-- Placeholder for "Used in" -->
 
+
 ## Methods
+
 <h3 id="calibrate"><code>calibrate</code></h3>
+
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/memory_evaluator.py#L80-L245">View source</a>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>calibrate(
     index_size: int,
@@ -36,29 +30,32 @@ Inherits From: [`Evaluator`](../../TFSimilarity/evaluators/Evaluator.md), [`ABC`
     verbose: int = 1
 )
 </code></pre>
+
 Computes the distances thresholds that the calibration much match to
 meet fixed target.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`index_size`
+<b>index_size</b>
 </td>
 <td>
 Index size.
 </td>
 </tr><tr>
 <td>
-`calibration_metric`
+<b>calibration_metric</b>
 </td>
 <td>
 Metric used for calibration.
 </td>
 </tr><tr>
 <td>
-`thresholds_targets`
+<b>thresholds_targets</b>
 </td>
 <td>
 Calibration metrics thresholds that are
@@ -66,22 +63,22 @@ targeted. The function will find the closed distance value.
 </td>
 </tr><tr>
 <td>
-`targets_labels`
+<b>targets_labels</b>
 </td>
 <td>
 List of expected labels for the lookups.
 </td>
 </tr><tr>
 <td>
-`lookup`
+<b>lookup</b>
 </td>
 <td>
 List of lookup results as produced by the
-`Index.batch_lookup()` method.
+<b>Index.batch_lookup()</b> method.
 </td>
 </tr><tr>
 <td>
-`extra_metrics`
+<b>extra_metrics</b>
 </td>
 <td>
 Additional metrics that should be computed and
@@ -89,7 +86,7 @@ reported as part of the calibration. Defaults to [].
 </td>
 </tr><tr>
 <td>
-`distance_rounding`
+<b>distance_rounding</b>
 </td>
 <td>
 How many digit to consider to
@@ -97,7 +94,7 @@ decide if the distance changed. Defaults to 8.
 </td>
 </tr><tr>
 <td>
-`metric_rounding`
+<b>metric_rounding</b>
 </td>
 <td>
 How many digit to consider to decide if
@@ -105,7 +102,7 @@ the metric changed. Defaults to 6.
 </td>
 </tr><tr>
 <td>
-`verbose`
+<b>verbose</b>
 </td>
 <td>
 Be verbose. Defaults to 1.
@@ -113,8 +110,12 @@ Be verbose. Defaults to 1.
 </tr>
 </table>
 
+
+
 <h3 id="evaluate"><code>evaluate</code></h3>
+
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/memory_evaluator.py#L15-L78">View source</a>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>evaluate(
     index_size: int,
@@ -124,44 +125,47 @@ Be verbose. Defaults to 1.
     distance_rounding: int = 8
 ) -> Dict[str, Union[float, int]]
 </code></pre>
+
 Evaluates lookup performances against a supplied set of metrics
+
 
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`index_size`
+<b>index_size</b>
 </td>
 <td>
 Size of the search index.
 </td>
 </tr><tr>
 <td>
-`metrics`
+<b>metrics</b>
 </td>
 <td>
-List of `EvalMetric()` to evaluate lookup matches against.
+List of <b>EvalMetric()</b> to evaluate lookup matches against.
 </td>
 </tr><tr>
 <td>
-`targets_labels`
+<b>targets_labels</b>
 </td>
 <td>
 List of the expected labels to match.
 </td>
 </tr><tr>
 <td>
-`lookups`
+<b>lookups</b>
 </td>
 <td>
 List of lookup results as produced by the
-`Index().batch_lookup()` method.
+<b>Index().batch_lookup()</b> method.
 </td>
 </tr><tr>
 <td>
-`distance_rounding`
+<b>distance_rounding</b>
 </td>
 <td>
 How many digit to consider to decide if
@@ -169,6 +173,8 @@ the distance changed. Defaults to 8.
 </td>
 </tr>
 </table>
+
+
 
 <!-- Tabular view -->
  <table class="responsive fixed orange">
@@ -180,6 +186,10 @@ Dictionnary of metric results where keys are the metric
 names and values are the metrics values.
 </td>
 </tr>
+
 </table>
+
+
+
 
 

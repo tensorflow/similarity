@@ -1,29 +1,33 @@
 # TFSimilarity.metrics.Recall
-<!-- Insert buttons and diff -->
-<table class="tfo-notebook-buttons tfo-api nocontent" align="left">
-<td>
-  <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/metrics.py#L280-L306">
-    <img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />
-    View source on GitHub
-  </a>
-</td>
-</table>
+
+
+
+
 
 Computing matcher recall at k for a given distance threshold
+
 Inherits From: [`EvalMetric`](../../TFSimilarity/callbacks/EvalMetric.md), [`ABC`](../../TFSimilarity/distances/ABC.md)
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>TFSimilarity.metrics.Recall(
+
+```python
+TFSimilarity.metrics.Recall(
     distance_threshold: float = 0.5,
     k: int = 1,
-    name=&#x27;recall&#x27;
+    name=recall
 ) -> None
-</code></pre>
+```
+
+
 
 <!-- Placeholder for "Used in" -->
+
 Recall formula: num_misses / num_queries
+
 ## Methods
+
 <h3 id="compute"><code>compute</code></h3>
+
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/metrics.py#L295-L306">View source</a>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>compute(
     max_k: int,
@@ -34,36 +38,39 @@ Recall formula: num_misses / num_queries
     lookups: List[List[Lookup]]
 ) -> float
 </code></pre>
+
 Compute the metric
+
 
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`max_k`
+<b>max_k</b>
 </td>
 <td>
 Number of neigboors considers during the retrieval.
 </td>
 </tr><tr>
 <td>
-`targets_labels`
+<b>targets_labels</b>
 </td>
 <td>
 Expected labels for the query. One label per query.
 </td>
 </tr><tr>
 <td>
-`index_size`
+<b>index_size</b>
 </td>
 <td>
 Total size of the index.
 </td>
 </tr><tr>
 <td>
-`match_ranks`
+<b>match_ranks</b>
 </td>
 <td>
 Minimal rank at which the targeted label is matched.
@@ -72,7 +79,7 @@ then match rank is 2. If there is no match then value 0.
 </td>
 </tr><tr>
 <td>
-`match_distances`
+<b>match_distances</b>
 </td>
 <td>
 Minimal distance at which the targeted label is
@@ -80,13 +87,15 @@ matched. Mirror the *match_rank* arg.
 </td>
 </tr><tr>
 <td>
-`lookups`
+<b>lookups</b>
 </td>
 <td>
 Full index lookup results to compute more advance metrics.
 </td>
 </tr>
 </table>
+
+
 
 <!-- Tabular view -->
  <table class="responsive fixed orange">
@@ -97,10 +106,15 @@ Full index lookup results to compute more advance metrics.
 metric results.
 </td>
 </tr>
+
 </table>
 
+
+
 <h3 id="compute_retrival_metrics"><code>compute_retrival_metrics</code></h3>
+
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/metrics.py#L137-L157">View source</a>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>compute_retrival_metrics(
     targets_labels: List[int],
@@ -109,8 +123,12 @@ metric results.
 </code></pre>
 
 
+
+
 <h3 id="filter_ranks"><code>filter_ranks</code></h3>
+
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/metrics.py#L89-L135">View source</a>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>filter_ranks(
     match_ranks: List[int],
@@ -120,19 +138,25 @@ metric results.
     distance: float = None
 ) -> List[int]
 </code></pre>
-Filter match ranks to only keep matches between `min_rank`
-and `max_rank` below a give distance.
+
+Filter match ranks to only keep matches between <b>min_rank</b>
+and <b>max_rank</b> below a give distance.
+
 #### Notes:
+
 Neigboors are order by ascending distance.
+
+
 
 
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`match_ranks`
+<b>match_ranks</b>
 </td>
 <td>
 Min rank at which the embedding match the correct
@@ -142,21 +166,23 @@ higher ranks that are from a different class.
 </td>
 </tr><tr>
 <td>
-`min_rank`
+<b>min_rank</b>
 </td>
 <td>
 Minimal rank to keep (inclusive). Defaults to 1.
 </td>
 </tr><tr>
 <td>
-`max_rank`
+<b>max_rank</b>
 </td>
 <td>
 Max rank to keep (inclusive). Defaults to None.
-If None will keep all ranks above `min_rank`
+If None will keep all ranks above <b>min_rank</b>
 </td>
 </tr>
 </table>
+
+
 
 <!-- Tabular view -->
  <table class="responsive fixed orange">
@@ -168,10 +194,15 @@ filtered ranks as a dense array with missing elements
 removed. len(filtered_ranks) <= len(match_ranks)
 </td>
 </tr>
+
 </table>
 
+
+
 <h3 id="from_config"><code>from_config</code></h3>
+
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/metrics.py#L39-L45">View source</a>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>@staticmethod</code>
 <code>from_config(
@@ -180,11 +211,18 @@ removed. len(filtered_ranks) <= len(match_ranks)
 </code></pre>
 
 
+
+
 <h3 id="get_config"><code>get_config</code></h3>
+
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/metrics.py#L30-L37">View source</a>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>get_config()
 </code></pre>
+
+
+
 
 
 
