@@ -1,21 +1,31 @@
 # TFSimilarity.callbacks.Callback
-<!-- Insert buttons and diff -->
-<table class="tfo-notebook-buttons tfo-api nocontent" align="left">
-</table>
+
+
+
+
+
 
 Abstract base class used to build new callbacks.
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>TFSimilarity.callbacks.Callback()
-</code></pre>
+
+```python
+TFSimilarity.callbacks.Callback()
+```
+
+
 
 <!-- Placeholder for "Used in" -->
-Callbacks can be passed to keras methods such as `fit`, `evaluate`, and
-`predict` in order to hook into the various stages of the model training and
+
+Callbacks can be passed to keras methods such as <b>fit</b>, <b>evaluate</b>, and
+<b>predict</b> in order to hook into the various stages of the model training and
 inference lifecycle.
-To create a custom callback, subclass `keras.callbacks.Callback` and override
+
+To create a custom callback, subclass <b>keras.callbacks.Callback</b> and override
 the method associated with the stage of interest. See
 https://www.tensorflow.org/guide/keras/custom_callback for more information.
+
 #### Example:
+
+
 
 ```
 >>> training_finished = False
@@ -29,14 +39,18 @@ https://www.tensorflow.org/guide/keras/custom_callback for more information.
 ...           callbacks=[MyCallback()])
 >>> assert training_finished == True
 ```
-If you want to use `Callback` objects in a custom training loop:
-1. You should pack all your callbacks into a single `callbacks.CallbackList`
+
+If you want to use <b>Callback</b> objects in a custom training loop:
+
+1. You should pack all your callbacks into a single <b>callbacks.CallbackList</b>
    so they can all be called together.
-2. You will need to manually call all the `on_*` methods at the apropriate
+2. You will need to manually call all the <b>on_*</b> methods at the apropriate
    locations in your loop. Like this:
+
    ```
    callbacks =  tf.keras.callbacks.CallbackList([...])
    callbacks.append(...)
+
    callbacks.on_train_begin(...)
    for epoch in range(EPOCHS):
      callbacks.on_epoch_begin(epoch)
@@ -49,16 +63,18 @@ If you want to use `Callback` objects in a custom training loop:
    final_logs=...
    callbacks.on_train_end(final_logs)
    ```
-The `logs` dictionary that callback methods
+The <b>logs</b> dictionary that callback methods
 take as argument will contain keys for quantities relevant to
 the current batch or epoch (see method-specific docstrings).
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
+
 <tr>
 <td>
-`params`
+<b>params</b>
 </td>
 <td>
 Dict. Training parameters
@@ -66,23 +82,27 @@ Dict. Training parameters
 </td>
 </tr><tr>
 <td>
-`model`
+<b>model</b>
 </td>
 <td>
-Instance of `keras.models.Model`.
+Instance of <b>keras.models.Model</b>.
 Reference of the model being trained.
 </td>
 </tr>
 </table>
 
 
+
+
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
+
 <tr>
 <td>
-`params`
+<b>params</b>
 </td>
 <td>
 Dict. Training parameters
@@ -90,55 +110,69 @@ Dict. Training parameters
 </td>
 </tr><tr>
 <td>
-`model`
+<b>model</b>
 </td>
 <td>
-Instance of `keras.models.Model`.
+Instance of <b>keras.models.Model</b>.
 Reference of the model being trained.
 </td>
 </tr>
 </table>
+
+
 
 ## Methods
+
 <h3 id="on_batch_begin"><code>on_batch_begin</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_batch_begin(
     batch, logs=None
 )
 </code></pre>
-A backwards compatibility alias for `on_train_batch_begin`.
+
+A backwards compatibility alias for <b>on_train_batch_begin</b>.
+
 
 <h3 id="on_batch_end"><code>on_batch_end</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_batch_end(
     batch, logs=None
 )
 </code></pre>
-A backwards compatibility alias for `on_train_batch_end`.
+
+A backwards compatibility alias for <b>on_train_batch_end</b>.
+
 
 <h3 id="on_epoch_begin"><code>on_epoch_begin</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_epoch_begin(
     epoch, logs=None
 )
 </code></pre>
+
 Called at the start of an epoch.
+
 Subclasses should override for any actions to run. This function should only
 be called during TRAIN mode.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`epoch`
+<b>epoch</b>
 </td>
 <td>
 Integer, index of epoch.
 </td>
 </tr><tr>
 <td>
-`logs`
+<b>logs</b>
 </td>
 <td>
 Dict. Currently no data is passed to this argument for this method
@@ -147,65 +181,80 @@ but that may change in the future.
 </tr>
 </table>
 
+
+
 <h3 id="on_epoch_end"><code>on_epoch_end</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_epoch_end(
     epoch, logs=None
 )
 </code></pre>
+
 Called at the end of an epoch.
+
 Subclasses should override for any actions to run. This function should only
 be called during TRAIN mode.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`epoch`
+<b>epoch</b>
 </td>
 <td>
 Integer, index of epoch.
 </td>
 </tr><tr>
 <td>
-`logs`
+<b>logs</b>
 </td>
 <td>
 Dict, metric results for this training epoch, and for the
  validation epoch if validation is performed. Validation result keys
- are prefixed with `val_`. For training epoch, the values of the
-`Model`'s metrics are returned. Example : `{'loss': 0.2, 'accuracy':
+ are prefixed with <b>val_</b>. For training epoch, the values of the
+<b>Model</b>'s metrics are returned. Example : `{'loss': 0.2, 'accuracy':
   0.7}`.
 </td>
 </tr>
 </table>
 
+
+
 <h3 id="on_predict_batch_begin"><code>on_predict_batch_begin</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_predict_batch_begin(
     batch, logs=None
 )
 </code></pre>
-Called at the beginning of a batch in `predict` methods.
+
+Called at the beginning of a batch in <b>predict</b> methods.
+
 Subclasses should override for any actions to run.
-Note that if the `steps_per_execution` argument to `compile` in
-`tf.keras.Model` is set to `N`, this method will only be called every `N`
+
+Note that if the <b>steps_per_execution</b> argument to <b>compile</b> in
+<b>tf.keras.Model</b> is set to <b>N</b>, this method will only be called every <b>N</b>
 batches.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`batch`
+<b>batch</b>
 </td>
 <td>
 Integer, index of batch within the current epoch.
 </td>
 </tr><tr>
 <td>
-`logs`
+<b>logs</b>
 </td>
 <td>
 Dict. Currently no data is passed to this argument for this method
@@ -214,31 +263,39 @@ but that may change in the future.
 </tr>
 </table>
 
+
+
 <h3 id="on_predict_batch_end"><code>on_predict_batch_end</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_predict_batch_end(
     batch, logs=None
 )
 </code></pre>
-Called at the end of a batch in `predict` methods.
+
+Called at the end of a batch in <b>predict</b> methods.
+
 Subclasses should override for any actions to run.
-Note that if the `steps_per_execution` argument to `compile` in
-`tf.keras.Model` is set to `N`, this method will only be called every `N`
+
+Note that if the <b>steps_per_execution</b> argument to <b>compile</b> in
+<b>tf.keras.Model</b> is set to <b>N</b>, this method will only be called every <b>N</b>
 batches.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`batch`
+<b>batch</b>
 </td>
 <td>
 Integer, index of batch within the current epoch.
 </td>
 </tr><tr>
 <td>
-`logs`
+<b>logs</b>
 </td>
 <td>
 Dict. Aggregated metric results up until this batch.
@@ -246,21 +303,28 @@ Dict. Aggregated metric results up until this batch.
 </tr>
 </table>
 
+
+
 <h3 id="on_predict_begin"><code>on_predict_begin</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_predict_begin(
     logs=None
 )
 </code></pre>
+
 Called at the beginning of prediction.
+
 Subclasses should override for any actions to run.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`logs`
+<b>logs</b>
 </td>
 <td>
 Dict. Currently no data is passed to this argument for this method
@@ -269,21 +333,28 @@ but that may change in the future.
 </tr>
 </table>
 
+
+
 <h3 id="on_predict_end"><code>on_predict_end</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_predict_end(
     logs=None
 )
 </code></pre>
+
 Called at the end of prediction.
+
 Subclasses should override for any actions to run.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`logs`
+<b>logs</b>
 </td>
 <td>
 Dict. Currently no data is passed to this argument for this method
@@ -292,33 +363,42 @@ but that may change in the future.
 </tr>
 </table>
 
+
+
 <h3 id="on_test_batch_begin"><code>on_test_batch_begin</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_test_batch_begin(
     batch, logs=None
 )
 </code></pre>
-Called at the beginning of a batch in `evaluate` methods.
-Also called at the beginning of a validation batch in the `fit`
+
+Called at the beginning of a batch in <b>evaluate</b> methods.
+
+Also called at the beginning of a validation batch in the <b>fit</b>
 methods, if validation data is provided.
+
 Subclasses should override for any actions to run.
-Note that if the `steps_per_execution` argument to `compile` in
-`tf.keras.Model` is set to `N`, this method will only be called every `N`
+
+Note that if the <b>steps_per_execution</b> argument to <b>compile</b> in
+<b>tf.keras.Model</b> is set to <b>N</b>, this method will only be called every <b>N</b>
 batches.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`batch`
+<b>batch</b>
 </td>
 <td>
 Integer, index of batch within the current epoch.
 </td>
 </tr><tr>
 <td>
-`logs`
+<b>logs</b>
 </td>
 <td>
 Dict. Currently no data is passed to this argument for this method
@@ -327,33 +407,42 @@ but that may change in the future.
 </tr>
 </table>
 
+
+
 <h3 id="on_test_batch_end"><code>on_test_batch_end</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_test_batch_end(
     batch, logs=None
 )
 </code></pre>
-Called at the end of a batch in `evaluate` methods.
-Also called at the end of a validation batch in the `fit`
+
+Called at the end of a batch in <b>evaluate</b> methods.
+
+Also called at the end of a validation batch in the <b>fit</b>
 methods, if validation data is provided.
+
 Subclasses should override for any actions to run.
-Note that if the `steps_per_execution` argument to `compile` in
-`tf.keras.Model` is set to `N`, this method will only be called every `N`
+
+Note that if the <b>steps_per_execution</b> argument to <b>compile</b> in
+<b>tf.keras.Model</b> is set to <b>N</b>, this method will only be called every <b>N</b>
 batches.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`batch`
+<b>batch</b>
 </td>
 <td>
 Integer, index of batch within the current epoch.
 </td>
 </tr><tr>
 <td>
-`logs`
+<b>logs</b>
 </td>
 <td>
 Dict. Aggregated metric results up until this batch.
@@ -361,21 +450,28 @@ Dict. Aggregated metric results up until this batch.
 </tr>
 </table>
 
+
+
 <h3 id="on_test_begin"><code>on_test_begin</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_test_begin(
     logs=None
 )
 </code></pre>
+
 Called at the beginning of evaluation or validation.
+
 Subclasses should override for any actions to run.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`logs`
+<b>logs</b>
 </td>
 <td>
 Dict. Currently no data is passed to this argument for this method
@@ -384,55 +480,70 @@ but that may change in the future.
 </tr>
 </table>
 
+
+
 <h3 id="on_test_end"><code>on_test_end</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_test_end(
     logs=None
 )
 </code></pre>
+
 Called at the end of evaluation or validation.
+
 Subclasses should override for any actions to run.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`logs`
+<b>logs</b>
 </td>
 <td>
 Dict. Currently the output of the last call to
-`on_test_batch_end()` is passed to this argument for this method
+<b>on_test_batch_end()</b> is passed to this argument for this method
 but that may change in the future.
 </td>
 </tr>
 </table>
 
+
+
 <h3 id="on_train_batch_begin"><code>on_train_batch_begin</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_train_batch_begin(
     batch, logs=None
 )
 </code></pre>
-Called at the beginning of a training batch in `fit` methods.
+
+Called at the beginning of a training batch in <b>fit</b> methods.
+
 Subclasses should override for any actions to run.
-Note that if the `steps_per_execution` argument to `compile` in
-`tf.keras.Model` is set to `N`, this method will only be called every `N`
+
+Note that if the <b>steps_per_execution</b> argument to <b>compile</b> in
+<b>tf.keras.Model</b> is set to <b>N</b>, this method will only be called every <b>N</b>
 batches.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`batch`
+<b>batch</b>
 </td>
 <td>
 Integer, index of batch within the current epoch.
 </td>
 </tr><tr>
 <td>
-`logs`
+<b>logs</b>
 </td>
 <td>
 Dict. Currently no data is passed to this argument for this method
@@ -441,31 +552,39 @@ but that may change in the future.
 </tr>
 </table>
 
+
+
 <h3 id="on_train_batch_end"><code>on_train_batch_end</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_train_batch_end(
     batch, logs=None
 )
 </code></pre>
-Called at the end of a training batch in `fit` methods.
+
+Called at the end of a training batch in <b>fit</b> methods.
+
 Subclasses should override for any actions to run.
-Note that if the `steps_per_execution` argument to `compile` in
-`tf.keras.Model` is set to `N`, this method will only be called every `N`
+
+Note that if the <b>steps_per_execution</b> argument to <b>compile</b> in
+<b>tf.keras.Model</b> is set to <b>N</b>, this method will only be called every <b>N</b>
 batches.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`batch`
+<b>batch</b>
 </td>
 <td>
 Integer, index of batch within the current epoch.
 </td>
 </tr><tr>
 <td>
-`logs`
+<b>logs</b>
 </td>
 <td>
 Dict. Aggregated metric results up until this batch.
@@ -473,21 +592,28 @@ Dict. Aggregated metric results up until this batch.
 </tr>
 </table>
 
+
+
 <h3 id="on_train_begin"><code>on_train_begin</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_train_begin(
     logs=None
 )
 </code></pre>
+
 Called at the beginning of training.
+
 Subclasses should override for any actions to run.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`logs`
+<b>logs</b>
 </td>
 <td>
 Dict. Currently no data is passed to this argument for this method
@@ -496,31 +622,41 @@ but that may change in the future.
 </tr>
 </table>
 
+
+
 <h3 id="on_train_end"><code>on_train_end</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>on_train_end(
     logs=None
 )
 </code></pre>
+
 Called at the end of training.
+
 Subclasses should override for any actions to run.
+
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
+
 <tr>
 <td>
-`logs`
+<b>logs</b>
 </td>
 <td>
-Dict. Currently the output of the last call to `on_epoch_end()`
+Dict. Currently the output of the last call to <b>on_epoch_end()</b>
 is passed to this argument for this method but that may change in
 the future.
 </td>
 </tr>
 </table>
 
+
+
 <h3 id="set_model"><code>set_model</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>set_model(
     model
@@ -528,12 +664,18 @@ the future.
 </code></pre>
 
 
+
+
 <h3 id="set_params"><code>set_params</code></h3>
+
 <pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
 <code>set_params(
     params
 )
 </code></pre>
+
+
+
 
 
 

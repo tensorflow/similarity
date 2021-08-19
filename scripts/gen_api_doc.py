@@ -58,8 +58,48 @@ def replace_in_file(fname, replacements):
     cprint('|-Patching %s' % fname, 'cyan')
     content = open(fname).read()
     os.unlink(fname)
+
     for rep in replacements:
         content = re.sub(rep[0], rep[1], content, flags=re.MULTILINE)
+
+
+    # fix the header manually as there is no easy regex
+    head = []
+    body = []
+    is_head = True
+    for l in content.split('\n'):
+
+
+        # stop when getting subsection
+        if len(l) and l[0] == "##" or "<!-- Placeholder" in l:
+            is_head = False
+
+        if is_head:
+            l = l.replace("&#x27;", '')
+
+            # remove remaining html
+            if "on GitHub" in l:
+                continue
+            l = l.replace("<code>", "```python\n")
+
+            if "</code>" in l:
+                head.append("```\n")
+
+            if "<" in l:
+                continue
+            head.append(l)
+        else:
+            l = re.sub('`([^`]+)`', '<b>\g<1></b>', l)
+            l = re.sub('{([^`]+)}', '<i>\g<1></i>', l)
+
+            body.append(l)
+
+    #print(head)
+
+    content = "\n".join(head)
+    content += "\n".join(body)
+
+
     with open(fname, 'w+') as f:
         f.write(content)
 
@@ -133,7 +173,6 @@ def main(_):
             ["<!-- Insert buttons and diff -->",
              """TensorFlow Similarity is a TensorFlow library focused on making metric learning easy"""],
             ["# Module: TFSimilarity", "# TensorFlow Similarity API Documentation"],
-            ["<table.+</table", ""],
         ]
 
     replace_in_file(mfname, reps)
@@ -145,7 +184,7 @@ def main(_):
         ["description: .+", ""], # remove "pseudo frontmatter"
         ["^\[", '- ['],  # make list valid again
         ["[^#]+\# ", '# '],
-        ["\n\n", "\n"]
+        [" module", ''],
     ]
     for fname in Path(OUTDIR).glob('**/*md'):
         fname = str(fname)
