@@ -8,8 +8,6 @@ Build masks that allows to select only the positive or negatives
 
 ```python
 TFSimilarity.distance_metrics.build_masks(
-```
-
     batch_size: int
 ) -> Tuple[BoolTensor, BoolTensor]
 ```

@@ -21,12 +21,12 @@ inheritance.
 
 ## Methods
 
-<h3 id="compute"><code>compute</code></h3>
+<h3 id="compute">compute</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/metrics.py#L183-L192">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>compute(
+```python
+compute(
     max_k: int,
     targets_labels: List[int],
     index_size: int,
@@ -34,7 +34,8 @@ inheritance.
     match_distances: List[float],
     lookups: List[List[Lookup]]
 ) -> int
-</code></pre>
+```
+
 
 Compute the metric
 
@@ -108,33 +109,35 @@ metric results.
 
 
 
-<h3 id="compute_retrival_metrics"><code>compute_retrival_metrics</code></h3>
+<h3 id="compute_retrival_metrics">compute_retrival_metrics</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/metrics.py#L137-L157">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>compute_retrival_metrics(
+```python
+compute_retrival_metrics(
     targets_labels: List[int],
     lookups: List[List[Lookup]]
 ) -> Tuple[int, int, int, int]
-</code></pre>
+```
 
 
 
 
-<h3 id="filter_ranks"><code>filter_ranks</code></h3>
+
+<h3 id="filter_ranks">filter_ranks</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/metrics.py#L89-L135">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>filter_ranks(
+```python
+filter_ranks(
     match_ranks: List[int],
     match_distances: List[float],
     min_rank: int = 1,
     max_rank: int = None,
     distance: float = None
 ) -> List[int]
-</code></pre>
+```
+
 
 Filter match ranks to only keep matches between <b>min_rank</b>
 and <b>max_rank</b> below a give distance.
@@ -196,27 +199,31 @@ removed. len(filtered_ranks) <= len(match_ranks)
 
 
 
-<h3 id="from_config"><code>from_config</code></h3>
+<h3 id="from_config">from_config</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/metrics.py#L39-L45">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@staticmethod</code>
-<code>from_config(
+``<b>python
+@staticmethod</b>``
+
+```python
+from_config(
     config
 )
-</code></pre>
+```
 
 
 
 
-<h3 id="get_config"><code>get_config</code></h3>
+
+<h3 id="get_config">get_config</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/metrics.py#L30-L37">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>get_config()
-</code></pre>
+```python
+get_config()
+```
+
 
 
 

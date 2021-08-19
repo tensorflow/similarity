@@ -9,14 +9,6 @@ Indexing system that allows to efficiently find nearest embeddings
 ```python
 TFSimilarity.indexer.Indexer(
     embedding_size: int,
-```
-
-```
-
-```
-
-```
-
     embedding_output: int = None,
     stat_buffer_size: int = 1000
 ) -> None
@@ -122,19 +114,22 @@ Invalid matcher or table.
 
 ## Methods
 
-<h3 id="add"><code>add</code></h3>
+<h3 id="add">add</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L189-L221">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>add(
-    prediction: <a href="../../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.callbacks.FloatTensor</code></a>,
+```python
+add(
+    prediction: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
     label: Optional[int] = None,
-    data: <a href="../../TFSimilarity/callbacks/Tensor.md"><code>TFSimilarity.callbacks.Tensor</code></a> = None,
+    data: <a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor```
+</a> = None,
     build: bool = (True),
     verbose: int = 1
 )
-</code></pre>
+```
+
 
 Add a single embedding to the indexer
 
@@ -189,19 +184,22 @@ Defaults to 1.
 
 
 
-<h3 id="batch_add"><code>batch_add</code></h3>
+<h3 id="batch_add">batch_add</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L223-L252">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>batch_add(
-    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.callbacks.FloatTensor</code></a>,
+```python
+batch_add(
+    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
     labels: Optional[List[Optional[int]]] = None,
-    data: Optional[<a href="../../TFSimilarity/callbacks/Tensor.md"><code>TFSimilarity.callbacks.Tensor</code></a>] = None,
+    data: Optional[<a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor```
+</a>] = None,
     build: bool = (True),
     verbose: int = 1
 )
-</code></pre>
+```
+
 
 Add a batch of embeddings to the indexer
 
@@ -253,17 +251,19 @@ Display progress if set to 1. Defaults to 1.
 
 
 
-<h3 id="batch_lookup"><code>batch_lookup</code></h3>
+<h3 id="batch_lookup">batch_lookup</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L288-L347">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>batch_lookup(
-    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.callbacks.FloatTensor</code></a>,
+```python
+batch_lookup(
+    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
     k: int = 5,
     verbose: int = 1
 ) -> List[List[Lookup]]
-</code></pre>
+```
+
 
 Find the k closest matches for a set of embeddings
 
@@ -302,22 +302,25 @@ Returns
     list of list of k nearest neighboors:
     List[List[Lookup]]
 
-<h3 id="calibrate"><code>calibrate</code></h3>
+<h3 id="calibrate">calibrate</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L378-L459">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>calibrate(
-    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.callbacks.FloatTensor</code></a>,
+```python
+calibrate(
+    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
     y: List[int],
     thresholds_targets: Dict[str, float],
-    calibration_metric: Union[str, <a href="../../TFSimilarity/callbacks/EvalMetric.md"><code>TFSimilarity.callbacks.EvalMetric</code></a>] = &#x27;f1_score&#x27;,
+    calibration_metric: Union[str, <a href="../../TFSimilarity/callbacks/EvalMetric.md">TFSimilarity.callbacks.EvalMetric```
+</a>] = f1_score,
     k: int = 1,
-    extra_metrics: List[Union[str, EvalMetric]] = [&#x27;accuracy&#x27;, &#x27;recall&#x27;],
+    extra_metrics: List[Union[str, EvalMetric]] = [accuracy, recall],
     rounding: int = 2,
     verbose: int = 1
 ) -> Dict[str, Union[Dict[str, float], List[float]]]
-</code></pre>
+```
+
 
 Calibrate model thresholds using a test dataset.
 
@@ -407,19 +410,21 @@ Calibration results: <b><i>"cutpoints": {}, "thresholds": {}</i></b>
 
 
 
-<h3 id="evaluate"><code>evaluate</code></h3>
+<h3 id="evaluate">evaluate</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L350-L376">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>evaluate(
-    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.callbacks.FloatTensor</code></a>,
+```python
+evaluate(
+    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
     y: List[int],
     metrics: List[Union[str, EvalMetric]],
     k: int = 1,
     verbose: int = 1
 ) -> Dict[str, Union[float, int]]
-</code></pre>
+```
+
 
 Evaluate the quality of the index against a test dataset.
 
@@ -484,28 +489,33 @@ values are the metrics values.
 
 
 
-<h3 id="get_calibration_metric"><code>get_calibration_metric</code></h3>
+<h3 id="get_calibration_metric">get_calibration_metric</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L601-L602">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>get_calibration_metric()
-</code></pre>
+```python
+get_calibration_metric()
+```
 
 
 
 
-<h3 id="load"><code>load</code></h3>
+
+<h3 id="load">load</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L555-L599">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>@staticmethod</code>
-<code>load(
-    path: Union[str, <a href="../../TFSimilarity/callbacks/Path.md"><code>TFSimilarity.callbacks.Path</code></a>],
+``<b>python
+@staticmethod</b>``
+
+```python
+load(
+    path: Union[str, <a href="../../TFSimilarity/callbacks/Path.md">TFSimilarity.callbacks.Path```
+</a>],
     verbose: int = 1
 )
-</code></pre>
+```
+
 
 Load Index data from a checkpoint and initialize underlying
 structure with the reloaded data.
@@ -548,17 +558,19 @@ Initialized index
 
 
 
-<h3 id="match"><code>match</code></h3>
+<h3 id="match">match</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L461-L519">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>match(
-    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.callbacks.FloatTensor</code></a>,
+```python
+match(
+    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
     no_match_label: int = -1,
     verbose: int = 1
 ) -> Dict[str, List[int]]
-</code></pre>
+```
+
 
 Match embeddings against the various cutpoints thresholds
 
@@ -611,38 +623,41 @@ Dict of matches list keyed by cutpoint names.
 
 
 
-<h3 id="print_stats"><code>print_stats</code></h3>
+<h3 id="print_stats">print_stats</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L631-L655">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>print_stats()
-</code></pre>
+```python
+print_stats()
+```
+
 
 display statistics in terminal friendly fashion
 
 
-<h3 id="reset"><code>reset</code></h3>
+<h3 id="reset">reset</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L103-L105">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>reset() -> None
-</code></pre>
+```python
+reset() -> None
+```
+
 
 Reinitialize the indexer
 
 
-<h3 id="save"><code>save</code></h3>
+<h3 id="save">save</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L521-L553">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>save(
+```python
+save(
     path: str,
     compression: bool = (True)
 )
-</code></pre>
+```
+
 
 Save the index to disk
 
@@ -671,16 +686,19 @@ Store index data compressed. Defaults to True.
 
 
 
-<h3 id="single_lookup"><code>single_lookup</code></h3>
+<h3 id="single_lookup">single_lookup</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L254-L286">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>single_lookup(
-    prediction: <a href="../../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.callbacks.FloatTensor</code></a>,
+```python
+single_lookup(
+    prediction: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
     k: int = 5
-) -> List[<a href="../../TFSimilarity/indexer/Lookup.md"><code>TFSimilarity.indexer.Lookup</code></a>]
-</code></pre>
+) -> List[<a href="../../TFSimilarity/indexer/Lookup.md">TFSimilarity.indexer.Lookup```
+</a>]
+```
+
 
 Find the k closest matches of a given embedding
 
@@ -712,37 +730,41 @@ Returns
     list of the k nearest neigboors info:
     List[Lookup]
 
-<h3 id="size"><code>size</code></h3>
+<h3 id="size">size</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L604-L606">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>size() -> int
-</code></pre>
+```python
+size() -> int
+```
+
 
 Return the index size
 
 
-<h3 id="stats"><code>stats</code></h3>
+<h3 id="stats">stats</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L608-L629">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>stats()
-</code></pre>
+```python
+stats()
+```
+
 
 return index statistics
 
 
-<h3 id="to_data_frame"><code>to_data_frame</code></h3>
+<h3 id="to_data_frame">to_data_frame</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L657-L667">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>to_data_frame(
+```python
+to_data_frame(
     num_items: int = 0
-) -> <a href="../../TFSimilarity/indexer/PandasDataFrame.md"><code>TFSimilarity.indexer.PandasDataFrame</code></a>
-</code></pre>
+) -> <a href="../../TFSimilarity/indexer/PandasDataFrame.md">TFSimilarity.indexer.PandasDataFrame```
+</a>
+```
+
 
 Export data as pandas dataframe
 

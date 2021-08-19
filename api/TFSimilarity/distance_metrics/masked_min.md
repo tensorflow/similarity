@@ -8,12 +8,8 @@ Computes the minimal values over masked pairwise distances.
 
 ```python
 TFSimilarity.distance_metrics.masked_min(
-```
-
     mask: BoolTensor,
     dim: int = 1
-```
-
 ```
 
 

@@ -13,17 +13,20 @@ inheritance.
 
 ## Methods
 
-<h3 id="add"><code>add</code></h3>
+<h3 id="add">add</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/tables/table.py#L8-L24">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>add(
-    embedding: <a href="../../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.callbacks.FloatTensor</code></a>,
+```python
+add(
+    embedding: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
     label: Optional[int] = None,
-    data: Optional[<a href="../../TFSimilarity/callbacks/Tensor.md"><code>TFSimilarity.callbacks.Tensor</code></a>] = None
+    data: Optional[<a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor```
+</a>] = None
 ) -> int
-</code></pre>
+```
+
 
 Add an Embedding record to the table.
 
@@ -73,17 +76,19 @@ Associated record id.
 
 
 
-<h3 id="batch_add"><code>batch_add</code></h3>
+<h3 id="batch_add">batch_add</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/tables/table.py#L25-L44">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>batch_add(
-    embeddings: List[<a href="../../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.callbacks.FloatTensor</code></a>],
+```python
+batch_add(
+    embeddings: List[<a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>],
     labels: List[Optional[int]] = None,
     data: List[Optional[Tensor]] = None
 ) -> List[int]
-</code></pre>
+```
+
 
 Add a set of embedding records to the table.
 
@@ -139,15 +144,16 @@ List of associated record id.
 
 
 
-<h3 id="batch_get"><code>batch_get</code></h3>
+<h3 id="batch_get">batch_get</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/tables/table.py#L59-L70">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>batch_get(
+```python
+batch_get(
     idxs: List[int]
 ) -> Tuple[List[FloatTensor], List[Optional[int]], List[Optional[Tensor]]]
-</code></pre>
+```
+
 
 Get embedding records from the table
 
@@ -183,15 +189,16 @@ List of records associated with the requested ids.
 
 
 
-<h3 id="get"><code>get</code></h3>
+<h3 id="get">get</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/tables/table.py#L46-L57">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>get(
+```python
+get(
     idx: int
 ) -> Tuple[FloatTensor, Optional[int], Optional[Tensor]]
-</code></pre>
+```
+
 
 Get an embedding record from the table
 
@@ -227,15 +234,16 @@ record associated with the requested id.
 
 
 
-<h3 id="load"><code>load</code></h3>
+<h3 id="load">load</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/tables/table.py#L85-L94">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>load(
+```python
+load(
     path: str
 ) -> int
-</code></pre>
+```
+
 
 Load index on disk
 
@@ -271,16 +279,17 @@ Number of records reloaded.
 
 
 
-<h3 id="save"><code>save</code></h3>
+<h3 id="save">save</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/tables/table.py#L76-L83">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>save(
+```python
+save(
     path: str,
     compression: bool = (True)
 ) -> None
-</code></pre>
+```
+
 
 Serializes index on disk.
 
@@ -309,26 +318,29 @@ Compress index data. Defaults to True.
 
 
 
-<h3 id="size"><code>size</code></h3>
+<h3 id="size">size</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/tables/table.py#L72-L74">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>size() -> int
-</code></pre>
+```python
+size() -> int
+```
+
 
 Number of record in the table.
 
 
-<h3 id="to_data_frame"><code>to_data_frame</code></h3>
+<h3 id="to_data_frame">to_data_frame</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/tables/table.py#L96-L106">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>to_data_frame(
+```python
+to_data_frame(
     num_records: int = 0
-) -> <a href="../../TFSimilarity/indexer/PandasDataFrame.md"><code>TFSimilarity.indexer.PandasDataFrame</code></a>
-</code></pre>
+) -> <a href="../../TFSimilarity/indexer/PandasDataFrame.md">TFSimilarity.indexer.PandasDataFrame```
+</a>
+```
+
 
 Export data as a Pandas dataframe.
 

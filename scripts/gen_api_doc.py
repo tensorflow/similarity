@@ -69,26 +69,31 @@ def replace_in_file(fname, replacements):
     is_head = True
     for l in content.split('\n'):
 
+        # fix h3 first
+        l = l.replace("><code>", '>')
+        l = l.replace("</code></h3>", '</h3>')
 
         # stop when getting subsection
         if len(l) and l[0] == "##" or "<!-- Placeholder" in l:
             is_head = False
 
+        l = l.replace("<code>", "```python\n")
+        l = l.replace('</code>', "```\n")
+        l = l.replace('</pre>', '')
+        l = l.replace("&#x27;", '')
+
         if is_head:
-            l = l.replace("&#x27;", '')
 
             # remove remaining html
             if "on GitHub" in l:
                 continue
-            l = l.replace("<code>", "```python\n")
-
-            if "</code>" in l:
-                head.append("```\n")
 
             if "<" in l:
                 continue
             head.append(l)
         else:
+            if '<pre' in l:
+                continue
             l = re.sub('`([^`]+)`', '<b>\g<1></b>', l)
             l = re.sub('{([^`]+)}', '<i>\g<1></i>', l)
 

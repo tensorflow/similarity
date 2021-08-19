@@ -11,10 +11,6 @@ Covert metric from str name to object if needed.
 TFSimilarity.callbacks.make_metric(
 ```
 
-```
-
-```
-
 
 
 <!-- Placeholder for "Used in" -->

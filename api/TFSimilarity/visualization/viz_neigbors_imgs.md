@@ -8,11 +8,7 @@ Display images nearest neighboors
 
 ```python
 TFSimilarity.visualization.viz_neigbors_imgs(
-```
-
     example_class: List[int],
-```
-
     class_mapping: Dict = None,
     fig_size: Tuple = (24, 4),
     cmap: str = viridis

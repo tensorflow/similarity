@@ -123,35 +123,38 @@ Reference of the model being trained.
 
 ## Methods
 
-<h3 id="on_batch_begin"><code>on_batch_begin</code></h3>
+<h3 id="on_batch_begin">on_batch_begin</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_batch_begin(
+```python
+on_batch_begin(
     batch, logs=None
 )
-</code></pre>
+```
+
 
 A backwards compatibility alias for <b>on_train_batch_begin</b>.
 
 
-<h3 id="on_batch_end"><code>on_batch_end</code></h3>
+<h3 id="on_batch_end">on_batch_end</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_batch_end(
+```python
+on_batch_end(
     batch, logs=None
 )
-</code></pre>
+```
+
 
 A backwards compatibility alias for <b>on_train_batch_end</b>.
 
 
-<h3 id="on_epoch_begin"><code>on_epoch_begin</code></h3>
+<h3 id="on_epoch_begin">on_epoch_begin</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_epoch_begin(
+```python
+on_epoch_begin(
     epoch, logs=None
 )
-</code></pre>
+```
+
 
 Called at the start of an epoch.
 
@@ -183,13 +186,14 @@ but that may change in the future.
 
 
 
-<h3 id="on_epoch_end"><code>on_epoch_end</code></h3>
+<h3 id="on_epoch_end">on_epoch_end</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_epoch_end(
+```python
+on_epoch_end(
     epoch, logs=None
 )
-</code></pre>
+```
+
 
 Called at the end of an epoch.
 
@@ -224,13 +228,14 @@ Dict, metric results for this training epoch, and for the
 
 
 
-<h3 id="on_predict_batch_begin"><code>on_predict_batch_begin</code></h3>
+<h3 id="on_predict_batch_begin">on_predict_batch_begin</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_predict_batch_begin(
+```python
+on_predict_batch_begin(
     batch, logs=None
 )
-</code></pre>
+```
+
 
 Called at the beginning of a batch in <b>predict</b> methods.
 
@@ -265,13 +270,14 @@ but that may change in the future.
 
 
 
-<h3 id="on_predict_batch_end"><code>on_predict_batch_end</code></h3>
+<h3 id="on_predict_batch_end">on_predict_batch_end</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_predict_batch_end(
+```python
+on_predict_batch_end(
     batch, logs=None
 )
-</code></pre>
+```
+
 
 Called at the end of a batch in <b>predict</b> methods.
 
@@ -305,13 +311,14 @@ Dict. Aggregated metric results up until this batch.
 
 
 
-<h3 id="on_predict_begin"><code>on_predict_begin</code></h3>
+<h3 id="on_predict_begin">on_predict_begin</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_predict_begin(
+```python
+on_predict_begin(
     logs=None
 )
-</code></pre>
+```
+
 
 Called at the beginning of prediction.
 
@@ -335,13 +342,14 @@ but that may change in the future.
 
 
 
-<h3 id="on_predict_end"><code>on_predict_end</code></h3>
+<h3 id="on_predict_end">on_predict_end</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_predict_end(
+```python
+on_predict_end(
     logs=None
 )
-</code></pre>
+```
+
 
 Called at the end of prediction.
 
@@ -365,13 +373,14 @@ but that may change in the future.
 
 
 
-<h3 id="on_test_batch_begin"><code>on_test_batch_begin</code></h3>
+<h3 id="on_test_batch_begin">on_test_batch_begin</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_test_batch_begin(
+```python
+on_test_batch_begin(
     batch, logs=None
 )
-</code></pre>
+```
+
 
 Called at the beginning of a batch in <b>evaluate</b> methods.
 
@@ -409,13 +418,14 @@ but that may change in the future.
 
 
 
-<h3 id="on_test_batch_end"><code>on_test_batch_end</code></h3>
+<h3 id="on_test_batch_end">on_test_batch_end</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_test_batch_end(
+```python
+on_test_batch_end(
     batch, logs=None
 )
-</code></pre>
+```
+
 
 Called at the end of a batch in <b>evaluate</b> methods.
 
@@ -452,13 +462,14 @@ Dict. Aggregated metric results up until this batch.
 
 
 
-<h3 id="on_test_begin"><code>on_test_begin</code></h3>
+<h3 id="on_test_begin">on_test_begin</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_test_begin(
+```python
+on_test_begin(
     logs=None
 )
-</code></pre>
+```
+
 
 Called at the beginning of evaluation or validation.
 
@@ -482,13 +493,14 @@ but that may change in the future.
 
 
 
-<h3 id="on_test_end"><code>on_test_end</code></h3>
+<h3 id="on_test_end">on_test_end</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_test_end(
+```python
+on_test_end(
     logs=None
 )
-</code></pre>
+```
+
 
 Called at the end of evaluation or validation.
 
@@ -513,13 +525,14 @@ but that may change in the future.
 
 
 
-<h3 id="on_train_batch_begin"><code>on_train_batch_begin</code></h3>
+<h3 id="on_train_batch_begin">on_train_batch_begin</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_train_batch_begin(
+```python
+on_train_batch_begin(
     batch, logs=None
 )
-</code></pre>
+```
+
 
 Called at the beginning of a training batch in <b>fit</b> methods.
 
@@ -554,13 +567,14 @@ but that may change in the future.
 
 
 
-<h3 id="on_train_batch_end"><code>on_train_batch_end</code></h3>
+<h3 id="on_train_batch_end">on_train_batch_end</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_train_batch_end(
+```python
+on_train_batch_end(
     batch, logs=None
 )
-</code></pre>
+```
+
 
 Called at the end of a training batch in <b>fit</b> methods.
 
@@ -594,13 +608,14 @@ Dict. Aggregated metric results up until this batch.
 
 
 
-<h3 id="on_train_begin"><code>on_train_begin</code></h3>
+<h3 id="on_train_begin">on_train_begin</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_train_begin(
+```python
+on_train_begin(
     logs=None
 )
-</code></pre>
+```
+
 
 Called at the beginning of training.
 
@@ -624,13 +639,14 @@ but that may change in the future.
 
 
 
-<h3 id="on_train_end"><code>on_train_end</code></h3>
+<h3 id="on_train_end">on_train_end</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>on_train_end(
+```python
+on_train_end(
     logs=None
 )
-</code></pre>
+```
+
 
 Called at the end of training.
 
@@ -655,24 +671,26 @@ the future.
 
 
 
-<h3 id="set_model"><code>set_model</code></h3>
+<h3 id="set_model">set_model</h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>set_model(
+```python
+set_model(
     model
 )
-</code></pre>
+```
 
 
 
 
-<h3 id="set_params"><code>set_params</code></h3>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>set_params(
+<h3 id="set_params">set_params</h3>
+
+```python
+set_params(
     params
 )
-</code></pre>
+```
+
 
 
 

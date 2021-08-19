@@ -11,8 +11,6 @@ TFSimilarity.metrics.make_metrics(
     metrics: List[Union[str, EvalMetric]]
 ```
 
-```
-
 
 
 <!-- Placeholder for "Used in" -->

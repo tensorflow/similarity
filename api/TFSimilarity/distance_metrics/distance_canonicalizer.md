@@ -11,10 +11,6 @@ Normalize user requested distance to its matching Distance object.
 TFSimilarity.distance_metrics.distance_canonicalizer(
 ```
 
-```
-
-```
-
 
 
 <!-- Placeholder for "Used in" -->

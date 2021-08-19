@@ -11,8 +11,6 @@ Inherits From: [`Matcher`](../../TFSimilarity/indexer/Matcher.md), [`ABC`](../..
 
 ```python
 TFSimilarity.indexer.NMSLibMatcher(
-```
-
     dims: int,
     algorithm: str = nmslib_hnsw,
     **kwargs
@@ -59,19 +57,21 @@ be verbose.
 
 ## Methods
 
-<h3 id="add"><code>add</code></h3>
+<h3 id="add">add</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/matchers/nmslib_matcher.py#L45-L71">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>add(
-    embedding: <a href="../../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.callbacks.FloatTensor</code></a>,
+```python
+add(
+    embedding: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
     idx: int,
     verbose: int = 1,
     build: bool = (True),
     **kwargs
 )
-</code></pre>
+```
+
 
 Add an embedding to the index
 
@@ -120,19 +120,21 @@ Defaults to True.
 
 
 
-<h3 id="batch_add"><code>batch_add</code></h3>
+<h3 id="batch_add">batch_add</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/matchers/nmslib_matcher.py#L73-L102">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>batch_add(
-    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.callbacks.FloatTensor</code></a>,
+```python
+batch_add(
+    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
     idxs: List[int],
     verbose: int = 1,
     build: bool = (True),
     **kwargs
 )
-</code></pre>
+```
+
 
 Add a batch of embeddings to the matcher.
 
@@ -174,16 +176,18 @@ time between successive addition. Defaults to True.
 
 
 
-<h3 id="batch_lookup"><code>batch_lookup</code></h3>
+<h3 id="batch_lookup">batch_lookup</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/matchers/nmslib_matcher.py#L118-L134">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>batch_lookup(
-    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.callbacks.FloatTensor</code></a>,
+```python
+batch_lookup(
+    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
     k: int = 5
 ) -> Tuple[List[List[int]], List[List[float]]]
-</code></pre>
+```
+
 
 Find embeddings K nearest neighboors embeddings.
 
@@ -212,15 +216,16 @@ Number of nearest neighboors embedding to lookup. Defaults to 5.
 
 
 
-<h3 id="load"><code>load</code></h3>
+<h3 id="load">load</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/matchers/nmslib_matcher.py#L145-L152">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>load(
+```python
+load(
     path: str
 )
-</code></pre>
+```
+
 
 load index on disk
 
@@ -242,16 +247,18 @@ where to store the data
 
 
 
-<h3 id="lookup"><code>lookup</code></h3>
+<h3 id="lookup">lookup</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/matchers/nmslib_matcher.py#L104-L116">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>lookup(
-    embedding: <a href="../../TFSimilarity/callbacks/FloatTensor.md"><code>TFSimilarity.callbacks.FloatTensor</code></a>,
+```python
+lookup(
+    embedding: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
     k: int = 5
 ) -> Tuple[List[int], List[float]]
-</code></pre>
+```
+
 
 Find embedding K nearest neighboors embeddings.
 
@@ -280,15 +287,16 @@ Number of nearest neighboors embedding to lookup. Defaults to 5.
 
 
 
-<h3 id="save"><code>save</code></h3>
+<h3 id="save">save</h3>
 
 <a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/matchers/nmslib_matcher.py#L136-L143">View source</a>
 
-<pre class="devsite-click-to-copy prettyprint lang-py tfo-signature-link">
-<code>save(
+```python
+save(
     path: str
 )
-</code></pre>
+```
+
 
 Serializes the index data on disk
 
