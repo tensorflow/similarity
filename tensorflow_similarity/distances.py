@@ -89,9 +89,8 @@ class CosineDistance(Distance):
         Returns:
             FloatTensor: Pairwise distance tensor.
         """
-        tensor = tf.nn.l2_normalize(embeddings, axis=1)
-        distances: FloatTensor = 1 - tf.linalg.matmul(
-            tensor, tensor, transpose_b=True)
+        distances = 1 - tf.linalg.matmul(
+                embeddings, embeddings, transpose_b=True)
         distances = tf.math.maximum(distances, 0.0)
         return distances
 
@@ -144,7 +143,7 @@ class SquaredEuclideanDistance(Distance):
     """Compute pairwise squared Euclidean distance.
 
     The [Sequared Euclidean Distance](https://en.wikipedia.org/wiki/Euclidean_distance#Squared_Euclidean_distance) is
-    an distance that varies from 0 (similar) to infinity (dissimilar).
+    a distance that varies from 0 (similar) to infinity (dissimilar).
     """
     def __init__(self):
         super().__init__('squared_euclidean', ['sql2', 'sqeuclidean'])

@@ -100,8 +100,8 @@ class MultiShotMemorySampler(Sampler):
                                num_examples_per_class=total_examples_per_class)
 
         # assign after potential selection
-        self.x = x
-        self.y = y
+        self._x = x
+        self._y = y
 
         # we need to reindex here  as the numbers of samples might have
         # changed due to the filtering
@@ -126,10 +126,57 @@ class MultiShotMemorySampler(Sampler):
             idxs.extend(random.choices(class_idxs, k=examples_per_class))
 
         random.shuffle(idxs)
-        batch_x = tf.gather(self.x, idxs[:self.batch_size])
-        batch_y = tf.gather(self.y, idxs[:self.batch_size])
+        idxs_slice = tf.constant(idxs[:self.batch_size])
+
+        with tf.device("/cpu:0"):
+            batch_x = tf.gather_nd(
+                    self._x,
+                    indices=tf.reshape(idxs_slice, (-1, 1))
+            )
+            batch_y = tf.gather(self._y, indices=idxs_slice)
 
         return batch_x, batch_y
+
+    def get_slice(self,
+                  begin: int = 0,
+                  size: int = -1) -> Tuple[FloatTensor, IntTensor]:
+        """Extracts a slice over both the x and y tensors.
+
+        This method extracts a slice of size `size` over the first dimension of
+        both the x and y tensors starting at the index specified by `begin`.
+
+        The value of `begin + size` must be less than `self.num_examples`.
+
+        Args:
+            begin: The starting index.
+            size: The size of the slice.
+
+        Returns:
+            A Tuple of FloatTensor and IntTensor
+        """
+        slice_x = self._get_slice(self._x, begin, size)
+        slice_y = self._get_slice(self._y, begin, size)
+
+        return slice_x, slice_y
+
+    def _get_slice(self,
+                   input_: Tensor,
+                   begin: int,
+                   size: int) -> Tensor:
+        b = [0] * len(tf.shape(input_))
+        b[0] = begin
+        s = [-1] * len(tf.shape(input_))
+        s[0] = size
+
+        return tf.slice(input_, b, s)
+
+    @property
+    def num_examples(self) -> int:
+        return len(self._x)
+
+    @property
+    def example_shape(self) -> IntTensor:
+        return tf.shape(self._x[0])
 
 
 class SingleShotMemorySampler(Sampler):

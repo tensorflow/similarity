@@ -1,4 +1,3 @@
-import numpy as np
 import tensorflow as tf
 from tensorflow_similarity.models import SimilarityModel
 from tensorflow_similarity.callbacks import EvalCallback
@@ -35,7 +34,7 @@ def test_eval_callback(tmp_path):
 def test_split_val_loss_callback(tmp_path):
     x = tf.constant([[-1]]*5+[[1]]*5)
     y = tf.constant([0]*5+[1]*5)
-    known_classes = np.array([1])
+    known_classes = tf.constant([1])
 
     callback = SplitValidationLoss(x, y, known_classes)
 
