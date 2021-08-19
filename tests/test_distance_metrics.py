@@ -4,23 +4,21 @@ from tensorflow_similarity.distance_metrics import DistanceGapMetric
 from tensorflow_similarity.distances import CosineDistance
 from tensorflow_similarity.types import FloatTensor
 
-EMB1 = [
+EMB1 = tf.nn.l2_normalize([
     [0.5, 1, 0.5],
     [0.2, 0.8, 0.4],
-]
-EMB2 = [
+], axis=-1)
+EMB2 = tf.nn.l2_normalize([
     [0.66, 0.5, 0.34],
     [0.77, 0.9, 0.92],
-]
+], axis=-1)
 
 LABELS = tf.Variable([[1], [1], [2], [2]], dtype='int32')
-EMBEDDINGS = tf.Variable(EMB1 + EMB2)
+EMBEDDINGS = tf.Variable(tf.concat((EMB1, EMB2), axis=0))
 
 
-def cosine(a: FloatTensor, b: FloatTensor, axis: int = -1) -> FloatTensor:
-    t1 = tf.nn.l2_normalize(a, axis=axis)
-    t2 = tf.nn.l2_normalize(b, axis=axis)
-    distances = 1 - tf.linalg.matmul(t1, t2, transpose_b=True)
+def cosine(a: FloatTensor, b: FloatTensor) -> FloatTensor:
+    distances = 1 - tf.linalg.matmul(a, b, transpose_b=True)
     distances = tf.math.maximum(distances, 0.0)
     return distances
 

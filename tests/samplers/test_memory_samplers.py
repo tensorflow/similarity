@@ -73,3 +73,40 @@ def test_multi_shot_memory_sampler(example_per_class):
             assert x == 20
         elif y == 3:
             assert x == 30
+
+
+def test_msms_get_slice():
+    """Test the multi shot memory sampler get_slice method."""
+    y = tf.constant(range(4))
+    x = tf.constant([
+        [0]*10,
+        [1]*10,
+        [2]*10,
+        [3]*10
+    ])
+
+    ms_sampler = MultiShotMemorySampler(x=x, y=y)
+    # x and y are randomly shuffled so we fix the values here.
+    ms_sampler._x = x
+    ms_sampler._y = y
+    slice_x, slice_y = ms_sampler.get_slice(1, 2)
+
+    assert slice_x.shape == (2, 10)
+    assert slice_y.shape == (2,)
+
+    assert slice_x[0, 0] == 1
+    assert slice_x[1, 0] == 2
+
+    assert slice_y[0] == 1
+    assert slice_y[1] == 2
+
+
+def test_msms_properties():
+    """Test the multi shot memory sampler num_examples and shape"""
+    y = tf.constant(range(4))
+    x = tf.ones([4, 10, 20, 3])
+
+    ms_sampler = MultiShotMemorySampler(x=x, y=y)
+
+    assert ms_sampler.num_examples == 4
+    assert ms_sampler.example_shape == (10, 20, 3)
