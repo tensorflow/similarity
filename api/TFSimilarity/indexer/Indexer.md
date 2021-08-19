@@ -1,29 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.indexer.Indexer" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="add"/>
-<meta itemprop="property" content="batch_add"/>
-<meta itemprop="property" content="batch_lookup"/>
-<meta itemprop="property" content="calibrate"/>
-<meta itemprop="property" content="evaluate"/>
-<meta itemprop="property" content="get_calibration_metric"/>
-<meta itemprop="property" content="load"/>
-<meta itemprop="property" content="match"/>
-<meta itemprop="property" content="print_stats"/>
-<meta itemprop="property" content="reset"/>
-<meta itemprop="property" content="save"/>
-<meta itemprop="property" content="single_lookup"/>
-<meta itemprop="property" content="size"/>
-<meta itemprop="property" content="stats"/>
-<meta itemprop="property" content="to_data_frame"/>
-<meta itemprop="property" content="DATA"/>
-<meta itemprop="property" content="DISTANCES"/>
-<meta itemprop="property" content="EMBEDDINGS"/>
-<meta itemprop="property" content="LABELS"/>
-<meta itemprop="property" content="RANKS"/>
-</div>
 # TFSimilarity.indexer.Indexer
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">
@@ -50,7 +24,7 @@ Indexing system that allows to efficiently find nearest embeddings
 
 <!-- Placeholder for "Used in" -->
 by indexing known embeddings and make them searchable using an
-[Approximate Nearest Neigboors Search](https://en.wikipedia.org/wiki/Nearest_neighbor_search)
+- [Approximate Nearest Neigboors Search](https://en.wikipedia.org/wiki/Nearest_neighbor_search)
 search implemented via the [`Matcher()`](matchers/overview.md) classes
 and associated data lookup via the [`Table()`](tables/overview.md) classes.
 The indexer allows to evaluate the quality of the constructed index and
@@ -343,7 +317,7 @@ meet with respect to the `calibration_metric`.
 `calibration_metric`
 </td>
 <td>
-[Metric()](metrics/overview.md) used to
+- [Metric()](metrics/overview.md) used to
 evaluate the performance of the index.
 </td>
 </tr><tr>

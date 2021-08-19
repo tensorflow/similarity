@@ -1,8 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.metrics.batch_class_ratio" />
-<meta itemprop="path" content="Stable" />
-</div>
 # TFSimilarity.metrics.batch_class_ratio
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

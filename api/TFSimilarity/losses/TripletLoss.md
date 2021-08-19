@@ -1,12 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.losses.TripletLoss" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__call__"/>
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="from_config"/>
-<meta itemprop="property" content="get_config"/>
-</div>
 # TFSimilarity.losses.TripletLoss
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">
@@ -85,7 +76,7 @@ Defaults to 'semi-hard'. Available: {'hard', 'semi-hard', 'easy'}
 `soft_margin`
 </td>
 <td>
-[description]. Defaults to True.
+- [description]. Defaults to True.
 Use a soft margin instead of an explicit one.
 </td>
 </tr><tr>

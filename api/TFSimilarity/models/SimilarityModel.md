@@ -1,21 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.models.SimilarityModel" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="calibrate"/>
-<meta itemprop="property" content="evaluate_matching"/>
-<meta itemprop="property" content="index"/>
-<meta itemprop="property" content="index_size"/>
-<meta itemprop="property" content="index_summary"/>
-<meta itemprop="property" content="load_index"/>
-<meta itemprop="property" content="lookup"/>
-<meta itemprop="property" content="match"/>
-<meta itemprop="property" content="reset_index"/>
-<meta itemprop="property" content="save_index"/>
-<meta itemprop="property" content="single_lookup"/>
-<meta itemprop="property" content="to_data_frame"/>
-</div>
 # TFSimilarity.models.SimilarityModel
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">
@@ -87,7 +69,7 @@ Dict of performance targets to
 `calibration_metric`
 </td>
 <td>
-[Metric()](metrics/overview.md) used to
+- [Metric()](metrics/overview.md) used to
 evaluate the performance of the index.
 </td>
 </tr><tr>

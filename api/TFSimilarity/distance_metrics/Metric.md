@@ -1,13 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.distance_metrics.Metric" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="__new__"/>
-<meta itemprop="property" content="reset_state"/>
-<meta itemprop="property" content="result"/>
-<meta itemprop="property" content="update_state"/>
-</div>
 # TFSimilarity.distance_metrics.Metric
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

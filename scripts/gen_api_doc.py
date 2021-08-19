@@ -131,9 +131,9 @@ def main(_):
 
     reps = [
             ["<!-- Insert buttons and diff -->",
-             """TensorFlow Similarity is a [TensorFLow](https://tensorflow.org)
-library focused on making metric learning easy"""],
-            ["# Module: TFSimilarity", "# TensorFlow Similarity API Documentation"]
+             """TensorFlow Similarity is a TensorFlow library focused on making metric learning easy"""],
+            ["# Module: TFSimilarity", "# TensorFlow Similarity API Documentation"],
+            ["<table.+</table", ""],
         ]
 
     replace_in_file(mfname, reps)
@@ -142,7 +142,9 @@ library focused on making metric learning easy"""],
     cprint("[Bulk patching]", 'yellow')
     # pattern, replacement
     reps = [
-        ["description: .+", ""],
+        ["description: .+", ""], # remove "pseudo frontmatter"
+        ["^\[", '- ['],  # make list valid again
+        ["[^#]+\# ", '# '],
         ["\n\n", "\n"]
     ]
     for fname in Path(OUTDIR).glob('**/*md'):

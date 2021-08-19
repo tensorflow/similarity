@@ -1,13 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.indexer.Lookup" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__eq__"/>
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="data"/>
-<meta itemprop="property" content="embedding"/>
-<meta itemprop="property" content="label"/>
-</div>
 # TFSimilarity.indexer.Lookup
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

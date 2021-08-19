@@ -1,7 +1,3 @@
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.visualization" />
-<meta itemprop="path" content="Stable" />
-</div>
 # Module: TFSimilarity.visualization
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">
@@ -16,6 +12,6 @@
 
 
 ## Functions
-[`confusion_matrix(...)`](../TFSimilarity/visualization/confusion_matrix.md): Plot confusion matrix
-[`projector(...)`](../TFSimilarity/visualization/projector.md): Visualize the embeddings in 2D or 3D using UMAP projection
-[`viz_neigbors_imgs(...)`](../TFSimilarity/visualization/viz_neigbors_imgs.md): Display images nearest neighboors
+- [`confusion_matrix(...)`](../TFSimilarity/visualization/confusion_matrix.md): Plot confusion matrix
+- [`projector(...)`](../TFSimilarity/visualization/projector.md): Visualize the embeddings in 2D or 3D using UMAP projection
+- [`viz_neigbors_imgs(...)`](../TFSimilarity/visualization/viz_neigbors_imgs.md): Display images nearest neighboors

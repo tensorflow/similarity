@@ -1,8 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.visualization.viz_neigbors_imgs" />
-<meta itemprop="path" content="Stable" />
-</div>
 # TFSimilarity.visualization.viz_neigbors_imgs
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

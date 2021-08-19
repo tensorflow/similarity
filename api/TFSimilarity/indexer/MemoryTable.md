@@ -1,17 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.indexer.MemoryTable" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="add"/>
-<meta itemprop="property" content="batch_add"/>
-<meta itemprop="property" content="batch_get"/>
-<meta itemprop="property" content="get"/>
-<meta itemprop="property" content="load"/>
-<meta itemprop="property" content="save"/>
-<meta itemprop="property" content="size"/>
-<meta itemprop="property" content="to_data_frame"/>
-</div>
 # TFSimilarity.indexer.MemoryTable
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

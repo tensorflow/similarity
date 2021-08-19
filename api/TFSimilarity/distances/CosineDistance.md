@@ -1,12 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.distances.CosineDistance" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__call__"/>
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="call"/>
-<meta itemprop="property" content="get_config"/>
-</div>
 # TFSimilarity.distances.CosineDistance
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">

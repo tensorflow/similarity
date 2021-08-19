@@ -1,15 +1,3 @@
-
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.metrics.Sampler" />
-<meta itemprop="path" content="Stable" />
-<meta itemprop="property" content="__getitem__"/>
-<meta itemprop="property" content="__init__"/>
-<meta itemprop="property" content="__iter__"/>
-<meta itemprop="property" content="__len__"/>
-<meta itemprop="property" content="generate_batch"/>
-<meta itemprop="property" content="get_examples"/>
-<meta itemprop="property" content="on_epoch_end"/>
-</div>
 # TFSimilarity.metrics.Sampler
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">
@@ -42,15 +30,7 @@ The method `__getitem__` should return a complete batch.
 `Sequence` are a safer way to do multiprocessing. This structure guarantees
 that the network will only train once
  on each sample per epoch which is not the case with generators.
-#### Examples:
-
-```python
-from skimage.io import imread
-from skimage.transform import resize
-import numpy as np
-import math
-# Here, `x_set` is list of path to the images
-# and `y_set` are the associated classes.
+##### # and `y_set` are the associated classes.
 class CIFAR10Sequence(Sequence):
     def __init__(self, x_set, y_set, batch_size):
         self.x, self.y = x_set, y_set

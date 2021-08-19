@@ -1,7 +1,3 @@
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.models" />
-<meta itemprop="path" content="Stable" />
-</div>
 # Module: TFSimilarity.models
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">
@@ -16,4 +12,4 @@
 
 
 ## Classes
-[`class SimilarityModel`](../TFSimilarity/models/SimilarityModel.md): Specialized Keras.Model which implement the core features needed for
+- [`class SimilarityModel`](../TFSimilarity/models/SimilarityModel.md): Specialized Keras.Model which implement the core features needed for

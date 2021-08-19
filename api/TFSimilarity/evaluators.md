@@ -1,7 +1,3 @@
-<div itemscope itemtype="http://developers.google.com/ReferenceObject">
-<meta itemprop="name" content="TFSimilarity.evaluators" />
-<meta itemprop="path" content="Stable" />
-</div>
 # Module: TFSimilarity.evaluators
 <!-- Insert buttons and diff -->
 <table class="tfo-notebook-buttons tfo-api nocontent" align="left">
@@ -16,5 +12,5 @@
 
 
 ## Classes
-[`class Evaluator`](../TFSimilarity/evaluators/Evaluator.md): Evaluates index performance and calibrates it.
-[`class MemoryEvaluator`](../TFSimilarity/callbacks/MemoryEvaluator.md): In memory index performance evaluation and calibration.
+- [`class Evaluator`](../TFSimilarity/evaluators/Evaluator.md): Evaluates index performance and calibrates it.
+- [`class MemoryEvaluator`](../TFSimilarity/callbacks/MemoryEvaluator.md): In memory index performance evaluation and calibration.
