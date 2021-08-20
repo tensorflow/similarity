@@ -48,7 +48,7 @@ For more information about specific functions, you can [check the API documentat
 
 Here is a bare bones example demonstrating how to train a TensorFlow Similarity model on the MNIST data. This example illustrates some of the main components provided by TensorFlow Similarity and how they fit together. Please refer to the hello_world notebook for a more detailed introduction.
 
-#### Preparing data
+### Preparing data
 
 TensorFlow Similarity provides data samplers that ensure that:
 - Support restricting the batches to a subset of the classes present in the dataset.
@@ -64,7 +64,7 @@ from tensorflow_similarity.samplers import TFDatasetMultiShotMemorySampler
 sampler = TFDatasetMultiShotMemorySampler(dataset_name='mnist', class_per_batch=10)
 ```
 
-#### Building a Similarity model
+### Building a Similarity model
 
 Building a TensorFlow Similarity model is similar to building a standard Keras model, except the output layer is usually a `MetricEmbedding()` layer that enforces L2 normalization and the model is instantiated as a specialized subclass `SimilarityModel()` that supports additional functionality.
 
@@ -85,7 +85,7 @@ outputs = MetricEmbedding(64)(x)
 model = SimilarityModel(inputs, outputs)
 ```
 
-#### Training model via contrastive learning
+### Training model via contrastive learning
 
 The model requires the use of special TensorFlow Similarity losses that construct the triplets from each batch of examples.
 
@@ -97,7 +97,7 @@ model.compile('adam', loss=MultiSimilarityLoss())
 model.fit(sampler, epochs=5)
 ```
 
-#### Building images index and querying it
+### Building images index and querying it
 
 Once the model is trained, embedded examples can be added to the index. Users can then use an embedded query to search the indexed examples for the K most similar items.
 
