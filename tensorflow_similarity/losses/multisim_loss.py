@@ -151,7 +151,7 @@ class MultiSimilarityLoss(MetricLoss):
                  beta: float = 20,
                  epsilon: float = 0.2,
                  lmda: float = 0.5,
-                 name: str = None):
+                 name: str = 'MultiSimilarityLoss'):
         """Initializes the Multi Similarity Loss
 
         Args:
@@ -178,7 +178,7 @@ class MultiSimilarityLoss(MetricLoss):
             this distance negatives are down weighted and positive are up
             weighted.
 
-            name: Loss name. Defaults to None.
+            name: Loss name. Defaults to MultiSimilarityLoss.
         """
 
         # distance canonicalization

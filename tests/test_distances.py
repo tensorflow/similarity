@@ -66,7 +66,7 @@ def test_cosine_opposite():
 
 
 def test_cosine_vals():
-    a = tf.constant([[0.1, 0.3, 0.2], [0.0, 0.1, 0.5]])
+    a = tf.nn.l2_normalize([[0.1, 0.3, 0.2], [0.0, 0.1, 0.5]], axis=-1)
     d = CosineDistance()
     vals = d(a)
     assert vals[0][0] == 0

@@ -1,7 +1,7 @@
 import tensorflow as tf
 import pytest
-from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.layers import MetricEmbedding
+from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.models import SimilarityModel
 from tensorflow_similarity.callbacks import EvalCallback
 
@@ -60,8 +60,6 @@ def test_default_multi_output():
     o1 = MetricEmbedding(4)(m)
     o2 = MetricEmbedding(4)(m)
     model = SimilarityModel(inputs, [o1, o2])
-    print(model.outputs)
-    print(model.output_names)
 
     # loss
     triplet_loss = TripletLoss()
@@ -112,8 +110,8 @@ def test_invalid_output_idx():
     inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS, ))
     # dont use x as variable
     m = tf.keras.layers.Dense(8, activation='relu')(inputs)
-    o1 = MetricEmbedding(6)(m)
-    o2 = MetricEmbedding(4)(m)
+    o1 = tf.keras.layers.Dense(6)(m)
+    o2 = tf.keras.layers.Dense(4)(m)
     model = SimilarityModel(inputs, [o1, o2])
 
     # check that specificing an invalid output value raise a valueerror

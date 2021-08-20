@@ -1,33 +1,41 @@
-# TF Similarity documentation
+# TensorFlow Similarity API Documentation
 
-The user-facing documentation is available FIXME - this is what you are looking for if you are a package user. This directory contains the source used to generate the documentation and are not easily readable as is.
-
-
-# Generating the documentation
+TensorFlow Similarity is a TensorFlow library focused on making metric learning easy
 
 
-Use (https://www.mkdocs.org/getting-started/)[mkdocs] with (https://squidfunk.github.io/mkdocs-material/getting-started/)[mkdocs material design them]
-
-## Installing dependencies
-
-```
-pip install -r requirements.txt
-```
 
 
-## Serving
-
-When developing the docs you can use mkdocs live reload as follow:
-
-```
-mkdocs serve
-```
 
 
-## generating local documentation
 
-To generate the documentation in `site/` run the  `build.sh` script.
 
-## generating public documentation
+## Modules
 
-A github action do this for the project on action merged.
+- [`architectures`](./TFSimilarity/architectures.md)
+
+- [`callbacks`](./TFSimilarity/callbacks.md)
+
+- [`distance_metrics`](./TFSimilarity/distance_metrics.md): Metrics computed over embeddings
+
+- [`distances`](./TFSimilarity/distances.md)
+
+- [`evaluators`](./TFSimilarity/evaluators.md)
+
+- [`indexer`](./TFSimilarity/indexer.md): Index embedding to allow distance based lookup
+
+- [`losses`](./TFSimilarity/losses.md): Contrastive learning specialized losses.
+
+- [`matchers`](./TFSimilarity/matchers.md)
+
+- [`metrics`](./TFSimilarity/metrics.md)
+
+- [`models`](./TFSimilarity/models.md)
+
+- [`samplers`](./TFSimilarity/samplers.md)
+
+- [`tables`](./TFSimilarity/tables.md)
+
+- [`utils`](./TFSimilarity/utils.md)
+
+- [`visualization`](./TFSimilarity/visualization.md)
+
