@@ -1,7 +1,6 @@
 from typing import List, Union
 from pathlib import Path
 
-import numpy as np
 import tensorflow as tf
 from tensorflow.keras.callbacks import Callback
 
@@ -120,7 +119,7 @@ class SplitValidationLoss(Callback):
     def __init__(self,
                  x: FloatTensor,
                  y: IntTensor,
-                 known_classes: np.ndarray):
+                 known_classes: IntTensor):
         """Creates the validation callbacks.
 
         Args:
@@ -148,10 +147,14 @@ class SplitValidationLoss(Callback):
         known_idxs = tf.squeeze(tf.where(known_mask))
         unknown_idxs = tf.squeeze(tf.where(~known_mask))
 
-        self.x_known = tf.gather(x, indices=known_idxs)
-        self.y_known = tf.gather(y, indices=known_idxs)
-        self.x_unknown = tf.gather(x, indices=unknown_idxs)
-        self.y_unknown = tf.gather(y, indices=unknown_idxs)
+        with tf.device("/cpu:0"):
+            known_idxs_nd = tf.reshape(known_idxs, (-1, 1))
+            self.x_known = tf.gather_nd(x, indices=known_idxs_nd)
+            self.y_known = tf.gather(y, indices=known_idxs)
+
+            unknown_idxs_nd = tf.reshape(unknown_idxs, (-1, 1))
+            self.x_unknown = tf.gather_nd(x, indices=unknown_idxs_nd)
+            self.y_unknown = tf.gather(y, indices=unknown_idxs)
 
     def on_epoch_end(self, epoch: int, logs: dict = None):
         _ = epoch

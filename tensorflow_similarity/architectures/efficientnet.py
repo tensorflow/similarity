@@ -4,6 +4,7 @@ from typing import Tuple, Callable, Union
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.applications import efficientnet
+from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.models import SimilarityModel
 
 EFF_INPUT_SIZE = {
@@ -35,7 +36,8 @@ def EfficientNetSim(input_shape: Tuple[int],
                     variant: str = "B0",
                     weights: str = "imagenet",
                     augmentation: Union[Callable, str] = "basic",
-                    trainable: str = "frozen"):
+                    trainable: str = "frozen",
+                    l2_norm: bool = True):
     """Build an EffecientNet Model backbone for similarity learning
 
     Architecture from [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks
@@ -62,6 +64,10 @@ def EfficientNetSim(input_shape: Tuple[int],
         "partial" to only make the last 3 block trainable or "frozen" to make
         it not trainable. Defaults to "frozen".
 
+        l2_norm: If True, tensorflow_similarity.layers.MetricEmbedding is used
+        as the last layer, otherwise keras.layers.Dense is used. This should be
+        true when using cosine distance. Defaults to True.
+
     Note:
         EfficientNet expects images at the following size:
          - "B0": 224,
@@ -84,23 +90,25 @@ def EfficientNetSim(input_shape: Tuple[int],
     img_size = EFF_INPUT_SIZE[variant]
 
     # augmentation
-    # add the basic version or the suppplied one.
-    if callable(augmentation):
-        x = augmentation(x)
-    elif augmentation == "basic":
+    if augmentation == "basic":
         # augs usually used in benchmark and work almost always well
-        over_size = int(img_size * 1.5)
-        x = tf.keras.Sequential([
-            layers.experimental.preprocessing.Resizing(over_size, over_size),
+        augmentation_layers = tf.keras.Sequential([
             layers.experimental.preprocessing.RandomCrop(img_size, img_size),
             layers.experimental.preprocessing.RandomFlip("horizontal")
-        ])(x)
+        ])
     else:
-        print(f'Warning: {augmentation} is not supported and will be skipped.')
+        augmentation_layers = augmentation
+
+    # add the basic version or the suppplied one.
+    if augmentation:
+        x = augmentation_layers(x)
 
     x = build_effnet(x, variant, weights, trainable)
     x = layers.GlobalAveragePooling2D()(x)
-    outputs = layers.Dense(embedding_size)(x)
+    if l2_norm:
+        outputs = MetricEmbedding(embedding_size)(x)
+    else:
+        outputs = layers.Dense(embedding_size)(x)
     return SimilarityModel(inputs, outputs)
 
 
