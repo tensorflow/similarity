@@ -1,6 +1,7 @@
 "Metrics computed over embeddings"
 import tensorflow as tf
 from tensorflow.keras.metrics import Metric
+
 from tensorflow_similarity.algebra import build_masks
 from tensorflow_similarity.algebra import masked_min, masked_max
 from tensorflow_similarity.distances import distance_canonicalizer

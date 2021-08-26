@@ -1,15 +1,12 @@
 from abc import abstractmethod
 from abc import ABC
 import math
-from typing import Sequence, Union
 
-import numpy as np
-
-from tensorflow_similarity.types import Lookup
+from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
-class EvalMetric(ABC):
-    """Abstract base class for computing evaluation metrics.
+class RetrievalMetric(ABC):
+    """Abstract base class for computing retrieval metrics.
 
     Attributes:
         name: Name associated with the metric object, e.g., recall@5
@@ -36,11 +33,17 @@ class EvalMetric(ABC):
                  k: int = 1,
                  distance_threshold: float = math.inf,
                  average: str = 'micro') -> None:
+        self.name = name
+        self.canonical_name = canonical_name
         self.k = k
         self.distance_threshold = distance_threshold
-        self.canonical_name = canonical_name
-        self.name = self._suffix_name(name, k, distance_threshold)
         self.average = average
+
+        if self.k and self.k > 1:
+            self.name = f'{self.name}@{k}'
+
+        if self.distance_threshold and self.distance_threshold != 0.5:
+            self.name = f'{self.name}:{self.distance_threshold}'
 
     def __str__(self) -> str:
         return self.name
@@ -56,22 +59,13 @@ class EvalMetric(ABC):
             "distance_threshold": float(self.distance_threshold)
         }
 
-    @staticmethod
-    def from_config(config):
-        metric = make_metric(config['canonical_name'])
-        metric.name = config['name']
-        metric.k = config['k']
-        metric.distance_threshold = config['distance_threshold']
-        return metric
-
     @abstractmethod
     def compute(self,
                 *,
-                query_labels: np.ndarray,
-                lookup_labels: np.ndarray,
-                lookup_distances: np.ndarray,
-                match_mask: np.ndarray,
-                lookups: Sequence[Sequence[Lookup]]) -> float:
+                query_labels: IntTensor,
+                lookup_labels: IntTensor,
+                lookup_distances: FloatTensor,
+                match_mask: BoolTensor) -> FloatTensor:
         """Compute the metric
 
         Args:
@@ -86,49 +80,6 @@ class EvalMetric(ABC):
             match_mask: A 2D mask where a 1 indicates a match between the
             jth query and the kth neighboor and a 0 indicates a mismatch.
 
-            lookups: A 2D collection of Lookup results where the jth row is the
-            k neighbors for the jth query.
-
         Returns:
             metric results.
         """
-
-    def _suffix_name(self,
-                     name: str,
-                     k: int = 1,
-                     distance: float = math.inf) -> str:
-        "Suffix metric name with k and distance if needed"
-        if k and k >= 1:
-            name = "%s@%d" % (name, k)
-
-        if distance and distance != 0.5:
-            name = "%s:%f" % (name, distance)
-
-        return name
-
-
-def make_metric(metric: Union[str, EvalMetric]) -> EvalMetric:
-    """Covert metric from str name to object if needed.
-
-    Args:
-        metric: EvalMetric() or metric name.
-
-    Raises:
-        ValueError: metric name is invalid.
-
-    Returns:
-        EvalMetric: Instantiated metric if needed.
-    """
-    # ! Metrics must be non-instantiated.
-    METRICS_ALIASES = {
-    }
-
-    if isinstance(metric, EvalMetric):
-        return metric
-    elif isinstance(metric, str):
-        if metric.lower() in METRICS_ALIASES:
-            return METRICS_ALIASES[metric.lower()]
-        else:
-            raise ValueError('Unknown metric name:', metric, ' typo?')
-    else:
-        raise ValueError('metrics must be a str or a Evalmetric Object')

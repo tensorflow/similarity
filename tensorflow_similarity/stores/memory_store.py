@@ -1,20 +1,22 @@
-import numpy as np
 from pathlib import Path
-from tensorflow_similarity.types import FloatTensor, List, Tuple, Tensor
-from tensorflow_similarity.types import Optional, PandasDataFrame
+from typing import List, Optional, Sequence, Tuple
+
+import numpy as np
 import pandas as pd
-from .table import Table
+
+from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
+from .store import Store
 
 
-class MemoryTable(Table):
-    """Efficient in-memory dataset table"""
+class MemoryStore(Store):
+    """Efficient in-memory dataset store"""
 
     def __init__(self) -> None:
         # We are using a native python array in memory for its row speed.
         # Serialization / export relies on Arrow.
-        self.labels: List[Optional[int]] = []
+        self.labels: List[int] = []
         self.embeddings: List[FloatTensor] = []
-        self.data: List[Optional[Tensor]] = []
+        self.data: List[Tensor] = []
         self.num_items: int = 0
         pass
 
@@ -22,7 +24,7 @@ class MemoryTable(Table):
             embedding: FloatTensor,
             label: Optional[int] = None,
             data: Optional[Tensor] = None) -> int:
-        """Add an Embedding record to the table.
+        """Add an Embedding record to the key value store.
 
         Args:
             embedding: Embedding predicted by the model.
@@ -41,12 +43,11 @@ class MemoryTable(Table):
         self.num_items += 1
         return idx
 
-    def batch_add(
-            self,
-            embeddings: List[FloatTensor],
-            labels: List[Optional[int]] = None,
-            data: List[Optional[Tensor]] = None) -> List[int]:
-        """Add a set of embedding records to the table.
+    def batch_add(self,
+                  embeddings: Sequence[FloatTensor],
+                  labels: Optional[Sequence[int]] = None,
+                  data: Optional[Sequence[Tensor]] = None) -> List[int]:
+        """Add a set of embedding records to the key value store.
 
         Args:
             embeddings: Embeddings predicted by the model.
@@ -61,7 +62,6 @@ class MemoryTable(Table):
         Returns:
             List of associated record id.
         """
-
         idxs: List[int] = []
         for idx, embedding in enumerate(embeddings):
             label = None if labels is None else labels[idx]
@@ -72,7 +72,7 @@ class MemoryTable(Table):
     def get(self, idx: int) -> Tuple[FloatTensor,
                                      Optional[int],
                                      Optional[Tensor]]:
-        """Get an embedding record from the table
+        """Get an embedding record from the key value store.
 
         Args:
             idx: Id of the record to fetch.
@@ -83,10 +83,11 @@ class MemoryTable(Table):
 
         return self.embeddings[idx], self.labels[idx], self.data[idx]
 
-    def batch_get(self, idxs: List[int]
-                  ) -> Tuple[List[FloatTensor], List[Optional[int]],
-                             List[Optional[Tensor]]]:
-        """Get embedding records from the table
+    def batch_get(self,
+                  idxs: Sequence[int]) -> Tuple[List[FloatTensor],
+                                                Optional[List[int]],
+                                                Optional[List[Tensor]]]:
+        """Get embedding records from the key value store.
 
         Args:
             idxs: ids of the records to fetch.
@@ -105,7 +106,7 @@ class MemoryTable(Table):
         return embeddings, labels, data
 
     def size(self) -> int:
-        "Number of record in the table."
+        "Number of record in the key value store."
         return self.num_items
 
     def save(self, path: str, compression: bool = True) -> None:

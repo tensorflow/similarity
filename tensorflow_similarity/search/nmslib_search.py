@@ -1,14 +1,14 @@
-from os import name
-import nmslib
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 
+import nmslib
+
+from .search import Search
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
-from .matcher import Matcher
 from tensorflow_similarity.types import FloatTensor
 
 
-class NMSLibMatcher(Matcher):
+class NMSLibSearch(Search):
     """
     Efficiently find nearest embeddings by indexing known embeddings and make
     them searchable using the  [Approximate Nearest Neigboors Search](https://en.wikipedia.org/wiki/Nearest_neighbor_search)
@@ -38,9 +38,8 @@ class NMSLibMatcher(Matcher):
         else:
             raise ValueError('Unsupported algorithm')
 
-        self._matcher = nmslib.init(method=method, space=space)
-        self._matcher.createIndex()
-
+        self._search_index = nmslib.init(method=method, space=space)
+        self._search_index.createIndex()
 
     def add(self,
             embedding: FloatTensor,
@@ -66,17 +65,17 @@ class NMSLibMatcher(Matcher):
             Defaults to True.
 
         """
-        self._matcher.addDataPoint(idx, embedding)
+        self._search_index.addDataPoint(idx, embedding)
         if build:
             self._build(verbose=verbose)
 
     def batch_add(self,
                   embeddings: FloatTensor,
-                  idxs: List[int],
+                  idxs: Sequence[int],
                   verbose: int = 1,
                   build: bool = True,
                   **kwargs):
-        """Add a batch of embeddings to the matcher.
+        """Add a batch of embeddings to the search index.
 
         Args:
             embeddings: List of embeddings to add to the index.
@@ -94,7 +93,7 @@ class NMSLibMatcher(Matcher):
         # !addDataPoint and addDataPointBAtch have inverted parameters
         if verbose:
             print('|-Adding embeddings to index.')
-        self._matcher.addDataPointBatch(embeddings, idxs)
+        self._search_index.addDataPointBatch(embeddings, idxs)
 
         if build:
             if verbose:
@@ -112,7 +111,7 @@ class NMSLibMatcher(Matcher):
         """
         idxs: List[int] = []
         distances: List[float] = []
-        idxs, distances = self._matcher.knnQuery(embedding, k=k)
+        idxs, distances = self._search_index.knnQuery(embedding, k=k)
         return idxs, distances
 
     def batch_lookup(self,
@@ -127,7 +126,7 @@ class NMSLibMatcher(Matcher):
         batch_idxs = []
         batch_distances = []
 
-        nn = self._matcher.knnQueryBatch(embeddings, k=k)
+        nn = self._search_index.knnQueryBatch(embeddings, k=k)
         for n in nn:
             batch_idxs.append(n[0])
             batch_distances.append(n[1])
@@ -140,7 +139,7 @@ class NMSLibMatcher(Matcher):
             path: where to store the data
         """
         fname = self.__make_fname(path)
-        self._matcher.saveIndex(fname, save_data=True)
+        self._search_index.saveIndex(fname, save_data=True)
 
     def load(self, path: str):
         """load index on disk
@@ -149,13 +148,13 @@ class NMSLibMatcher(Matcher):
             path: where to store the data
         """
         fname = self.__make_fname(path)
-        self._matcher.loadIndex(fname, load_data=True)
+        self._search_index.loadIndex(fname, load_data=True)
 
     def _build(self, verbose=0):
         """Build the index this is need to take into account the new points
         """
         show = True if verbose else False
-        self._matcher.createIndex(print_progress=show)
+        self._search_index.createIndex(print_progress=show)
 
     def __make_fname(self, path):
-        return str(Path(path) / 'index_matcher.bin')
+        return str(Path(path) / 'search_index.bin')

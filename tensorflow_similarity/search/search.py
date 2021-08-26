@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
+from typing import List, Sequence, Tuple, Union
+
 from tensorflow_similarity.types import FloatTensor
-from typing import List, Tuple, Union
+
 from tensorflow_similarity.distances import Distance
 
 
-class Matcher(ABC):
+class Search(ABC):
 
     @abstractmethod
     def __init__(self,
@@ -12,7 +14,7 @@ class Matcher(ABC):
                  dim: int,
                  verbose: bool,
                  **kwargs):
-        """Initializes a nearest neigboors matcher.
+        """Initializes a nearest neigboors search index.
 
         Args:
             distance: the distance used to compute the distance between
@@ -29,7 +31,7 @@ class Matcher(ABC):
             idx: int,
             verbose: int = 1,
             **kwargs):
-        """Add a single embedding to the matcher.
+        """Add a single embedding to the search index.
 
         Args:
             embedding: The embedding to index as computed by
@@ -44,10 +46,10 @@ class Matcher(ABC):
     @abstractmethod
     def batch_add(self,
                   embeddings: FloatTensor,
-                  idxs: List[int],
+                  idxs: Sequence[int],
                   verbose: int = 1,
                   **kwargs):
-        """Add a batch of embeddings to the matcher.
+        """Add a batch of embeddings to the search index.
 
         Args:
             embeddings: List of embeddings to add to the index.

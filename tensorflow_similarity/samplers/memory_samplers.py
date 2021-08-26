@@ -115,9 +115,10 @@ class MultiShotMemorySampler(Sampler):
             cl = cls[idx]
             self.index_per_class[cl].append(idx)
 
-    def get_examples(self, batch_id: int, num_classes: int,
+    def get_examples(self,
+                     batch_id: int,
+                     num_classes: int,
                      examples_per_class: int) -> Tuple[Tensor, Tensor]:
-
         # select class at ramdom
         class_list = random.sample(self.class_list, k=num_classes)
 
@@ -131,10 +132,7 @@ class MultiShotMemorySampler(Sampler):
         idxs_slice = tf.constant(idxs[:self.batch_size])
 
         with tf.device("/cpu:0"):
-            batch_x = tf.gather_nd(
-                    self._x,
-                    indices=tf.reshape(idxs_slice, (-1, 1))
-            )
+            batch_x = tf.gather(self._x, indices=idxs_slice)
             batch_y = tf.gather(self._y, indices=idxs_slice)
 
         return batch_x, batch_y

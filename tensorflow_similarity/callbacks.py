@@ -1,13 +1,15 @@
-from typing import List, Union
+from typing import List, Sequence, Union
 from pathlib import Path
 
 import tensorflow as tf
 from tensorflow.keras.callbacks import Callback
 
-from tensorflow_similarity.types import Tensor
+from tensorflow_similarity.types import Tensor, FloatTensor, IntTensor
 from tensorflow_similarity.evaluators import MemoryEvaluator
-from tensorflow_similarity.metrics import EvalMetric, make_metric
-from .types import FloatTensor, IntTensor
+from tensorflow_similarity.classification_metric import ClassificationMetric
+from tensorflow_similarity.classification_metric import make_classification_metric # noqa
+
+Metric = Union[str, ClassificationMetric]
 
 
 class EvalCallback(Callback):
@@ -21,11 +23,11 @@ class EvalCallback(Callback):
 
     def __init__(self,
                  queries: Tensor,
-                 query_labels: List[int],
+                 query_labels: Sequence[int],
                  targets: Tensor,
-                 target_labels: List[int],
+                 target_labels: Sequence[int],
                  distance: str = 'cosine',
-                 metrics: List[Union[str, EvalMetric]] = ['accuracy', 'mean_rank'],  # noqa
+                 metrics: Sequence[Metric] = ['accuracy', 'f1score'],  # noqa
                  tb_logdir: str = None,
                  k: int = 1):
         """Evaluate model matching quality against a validation dataset at
@@ -62,7 +64,8 @@ class EvalCallback(Callback):
         self.index_size = len(target_labels)
         self.evaluator = MemoryEvaluator()
         # typing requires this weird formulation of creating a new list
-        self.metrics: List[Union[str, EvalMetric]] = [make_metric(m) for m in metrics] # noqa
+        self.metrics: List[ClassificationMetric] = (
+                [make_classification_metric(m) for m in metrics])
 
         if tb_logdir:
             tb_logdir = str(Path(tb_logdir) / 'index/')
@@ -148,12 +151,10 @@ class SplitValidationLoss(Callback):
         unknown_idxs = tf.squeeze(tf.where(~known_mask))
 
         with tf.device("/cpu:0"):
-            known_idxs_nd = tf.reshape(known_idxs, (-1, 1))
-            self.x_known = tf.gather_nd(x, indices=known_idxs_nd)
+            self.x_known = tf.gather(x, indices=known_idxs)
             self.y_known = tf.gather(y, indices=known_idxs)
 
-            unknown_idxs_nd = tf.reshape(unknown_idxs, (-1, 1))
-            self.x_unknown = tf.gather_nd(x, indices=unknown_idxs_nd)
+            self.x_unknown = tf.gather(x, indices=unknown_idxs)
             self.y_unknown = tf.gather(y, indices=unknown_idxs)
 
     def on_epoch_end(self, epoch: int, logs: dict = None):

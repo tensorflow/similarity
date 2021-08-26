@@ -1,9 +1,10 @@
-import numpy as np
+import tensorflow as tf
 
-from tensorflow_similarity.metrics import EvalMetric
+from .retrieval_metric import RetrievalMetric
+from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
-class PrecisionAtK(EvalMetric):
+class PrecisionAtK(RetrievalMetric):
     r"""Precision@K is computed as.
 
                          k
@@ -34,7 +35,7 @@ class PrecisionAtK(EvalMetric):
 
         k: The number of nearest neighbors over which the metric is computed.
 
-        distance_threshold: The max distance below which a nearset neighbor is
+        distance_threshold: The max distance below which a nearest neighbor is
         considered a valid match.
 
         average: {'micro', 'macro'} Determines the type of averaging performed
@@ -46,11 +47,9 @@ class PrecisionAtK(EvalMetric):
                      mean.
     """
     def __init__(self,
-                 name: str = '',
+                 name: str = 'precision',
                  k: int = 1,
                  **kwargs) -> None:
-        name = name if name else f'precision@{k}'
-
         if 'canonical_name' not in kwargs:
             kwargs['canonical_name'] = 'precision@k'
 
@@ -58,9 +57,9 @@ class PrecisionAtK(EvalMetric):
 
     def compute(self,
                 *,
-                query_labels: np.ndarray,
-                match_mask: np.ndarray,
-                **kwargs) -> float:
+                query_labels: IntTensor,
+                match_mask: BoolTensor,
+                **kwargs) -> FloatTensor:
         """Compute the metric
 
         Args:
@@ -75,19 +74,20 @@ class PrecisionAtK(EvalMetric):
         Returns:
             metric results.
         """
-        k_slice = match_mask[:, :self.k]
-        tp = np.sum(k_slice, axis=1)
-        per_example_p = np.divide(tp, self.k)
+        k_slice = tf.cast(match_mask[:, :self.k], dtype='float')
+        tp = tf.math.reduce_sum(k_slice, axis=1)
+        per_example_p = tf.math.divide(tp, self.k)
 
         if self.average == 'micro':
-            p_at_k = np.mean(per_example_p)
+            p_at_k = tf.math.reduce_mean(per_example_p)
         elif self.average == 'macro':
             per_class_metrics = 0
-            class_labels = np.unique(query_labels)
+            class_labels = tf.unique(query_labels)[0]
             for label in class_labels:
-                idxs = np.argwhere(query_labels == label)
-                per_class_metrics += np.mean(per_example_p[idxs])
-            p_at_k = np.divide(per_class_metrics, len(class_labels))
+                idxs = tf.where(query_labels == label)
+                c_slice = tf.gather(per_example_p, indices=idxs)
+                per_class_metrics += tf.math.reduce_mean(c_slice)
+            p_at_k = tf.math.divide(per_class_metrics, len(class_labels))
         else:
             raise ValueError(f'{self.average} is not a supported average '
                              'option')
