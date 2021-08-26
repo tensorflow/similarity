@@ -1,26 +1,31 @@
 from collections import defaultdict
 from copy import copy
 from pathlib import Path
-from tensorflow_similarity.evaluators.evaluator import Evaluator
-from typing import Dict, List, Union, DefaultDict, Optional
-from tabulate import tabulate
-from tqdm.auto import tqdm
+from typing import DefaultDict, Dict, List, Mapping, Optional, Sequence, Union
 
+from tabulate import tabulate
 import tensorflow as tf
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.losses import Loss
+from tqdm.auto import tqdm
 
-from tensorflow_similarity.indexer import Indexer
-from tensorflow_similarity.tables import Table
-from tensorflow_similarity.matchers import Matcher
-from tensorflow_similarity.metrics import EvalMetric, make_metric
+from tensorflow_similarity.classification_metrics import ClassificationMetric
+from tensorflow_similarity.classification_metrics import make_classification_metric  # noqa
 from tensorflow_similarity.distances import Distance
 from tensorflow_similarity.distances import distance_canonicalizer
-from tensorflow_similarity.distance_metrics import DistanceMetric
+from tensorflow_similarity.training_metrics import DistanceMetric
+from tensorflow_similarity.evaluators.evaluator import Evaluator
+from tensorflow_similarity.indexer import Indexer
 from tensorflow_similarity.losses import MetricLoss
-from tensorflow_similarity.types import FloatTensor, Lookup, IntTensor, Tensor
-from tensorflow_similarity.types import PandasDataFrame
+from tensorflow_similarity.matchers import ClassificationMatch
+from tensorflow_similarity.stores import Store
+from tensorflow_similarity.search import Search
+from tensorflow_similarity.types import (
+        FloatTensor, Lookup, IntTensor, Tensor, PandasDataFrame)
+
+CalibrationMetric = Union[str, ClassificationMetric]
+ExtraClassificationMetrics = Sequence[Union[str, ClassificationMetric]]
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -49,8 +54,8 @@ class SimilarityModel(tf.keras.Model):
                 loss: Union[Loss, MetricLoss, str, Dict, List] = None,
                 metrics: Union[Metric, DistanceMetric, str, Dict, List] = None,
                 embedding_output: int = None,
-                table: Union[Table, str] = 'memory',
-                matcher: Union[Matcher, str] = 'nmslib',
+                kv_store: Union[Store, str] = 'memory',
+                search: Union[Search, str] = 'nmslib',
                 evaluator: Union[Evaluator, str] = 'memory',
                 stat_buffer_size: int = 1000,
                 loss_weights: List = None,
@@ -95,13 +100,12 @@ class SimilarityModel(tf.keras.Model):
 
             For multi-output models you can specify different metrics for
             different outputs by passing a dictionary, such as
-            `metrics={'similarity': 'min_neg_gap', 'other': ['accuracy', 'mse']}`.
-            You can also pass a list (len = len(outputs)) of lists of metrics
-            such as `metrics=[['min_neg_gap'], ['accuracy', 'mse']]` or
-            `metrics=['min_neg_gap', ['accuracy', 'mse']]`. For outputs which
-            are not related to metrics learning, you can use any of the
+            `metrics={'similarity': 'min_neg_gap', 'other': ['accuracy',
+            'mse']}`.  You can also pass a list (len = len(outputs)) of lists
+            of metrics such as `metrics=[['min_neg_gap'], ['accuracy', 'mse']]`
+            or `metrics=['min_neg_gap', ['accuracy', 'mse']]`. For outputs
+            which are not related to metrics learning, you can use any of the
             standard `tf.keras.metrics`.
-
 
             loss_weights: Optional list or dictionary specifying scalar
             coefficients (Python floats) to weight the loss contributions of
@@ -137,7 +141,6 @@ class SimilarityModel(tf.keras.Model):
         ValueError: In case of invalid arguments for
             `optimizer`, `loss` or `metrics`.
     """
-
         # Fetching the distance used from the first loss if auto
         if distance == 'auto':
             if isinstance(loss, list):
@@ -175,12 +178,12 @@ class SimilarityModel(tf.keras.Model):
             self.embedding_size = self.outputs[0].shape[1]
 
         # init index
-        self._index = Indexer(distance=distance,
-                              embedding_size=self.embedding_size,
-                              embedding_output=embedding_output,
-                              table=table,
-                              matcher=matcher,
+        self._index = Indexer(embedding_size=self.embedding_size,
+                              distance=distance,
+                              search=search,
+                              kv_store=kv_store,
                               evaluator=evaluator,
+                              embedding_output=embedding_output,
                               stat_buffer_size=stat_buffer_size)
 
         # call underlying keras method
@@ -205,8 +208,9 @@ class SimilarityModel(tf.keras.Model):
             x: Samples to index.
 
             y: class ids associated with the data if any. Defaults to None.
-            store_data: store the data associated with the samples in Table.
-            Defaults to True.
+
+            store_data: store the data associated with the samples in the key
+            value store. Defaults to True.
 
             build: Rebuild the index after indexing. This is needed to make the
             new samples searchable. Set it to false to save processing time
@@ -217,14 +221,15 @@ class SimilarityModel(tf.keras.Model):
         """
 
         if not self._index:
-            raise Exception('You need to compile the model with a valid distance to be able to use the indexing')
+            raise Exception('You need to compile the model with a valid'
+                            'distance to be able to use the indexing')
         if verbose:
             print('[Indexing %d points]' % len(x))
             print('|-Computing embeddings')
         predictions = self.predict(x)
-        self._index.batch_add(predictions,
-                              y,
-                              data,
+        self._index.batch_add(predictions=predictions,
+                              labels=y,
+                              data=data,
                               build=build,
                               verbose=verbose)
 
@@ -246,7 +251,7 @@ class SimilarityModel(tf.keras.Model):
             List[List[Lookup]]
         """
         predictions = self.predict(x)
-        return self._index.batch_lookup(predictions,
+        return self._index.batch_lookup(predictions=predictions,
                                         k=k,
                                         verbose=verbose)
 
@@ -266,21 +271,23 @@ class SimilarityModel(tf.keras.Model):
         """
         x = tf.expand_dims(x, axis=0)
         prediction = self.predict(x)
-        return self._index.single_lookup(prediction, k=k)
+        return self._index.single_lookup(prediction=prediction, k=k)
 
     def index_summary(self):
         "Display index info summary."
         self._index.print_stats()
 
-    def calibrate(self,
-                  x: FloatTensor,
-                  y: IntTensor,
-                  thresholds_targets: Dict[str, float] = {},
-                  k: int = 1,
-                  calibration_metric: Union[str, EvalMetric] = "f1_score",
-                  extra_metrics: List[Union[str, EvalMetric]] = ['accuracy', 'recall'],  # noqa
-                  rounding: int = 2,
-                  verbose: int = 1):
+    def calibrate(
+            self,
+            x: FloatTensor,
+            y: IntTensor,
+            thresholds_targets: Mapping[str, float] = {},
+            k: int = 1,
+            calibration_metric: CalibrationMetric = "f1_score",
+            matcher: Union[str, ClassificationMatch] = 'match_nearest',
+            extra_metrics: ExtraClassificationMetrics = ['accuracy', 'recall'],
+            rounding: int = 2,
+            verbose: int = 1):
         """Calibrate model thresholds using a test dataset.
             FIXME: more detailed explaination.
 
@@ -288,19 +295,28 @@ class SimilarityModel(tf.keras.Model):
 
                 x: examples to use for the calibration.
 
-                y: Expected labels for the nearest neighboors.
+                y: labels associated with the calibration examples.
 
                 thresholds_targets: Dict of performance targets to
                 (if possible) meet with respect to the `calibration_metric`.
 
-                calibration_metric: [Metric()](metrics/overview.md) used to
-                evaluate the performance of the index.
+                calibration_metric:
+                [ClassificationMetric()](classification_metrics/overview.md)
+                used to evaluate the performance of the index.
 
                 k: How many neighboors to use during the calibration.
                 Defaults to 1.
 
-                extra_metrics: List of additional [Metric()](
-                metrics/overview.md) to compute and report.
+                matcher: {'match_nearest', 'match_majority_vote'} or
+                ClassificationMatch object. Defines the classification
+                matching, e.g., match_nearest will count a True Positive if the
+                query_label is equal to the label of the nearest neighbor and
+                the distance is less than or equal to the distance threshold.
+                Defaults to 'match_nearest'.
+
+                extra_metrics: List of additional
+                [ClassificationMetric()](classification_metrics/overview.md) to
+                compute and report.
 
                 rounding: Metric rounding. Default to 2 digits.
 
@@ -316,10 +332,11 @@ class SimilarityModel(tf.keras.Model):
 
         # calibrate
         return self._index.calibrate(predictions=predictions,
-                                     y=y,
+                                     target_labels=y,
                                      thresholds_targets=thresholds_targets,
                                      k=k,
                                      calibration_metric=calibration_metric,
+                                     matcher=matcher,
                                      extra_metrics=extra_metrics,
                                      rounding=rounding,
                                      verbose=verbose)
@@ -373,12 +390,15 @@ class SimilarityModel(tf.keras.Model):
         else:  # normal match behavior - returns a specific cut point
             return matches[cutpoint]
 
-    def evaluate_matching(self,
-                          x: Tensor,
-                          y: IntTensor,
-                          k: int = 1,
-                          extra_metrics: List[Union[EvalMetric, str]] = ['accuracy', 'recall'],  # noqa
-                          verbose: int = 1):
+    def evaluate_classification(
+            self,
+            x: Tensor,
+            y: IntTensor,
+            k: int = 1,
+            extra_metrics: ExtraClassificationMetrics = ['precision', 'recall'],  # noqa
+            matcher: Union[str, ClassificationMatch] = 'match_nearest',
+            verbose: int = 1
+            ) -> DefaultDict[str, Dict[str, Union[int, float, str]]]:
         """Evaluate model matching accuracy on a given evaluation dataset.
 
         Args:
@@ -386,51 +406,64 @@ class SimilarityModel(tf.keras.Model):
 
             y: Label associated with the examples supplied.
 
-            k: How many neigboors to use to perform the evaluation.
+            k: How many neighbors to use to perform the evaluation.
             Defaults to 1.
 
             extra_metrics: Additional (distance_metrics.mde)[distance metrics]
-            to be computed during the evaluation. Defaut to accuracy and
+            to be computed during the evaluation. Default to accuracy and
             recall.
+
+            matcher: {'match_nearest', 'match_majority_vote'} or
+            ClassificationMatch object. Defines the classification matching,
+            e.g., match_nearest will count a True Positive if the query_label
+            is equal to the label of the nearest neighbor and the distance is
+            less than or equal to the distance threshold.
 
             verbose (int, optional): Display results if set to 1 otherwise
             results are returned silently. Defaults to 1.
 
         Returns:
-            Dictionnary of (distance_metrics.md)[evaluation metrics]
+            Dictionary of (distance_metrics.md)[evaluation metrics]
         """
         # There is some code duplication in this function but that is the best
         # solution to keep the end-user API clean and doing inferences once.
 
         if not self._index.is_calibrated:
             raise ValueError('Uncalibrated model: run model.calibration()')
+        cal_metric = self._index.get_calibration_metric()
 
         # get embeddings
         if verbose:
             print("|-Computing embeddings")
         predictions = self.predict(x)
 
-        results: DefaultDict['str', Dict[str, Union[int, float, str]]] = defaultdict(dict)  # noqa
-        cal_metric = self._index.get_calibration_metric()
+        results: DefaultDict[str, Dict[str, Union[int, float, str]]] = defaultdict(dict)  # noqa
 
         if verbose:
             pb = tqdm(total=len(self._index.cutpoints),
                       desc='Evaluating cutpoints')
 
-        res: Dict[str, Union[str, int, float]] = {}
         for cp_name, cp_data in self._index.cutpoints.items():
             # create a metric that match at the requested k and threshold
-            metric = make_metric(cal_metric.name)
-            metric.k = k
-            metric.distance_threshold = float(cp_data['distance'])
+            distance_threshold = float(cp_data['distance'])
+            metric = make_classification_metric(cal_metric.name)
             metrics = copy(extra_metrics)
             metrics.append(metric)
-            res.update(self._index.evaluate(predictions, y, metrics, k))
-            res['distance'] = cp_data['distance']
+
+            res = self._index.evaluate_classification(
+                predictions,
+                y,
+                [distance_threshold],
+                metrics=metrics,
+                matcher=matcher,
+                k=k
+            )
+            res['distance'] = distance_threshold
             res['name'] = cp_name
             results[cp_name] = res
             if verbose:
                 pb.update()
+
         if verbose:
             pb.close()
 

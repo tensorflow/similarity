@@ -1,16 +1,18 @@
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Optional
+
+from typing import List, Optional, Sequence, Tuple
+
 from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 
 
-class Table(ABC):
+class Store(ABC):
 
     @abstractmethod
     def add(self,
             embedding: FloatTensor,
             label: Optional[int] = None,
             data: Optional[Tensor] = None) -> int:
-        """Add an Embedding record to the table.
+        """Add an Embedding record to the key value store.
 
         Args:
             embedding: Embedding predicted by the model.
@@ -24,10 +26,10 @@ class Table(ABC):
         """
     @abstractmethod
     def batch_add(self,
-                  embeddings: List[FloatTensor],
-                  labels: List[Optional[int]] = None,
-                  data: List[Optional[Tensor]] = None) -> List[int]:
-        """Add a set of embedding records to the table.
+                  embeddings: Sequence[FloatTensor],
+                  labels: Optional[Sequence[int]] = None,
+                  data: Optional[Sequence[Tensor]] = None) -> List[int]:
+        """Add a set of embedding records to the key value store.
 
         Args:
             embeddings: Embeddings predicted by the model.
@@ -47,7 +49,7 @@ class Table(ABC):
     def get(self, idx: int) -> Tuple[FloatTensor,
                                      Optional[int],
                                      Optional[Tensor]]:
-        """Get an embedding record from the table
+        """Get an embedding record from the key value store.
 
         Args:
             idx: Id of the record to fetch.
@@ -57,10 +59,11 @@ class Table(ABC):
         """
 
     @abstractmethod
-    def batch_get(self, idxs: List[int]
-                  ) -> Tuple[List[FloatTensor], List[Optional[int]],
-                             List[Optional[Tensor]]]:
-        """Get embedding records from the table
+    def batch_get(self,
+                  idxs: Sequence[int]) -> Tuple[List[FloatTensor],
+                                                Optional[List[int]],
+                                                Optional[List[Tensor]]]:
+        """Get embedding records from the key value store.
 
         Args:
             idxs: ids of the records to fetch.
@@ -71,7 +74,7 @@ class Table(ABC):
 
     @abstractmethod
     def size(self) -> int:
-        "Number of record in the table."
+        "Number of record in the key value store."
 
     @abstractmethod
     def save(self, path: str, compression: bool = True) -> None:

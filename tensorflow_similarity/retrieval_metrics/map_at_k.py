@@ -1,11 +1,12 @@
 from typing import Mapping
 
-import numpy as np
+import tensorflow as tf
 
-from tensorflow_similarity.metrics import EvalMetric
+from .retrieval_metric import RetrievalMetric
+from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
-class MeanAvgPrecisionAtK(EvalMetric):
+class MapAtK(RetrievalMetric):
     r"""Mean Average precision (mAP) @K is computed as.
 
                k
@@ -48,7 +49,7 @@ class MeanAvgPrecisionAtK(EvalMetric):
 
         k: The number of nearest neighbors over which the metric is computed.
 
-        distance_threshold: The max distance below which a nearset neighbor is
+        distance_threshold: The max distance below which a nearest neighbor is
         considered a valid match.
 
         average: {'micro'} Determines the type of averaging performed over the
@@ -58,7 +59,7 @@ class MeanAvgPrecisionAtK(EvalMetric):
     """
     def __init__(self,
                  r: Mapping[int, int],
-                 name: str = '',
+                 name: str = 'map',
                  k: int = 1,
                  average: str = 'micro',
                  **kwargs) -> None:
@@ -68,24 +69,23 @@ class MeanAvgPrecisionAtK(EvalMetric):
 
         for label, count in r.items():
             if count < k:
-                raise ValueError(f'Class {label} has {count} examples in the '
-                                 f'index but K is set to {k}. The number of '
-                                 'indexed examples for each class must be '
-                                 'greater than or equal to K.')
-
-        name = name if name else f'avg_precision@{k}'
+                raise RuntimeWarning(f'Class {label} has {count} examples in '
+                                     f'the index but K is set to {k}. The '
+                                     'number of indexed examples for each '
+                                     'class must be greater than or equal '
+                                     'to K.')
 
         if 'canonical_name' not in kwargs:
-            kwargs['canonical_name'] = 'avg_precision@k'
+            kwargs['canonical_name'] = 'map@k'
 
         super().__init__(name=name, k=k, average=average, **kwargs)
         self.r = r
 
     def compute(self,
                 *,
-                query_labels: np.ndarray,
-                match_mask: np.ndarray,
-                **kwargs) -> float:
+                query_labels: IntTensor,
+                match_mask: BoolTensor,
+                **kwargs) -> FloatTensor:
         """Compute the metric
 
         Args:
@@ -100,23 +100,31 @@ class MeanAvgPrecisionAtK(EvalMetric):
         Returns:
             metric results.
         """
-
-        mask_slice = match_mask[:, :self.k]
-        tp = np.cumsum(mask_slice, axis=1)
-        p_at_k = np.divide(
+        k_slice = tf.cast(match_mask[:, :self.k], dtype='float')
+        tp = tf.math.cumsum(k_slice, axis=1)
+        p_at_k = tf.math.divide(
                 tp,
-                np.arange(1, self.k+1)
+                tf.range(1, self.k+1, dtype='float')
         )
-        masked_p_at_k = mask_slice * p_at_k
+        p_at_k = tf.math.multiply(k_slice, p_at_k)
 
         if self.average == 'micro':
-            class_counts = np.array([self.r[label] for label in query_labels])
-            avg_p_at_k = np.divide(
-                    np.sum(masked_p_at_k, axis=1),
-                    class_counts
+            table = tf.lookup.StaticHashTable(
+                    tf.lookup.KeyValueTensorInitializer(
+                        list(self.r.keys()),
+                        list(self.r.values()),
+                        key_dtype=tf.int64,
+                        value_dtype=tf.int64,
+                    ),
+                    default_value=-1
+            )
+            class_counts = table.lookup(query_labels)
+            avg_p_at_k = tf.math.divide(
+                    tf.math.reduce_sum(p_at_k, axis=1),
+                    tf.cast(class_counts, dtype='float')
             )
 
-            avg_p_at_k = np.mean(avg_p_at_k)
+            avg_p_at_k = tf.math.reduce_mean(avg_p_at_k)
         else:
             raise ValueError(f'{self.average} is not a supported average '
                              'option')

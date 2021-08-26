@@ -15,7 +15,7 @@
 """Core TensorFlow types."""
 
 import dataclasses
-from typing import Any, Callable, Iterable, Union, Optional, List, Tuple, Optional  # noqa
+from typing import Any, Callable, Dict, List, Optional, Union  # noqa
 
 import numpy as np
 import tensorflow as tf
@@ -148,3 +148,20 @@ class Lookup:
             return False
 
         return True
+
+
+@dataclasses.dataclass
+class CalibrationResults:
+    """Cutpoints and thresholds associated with a calibration.
+
+    Attributes:
+        cutpoints: A Dict mapping the cutpoint name to a Dict containing the
+        ClassificationMetric values associated with a particular distance
+        threshold, e.g., 'optimal' : {'acc': 0.90, 'f1': 0.92}.
+
+        thresholds: A Dict mapping ClassificationMetric names to a list
+        containing the metric's value computed at each of the distance
+        thresholds, e.g., {'acc': [0.99, 0.80], 'distance': [0.0, 1.0]}.
+    """
+    thresholds: Dict[str, Union[float, int]]
+    cutpoints: Dict[str, Dict[str, Union[str, float, int]]]

@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Union, List
+
 import tensorflow as tf
+
 from .types import FloatTensor
 
 

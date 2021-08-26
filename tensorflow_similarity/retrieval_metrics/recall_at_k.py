@@ -1,9 +1,10 @@
-import numpy as np
+import tensorflow as tf
 
-from tensorflow_similarity.metrics import EvalMetric
+from .retrieval_metric import RetrievalMetric
+from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
-class RecallAtK(EvalMetric):
+class RecallAtK(RetrievalMetric):
     r"""The metric learning version of Recall@K.
 
     A query is counted as a positive when ANY lookup in top K match the query
@@ -29,11 +30,9 @@ class RecallAtK(EvalMetric):
                      mean.
     """
     def __init__(self,
-                 name: str = '',
+                 name: str = 'recall',
                  k: int = 1,
                  **kwargs) -> None:
-        name = name if name else f'recall@{k}'
-
         if 'canonical_name' not in kwargs:
             kwargs['canonical_name'] = 'recall@k'
 
@@ -41,13 +40,13 @@ class RecallAtK(EvalMetric):
 
     def compute(self,
                 *,
-                query_labels: np.ndarray,
-                match_mask: np.ndarray,
-                **kwargs) -> float:
+                query_labels: IntTensor,
+                match_mask: BoolTensor,
+                **kwargs) -> FloatTensor:
         """Compute the metric
 
         Args:
-            query_labels: A 1D array of the labels associated with the
+            query_labels: A 1D tensor of the labels associated with the
             embedding queries.
 
             match_mask: A 2D mask where a 1 indicates a match between the
@@ -59,17 +58,19 @@ class RecallAtK(EvalMetric):
             metric results.
         """
         k_slice = match_mask[:, :self.k]
-        match_indicator = np.any(k_slice, axis=1)
+        match_indicator = tf.math.reduce_any(k_slice, axis=1)
+        match_indicator = tf.cast(match_indicator, dtype='float')
 
         if self.average == 'micro':
-            recall_at_k = np.mean(match_indicator)
+            recall_at_k = tf.math.reduce_mean(match_indicator)
         elif self.average == 'macro':
             per_class_metrics = 0
-            class_labels = np.unique(query_labels)
+            class_labels = tf.unique(query_labels)[0]
             for label in class_labels:
-                idxs = np.argwhere(query_labels == label)
-                per_class_metrics += np.mean(match_indicator[idxs])
-            recall_at_k = np.divide(per_class_metrics, len(class_labels))
+                idxs = tf.where(query_labels == label)
+                c_slice = tf.gather(match_indicator, indices=idxs)
+                per_class_metrics += tf.math.reduce_mean(c_slice)
+            recall_at_k = tf.math.divide(per_class_metrics, len(class_labels))
         else:
             raise ValueError(f'{self.average} is not a supported average '
                              'option')
