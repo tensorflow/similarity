@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Dict, Type, Union
 
 from .classification_match import ClassificationMatch
 from .match_majority_vote import MatchMajorityVote
@@ -19,7 +19,7 @@ def make_classification_matcher(
         ClassificationMatch: Instantiated matcher if needed.
     """
     # ! Matcher must be non-instantiated.
-    MATCHER_ALIASES = {
+    MATCHER_ALIASES: Dict[str, Type['ClassificationMatch']] = {
         "match_nearest": MatchNearest,
         "match_majority_vote": MatchMajorityVote,
     }
@@ -28,6 +28,6 @@ def make_classification_matcher(
         if matcher.lower() in MATCHER_ALIASES:
             matcher = MATCHER_ALIASES[matcher.lower()]()
         else:
-            raise ValueError('Unknown matcher name:', matcher, ' typo?')
+            raise ValueError(f'Unknown matcher name: {matcher}, typo?')
 
     return matcher

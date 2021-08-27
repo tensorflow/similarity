@@ -1,3 +1,5 @@
+import tensorflow as tf
+
 from tensorflow_similarity.types import FloatTensor, IntTensor
 from .classification_metric import ClassificationMetric
 
@@ -8,7 +10,6 @@ class Accuracy(ClassificationMetric):
         super().__init__(name=name, canonical_name='accuracy')
 
     def compute(self,
-                *,
                 tp: IntTensor,
                 fp: IntTensor,
                 tn: IntTensor,
@@ -40,4 +41,5 @@ class Accuracy(ClassificationMetric):
             fn: The count of False Negatives at each distance threshold.
             count: The total number of queries
         """
-        return tp / count
+        result: FloatTensor = tp / tf.constant([count], dtype='float')
+        return result

@@ -19,7 +19,6 @@ class MatchNearest(ClassificationMatch):
         super().__init__(name=name, **kwargs)
 
     def compute_match_indicators(self,
-                                 *,
                                  query_labels: IntTensor,
                                  lookup_labels: IntTensor,
                                  lookup_distances: FloatTensor

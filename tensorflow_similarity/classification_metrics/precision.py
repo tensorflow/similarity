@@ -10,7 +10,6 @@ class Precision(ClassificationMetric):
         super().__init__(name=name, canonical_name='classification_precision')
 
     def compute(self,
-                *,
                 tp: IntTensor,
                 fp: IntTensor,
                 tn: IntTensor,
@@ -25,7 +24,7 @@ class Precision(ClassificationMetric):
             fn: The count of False Negatives at each distance threshold.
             count: The total number of queries
         """
-        p = tf.math.divide_no_nan(tp, tp + fp)
+        p: FloatTensor = tf.math.divide_no_nan(tp, tp + fp)
         # Handle the case where we have no valid matches at a recall of 0.0
         if p[0] == 0.0 and len(p) > 1:
             p = p + tf.constant([1.0]+[0.0]*(len(p)-1))

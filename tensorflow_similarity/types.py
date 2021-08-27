@@ -15,10 +15,11 @@
 """Core TensorFlow types."""
 
 import dataclasses
-from typing import Any, Callable, Dict, List, Optional, Union  # noqa
+from typing import Any, Callable, Mapping, Sequence, Optional, Union
 
 import numpy as np
 import tensorflow as tf
+from tensorflow import Tensor
 
 
 class PandasDataFrame(object):
@@ -26,30 +27,6 @@ class PandasDataFrame(object):
     Pandas type are too loose you get an Any. We want a PandaFrame
     """
     pass
-
-
-class Tensor(List):
-    """The base class of all dense Tensor objects.
-
-    A dense tensor has a static data type (dtype), and may have a static rank
-    and shape. Tensor objects are immutable. Mutable objects may be backed by
-    a Tensor which holds the unique handle that identifies the mutable object.
-    """
-    @property
-    def dtype(self):
-        pass
-
-    @property
-    def shape(self):
-        pass
-
-    @property
-    def __len__(self):
-        pass
-
-    @property
-    def __iter__(self):
-        pass
 
 
 class BoolTensor(Tensor):
@@ -163,5 +140,5 @@ class CalibrationResults:
         containing the metric's value computed at each of the distance
         thresholds, e.g., {'acc': [0.99, 0.80], 'distance': [0.0, 1.0]}.
     """
-    thresholds: Dict[str, Union[float, int]]
-    cutpoints: Dict[str, Dict[str, Union[str, float, int]]]
+    cutpoints: Mapping[str, Mapping[str, Union[str, float, int]]]
+    thresholds: Mapping[str, Sequence[Union[float, int]]]

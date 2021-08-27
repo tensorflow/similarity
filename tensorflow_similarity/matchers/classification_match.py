@@ -24,8 +24,8 @@ class ClassificationMatch(ABC):
     """
 
     def __init__(self,
-                 name: str,
-                 canonical_name: str,
+                 name: str = '',
+                 canonical_name: str = '',
                  ) -> None:
         self.name = name
         self.canonical_name = canonical_name
@@ -45,7 +45,6 @@ class ClassificationMatch(ABC):
 
     @abstractmethod
     def compute_match_indicators(self,
-                                 *,
                                  query_labels: IntTensor,
                                  lookup_labels: IntTensor,
                                  lookup_distances: FloatTensor
@@ -80,10 +79,9 @@ class ClassificationMatch(ABC):
         )
 
     def match(self,
-              *,
               query_labels: IntTensor,
               lookup_labels: IntTensor,
-              lookup_distances: FloatTensor) -> BoolTensor:
+              lookup_distances: FloatTensor):
         """Compares the query_label against the match label associated with the
         lookup labels.
 

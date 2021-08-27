@@ -5,7 +5,15 @@ import json
 from pathlib import Path
 from time import time
 from typing import (
-        DefaultDict, Deque, Dict, List, Mapping, Optional, Sequence, Union)
+        DefaultDict,
+        Deque,
+        Dict,
+        List,
+        Mapping,
+        MutableMapping,
+        Optional,
+        Sequence,
+        Union)
 
 import numpy as np
 from tabulate import tabulate
@@ -30,9 +38,6 @@ from .types import (
         PandasDataFrame,
         Tensor,
         CalibrationResults)
-
-CalibrationMetric = Union[str, ClassificationMetric]
-ExtraMetrics = Sequence[Union[str, ClassificationMetric]]
 
 
 class Indexer():
@@ -109,8 +114,8 @@ class Indexer():
         # calibration
         self.is_calibrated = False
         self.calibration_metric: ClassificationMetric = F1Score()
-        self.cutpoints: Dict[str, Dict[str, Union[int, float, str]]] = {}
-        self.calibration_thresholds: Dict[str, List[Union[float, int]]] = {}
+        self.cutpoints: Mapping[str, Mapping[str, Union[int, float, str]]] = {}
+        self.calibration_thresholds: Mapping[str, Sequence[Union[float, int]]] = {}  # noqa
 
         # initialize internal structures
         self._init_structures()
@@ -240,7 +245,7 @@ class Indexer():
 
     def batch_add(self,
                   predictions: FloatTensor,
-                  labels: Optional[List[Optional[int]]] = None,
+                  labels: Optional[Sequence[int]] = None,
                   data: Optional[Tensor] = None,
                   build: bool = True,
                   verbose: int = 1):
@@ -371,12 +376,13 @@ class Indexer():
         return batch_lookups
 
     # evaluation related functions
-    def evaluate(self,
-                 predictions: FloatTensor,
-                 target_labels: Sequence[int],
-                 retrieval_metrics: Sequence[Union[str, RetrievalMetric]],
-                 k: int = 1,
-                 verbose: int = 1) -> Dict[str, Union[float, int]]:
+    def evaluate_retrieval(
+            self,
+            predictions: FloatTensor,
+            target_labels: Sequence[int],
+            retrieval_metrics: Sequence[Union[str, RetrievalMetric]],
+            k: int = 1,
+            verbose: int = 1) -> Dict[str, np.ndarray]:
         """Evaluate the quality of the index against a test dataset.
 
         Args:
@@ -400,9 +406,10 @@ class Indexer():
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
         # Evaluate them
-        return self.evaluator.evaluate(retrieval_metrics=retrieval_metrics,
-                                       target_labels=target_labels,
-                                       lookups=lookups)
+        return self.evaluator.evaluate_retrieval(
+                retrieval_metrics=retrieval_metrics,
+                target_labels=target_labels,
+                lookups=lookups)
 
     def evaluate_classification(
             self,
@@ -412,7 +419,7 @@ class Indexer():
             metrics: Sequence[Union[str, ClassificationMetric]] = ['f1'],
             matcher: Union[str, ClassificationMatch] = 'match_nearest',
             k: int = 1,
-            verbose: int = 1) -> Dict[str, Union[float, int]]:
+            verbose: int = 1) -> Dict[str, np.ndarray]:
         """Evaluate the classification performance.
 
         Compute the classification metrics given a set of queries, lookups, and
@@ -443,23 +450,28 @@ class Indexer():
             A Mapping from metric name to the list of values computed for each
             distance threshold.
         """
-        metrics: List[ClassificationMetric] = (
+        combined_metrics: List[ClassificationMetric] = (
             [make_classification_metric(m) for m in metrics])
 
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
         lookup_distances = unpack_lookup_distances(lookups)
         lookup_labels = unpack_lookup_labels(lookups)
-        target_labels = tf.convert_to_tensor(target_labels, dtype='int32')
-        distance_thresholds = (
-                tf.convert_to_tensor(distance_thresholds, dtype='float32'))
+        query_labels: IntTensor = tf.cast(
+                tf.convert_to_tensor(target_labels),
+                dtype='int32'
+        )
+        thresholds: FloatTensor = tf.cast(
+                tf.convert_to_tensor(distance_thresholds),
+                dtype='float32'
+        )
 
         results = self.evaluator.evaluate_classification(
-            metrics=metrics,
-            query_labels=target_labels,
+            query_labels=query_labels,
             lookup_labels=lookup_labels,
             lookup_distances=lookup_distances,
-            distance_thresholds=distance_thresholds,
+            distance_thresholds=thresholds,
+            metrics=combined_metrics,
             matcher=matcher,
             verbose=verbose)
 
@@ -468,11 +480,11 @@ class Indexer():
     def calibrate(self,
                   predictions: FloatTensor,
                   target_labels: Sequence[int],
-                  thresholds_targets: Mapping[str, float],
-                  calibration_metric: CalibrationMetric = "f1_score",
+                  thresholds_targets: MutableMapping[str, float],
+                  calibration_metric: Union[str, ClassificationMetric] = "f1_score",  # noqa
                   k: int = 1,
                   matcher: Union[str, ClassificationMatch] = 'match_nearest',
-                  extra_metrics: ExtraMetrics = ['accuracy', 'recall'],
+                  extra_metrics: Sequence[Union[str, ClassificationMetric]] = ['accuracy', 'recall'],  # noqa
                   rounding: int = 2,
                   verbose: int = 1) -> CalibrationResults:
         """Calibrate model thresholds using a test dataset.
@@ -519,17 +531,17 @@ class Indexer():
         # making sure our metrics are all ClassificationMetric objects
         calibration_metric = make_classification_metric(calibration_metric)
 
-        extra_metrics: List[ClassificationMetric] = (
+        combined_metrics: List[ClassificationMetric] = (
             [make_classification_metric(m) for m in extra_metrics])
 
         # running calibration
         calibration_results = self.evaluator.calibrate(
-            calibration_metric=calibration_metric,
-            thresholds_targets=thresholds_targets,
             target_labels=target_labels,
             lookups=lookups,
+            thresholds_targets=thresholds_targets,
+            calibration_metric=calibration_metric,
             matcher=matcher,
-            extra_metrics=extra_metrics,
+            extra_metrics=combined_metrics,
             metric_rounding=rounding,
             verbose=verbose
         )
@@ -537,16 +549,16 @@ class Indexer():
         # display cutpoint results if requested
         if verbose:
             headers = ['name', 'value', 'distance']  # noqa
-
-            # dynamically find which metrics we need
-            for data in calibration_results.cutpoints.values():
-                for k in data.keys():
-                    if k not in headers:
-                        headers.append(str(k))
-                break
+            cutpoints = list(calibration_results.cutpoints.values())
+            # dynamically find which metrics we need. We only need to look at
+            # the first cutpoints dictionary as all subsequent ones will have
+            # the same metric keys.
+            for metric_name in cutpoints[0].keys():
+                if metric_name not in headers:
+                    headers.append(metric_name)
 
             rows = []
-            for data in calibration_results.cutpoints.values():
+            for data in cutpoints:
                 rows.append([data[v] for v in headers])
             print("\n", tabulate(rows, headers=headers))
 

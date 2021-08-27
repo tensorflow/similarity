@@ -98,4 +98,5 @@ class BNDCG(RetrievalMetric):
             raise ValueError(f'{self.average} is not a supported average '
                              'option')
 
-        return ndcg
+        result: FloatTensor = ndcg
+        return result

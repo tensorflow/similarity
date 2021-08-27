@@ -1,15 +1,15 @@
 from typing import List, Sequence, Union
 from pathlib import Path
+import math
 
 import tensorflow as tf
 from tensorflow.keras.callbacks import Callback
 
-from tensorflow_similarity.types import Tensor, FloatTensor, IntTensor
-from tensorflow_similarity.evaluators import MemoryEvaluator
-from tensorflow_similarity.classification_metric import ClassificationMetric
-from tensorflow_similarity.classification_metric import make_classification_metric # noqa
-
-Metric = Union[str, ClassificationMetric]
+from .classification_metrics import ClassificationMetric
+from .classification_metrics import make_classification_metric # noqa
+from .evaluators import MemoryEvaluator
+from .types import Tensor, FloatTensor, IntTensor
+from .utils import unpack_lookup_distances, unpack_lookup_labels
 
 
 class EvalCallback(Callback):
@@ -27,7 +27,7 @@ class EvalCallback(Callback):
                  targets: Tensor,
                  target_labels: Sequence[int],
                  distance: str = 'cosine',
-                 metrics: Sequence[Metric] = ['accuracy', 'f1score'],  # noqa
+                 metrics: Sequence[Union[str, ClassificationMetric]] = ['accuracy', 'f1score'],  # noqa
                  tb_logdir: str = None,
                  k: int = 1):
         """Evaluate model matching quality against a validation dataset at
@@ -56,12 +56,14 @@ class EvalCallback(Callback):
         """
         super().__init__()
         self.queries = queries
-        self.queries_labels = query_labels
+        self.query_labels: IntTensor = tf.cast(
+                tf.convert_to_tensor(query_labels),
+                dtype='int32'
+        )
         self.targets = targets
         self.target_labels = target_labels
         self.distance = distance
         self.k = k
-        self.index_size = len(target_labels)
         self.evaluator = MemoryEvaluator()
         # typing requires this weird formulation of creating a new list
         self.metrics: List[ClassificationMetric] = (
@@ -85,16 +87,26 @@ class EvalCallback(Callback):
         self.model.index(self.targets, self.target_labels, verbose=0)
 
         lookups = self.model.lookup(self.queries, verbose=0)
-        results = self.evaluator.evaluate(self.index_size, self.metrics,
-                                          self.queries_labels, lookups)
+        lookup_distances = unpack_lookup_distances(lookups)
+        lookup_labels = unpack_lookup_labels(lookups)
+
+        results = self.evaluator.evaluate_classification(
+            query_labels=self.query_labels,
+            lookup_labels=lookup_labels,
+            lookup_distances=lookup_distances,
+            distance_thresholds=tf.constant([math.inf]),
+            metrics=self.metrics,
+            matcher='match_nearest',
+            verbose=0)
 
         mstr = []
-        for k, v in results.items():
-            logs[k] = v
-            mstr.append(f'{k}:{v:0.4f}')
+        for metric_name, vals in results.items():
+            float_val = vals[0]
+            logs[metric_name] = float_val
+            mstr.append(f'{metric_name}:{float_val:0.4f}')
             if self.tb_writer:
                 with self.tb_writer.as_default():
-                    tf.summary.scalar(k, v, step=epoch)
+                    tf.summary.scalar(metric_name, float_val, step=epoch)
 
         print(' - '.join(mstr))
 
@@ -161,9 +173,14 @@ class SplitValidationLoss(Callback):
         _ = epoch
         if logs is None:
             logs = {}
-        known_eval = self.model.evaluate(self.x_known, self.y_known, verbose=0)
-        unknown_eval = (
-                self.model.evaluate(self.x_unknown, self.y_unknown, verbose=0))
+        known_eval = self.model.evaluate_classification(
+                self.x_known,
+                self.y_known,
+                verbose=0)
+        unknown_eval = self.model.evaluate_classification(
+                self.x_unknown,
+                self.y_unknown,
+                verbose=0)
         print(f'val_los - known_classes: {known_eval:.4f} - '
               f'unknown_classes: {unknown_eval:.4f}')
         logs['known_val_loss'] = known_eval

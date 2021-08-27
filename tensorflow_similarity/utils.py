@@ -28,7 +28,8 @@ def tf_cap_memory():
 def unpack_lookup_labels(lookups: Sequence[Sequence[Lookup]]) -> IntTensor:
     # using list comprehension as it is faster
     all_values = [[n.label for n in lu] for lu in lookups]
-    return tf.cast(tf.constant(all_values), dtype='int32')
+    result: IntTensor = tf.cast(tf.constant(all_values), dtype='int32')
+    return result
 
 
 def unpack_lookup_distances(
@@ -36,9 +37,10 @@ def unpack_lookup_distances(
         distance_rounding: Optional[int] = None) -> FloatTensor:
     # using list comprehension as it is faster
     all_values = [[n.distance for n in lu] for lu in lookups]
-    dists = tf.cast(tf.constant(all_values), dtype='float32')
+    dists: FloatTensor = tf.cast(tf.constant(all_values), dtype='float32')
 
     if distance_rounding is not None:
-        multiplier = 10.0**distance_rounding
+        multiplier = tf.constant([10.0**distance_rounding])
         dists = tf.round(dists * multiplier) / multiplier
+
     return dists

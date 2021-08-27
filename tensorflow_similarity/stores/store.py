@@ -61,8 +61,8 @@ class Store(ABC):
     @abstractmethod
     def batch_get(self,
                   idxs: Sequence[int]) -> Tuple[List[FloatTensor],
-                                                Optional[List[int]],
-                                                Optional[List[Tensor]]]:
+                                                List[Optional[int]],
+                                                List[Optional[Tensor]]]:
         """Get embedding records from the key value store.
 
         Args:

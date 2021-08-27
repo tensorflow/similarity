@@ -58,7 +58,7 @@ class MapAtK(RetrievalMetric):
             'micro': Calculates metrics globally over all queries.
     """
     def __init__(self,
-                 r: Mapping[int, int],
+                 r: Mapping[int, int] = {},
                  name: str = 'map',
                  k: int = 1,
                  average: str = 'micro',
@@ -109,6 +109,10 @@ class MapAtK(RetrievalMetric):
         p_at_k = tf.math.multiply(k_slice, p_at_k)
 
         if self.average == 'micro':
+            if not self.r:
+                self.r = {label: self.k
+                          for label in tf.unique(query_labels)[0]}
+
             table = tf.lookup.StaticHashTable(
                     tf.lookup.KeyValueTensorInitializer(
                         list(self.r.keys()),
@@ -129,4 +133,5 @@ class MapAtK(RetrievalMetric):
             raise ValueError(f'{self.average} is not a supported average '
                              'option')
 
-        return avg_p_at_k
+        result: FloatTensor = avg_p_at_k
+        return result

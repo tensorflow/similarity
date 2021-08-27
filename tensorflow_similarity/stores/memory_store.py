@@ -14,9 +14,9 @@ class MemoryStore(Store):
     def __init__(self) -> None:
         # We are using a native python array in memory for its row speed.
         # Serialization / export relies on Arrow.
-        self.labels: List[int] = []
+        self.labels: List[Optional[int]] = []
         self.embeddings: List[FloatTensor] = []
-        self.data: List[Tensor] = []
+        self.data: List[Optional[Tensor]] = []
         self.num_items: int = 0
         pass
 
@@ -85,8 +85,8 @@ class MemoryStore(Store):
 
     def batch_get(self,
                   idxs: Sequence[int]) -> Tuple[List[FloatTensor],
-                                                Optional[List[int]],
-                                                Optional[List[Tensor]]]:
+                                                List[Optional[int]],
+                                                List[Optional[Tensor]]]:
         """Get embedding records from the key value store.
 
         Args:

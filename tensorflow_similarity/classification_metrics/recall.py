@@ -10,7 +10,6 @@ class Recall(ClassificationMetric):
         super().__init__(name=name, canonical_name='classification_recall')
 
     def compute(self,
-                *,
                 tp: IntTensor,
                 fp: IntTensor,
                 tn: IntTensor,
@@ -25,4 +24,5 @@ class Recall(ClassificationMetric):
             fn: The count of False Negatives at each distance threshold.
             count: The total number of queries
         """
-        return tf.math.divide_no_nan(tp, tp + fn)
+        result: FloatTensor = tf.math.divide_no_nan(tp, tp + fn)
+        return result

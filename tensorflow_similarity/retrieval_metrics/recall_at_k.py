@@ -74,5 +74,5 @@ class RecallAtK(RetrievalMetric):
         else:
             raise ValueError(f'{self.average} is not a supported average '
                              'option')
-
-        return recall_at_k
+        result: FloatTensor = recall_at_k
+        return result
