@@ -1,4 +1,5 @@
-from typing import Mapping, Optional, Union
+from typing import Dict, Mapping, Optional, Type, Union
+import typing
 
 import tensorflow as tf
 
@@ -28,7 +29,7 @@ def compute_match_mask(query_labels: IntTensor,
     if tf.rank(query_labels) == 1:
         query_labels = tf.expand_dims(query_labels, axis=-1)
 
-    match_mask = tf.math.equal(lookup_labels, query_labels)
+    match_mask: BoolTensor = tf.math.equal(lookup_labels, query_labels)
 
     return match_mask
 
@@ -59,7 +60,7 @@ def make_retrieval_metric(metric: Union[str, 'RetrievalMetric'],
         RetrievalMetric: Instantiated metric if needed.
     """
     # ! Metrics must be non-instantiated.
-    METRICS_ALIASES = {
+    METRICS_ALIASES: Dict[str, Type['RetrievalMetric']] = {
         # recall
         "recall": RecallAtK,
         "recall@k": RecallAtK,
@@ -70,7 +71,6 @@ def make_retrieval_metric(metric: Union[str, 'RetrievalMetric'],
         "map": MapAtK,
         "map@k": MapAtK,
         # binary ndcg
-        "ndcg": BNDCG,
         "bndcg": BNDCG,
         "ndcg@k": BNDCG,
         "bndcg@k": BNDCG,
@@ -78,22 +78,20 @@ def make_retrieval_metric(metric: Union[str, 'RetrievalMetric'],
 
     if isinstance(metric, str):
         if metric.lower() in METRICS_ALIASES:
-            if metric.lower().startswith('map'):
-                if r is None:
-                    raise ValueError(
-                            "Mean Avg Precision requires 'r': per class count "
-                            'of examples in the index.')
-                metric = METRICS_ALIASES[metric.lower()](r)
-            else:
-                metric = METRICS_ALIASES[metric.lower()]()
+            valid_metric: RetrievalMetric = METRICS_ALIASES[metric.lower()]()
         else:
-            raise ValueError('Unknown metric name:', metric, ' typo?')
+            raise ValueError(f'Unknown metric name: {metric}, typo?')
+    else:
+        valid_metric = metric
 
     if k:
-        metric.k = k
+        valid_metric.k = k
     if distance_threshold:
-        metric.distance_threshold = distance_threshold
-    if r:
-        metric.r = r
+        valid_metric.distance_threshold = distance_threshold
+    if r and valid_metric.canonical_name == "map@k":
+        # valid_matric must be MapAtK if r is not None
+        # TODO(ovallis): Find a better way to support r in MapAtK without
+        # changing the protoype for RetrievalMetric
+        typing.cast(MapAtK, valid_metric).r = r
 
-    return metric
+    return valid_metric

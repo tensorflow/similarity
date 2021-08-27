@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Dict, Type, Union
 
 from .classification_metric import ClassificationMetric  # noqa
 from .f1_score import F1Score  # noqa
@@ -23,7 +23,7 @@ def make_classification_metric(
         ClassificationMetric: Instantiated metric if needed.
     """
     # ! Metrics must be non-instantiated.
-    METRICS_ALIASES = {
+    METRICS_ALIASES: Dict[str, Type['ClassificationMetric']] = {
         "recall": Recall,
         "precision": Precision,
         "f1": F1Score,
@@ -41,6 +41,6 @@ def make_classification_metric(
         if metric.lower() in METRICS_ALIASES:
             metric = METRICS_ALIASES[metric.lower()]()
         else:
-            raise ValueError('Unknown metric name:', metric, ' typo?')
+            raise ValueError(f'Unknown metric name: {metric}, typo?')
 
     return metric

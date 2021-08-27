@@ -12,7 +12,6 @@ class F1Score(ClassificationMetric):
                 canonical_name='f1_score')
 
     def compute(self,
-                *,
                 tp: IntTensor,
                 fp: IntTensor,
                 tn: IntTensor,
@@ -31,4 +30,5 @@ class F1Score(ClassificationMetric):
         precision = tf.math.divide_no_nan(tp, tp + fp)
         numer = 2 * recall * precision
         denom = recall + precision
-        return tf.math.divide_no_nan(numer, denom)
+        result: FloatTensor = tf.math.divide_no_nan(numer, denom)
+        return result

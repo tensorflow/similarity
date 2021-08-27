@@ -1,8 +1,16 @@
 from collections import defaultdict
 from copy import copy
 from pathlib import Path
-from typing import DefaultDict, Dict, List, Mapping, Optional, Sequence, Union
+from typing import (
+        DefaultDict,
+        Dict,
+        List,
+        MutableMapping,
+        MutableSequence,
+        Optional,
+        Union)
 
+import numpy as np
 from tabulate import tabulate
 import tensorflow as tf
 from tensorflow.keras.optimizers import Optimizer
@@ -23,9 +31,6 @@ from tensorflow_similarity.stores import Store
 from tensorflow_similarity.search import Search
 from tensorflow_similarity.types import (
         FloatTensor, Lookup, IntTensor, Tensor, PandasDataFrame)
-
-CalibrationMetric = Union[str, ClassificationMetric]
-ExtraClassificationMetrics = Sequence[Union[str, ClassificationMetric]]
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -281,11 +286,11 @@ class SimilarityModel(tf.keras.Model):
             self,
             x: FloatTensor,
             y: IntTensor,
-            thresholds_targets: Mapping[str, float] = {},
+            thresholds_targets: MutableMapping[str, float] = {},
             k: int = 1,
-            calibration_metric: CalibrationMetric = "f1_score",
+            calibration_metric: Union[str, ClassificationMetric] = "f1_score",
             matcher: Union[str, ClassificationMatch] = 'match_nearest',
-            extra_metrics: ExtraClassificationMetrics = ['accuracy', 'recall'],
+            extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = ['accuracy', 'recall'],  # noqa
             rounding: int = 2,
             verbose: int = 1):
         """Calibrate model thresholds using a test dataset.
@@ -395,10 +400,10 @@ class SimilarityModel(tf.keras.Model):
             x: Tensor,
             y: IntTensor,
             k: int = 1,
-            extra_metrics: ExtraClassificationMetrics = ['precision', 'recall'],  # noqa
+            extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = ['precision', 'recall'],  # noqa
             matcher: Union[str, ClassificationMatch] = 'match_nearest',
             verbose: int = 1
-            ) -> DefaultDict[str, Dict[str, Union[int, float, str]]]:
+            ) -> DefaultDict[str, Dict[str, Union[str, np.ndarray]]]:
         """Evaluate model matching accuracy on a given evaluation dataset.
 
         Args:
@@ -437,7 +442,8 @@ class SimilarityModel(tf.keras.Model):
             print("|-Computing embeddings")
         predictions = self.predict(x)
 
-        results: DefaultDict[str, Dict[str, Union[int, float, str]]] = defaultdict(dict)  # noqa
+        results: DefaultDict[str, Dict[str, Union[str, np.ndarray]]] = (
+                defaultdict(dict))
 
         if verbose:
             pb = tqdm(total=len(self._index.cutpoints),
@@ -450,15 +456,18 @@ class SimilarityModel(tf.keras.Model):
             metrics = copy(extra_metrics)
             metrics.append(metric)
 
-            res = self._index.evaluate_classification(
-                predictions,
-                y,
-                [distance_threshold],
-                metrics=metrics,
-                matcher=matcher,
-                k=k
+            res: Dict[str, Union[str, np.ndarray]] = {}
+            res.update(
+                self._index.evaluate_classification(
+                    predictions,
+                    y,
+                    [distance_threshold],
+                    metrics=metrics,
+                    matcher=matcher,
+                    k=k
+                )
             )
-            res['distance'] = distance_threshold
+            res['distance'] = tf.constant([distance_threshold])
             res['name'] = cp_name
             results[cp_name] = res
             if verbose:

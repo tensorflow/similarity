@@ -28,8 +28,8 @@ class RetrievalMetric(ABC):
                      mean.
     """
     def __init__(self,
-                 name: str,
-                 canonical_name: str,
+                 name: str = '',
+                 canonical_name: str = '',
                  k: int = 1,
                  distance_threshold: float = math.inf,
                  average: str = 'micro') -> None:

@@ -27,7 +27,6 @@ class MatchMajorityVote(ClassificationMatch):
         self._dist_agg = dist_agg
 
     def compute_match_indicators(self,
-                                 *,
                                  query_labels: IntTensor,
                                  lookup_labels: IntTensor,
                                  lookup_distances: FloatTensor
@@ -62,7 +61,9 @@ class MatchMajorityVote(ClassificationMatch):
                 tf.expand_dims(pred_labels, axis=-1)
         )
 
-        mean_dist = self._dist_agg(lookup_distances, axis=1)
+        # Callable type requires positional args only. Here we assume the
+        # signature to be _dist_agg(input_tensor, axis)
+        mean_dist = self._dist_agg(lookup_distances, 1)
         # A 2D BoolTensor [len(lookup_distance), len(self.distance_thresholds)]
         dist_mask = tf.math.less_equal(
                 tf.expand_dims(mean_dist, axis=-1),

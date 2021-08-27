@@ -15,8 +15,8 @@ class ClassificationMetric(ABC):
     """
 
     def __init__(self,
-                 name: str,
-                 canonical_name: str,
+                 name: str = '',
+                 canonical_name: str = '',
                  direction: str = 'max') -> None:
         self.name = name
         self.canonical_name = canonical_name
@@ -36,7 +36,6 @@ class ClassificationMetric(ABC):
 
     @abstractmethod
     def compute(self,
-                *,
                 tp: IntTensor,
                 fp: IntTensor,
                 tn: IntTensor,

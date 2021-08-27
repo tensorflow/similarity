@@ -10,7 +10,6 @@ class NegativePredictiveValue(ClassificationMetric):
         super().__init__(name=name, canonical_name='neg_predictive_value')
 
     def compute(self,
-                *,
                 tp: IntTensor,
                 fp: IntTensor,
                 tn: IntTensor,
@@ -25,4 +24,5 @@ class NegativePredictiveValue(ClassificationMetric):
             fn: The count of False Negatives at each distance threshold.
             count: The total number of queries
         """
-        return tf.math.divide_no_nan(tn, tn + fn)
+        result: FloatTensor = tf.math.divide_no_nan(tn, tn + fn)
+        return result

@@ -10,7 +10,6 @@ class FalsePositiveRate(ClassificationMetric):
         super().__init__(name=name, canonical_name='false_positive_rate')
 
     def compute(self,
-                *,
                 tp: IntTensor,
                 fp: IntTensor,
                 tn: IntTensor,
@@ -25,4 +24,5 @@ class FalsePositiveRate(ClassificationMetric):
             fn: The count of False Negatives at each distance threshold.
             count: The total number of queries
         """
-        return tf.math.divide_no_nan(fp, fp + tn)
+        result: FloatTensor = tf.math.divide_no_nan(fp, fp + tn)
+        return result

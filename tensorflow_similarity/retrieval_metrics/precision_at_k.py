@@ -91,5 +91,5 @@ class PrecisionAtK(RetrievalMetric):
         else:
             raise ValueError(f'{self.average} is not a supported average '
                              'option')
-
-        return p_at_k
+        result: FloatTensor = p_at_k
+        return result

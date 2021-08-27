@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Mapping, Sequence, Union
+from typing import Dict, MutableMapping, Sequence, Union
+
+import numpy as np
 
 from tensorflow_similarity.classification_metrics import ClassificationMetric
 from tensorflow_similarity.matchers import ClassificationMatch
@@ -20,11 +22,10 @@ class Evaluator(ABC):
     @abstractmethod
     def evaluate_retrieval(
             self,
-            *,
             target_labels: Sequence[int],
             lookups: Sequence[Sequence[Lookup]],
             retrieval_metrics: Sequence[Union[str, RetrievalMetric]],
-            distance_rounding: int = 8) -> Dict[str, Union[float, int]]:
+            distance_rounding: int = 8) -> Dict[str, np.ndarray]:
         """Evaluates lookup performances against a supplied set of metrics
 
         Args:
@@ -47,7 +48,6 @@ class Evaluator(ABC):
     @abstractmethod
     def evaluate_classification(
         self,
-        *,
         query_labels: IntTensor,
         lookup_labels: IntTensor,
         lookup_distances: FloatTensor,
@@ -56,7 +56,7 @@ class Evaluator(ABC):
         matcher: Union[str, ClassificationMatch],
         distance_rounding: int = 8,
         verbose: int = 1
-    ) -> Dict[str, Union[float, int]]:
+    ) -> Dict[str, np.ndarray]:
         """Evaluate the classification performance.
 
         Compute the classification metrics given a set of queries, lookups, and
@@ -94,30 +94,35 @@ class Evaluator(ABC):
     @abstractmethod
     def calibrate(
         self,
-        *,
-        calibration_metric: ClassificationMetric,
-        thresholds_targets: Mapping[str, float],
         target_labels: Sequence[int],
         lookups: Sequence[Sequence[Lookup]],
-        extra_metrics: Sequence[Union[str, ClassificationMetric]] = [],
-        classification_match_type: str = 'match_nearest',
+        thresholds_targets: MutableMapping[str, float],
+        calibration_metric: ClassificationMetric,
+        matcher: Union[str, ClassificationMatch],
+        extra_metrics: Sequence[ClassificationMetric] = [],
         distance_rounding: int = 8,
         metric_rounding: int = 6,
         verbose: int = 1
     ) -> CalibrationResults:
-        """Computes the distances thresholds that the classification much match to
-        meet fixed target.
+        """Computes the distances thresholds that the classification must match to
+        meet a fixed target.
 
         Args:
-            calibration_metric: Metric used for calibration.
-
-            thresholds_targets: classification metrics thresholds that are
-            targeted. The function will find the closed distance value.
-
             target_labels: Sequence of expected labels for the lookups.
 
             lookup: Sequence of lookup results as produced by the
             `Index.batch_lookup()` method.
+
+            thresholds_targets: classification metrics thresholds that are
+            targeted. The function will find the closed distance value.
+
+            calibration_metric: Classification metric used for calibration.
+
+            matcher: {'match_nearest', 'match_majority_vote'} or
+            ClassificationMatch object. Defines the classification matching,
+            e.g., match_nearest will count a True Positive if the query_label
+            is equal to the label of the nearest neighbor and the distance is
+            less than or equal to the distance threshold.
 
             extra_metrics: Additional metrics that should be computed and
             reported as part of the classification. Defaults to [].
@@ -129,7 +134,6 @@ class Evaluator(ABC):
             the metric changed. Defaults to 6.
 
             verbose: Be verbose. Defaults to 1.
-
         Returns:
             CalibrationResults containing the thresholds and cutpoints Dicts.
         """
