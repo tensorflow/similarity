@@ -72,7 +72,6 @@ def make_retrieval_metric(metric: Union[str, 'RetrievalMetric'],
         "map@k": MapAtK,
         # binary ndcg
         "bndcg": BNDCG,
-        "ndcg@k": BNDCG,
         "bndcg@k": BNDCG,
     }
 

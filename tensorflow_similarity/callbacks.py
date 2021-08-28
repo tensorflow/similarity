@@ -198,10 +198,22 @@ class SplitValidationLoss(Callback):
             self.queries_known = tf.gather(queries, indices=known_idxs)
             self.query_labels_known = (
                     tf.gather(query_labels, indices=known_idxs))
+            # Expand to 2D if we only have a single example
+            if tf.rank(self.queries_known) == 1:
+                self.queries_known = (
+                        tf.expand_dims(self.queries_known, axis=0))
+                self.query_labels_known = (
+                        tf.expand_dims(self.query_labels_known, axis=0))
 
             self.queries_unknown = tf.gather(queries, indices=unknown_idxs)
             self.query_labels_unknown = (
                     tf.gather(query_labels, indices=unknown_idxs))
+            # Expand to 2D if we only have a single example
+            if tf.rank(self.queries_unknown) == 1:
+                self.queries_unknown = (
+                        tf.expand_dims(self.queries_unknown, axis=0))
+                self.query_labels_unknown = (
+                        tf.expand_dims(self.query_labels_unknown, axis=0))
 
     def on_epoch_end(self, epoch: int, logs: dict = None):
         _ = epoch
