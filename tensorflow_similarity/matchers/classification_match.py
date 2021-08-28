@@ -153,3 +153,16 @@ class ClassificationMatch(ABC):
     @property
     def count(self):
         return self._count
+
+    @staticmethod
+    def _check_shape(query_labels, lookup_labels, lookup_distances):
+        ll_shape = tf.shape(lookup_labels)
+        ld_shape = tf.shape(lookup_distances)
+
+        if tf.shape(query_labels)[0] != ll_shape[0]:
+            raise ValueError('Number of query labels must match the number of '
+                             'lookup_label sets.')
+
+        if ll_shape[0] != ld_shape[0] or ll_shape[1] != ld_shape[1]:
+            raise ValueError('Number of number of lookup labels must match '
+                             'the number of lookup distances.')

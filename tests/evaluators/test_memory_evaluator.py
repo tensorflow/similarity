@@ -1,7 +1,11 @@
 import random
+import math
+
+import tensorflow as tf
 
 from tensorflow_similarity.evaluators import MemoryEvaluator
-from tensorflow_similarity.metrics import MinRank, MaxRank
+from tensorflow_similarity.classification_metrics import Precision, Recall
+from tensorflow_similarity.matchers import MatchNearest
 from tensorflow_similarity.types import Lookup
 
 
@@ -39,63 +43,26 @@ def generate_lookups(num_classes, examples_per_class=10, match_rate=0.7):
     return target_labels, lookups, effective_match_rate
 
 
-def test_evaluate_2():
-    NUM_CLASSES = 2
-    EXAMPLES_PER_CLASS = 4
-    MATCH_RATE = 0.7
-
-    index_size = NUM_CLASSES * EXAMPLES_PER_CLASS
-    metrics = ['accuracy']  # , 'accuracy', 'mean_rank']
-    target_labels, lookups, effective_match_rate = generate_lookups(
-        NUM_CLASSES, EXAMPLES_PER_CLASS, MATCH_RATE)
-    # print(target_labels)
-    # print(lookups)
-
-    evaluator = MemoryEvaluator()
-    res = evaluator.evaluate(index_size, metrics, target_labels, lookups)
-    assert res['accuracy'] == effective_match_rate
-
-
 def test_evaluate():
-    TEST_VECTORS = [
-        [
-            30,  # index size
-            [MinRank(), MaxRank()],  # metrics
-            [1, 2, 3, 4, 5, 6, 7],  # target_labels
-            [  # lookups
-                [
-                    Lookup(rank=0, label=21, distance=0.01),
-                    Lookup(rank=1, label=1, distance=0.1)
-                ],
-                [
-                    Lookup(rank=0, label=2, distance=0.2),
-                    Lookup(rank=1, label=22, distance=0.22)
-                ],
-                [
-                    Lookup(rank=0, label=23, distance=0.01),
-                    Lookup(rank=1, label=3, distance=0.3)
-                ],
-                [
-                    Lookup(rank=0, label=4, distance=0.4),
-                    Lookup(rank=1, label=24, distance=0.44)
-                ]
-            ]
-        ]
-    ]
-
-    expected = [
-        {
-            "max_rank": 2,
-            "min_rank": 1
-        }
-    ]
-
     ev = MemoryEvaluator()
-    for idx, v in enumerate(TEST_VECTORS):
-        res = ev.evaluate(v[0], v[1], v[2], v[3])
-        print(res)
-        for m, v in expected[idx].items():
-            assert res[m] == v
+    ll = tf.constant([[0], [10], [1], [10], [2], [10], [3], [10]])
+    ld = tf.constant([[0.0], [0.1], [0.2], [0.3], [0.4], [0.5], [0.6], [0.7]])
+    res = ev.evaluate_classification(
+            query_labels=tf.constant([0, 0, 1, 1, 2, 2, 3, 3]),
+            lookup_labels=ll,
+            lookup_distances=ld,
+            distance_thresholds=tf.constant([math.inf]),
+            metrics=[Precision(), Recall()],
+            matcher=MatchNearest()
+    )
+
+    expected = {
+            'precision': 0.5,
+            'recall': 1.0,
+    }
+
+    for metric_name, val in expected.items():
+        assert res[metric_name] == val
 
 
 def test_comparators():

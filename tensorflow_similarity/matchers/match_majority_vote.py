@@ -54,6 +54,12 @@ class MatchMajorityVote(ClassificationMatch):
         if tf.rank(query_labels) == 1:
             query_labels = tf.expand_dims(query_labels, axis=-1)
 
+        ClassificationMatch._check_shape(
+                query_labels,
+                lookup_labels,
+                lookup_distances
+        )
+
         pred_labels = tf.map_fn(self._majority_vote, lookup_labels)
         # A 1D BoolTensor [len(query_labels), 1]
         label_match = tf.math.equal(

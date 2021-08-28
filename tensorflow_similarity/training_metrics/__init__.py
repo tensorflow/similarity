@@ -1,5 +1,6 @@
 from .utils import batch_class_ratio  # noqa
 from .distance_metrics import DistanceMetric # noqa
+from .distance_metrics import DistanceGapMetric # noqa
 from .distance_metrics import dist_gap # noqa
 from .distance_metrics import max_pos # noqa
 from .distance_metrics import max_neg # noqa

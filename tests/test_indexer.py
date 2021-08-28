@@ -18,10 +18,10 @@ def test_calibration():
                                   thresholds_targets,
                                   verbose=1)
     # assert 'vl' in cutpoints
-    assert 'optimal' in calibration['cutpoints']
-    assert '0.5' in calibration['cutpoints']
-    assert len(calibration['thresholds']['distance']) == len(
-        calibration['thresholds']['value'])
+    assert 'optimal' in calibration.cutpoints
+    assert '0.5' in calibration.cutpoints
+    assert len(calibration.thresholds['distance']) == len(
+        calibration.thresholds['value'])
     assert index.is_calibrated
 
 
