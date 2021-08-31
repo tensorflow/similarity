@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Callable, Optional
+
 import tensorflow as tf
 
 
@@ -50,9 +51,12 @@ def TFRecordDatasetSampler(shard_path: str,
         Defaults to 32.
 
         shards_per_cycle: How many shards to use concurrently per cycle.
-        Default is None which is all of them. Can cause segv if too many shards.
+        Default is None which is all of them. Can cause segv if too many
+        shards.
 
-        compression: Which compression was used when creating the dataset. `{None, "ZLIB", or "GZIP"}` as specified in [TFRecordDataset documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
+        compression: Which compression was used when creating the dataset.
+        `{None, "ZLIB", or "GZIP"}` as specified in [TFRecordDataset
+        documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
         Defaults to None.
 
         parallelism: How many parallel calls to do. If not set, will let

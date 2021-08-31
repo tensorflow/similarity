@@ -97,7 +97,6 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
         Returns:
             x, y: batch of examples made of `num_classes` * `example_per_class`
         """
-        raise NotImplementedError('must be implemented by subclass')
 
     # [Shared mechanics]
     def __len__(self) -> int:
