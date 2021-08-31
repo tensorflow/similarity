@@ -5,13 +5,13 @@ from tensorflow_similarity.types import FloatTensor, IntTensor
 
 
 class ClassificationMetric(ABC):
-    """Abstract base class for computing calibration metrics.
+    """Abstract base class for computing classification metrics.
 
     Attributes:
-        name: Name associated with the metric object, e.g., match_acc
+        name: Name associated with the metric object, e.g., accuracy.
 
         canonical_name: The canonical name associated with metric,
-        e.g., match_accuracy
+        e.g., accuracy
     """
 
     def __init__(self,

@@ -34,11 +34,11 @@ def compute_match_mask(query_labels: IntTensor,
     return match_mask
 
 
-def make_retrieval_metric(metric: Union[str, 'RetrievalMetric'],
+def make_retrieval_metric(metric: Union[str, RetrievalMetric],
                           k: Optional[int] = None,
                           distance_threshold: Optional[float] = None,
                           r: Optional[Mapping[int, int]] = None
-                          ) -> 'RetrievalMetric':
+                          ) -> RetrievalMetric:
     """Convert metric from str name to object if needed.
 
     Args:
@@ -60,7 +60,7 @@ def make_retrieval_metric(metric: Union[str, 'RetrievalMetric'],
         RetrievalMetric: Instantiated metric if needed.
     """
     # ! Metrics must be non-instantiated.
-    METRICS_ALIASES: Dict[str, Type['RetrievalMetric']] = {
+    METRICS_ALIASES: Dict[str, Type[RetrievalMetric]] = {
         # recall
         "recall": RecallAtK,
         "recall@k": RecallAtK,

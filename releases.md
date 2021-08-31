@@ -8,6 +8,8 @@ including visulization tools, intergation with TensorFlow dataset catalog and ad
 
 Refactored the Index API to prepare for major overhaul while keeping it transparent.
 
+Refactored the evaluation metrics to support both classification and retrieval metrics.
+
 
 ## New features
 
@@ -23,6 +25,12 @@ Refactored the Index API to prepare for major overhaul while keeping it transpar
 
 - TensorFlow Catalog integration via `TFDatasetMultiShotMemorySampler()`
 
+- New retrieval evaluation metrics:
+  1. recall@k
+  2. precision@k
+  3. map@k
+  4. binary ndcg@k
+
 ## Breaking changes
 
 The `__init__()` of the matcher has been refactored to be implementation
@@ -36,6 +44,10 @@ select_samples() arguments were improved to be clearer,
 breaks previous code using them but should requires only
 to rename a variable or two to work.
 
+The calibration and evaluation methods now call the classification metrics and
+accept a Matcher object that maps a set of lookup results to a single label and
+distance.
+
 ## Major improvements
 
 - Distance aliasing is now delegated to the Distance implementation which makes it more modular and removed many bugs due to naming duplication.
@@ -44,6 +56,7 @@ to rename a variable or two to work.
 
 - Better Index serialization meta_data that now include the size of the index and if it was compressed.
 
+- Evaluation metrics are now vectorized using Tensorflow.
 
 ## 0.12.x - Q/A release
 

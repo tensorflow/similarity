@@ -16,7 +16,7 @@ class RetrievalMetric(ABC):
 
         k: The number of nearest neighbors over which the metric is computed.
 
-        distance_threshold: The max distance below which a nearset neighbor is
+        distance_threshold: The max distance below which a nearest neighbor is
         considered a valid match.
 
         average: {'micro'} Determines the type of averaging performed over the
@@ -78,7 +78,7 @@ class RetrievalMetric(ABC):
             between the jth query and the set of k neighbors.
 
             match_mask: A 2D mask where a 1 indicates a match between the
-            jth query and the kth neighboor and a 0 indicates a mismatch.
+            jth query and the kth neighbor and a 0 indicates a mismatch.
 
         Returns:
             metric results.

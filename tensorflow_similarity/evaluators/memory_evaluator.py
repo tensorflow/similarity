@@ -117,6 +117,7 @@ class MemoryEvaluator(Evaluator):
             decide if the distance changed. Defaults to 8.
 
             verbose: Be verbose. Defaults to 1.
+
         Returns:
             A Mapping from metric name to the list of values computed for each
             distance threshold.
@@ -186,8 +187,8 @@ class MemoryEvaluator(Evaluator):
             is equal to the label of the nearest neighbor and the distance is
             less than or equal to the distance threshold.
 
-            extra_metrics: Additional metrics that should be computed and
-            reported as part of the classification. Defaults to [].
+            extra_metrics: Additional classification metrics that should be
+            computed and reported as part of the calibration. Defaults to [].
 
             distance_rounding: How many digit to consider to
             decide if the distance changed. Defaults to 8.

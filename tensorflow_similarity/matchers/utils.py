@@ -6,11 +6,15 @@ from .match_nearest import MatchNearest
 
 
 def make_classification_matcher(
-        matcher: Union[str, 'ClassificationMatch']) -> 'ClassificationMatch':
+        matcher: Union[str, ClassificationMatch]) -> ClassificationMatch:
     """Convert classification matcher from str name to object if needed.
 
     Args:
-        metric: ClassificationMatch() or matcher name.
+        matcher: {'match_nearest', 'match_majority_vote'} or
+        ClassificationMatch object. Defines the classification matching,
+        e.g., match_nearest will count a True Positive if the query_label
+        is equal to the label of the nearest neighbor and the distance is
+        less than or equal to the distance threshold.
 
     Raises:
         ValueError: matcher name is invalid.
@@ -19,7 +23,7 @@ def make_classification_matcher(
         ClassificationMatch: Instantiated matcher if needed.
     """
     # ! Matcher must be non-instantiated.
-    MATCHER_ALIASES: Dict[str, Type['ClassificationMatch']] = {
+    MATCHER_ALIASES: Dict[str, Type[ClassificationMatch]] = {
         "match_nearest": MatchNearest,
         "match_majority_vote": MatchMajorityVote,
     }
