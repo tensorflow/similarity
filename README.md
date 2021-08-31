@@ -75,7 +75,7 @@ from tensorflow_similarity.models import SimilarityModel
 
 # Build a Similarity model using standard Keras layers
 inputs = layers.Input(shape=(28, 28, 1))
-x = layers.Rescaling(1/255)(inputs)
+x = layers.experimental.preprocessing.Rescaling(1/255)(inputs)
 x = layers.Conv2D(64, 3, activation='relu')(x)
 x = layers.Flatten()(x)
 x = layers.Dense(64, activation='relu')(x)
