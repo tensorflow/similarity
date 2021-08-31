@@ -484,7 +484,7 @@ class Indexer():
                   calibration_metric: Union[str, ClassificationMetric] = "f1_score",  # noqa
                   k: int = 1,
                   matcher: Union[str, ClassificationMatch] = 'match_nearest',
-                  extra_metrics: Sequence[Union[str, ClassificationMetric]] = ['accuracy', 'recall'],  # noqa
+                  extra_metrics: Sequence[Union[str, ClassificationMetric]] = ['precision', 'recall'],  # noqa
                   rounding: int = 2,
                   verbose: int = 1) -> CalibrationResults:
         """Calibrate model thresholds using a test dataset.
@@ -514,8 +514,9 @@ class Indexer():
             less than or equal to the distance threshold.
             Defaults to 'match_nearest'.
 
-            extra_metrics: List of additional [Metric()](metrics/overview.md)
-            to compute and report. Defaults to [].
+            extra_metrics: List of additional
+            `tf.similarity.classification_metrics.ClassificationMetric()` to
+            compute and report. Defaults to ['precision', 'recall'].
 
             rounding: Metric rounding. Default to 2 digits.
 

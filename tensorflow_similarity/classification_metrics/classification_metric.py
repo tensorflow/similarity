@@ -1,17 +1,30 @@
 from abc import abstractmethod
 from abc import ABC
 
-from tensorflow_similarity.types import FloatTensor, IntTensor
+from tensorflow_similarity.types import FloatTensor
 
 
 class ClassificationMetric(ABC):
     """Abstract base class for computing classification metrics.
 
-    Attributes:
-        name: Name associated with the metric object, e.g., accuracy.
+    Args:
+        name: Name associated with a specific metric object, e.g.,
+        accuracy@0.1
 
-        canonical_name: The canonical name associated with metric,
-        e.g., accuracy
+        canonical_name: The canonical name associated with metric, e.g.,
+        accuracy
+
+        direction: {'max','min'} the starting point of the search for the
+        optimal distance threhsold.
+
+        * `max`: Start at the max distance and search decreasing.
+        * `min`: Start at the min distance and search increasing.
+
+    `ClassificationMetrics` measure the matching classification between the
+    query label and the label derived from the set of lookup results.
+
+    The `compute()` method supports computing the metric for a set of values,
+    where each value represents the counts at a specific distance threshold.
     """
 
     def __init__(self,
@@ -30,23 +43,31 @@ class ClassificationMetric(ABC):
 
     def get_config(self):
         return {
-            "name": str(self.name),
-            "canonical_name": str(self.canonical_name),
+            "name": self.name,
+            "canonical_name": self.canonical_name,
+            "direction": self.direction
         }
 
     @abstractmethod
     def compute(self,
-                tp: IntTensor,
-                fp: IntTensor,
-                tn: IntTensor,
-                fn: IntTensor,
+                tp: FloatTensor,
+                fp: FloatTensor,
+                tn: FloatTensor,
+                fn: FloatTensor,
                 count: int) -> FloatTensor:
         """Compute the classification metric.
 
         Args:
-            tp: The count of True Positives at each distance threshold.
-            fp: The count of False Positives at each distance threshold.
-            tn: The count of True Negatives at each distance threshold.
-            fn: The count of False Negatives at each distance threshold.
+            tp: A 1D FloatTensor containing the count of True Positives at each
+            distance threshold.
+            fp: A 1D FloatTensor containing the count of False Positives at each
+            distance threshold.
+            tn: A 1D FloatTensor containing the count of True Negatives at each
+            distance threshold.
+            fn: A 1D FloatTensor containing the count of False Negatives at each
+            distance threshold.
             count: The total number of queries
+
+        Returns:
+            A 1D FloatTensor containing the metric at each distance threshold.
         """

@@ -1,41 +1,72 @@
 import tensorflow as tf
 
-from tensorflow_similarity.types import FloatTensor, IntTensor
+from tensorflow_similarity.types import FloatTensor
 from .classification_metric import ClassificationMetric
 
 
 class Precision(ClassificationMetric):
+    """Calculates the precision of the query classification.
+
+    Computes the precision given the query classification counts.
+
+    $$
+    Precision = \frac{\textrm{true_positives}}{\textrm{true_positives} + \textrm{false_positives}}
+    $$
+
+    args:
+        name: Name associated with a specific metric object, e.g.,
+        precision@0.1
+
+    Usage with `tf.similarity.models.SimilarityModel()`:
+
+    ```python
+    model.calibrate(x=query_examples,
+                    y=query_labels,
+                    calibration_metric='precision')
+    ```
+    """
 
     def __init__(self, name: str = 'precision') -> None:
         super().__init__(name=name, canonical_name='classification_precision')
 
     def compute(self,
-                tp: IntTensor,
-                fp: IntTensor,
-                tn: IntTensor,
-                fn: IntTensor,
+                tp: FloatTensor,
+                fp: FloatTensor,
+                tn: FloatTensor,
+                fn: FloatTensor,
                 count: int) -> FloatTensor:
         """Compute the classification metric.
 
+        The `compute()` method supports computing the metric for a set of
+        values, where each value represents the counts at a specific distance
+        threshold.
+
         Args:
-            tp: The count of True Positives at each distance threshold.
-            fp: The count of False Positives at each distance threshold.
-            tn: The count of True Negatives at each distance threshold.
-            fn: The count of False Negatives at each distance threshold.
+            tp: A 1D FloatTensor containing the count of True Positives at each
+            distance threshold.
+            fp: A 1D FloatTensor containing the count of False Positives at each
+            distance threshold.
+            tn: A 1D FloatTensor containing the count of True Negatives at each
+            distance threshold.
+            fn: A 1D FloatTensor containing the count of False Negatives at each
+            distance threshold.
             count: The total number of queries
+
+        Returns:
+            A 1D FloatTensor containing the metric at each distance threshold.
         """
         p: FloatTensor = tf.math.divide_no_nan(tp, tp + fp)
 
         # If all queries return empty result sets we have a recall of zero. In
         # this case the precision should be 1.0 (see
         # https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html#fig:precision-recall).
-        # The following sets the first precision value to 1.0 if the first
-        # recall and precision are both zero.
+        # The following accounts for the and sets the first precision value to
+        # 1.0 if the first recall and precision are both zero.
         if (tp + fp)[0] == 0.0 and len(p) > 1:
-            initial_precsion = tf.constant(
+            initial_precision = tf.constant(
                     [tf.constant([1.0]), tf.zeros(len(p)-1)],
                     axis=0
             )
-            p = p + initial_precsion
+            p = p + initial_precision
 
         return p

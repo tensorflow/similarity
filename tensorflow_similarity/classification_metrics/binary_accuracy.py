@@ -4,31 +4,37 @@ from tensorflow_similarity.types import FloatTensor
 from .classification_metric import ClassificationMetric
 
 
-class Recall(ClassificationMetric):
-    """Calculates the recall of the query classification.
+class BinaryAccuracy(ClassificationMetric):
+    """Calculates how often the query label matches the derived lookup label.
 
-    Computes the recall given the query classification counts.
+    Accuracy is technically (TP+TN)/(TP+FP+TN+FN), but here we filter all
+    queries above the distance threshold. In the case of binary matching, this
+    makes all the TPs and FPs below the distance threshold and all the TNs and
+    FNs above the distance threshold.
 
-    $$
-    Recall = \frac{\textrm{true_positives}}{\textrm{true_positives} +
-    \textrm{false_negatives}}
-    $$
+    As we are only concerned with the matches below the distance threshold, the
+    accuracy simplifies to TP/(TP+FP) and is equivalent to the precision with
+    respect to the unfiltered queries. However, we also want to consider the
+    query coverage at the distance threshold, i.e., the percentage of queries
+    that retrun a match, computed as (TP+FP)/(TP+FP+TN+FN). Therefore, we can
+    take $ precision \times query_coverage $ to produce a measure that capture
+    the precision scaled by the query coverage. This simplifies down to the
+    binary accuracy presented here, giving TP/(TP+FP+TN+FN).
 
     args:
         name: Name associated with a specific metric object, e.g.,
-        recall@0.1
+        binary_accuracy@0.1
 
     Usage with `tf.similarity.models.SimilarityModel()`:
 
     ```python
     model.calibrate(x=query_examples,
                     y=query_labels,
-                    calibration_metric='recall')
+                    calibration_metric='binary_accuracy')
     ```
     """
-
-    def __init__(self, name: str = 'recall') -> None:
-        super().__init__(name=name, canonical_name='classification_recall')
+    def __init__(self, name: str = 'binary_accuracy') -> None:
+        super().__init__(name=name, canonical_name='binary_accuracy')
 
     def compute(self,
                 tp: FloatTensor,
@@ -56,5 +62,5 @@ class Recall(ClassificationMetric):
         Returns:
             A 1D FloatTensor containing the metric at each distance threshold.
         """
-        result: FloatTensor = tf.math.divide_no_nan(tp, tp + fn)
+        result: FloatTensor = tp / tf.constant([count], dtype='float')
         return result
