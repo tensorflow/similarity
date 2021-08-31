@@ -1,10 +1,14 @@
-from tensorflow_similarity.types import FloatTensor, IntTensor
+from typing import Callable, Optional, Sequence, Tuple, Union
+
 from tqdm.auto import tqdm
 import tensorflow_datasets as tfds
-from typing import Callable, Optional, Union, List, Sequence
 
 from .samplers import Augmenter
 from .memory_samplers import MultiShotMemorySampler
+from tensorflow_similarity.types import FloatTensor, IntTensor
+
+PreProcessFn = (
+        Callable[[FloatTensor, IntTensor], Tuple[FloatTensor, IntTensor]])
 
 
 class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
@@ -13,31 +17,31 @@ class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
                  classes_per_batch: int,
                  x_key: str = "image",
                  y_key: str = "label",
-                 splits: Union[str, List[str]] = ["train", "test"],
+                 splits: Union[str, Sequence[str]] = ["train", "test"],
                  examples_per_class_per_batch: int = 2,
                  steps_per_epoch: int = 1000,
                  class_list: Sequence[int] = None,
                  total_examples_per_class: int = None,
-                 preprocess_fn: Optional[Callable] = None,
+                 preprocess_fn: Optional[PreProcessFn] = None,
                  augmenter: Optional[Augmenter] = None,
                  warmup: int = -1):
         """Create a Multishot in memory sampler from a dataset downloaded from
         the [TensorFlow datasets catalogue](https://www.tensorflow.org/datasets/catalog/)
 
         The sampler ensures that each batch is well balanced by ensure that
-        each batch aims to contains `example_per_class` examples
-        of `classes_per_batch` classes.
+        each batch aims to contains `example_per_class` examples of
+        `classes_per_batch` classes.
 
         The `batch_size` used during training will be equal to:
-        `classes_per_batch * example_per_class` unless an `augmenter` that alters
-        the number of examples returned is used. Then the batch_size is a
-        function of how many augmented examples are returned by
-        the `augmenter`.
+        `classes_per_batch * example_per_class` unless an `augmenter` that
+        alters the number of examples returned is used. Then the batch_size is
+        a function of how many augmented examples are returned by the
+        `augmenter`.
 
-        Multishot samplers are to be used when you have multiple
-        examples for the same class. If this is not the case, then see
-        the [SingleShotMemorySampler()](single_memory.md) for using single
-        example with augmentation.
+        Multishot samplers are to be used when you have multiple examples for
+        the same class. If this is not the case, then see the
+        [SingleShotMemorySampler()](single_memory.md) for using single example
+        with augmentation.
 
         Memory samplers are good for datasets that fit in memory. If you have
         larger ones that needs to sample from disk then use the

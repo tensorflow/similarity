@@ -1,9 +1,10 @@
-from tqdm.auto import tqdm
 from collections import defaultdict
 import random
 from typing import Sequence, Tuple
 
+from tqdm.auto import tqdm
 import tensorflow as tf
+
 from tensorflow_similarity.types import IntTensor, FloatTensor
 
 
@@ -66,7 +67,7 @@ def select_examples(x: FloatTensor,
     idxs = tf.constant(idxs)
 
     with tf.device("/cpu:0"):
-        batch_x = tf.gather_nd(x, indices=tf.reshape(idxs, (-1, 1)))
+        batch_x = tf.gather(x, indices=idxs)
         batch_y = tf.gather(y, indices=idxs)
 
     return batch_x, batch_y

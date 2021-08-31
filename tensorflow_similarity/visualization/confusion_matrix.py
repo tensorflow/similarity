@@ -1,7 +1,9 @@
 import itertools
+
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+
 from tensorflow_similarity.types import IntTensor
 
 
@@ -28,13 +30,20 @@ def confusion_matrix(y_pred: IntTensor,
 
         cmap: Color schema as CMAP. Defaults to 'Blues'.
     """
+    # Ensure we are working with integer tensors.
+    y_pred = tf.cast(tf.convert_to_tensor(y_pred), dtype='int32')
+    y_true = tf.cast(tf.convert_to_tensor(y_true), dtype='int32')
 
-    cm = np.array(tf.math.confusion_matrix(y_true, y_pred))
-    accuracy = np.trace(cm) / np.sum(cm).astype('float')
+    cm = tf.math.confusion_matrix(y_true, y_pred)
+    cm = tf.cast(cm, dtype='float')
+    accuracy = tf.linalg.trace(cm) / tf.math.reduce_sum(cm)
     misclass = 1 - accuracy
 
     if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        cm = tf.math.divide_no_nan(
+                cm,
+                tf.math.reduce_sum(cm, axis=1)[:, np.newaxis]
+        )
 
     plt.figure(figsize=(8, 6))
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
@@ -46,10 +55,8 @@ def confusion_matrix(y_pred: IntTensor,
         plt.xticks(tick_marks, labels, rotation=45)
         plt.yticks(tick_marks, labels)
 
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-
-    thresh = cm.max() / 1.5 if normalize else cm.max() / 2
+    cm_max = tf.math.reduce_max(cm)
+    thresh = cm_max / 1.5 if normalize else cm_max / 2.0
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
         val = cm[i, j]
         color = "white" if val > thresh else "black"
