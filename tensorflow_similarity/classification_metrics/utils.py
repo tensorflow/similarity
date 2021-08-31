@@ -10,7 +10,7 @@ from .accuracy import Accuracy  # noqa
 
 
 def make_classification_metric(
-        metric: Union[str, 'ClassificationMetric']) -> 'ClassificationMetric':
+        metric: Union[str, ClassificationMetric]) -> ClassificationMetric:
     """Convert classification metric from str name to object if needed.
 
     Args:
@@ -23,7 +23,7 @@ def make_classification_metric(
         ClassificationMetric: Instantiated metric if needed.
     """
     # ! Metrics must be non-instantiated.
-    METRICS_ALIASES: Dict[str, Type['ClassificationMetric']] = {
+    METRICS_ALIASES: Dict[str, Type[ClassificationMetric]] = {
         "recall": Recall,
         "precision": Precision,
         "f1": F1Score,

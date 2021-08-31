@@ -46,7 +46,7 @@ setup(
     url='https://github.com/tensorflow/similarity',
     license='Apache License 2.0',
     install_requires=[
-        'numpy', 'tabulate', 'nmslib', 'tensorflow>=2.4', 'tqdm',
+        'numpy', 'tabulate', 'nmslib', 'tensorflow>=2.6', 'tqdm',
         'matplotlib', 'pandas', 'tensorflow-datasets>=4.2', 'umap-learn',
         'bokeh', 'Pillow', 'distinctipy'
     ],

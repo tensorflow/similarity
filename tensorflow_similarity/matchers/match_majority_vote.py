@@ -60,7 +60,9 @@ class MatchMajorityVote(ClassificationMatch):
                 lookup_distances
         )
 
+        # TODO(ovallis): Add parallel for callback or inline evaluation.
         pred_labels = tf.map_fn(self._majority_vote, lookup_labels)
+
         # A 1D BoolTensor [len(query_labels), 1]
         label_match = tf.math.equal(
                 query_labels,
@@ -78,12 +80,8 @@ class MatchMajorityVote(ClassificationMatch):
 
         return label_match, dist_mask
 
-    def _majority_vote(self, labels):
-        labels, _, counts = tf.unique_with_counts(labels)
-        counts = counts * tf.cast(
-                tf.where(labels != -1, 1, 0),
-                dtype='int32'
-        )
+    def _majority_vote(self, lookup_labels):
+        labels, _, counts = tf.unique_with_counts(lookup_labels)
         majority = tf.argmax(counts)
 
         return tf.gather(labels, majority)

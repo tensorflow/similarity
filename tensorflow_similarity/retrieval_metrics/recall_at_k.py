@@ -18,7 +18,7 @@ class RecallAtK(RetrievalMetric):
 
         k: The number of nearest neighbors over which the metric is computed.
 
-        distance_threshold: The max distance below which a nearset neighbor is
+        distance_threshold: The max distance below which a nearest neighbor is
         considered a valid match.
 
         average: {'micro'} Determines the type of averaging performed over the
@@ -50,7 +50,7 @@ class RecallAtK(RetrievalMetric):
             embedding queries.
 
             match_mask: A 2D mask where a 1 indicates a match between the
-            jth query and the kth neighboor and a 0 indicates a mismatch.
+            jth query and the kth neighbor and a 0 indicates a mismatch.
 
             **kwargs: Additional compute args.
 
@@ -66,6 +66,7 @@ class RecallAtK(RetrievalMetric):
         elif self.average == 'macro':
             per_class_metrics = 0
             class_labels = tf.unique(query_labels)[0]
+            # TODO(ovallis): potential slowness.
             for label in class_labels:
                 idxs = tf.where(query_labels == label)
                 c_slice = tf.gather(match_indicator, indices=idxs)

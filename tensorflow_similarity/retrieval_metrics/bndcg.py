@@ -54,7 +54,7 @@ class BNDCG(RetrievalMetric):
             between the jth query and the set of k neighbors.
 
             match_mask: A 2D mask where a 1 indicates a match between the
-            jth query and the kth neighboor and a 0 indicates a mismatch.
+            jth query and the kth neighbor and a 0 indicates a mismatch.
 
             **kwargs: Additional compute args.
 

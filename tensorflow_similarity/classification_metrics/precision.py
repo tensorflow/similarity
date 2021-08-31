@@ -25,7 +25,17 @@ class Precision(ClassificationMetric):
             count: The total number of queries
         """
         p: FloatTensor = tf.math.divide_no_nan(tp, tp + fp)
-        # Handle the case where we have no valid matches at a recall of 0.0
-        if p[0] == 0.0 and len(p) > 1:
-            p = p + tf.constant([1.0]+[0.0]*(len(p)-1))
+
+        # If all queries return empty result sets we have a recall of zero. In
+        # this case the precision should be 1.0 (see
+        # https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html#fig:precision-recall).
+        # The following sets the first precision value to 1.0 if the first
+        # recall and precision are both zero.
+        if (tp + fp)[0] == 0.0 and len(p) > 1:
+            initial_precsion = tf.constant(
+                    [tf.constant([1.0]), tf.zeros(len(p)-1)],
+                    axis=0
+            )
+            p = p + initial_precsion
+
         return p

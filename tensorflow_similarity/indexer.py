@@ -608,7 +608,7 @@ class Indexer():
             pb = tqdm(total=len(lookup_distances) * len(self.cutpoints),
                       desc='matching embeddings')
 
-        matches: DefaultDict = defaultdict(list)
+        matches: DefaultDict[str, List[int]] = defaultdict(list)
         for cp_name, cp_data in self.cutpoints.items():
             distance_threshold = float(cp_data['distance'])
             for idx, distance in enumerate(lookup_distances):
