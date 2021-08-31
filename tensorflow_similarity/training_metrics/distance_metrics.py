@@ -82,14 +82,15 @@ class DistanceMetric(Metric):
         return self.aggregated_distances
 
     def get_config(self):
-        return {
+        config =  {
             "distance": self.distance.name,
             "aggregate": self.aggregate,
             "anchor": self.anchor,
-            "name": self.name,
             "positive_mining_strategy": self.positive_mining_strategy,
             "negative_mining_strategy": self.negative_mining_strategy
         }
+        base_config = super().get_config()
+        return {**base_config, **config}
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -116,10 +117,11 @@ class DistanceGapMetric(Metric):
         return self.gap
 
     def get_config(self):
-        return {
+        config = {
             "distance": self.distance,
-            "name": self.name,
         }
+        base_config = super().get_config()
+        return {**base_config, **config}
 
 
 # aliases
