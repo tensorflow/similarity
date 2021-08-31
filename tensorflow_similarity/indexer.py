@@ -704,7 +704,8 @@ class Indexer():
             if verbose:
                 print("Loading calibration data")
             index.calibration_metric = make_classification_metric(
-                    md['calibration_metric_config'])
+                    metric=md['calibration_metric_config']['canonical_name'],
+                    name=md['calibration_metric_config']['name'])
 
             index.cutpoints = md['cutpoints']
             index.calibration_thresholds = md['calibration_thresholds']
@@ -754,7 +755,7 @@ class Indexer():
             ['evaluator', self.evaluator_type],
             ['index size', self.size()],
             ['calibrated', self.is_calibrated],
-            ['calibration_metric', self.calibration_metric],
+            ['calibration_metric', self.calibration_metric.name],
             ['embedding_output', self.embedding_output]
         ]
         print(tabulate(rows))

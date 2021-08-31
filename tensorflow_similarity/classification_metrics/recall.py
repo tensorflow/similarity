@@ -28,7 +28,7 @@ class Recall(ClassificationMetric):
     """
 
     def __init__(self, name: str = 'recall') -> None:
-        super().__init__(name=name, canonical_name='classification_recall')
+        super().__init__(name=name, canonical_name='recall')
 
     def compute(self,
                 tp: FloatTensor,

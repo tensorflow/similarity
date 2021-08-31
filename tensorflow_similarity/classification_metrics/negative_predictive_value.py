@@ -28,7 +28,7 @@ class NegativePredictiveValue(ClassificationMetric):
     """
 
     def __init__(self, name: str = 'npv') -> None:
-        super().__init__(name=name, canonical_name='neg_predictive_value')
+        super().__init__(name=name, canonical_name='negative_predictive_value')
 
     def compute(self,
                 tp: FloatTensor,

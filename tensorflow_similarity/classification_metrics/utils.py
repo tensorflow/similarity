@@ -10,7 +10,8 @@ from .binary_accuracy import BinaryAccuracy  # noqa
 
 
 def make_classification_metric(
-        metric: Union[str, ClassificationMetric]) -> ClassificationMetric:
+        metric: Union[str, ClassificationMetric],
+        name: str = '') -> ClassificationMetric:
     """Convert classification metric from str name to object if needed.
 
     Args:
@@ -41,5 +42,8 @@ def make_classification_metric(
             metric = METRICS_ALIASES[metric.lower()]()
         else:
             raise ValueError(f'Unknown metric name: {metric}, typo?')
+
+    if name:
+        metric.name = name
 
     return metric

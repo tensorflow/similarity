@@ -27,7 +27,7 @@ class Precision(ClassificationMetric):
     """
 
     def __init__(self, name: str = 'precision') -> None:
-        super().__init__(name=name, canonical_name='classification_precision')
+        super().__init__(name=name, canonical_name='precision')
 
     def compute(self,
                 tp: FloatTensor,
