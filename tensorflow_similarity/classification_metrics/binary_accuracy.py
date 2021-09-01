@@ -4,30 +4,37 @@ from tensorflow_similarity.types import FloatTensor
 from .classification_metric import ClassificationMetric
 
 
-class Precision(ClassificationMetric):
-    """Calculates the precision of the query classification.
+class BinaryAccuracy(ClassificationMetric):
+    """Calculates how often the query label matches the derived lookup label.
 
-    Computes the precision given the query classification counts.
+    Accuracy is technically (TP+TN)/(TP+FP+TN+FN), but here we filter all
+    queries above the distance threshold. In the case of binary matching, this
+    makes all the TPs and FPs below the distance threshold and all the TNs and
+    FNs above the distance threshold.
 
-    $$
-    Precision = \frac{\textrm{true_positives}}{\textrm{true_positives} + \textrm{false_positives}}
-    $$
+    As we are only concerned with the matches below the distance threshold, the
+    accuracy simplifies to TP/(TP+FP) and is equivalent to the precision with
+    respect to the unfiltered queries. However, we also want to consider the
+    query coverage at the distance threshold, i.e., the percentage of queries
+    that retrun a match, computed as (TP+FP)/(TP+FP+TN+FN). Therefore, we can
+    take $ precision \times query_coverage $ to produce a measure that capture
+    the precision scaled by the query coverage. This simplifies down to the
+    binary accuracy presented here, giving TP/(TP+FP+TN+FN).
 
     args:
         name: Name associated with a specific metric object, e.g.,
-        precision@0.1
+        binary_accuracy@0.1
 
     Usage with `tf.similarity.models.SimilarityModel()`:
 
     ```python
     model.calibrate(x=query_examples,
                     y=query_labels,
-                    calibration_metric='precision')
+                    calibration_metric='binary_accuracy')
     ```
     """
-
-    def __init__(self, name: str = 'precision') -> None:
-        super().__init__(name=name, canonical_name='precision')
+    def __init__(self, name: str = 'binary_accuracy') -> None:
+        super().__init__(name=name, canonical_name='binary_accuracy')
 
     def compute(self,
                 tp: FloatTensor,
@@ -55,18 +62,5 @@ class Precision(ClassificationMetric):
         Returns:
             A 1D FloatTensor containing the metric at each distance threshold.
         """
-        p: FloatTensor = tf.math.divide_no_nan(tp, tp + fp)
-
-        # If all queries return empty result sets we have a recall of zero. In
-        # this case the precision should be 1.0 (see
-        # https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html#fig:precision-recall).
-        # The following accounts for the and sets the first precision value to
-        # 1.0 if the first recall and precision are both zero.
-        if (tp + fp)[0] == 0.0 and len(p) > 1:
-            initial_precision = tf.constant(
-                    [tf.constant([1.0]), tf.zeros(len(p)-1)],
-                    axis=0
-            )
-            p = p + initial_precision
-
-        return p
+        result: FloatTensor = tp / tf.constant([count], dtype='float')
+        return result

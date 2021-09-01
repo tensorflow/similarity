@@ -1,30 +1,61 @@
 import tensorflow as tf
 
-from tensorflow_similarity.types import FloatTensor, IntTensor
+from tensorflow_similarity.types import FloatTensor
 from .classification_metric import ClassificationMetric
 
 
 class F1Score(ClassificationMetric):
+    """Calculates the harmonic mean of precision and recall.
 
+    Computes the F-1 Score given the query classification counts. The metric is
+    computed as follows:
+
+    $$
+    F_1 = 2 \cdot \frac{\textrm{precision} \cdot \textrm{recall}}{\textrm{precision} + \textrm{recall}}
+    $$
+
+    args:
+        name: Name associated with a specific metric object, e.g.,
+        f1@0.1
+
+    Usage with `tf.similarity.models.SimilarityModel()`:
+
+    ```python
+    model.calibrate(x=query_examples,
+                    y=query_labels,
+                    calibration_metric='f1')
+    ```
+    """
     def __init__(self, name: str = 'f1') -> None:
         super().__init__(
                 name=name,
                 canonical_name='f1_score')
 
     def compute(self,
-                tp: IntTensor,
-                fp: IntTensor,
-                tn: IntTensor,
-                fn: IntTensor,
+                tp: FloatTensor,
+                fp: FloatTensor,
+                tn: FloatTensor,
+                fn: FloatTensor,
                 count: int) -> FloatTensor:
         """Compute the classification metric.
 
+        The `compute()` method supports computing the metric for a set of
+        values, where each value represents the counts at a specific distance
+        threshold.
+
         Args:
-            tp: The count of True Positives at each distance threshold.
-            fp: The count of False Positives at each distance threshold.
-            tn: The count of True Negatives at each distance threshold.
-            fn: The count of False Negatives at each distance threshold.
+            tp: A 1D FloatTensor containing the count of True Positives at each
+            distance threshold.
+            fp: A 1D FloatTensor containing the count of False Positives at each
+            distance threshold.
+            tn: A 1D FloatTensor containing the count of True Negatives at each
+            distance threshold.
+            fn: A 1D FloatTensor containing the count of False Negatives at each
+            distance threshold.
             count: The total number of queries
+
+        Returns:
+            A 1D FloatTensor containing the metric at each distance threshold.
         """
         recall = tf.math.divide_no_nan(tp, tp + fn)
         precision = tf.math.divide_no_nan(tp, tp + fp)
