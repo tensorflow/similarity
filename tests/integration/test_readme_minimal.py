@@ -38,5 +38,6 @@ def test_readme_minimal():
     qx, qy = sampler.get_slice(3713, 1)
     nns = model.single_lookup(qx[0])
 
+    # ! don't add viz its block the test in certain env.
     # Visualize the query example and its top 5 neighbors
-    viz_neigbors_imgs(qx[0], qy[0], nns)
+    # viz_neigbors_imgs(qx[0], qy[0], nns)
