@@ -14,7 +14,7 @@ TFSimilarity.losses.PNLoss(
     negative_mining_strategy: str = semi-hard,
     soft_margin: bool = (False),
     margin: float = 1.0,
-    name: str = None
+    name: str = PNLoss
 )
 ```
 
@@ -104,7 +104,7 @@ term. Defaults to 1.0.
 <b>name</b>
 </td>
 <td>
-Loss name. Defaults to None.
+Loss name. Defaults to PNLoss.
 </td>
 </tr>
 </table>

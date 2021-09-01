@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Vectorized embedding pairwise distances computation functions"""
 from abc import ABC, abstractmethod
 from typing import Union, List
 

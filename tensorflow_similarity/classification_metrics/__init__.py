@@ -11,10 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# TODO(ovallis): Explain what the calibration metrics are
-"""HERE in Markdown"""
-# Classification Metrics
+"""Classification metrics measure matching classification quality between a
+set query examples and a set of indexed examples. """
 from .classification_metric import ClassificationMetric  # noqa
 from .f1_score import F1Score  # noqa
 from .false_positive_rate import FalsePositiveRate  # noqa

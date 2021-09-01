@@ -10,7 +10,12 @@ Inherits From: [`Callback`](../../TFSimilarity/callbacks/Callback.md)
 
 ```python
 TFSimilarity.callbacks.SplitValidationLoss(
-    known_classes: np.ndarray
+    query_labels: Sequence[int],
+    target_labels: Sequence[int],
+    distance: str = cosine,
+    metrics: Sequence[Union[str, ClassificationMetric]] = [binary_accuracy, f1score],
+    tb_logdir: str = None,
+    k=1
 )
 ```
 
@@ -36,17 +41,31 @@ generalize to new classes.
 
 <tr>
 <td>
-<b>x</b>
+<b>queries</b>
 </td>
 <td>
-Validation data.
+Test examples that will be tested against the built index.
 </td>
 </tr><tr>
 <td>
-<b>y</b>
+<b>query_labels</b>
 </td>
 <td>
-Validation labels.
+Queries nearest neighbors expected labels.
+</td>
+</tr><tr>
+<td>
+<b>targets</b>
+</td>
+<td>
+Examples that are indexed.
+</td>
+</tr><tr>
+<td>
+<b>target_labels</b>
+</td>
+<td>
+Target examples labels.
 </td>
 </tr><tr>
 <td>
@@ -55,83 +74,37 @@ Validation labels.
 <td>
 The set of classes seen during training.
 </td>
-</tr>
-</table>
-
-
-
-<!-- Tabular view -->
- <table class="responsive fixed orange">
-<colgroup><col width="214px"><col></colgroup>
-<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
-
-<tr>
+</tr><tr>
 <td>
-<b>x_known</b>
+<b>distance</b>
 </td>
 <td>
-The set of examples from the known classes.
+Distance function used to compute pairwise distance
+between examples embeddings.
 </td>
 </tr><tr>
 <td>
-<b>y_known</b>
+<b>metrics</b>
 </td>
 <td>
-The labels associated with the known examples.
-</td>
-</tr><tr>
-<td>
-<b>x_unknown</b>
-</td>
-<td>
-The set of examples from the unknown classes.
+List of
+'tf.similarity.classification_metrics.ClassificationMetric()` to
+compute during the evaluation. Defaults to ['binary_accuracy',
+'f1score'].
 </td>
 </tr><tr>
 <td>
-<b>y_unknown</b>
+<b>tb_logdir</b>
 </td>
 <td>
-The labels associated with the unknown examples.
-</td>
-</tr>
-</table>
-
-
-
-
-
-<!-- Tabular view -->
- <table class="responsive fixed orange">
-<colgroup><col width="214px"><col></colgroup>
-<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
-
-<tr>
-<td>
-<b>x_known</b>
-</td>
-<td>
-The set of examples from the known classes.
+Where to write TensorBoard logs. Defaults to None.
 </td>
 </tr><tr>
 <td>
-<b>y_known</b>
+<b>k</b>
 </td>
 <td>
-The labels associated with the known examples.
-</td>
-</tr><tr>
-<td>
-<b>x_unknown</b>
-</td>
-<td>
-The set of examples from the unknown classes.
-</td>
-</tr><tr>
-<td>
-<b>y_unknown</b>
-</td>
-<td>
-The labels associated with the unknown examples.
+How many neighbors to retrieve for evaluation. Defaults to 1.
 </td>
 </tr>
 </table>

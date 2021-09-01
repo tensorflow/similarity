@@ -14,7 +14,7 @@ TFSimilarity.losses.MultiSimilarityLoss(
     beta: float = 20,
     epsilon: float = 0.2,
     lmda: float = 0.5,
-    name: str = None
+    name: str = MultiSimilarityLoss
 )
 ```
 
@@ -90,7 +90,7 @@ weighted.
 <b>name</b>
 </td>
 <td>
-Loss name. Defaults to None.
+Loss name. Defaults to MultiSimilarityLoss.
 </td>
 </tr>
 </table>

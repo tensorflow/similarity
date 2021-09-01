@@ -13,7 +13,8 @@ TFSimilarity.architectures.EfficientNetSim(
     variant: str = B0,
     weights: str = imagenet,
     augmentation: Union[Callable, str] = basic,
-    trainable: str = frozen
+    trainable: str = frozen,
+    l2_norm: bool = (True)
 )
 ```
 
@@ -44,6 +45,10 @@ TFSimilarity.architectures.EfficientNetSim(
         trainable. Either "full" to make the entire backbone trainable,
         "partial" to only make the last 3 block trainable or "frozen" to make
         it not trainable. Defaults to "frozen".
+
+        l2_norm: If True, tensorflow_similarity.layers.MetricEmbedding is used
+        as the last layer, otherwise keras.layers.Dense is used. This should be
+        true when using cosine distance. Defaults to True.
 
     Note:
         EfficientNet expects images at the following size:

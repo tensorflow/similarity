@@ -11,8 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from .retrieval_metric import RetrievalMetric
+"""Retrieval metrics measure the quality of the embedding space given a
+set query examples and a set of indexed examples. Informally it can be thought
+of as how well the space is clustered among other things.
+"""
+from .retrieval_metric import RetrievalMetric  # noqa
 from .recall_at_k import RecallAtK  # noqa
 from .precision_at_k import PrecisionAtK  # noqa
 from .map_at_k import MapAtK  # noqa

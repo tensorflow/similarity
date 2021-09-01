@@ -4,41 +4,49 @@
 
 
 
-Index embedding to allow distance based lookup
+Index the embeddings infered by the model to allow distance based
 
-
+sub-linear search
 
 ## Classes
 
+- [`class CalibrationResults`](../TFSimilarity/indexer/CalibrationResults.md): Cutpoints and thresholds associated with a calibration.
+
+- [`class ClassificationMatch`](../TFSimilarity/indexer/ClassificationMatch.md): Abstract base class for computing calibration metrics.
+
+- [`class ClassificationMetric`](../TFSimilarity/callbacks/ClassificationMetric.md): Abstract base class for computing classification metrics.
+
 - [`class Distance`](../TFSimilarity/distances/Distance.md): Note: don't forget to add your distance to the DISTANCES list
 
-- [`class EvalMetric`](../TFSimilarity/callbacks/EvalMetric.md): Helper class that provides a standard way to create an ABC using
+- [`class Evaluator`](../TFSimilarity/callbacks/Evaluator.md): Evaluates search index performance and calibrates it.
 
-- [`class Evaluator`](../TFSimilarity/evaluators/Evaluator.md): Evaluates index performance and calibrates it.
+- [`class F1Score`](../TFSimilarity/classification_metrics/F1Score.md): Calculates the harmonic mean of precision and recall.
 
-- [`class F1Score`](../TFSimilarity/indexer/F1Score.md): Compute the F1 score, also known as balanced F-score or F-measure at K
-
-- [`class FloatTensor`](../TFSimilarity/callbacks/FloatTensor.md): Float tensor 
+- [`class FloatTensor`](../TFSimilarity/distances/FloatTensor.md): Float tensor 
 
 - [`class Indexer`](../TFSimilarity/indexer/Indexer.md): Indexing system that allows to efficiently find nearest embeddings
 
+- [`class IntTensor`](../TFSimilarity/callbacks/IntTensor.md): Integer tensor
+
 - [`class Lookup`](../TFSimilarity/indexer/Lookup.md): Metadata associated with a query match.
 
-- [`class Matcher`](../TFSimilarity/indexer/Matcher.md): Helper class that provides a standard way to create an ABC using
+- [`class MemoryEvaluator`](../TFSimilarity/callbacks/MemoryEvaluator.md): In memory index performance evaluation and classification.
 
-- [`class MemoryEvaluator`](../TFSimilarity/callbacks/MemoryEvaluator.md): In memory index performance evaluation and calibration.
+- [`class MemoryStore`](../TFSimilarity/indexer/MemoryStore.md): Efficient in-memory dataset store
 
-- [`class MemoryTable`](../TFSimilarity/indexer/MemoryTable.md): Efficient in-memory dataset table
-
-- [`class NMSLibMatcher`](../TFSimilarity/indexer/NMSLibMatcher.md): Efficiently find nearest embeddings by indexing known embeddings and make
+- [`class NMSLibSearch`](../TFSimilarity/indexer/NMSLibSearch.md): Efficiently find nearest embeddings by indexing known embeddings and make
 
 - [`class PandasDataFrame`](../TFSimilarity/indexer/PandasDataFrame.md): Symbolic pandas frame
 
 - [`class Path`](../TFSimilarity/callbacks/Path.md): PurePath subclass that can make system calls.
 
-- [`class Table`](../TFSimilarity/indexer/Table.md): Helper class that provides a standard way to create an ABC using
+- [`class RetrievalMetric`](../TFSimilarity/indexer/RetrievalMetric.md): Abstract base class for computing retrieval metrics.
 
-- [`class Tensor`](../TFSimilarity/callbacks/Tensor.md): The base class of all dense Tensor objects.
+- [`class Search`](../TFSimilarity/indexer/Search.md): Helper class that provides a standard way to create an ABC using
+
+- [`class Store`](../TFSimilarity/indexer/Store.md): Helper class that provides a standard way to create an ABC using
+
+- [`class Tensor`](../TFSimilarity/callbacks/Tensor.md): A tensor is a multidimensional array of elements represented by a
 
 - [`class defaultdict`](../TFSimilarity/indexer/defaultdict.md): defaultdict(default_factory[, ...]) --> dict with default factory
 
@@ -48,11 +56,15 @@ Index embedding to allow distance based lookup
 
 ## Functions
 
-- [`distance_canonicalizer(...)`](../TFSimilarity/distance_metrics/distance_canonicalizer.md): Normalize user requested distance to its matching Distance object.
+- [`distance_canonicalizer(...)`](../TFSimilarity/distances/distance_canonicalizer.md): Normalize user requested distance to its matching Distance object.
 
-- [`make_metric(...)`](../TFSimilarity/callbacks/make_metric.md): Covert metric from str name to object if needed.
+- [`make_classification_metric(...)`](../TFSimilarity/callbacks/make_classification_metric.md): Convert classification metric from str name to object if needed.
 
 - [`tabulate(...)`](../TFSimilarity/indexer/tabulate.md): Format a fixed width table for pretty printing.
 
 - [`time(...)`](../TFSimilarity/indexer/time.md): time() -> floating point number
+
+- [`unpack_lookup_distances(...)`](../TFSimilarity/callbacks/unpack_lookup_distances.md)
+
+- [`unpack_lookup_labels(...)`](../TFSimilarity/callbacks/unpack_lookup_labels.md)
 

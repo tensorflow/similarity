@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Specialized callbacks that track similarity metrics during training"""
 from typing import Dict, List, Sequence, Union
 from pathlib import Path
 import math

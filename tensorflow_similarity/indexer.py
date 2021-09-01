@@ -12,23 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"Index embedding to allow distance based lookup"
+"""Index the embeddings infered by the model to allow distance based
+sub-linear search"""
 
 from collections import defaultdict, deque
 import json
 from pathlib import Path
 from time import time
-from typing import (
-        DefaultDict,
-        Deque,
-        Dict,
-        List,
-        Mapping,
-        MutableMapping,
-        Optional,
-        Sequence,
-        Union)
-
+from typing import DefaultDict, Deque, Dict, List, Mapping, MutableMapping
+from typing import Optional, Sequence, Union
 import numpy as np
 from tabulate import tabulate
 import tensorflow as tf
@@ -45,13 +37,8 @@ from .retrieval_metrics import RetrievalMetric
 from .search import Search, NMSLibSearch
 from .stores import Store, MemoryStore
 from .utils import unpack_lookup_distances, unpack_lookup_labels
-from .types import (
-        IntTensor,
-        FloatTensor,
-        Lookup,
-        PandasDataFrame,
-        Tensor,
-        CalibrationResults)
+from .types import IntTensor, FloatTensor, Lookup, PandasDataFrame
+from .types import Tensor, CalibrationResults
 
 
 class Indexer():

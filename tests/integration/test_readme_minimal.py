@@ -5,7 +5,6 @@ from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.losses import MultiSimilarityLoss
 from tensorflow_similarity.models import SimilarityModel
 from tensorflow_similarity.samplers import TFDatasetMultiShotMemorySampler
-from tensorflow_similarity.visualization import viz_neigbors_imgs
 
 
 def test_readme_minimal():
@@ -36,7 +35,7 @@ def test_readme_minimal():
 
     # Find the top 5 most similar indexed MNIST examples for a given example
     qx, qy = sampler.get_slice(3713, 1)
-    nns = model.single_lookup(qx[0])
+    nns = model.single_lookup(qx[0])  # noqa
 
     # ! don't add viz its block the test in certain env.
     # Visualize the query example and its top 5 neighbors

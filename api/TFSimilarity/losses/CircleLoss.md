@@ -12,7 +12,7 @@ Inherits From: [`MetricLoss`](../../TFSimilarity/losses/MetricLoss.md)
 TFSimilarity.losses.CircleLoss(
     gamma: float = 80.0,
     margin: float = 0.4,
-    name: str = None
+    name: str = CircleLoss
 )
 ```
 
@@ -73,7 +73,7 @@ weighted. Defaults to 0.4.
 <b>name</b>
 </td>
 <td>
-Loss name. Defaults to None.
+Loss name. Defaults to CircleLoss.
 </td>
 </tr>
 </table>
