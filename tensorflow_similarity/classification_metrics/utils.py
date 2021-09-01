@@ -6,18 +6,19 @@ from .false_positive_rate import FalsePositiveRate  # noqa
 from .negative_predictive_value import NegativePredictiveValue  # noqa
 from .precision import Precision  # noqa
 from .recall import Recall  # noqa
-from .accuracy import Accuracy  # noqa
+from .binary_accuracy import BinaryAccuracy  # noqa
 
 
 def make_classification_metric(
-        metric: Union[str, ClassificationMetric]) -> ClassificationMetric:
+        metric: Union[str, ClassificationMetric],
+        name: str = '') -> ClassificationMetric:
     """Convert classification metric from str name to object if needed.
 
     Args:
         metric: ClassificationMetric() or metric name.
 
     Raises:
-        ValueError: metric name is invalid.
+        ValueError: Unknown metric name: {metric}, typo?
 
     Returns:
         ClassificationMetric: Instantiated metric if needed.
@@ -29,8 +30,7 @@ def make_classification_metric(
         "f1": F1Score,
         "f1score": F1Score,
         "f1_score": F1Score,
-        "acc": Accuracy,
-        "accuracy": Accuracy,
+        "binary_accuracy": BinaryAccuracy,
         "npv": NegativePredictiveValue,
         "negative_predicitve_value": NegativePredictiveValue,
         "fpr": FalsePositiveRate,
@@ -42,5 +42,8 @@ def make_classification_metric(
             metric = METRICS_ALIASES[metric.lower()]()
         else:
             raise ValueError(f'Unknown metric name: {metric}, typo?')
+
+    if name:
+        metric.name = name
 
     return metric

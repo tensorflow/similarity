@@ -29,7 +29,7 @@ class EvalCallback(Callback):
                  targets: Tensor,
                  target_labels: Sequence[int],
                  distance: str = 'cosine',
-                 metrics: Sequence[Union[str, ClassificationMetric]] = ['accuracy', 'f1score'],  # noqa
+                 metrics: Sequence[Union[str, ClassificationMetric]] = ['binary_accuracy', 'f1score'],  # noqa
                  tb_logdir: str = None,
                  k: int = 1):
         """Evaluate model matching quality against a validation dataset at
@@ -38,7 +38,7 @@ class EvalCallback(Callback):
         Args:
             queries: Test examples that will be tested against the built index.
 
-            query_labels: Queries nearest neighboors expected labels.
+            query_labels: Queries nearest neighbors expected labels.
 
             targets: Examples that are indexed.
 
@@ -47,14 +47,14 @@ class EvalCallback(Callback):
             distance: Distance function used to compute pairwise distance
             between examples embeddings.
 
-            metrics: List of [EvalMetrics](eval_metrics.md) to be computed
-            during the evaluation. Defaults to ['accuracy', 'mean_rank'].
-            embedding to evaluate.
+            metrics: List of
+            'tf.similarity.classification_metrics.ClassificationMetric()` to
+            compute during the evaluation. Defaults to ['binary_accuracy',
+            'f1score'].
 
             tb_logdir: Where to write TensorBoard logs. Defaults to None.
 
-            k: How many neigboors to retrive for evaluation. Defaults to 1.
-
+            k: How many neighbors to retrieve for evaluation. Defaults to 1.
         """
         super().__init__()
         self.queries = queries
@@ -130,7 +130,7 @@ class SplitValidationLoss(Callback):
                  target_labels: Sequence[int],
                  known_classes: IntTensor,
                  distance: str = 'cosine',
-                 metrics: Sequence[Union[str, ClassificationMetric]] = ['accuracy', 'f1score'],  # noqa
+                 metrics: Sequence[Union[str, ClassificationMetric]] = ['binary_accuracy', 'f1score'],  # noqa
                  tb_logdir: str = None,
                  k=1):
         """Creates the validation callbacks.
@@ -138,7 +138,7 @@ class SplitValidationLoss(Callback):
         Args:
             queries: Test examples that will be tested against the built index.
 
-            query_labels: Queries nearest neighboors expected labels.
+            query_labels: Queries nearest neighbors expected labels.
 
             targets: Examples that are indexed.
 
@@ -149,13 +149,14 @@ class SplitValidationLoss(Callback):
             distance: Distance function used to compute pairwise distance
             between examples embeddings.
 
-            metrics: List of [EvalMetrics](eval_metrics.md) to be computed
-            during the evaluation. Defaults to ['accuracy', 'mean_rank'].
-            embedding to evaluate.
+            metrics: List of
+            'tf.similarity.classification_metrics.ClassificationMetric()` to
+            compute during the evaluation. Defaults to ['binary_accuracy',
+            'f1score'].
 
             tb_logdir: Where to write TensorBoard logs. Defaults to None.
 
-            k: How many neigboors to retrive for evaluation. Defaults to 1.
+            k: How many neighbors to retrieve for evaluation. Defaults to 1.
         """
         super().__init__()
         self.targets = targets

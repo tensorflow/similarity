@@ -24,7 +24,7 @@ from tensorflow import Tensor
 
 class PandasDataFrame(object):
     """Symbolic pandas frame
-    Pandas type are too loose you get an Any. We want a PandaFrame
+    Pandas type are too loose you get an Any. We want a DataFrame
     """
     pass
 
@@ -138,7 +138,7 @@ class CalibrationResults:
 
         thresholds: A Dict mapping ClassificationMetric names to a list
         containing the metric's value computed at each of the distance
-        thresholds, e.g., {'acc': [0.99, 0.80], 'distance': [0.0, 1.0]}.
+        thresholds, e.g., {'f1': [0.99, 0.80], 'distance': [0.0, 1.0]}.
     """
     cutpoints: Mapping[str, Mapping[str, Union[str, float, int]]]
     thresholds: Mapping[str, Sequence[Union[float, int]]]

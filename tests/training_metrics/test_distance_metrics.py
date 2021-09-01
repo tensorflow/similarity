@@ -1,4 +1,5 @@
 import tensorflow as tf
+
 from tensorflow_similarity.training_metrics import DistanceMetric
 from tensorflow_similarity.training_metrics import DistanceGapMetric
 from tensorflow_similarity.distances import CosineDistance

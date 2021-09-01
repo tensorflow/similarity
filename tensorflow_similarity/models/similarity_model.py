@@ -288,9 +288,9 @@ class SimilarityModel(tf.keras.Model):
             y: IntTensor,
             thresholds_targets: MutableMapping[str, float] = {},
             k: int = 1,
-            calibration_metric: Union[str, ClassificationMetric] = "f1_score",
+            calibration_metric: Union[str, ClassificationMetric] = "f1",
             matcher: Union[str, ClassificationMatch] = 'match_nearest',
-            extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = ['accuracy', 'recall'],  # noqa
+            extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = ['precision', 'recall'],  # noqa
             rounding: int = 2,
             verbose: int = 1):
         """Calibrate model thresholds using a test dataset.
@@ -320,8 +320,8 @@ class SimilarityModel(tf.keras.Model):
                 Defaults to 'match_nearest'.
 
                 extra_metrics: List of additional
-                [ClassificationMetric()](classification_metrics/overview.md) to
-                compute and report.
+                `tf.similarity.classification_metrics.ClassificationMetric()` to
+                compute and report. Defaults to ['precision', 'recall'].
 
                 rounding: Metric rounding. Default to 2 digits.
 
@@ -404,7 +404,7 @@ class SimilarityModel(tf.keras.Model):
             matcher: Union[str, ClassificationMatch] = 'match_nearest',
             verbose: int = 1
             ) -> DefaultDict[str, Dict[str, Union[str, np.ndarray]]]:
-        """Evaluate model matching accuracy on a given evaluation dataset.
+        """Evaluate model classification matching on a given evaluation dataset.
 
         Args:
             x: Examples to be matched against the index.
@@ -414,9 +414,9 @@ class SimilarityModel(tf.keras.Model):
             k: How many neighbors to use to perform the evaluation.
             Defaults to 1.
 
-            extra_metrics: Additional (distance_metrics.mde)[distance metrics]
-            to be computed during the evaluation. Default to accuracy and
-            recall.
+            extra_metrics: List of additional
+            `tf.similarity.classification_metrics.ClassificationMetric()` to
+            compute and report. Defaults to ['precision', 'recall'].
 
             matcher: {'match_nearest', 'match_majority_vote'} or
             ClassificationMatch object. Defines the classification matching,
