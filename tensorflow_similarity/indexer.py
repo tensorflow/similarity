@@ -32,7 +32,7 @@ from .classification_metrics import ClassificationMetric
 from .classification_metrics import F1Score
 from .classification_metrics import make_classification_metric
 from .evaluators import Evaluator, MemoryEvaluator
-from .matchers import ClassificationMatch
+from .matchers import ClassificationMatch, make_classification_matcher
 from .retrieval_metrics import RetrievalMetric
 from .search import Search, NMSLibSearch
 from .stores import Store, MemoryStore
@@ -583,6 +583,8 @@ class Indexer():
     def match(self,
               predictions: FloatTensor,
               no_match_label: int = -1,
+              k=1,
+              matcher: Union[str, ClassificationMatch] = 'match_nearest',
               verbose: int = 1) -> Dict[str, List[int]]:
         """Match embeddings against the various cutpoints thresholds
 
@@ -592,6 +594,15 @@ class Indexer():
 
             no_match_label: What label value to assign when there is no match.
             Defaults to -1.
+
+            k: How many neighboors to use during the calibration.
+            Defaults to 1.
+
+            matcher: {'match_nearest', 'match_majority_vote'} or
+            ClassificationMatch object. Defines the classification matching,
+            e.g., match_nearest will count a True Positive if the query_label
+            is equal to the label of the nearest neighbor and the distance is
+            less than or equal to the distance threshold.
 
             verbose: display progression. Default to 1.
 
@@ -610,10 +621,12 @@ class Indexer():
         Returns:
             Dict of cutpoint names mapped to lists of matches.
         """
-        lookups = self.batch_lookup(predictions, k=1, verbose=verbose)
+        matcher = make_classification_matcher(matcher)
 
-        lookup_distances = tf.reshape(unpack_lookup_distances(lookups), (-1))
-        lookup_labels = tf.reshape(unpack_lookup_labels(lookups), (-1))
+        lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
+
+        lookup_distances = unpack_lookup_distances(lookups)
+        lookup_labels = unpack_lookup_labels(lookups)
 
         if verbose:
             pb = tqdm(total=len(lookup_distances) * len(self.cutpoints),
@@ -622,9 +635,14 @@ class Indexer():
         matches: DefaultDict[str, List[int]] = defaultdict(list)
         for cp_name, cp_data in self.cutpoints.items():
             distance_threshold = float(cp_data['distance'])
-            for idx, distance in enumerate(lookup_distances):
+
+            pred_labels, pred_dist = matcher.predict_match(
+                    lookup_labels=lookup_labels,
+                    lookup_distances=lookup_distances)
+
+            for label, distance in zip(pred_labels, pred_dist):
                 if distance <= distance_threshold:
-                    label = int(lookup_labels[idx])
+                    label = int(label)
                 else:
                     label = no_match_label
 

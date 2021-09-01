@@ -40,6 +40,21 @@ class MatchMajorityVote(ClassificationMatch):
 
         self._dist_agg = dist_agg
 
+    def predict_match(self,
+                      lookup_labels: IntTensor,
+                      lookup_distances: FloatTensor
+                      ) -> Tuple[FloatTensor, FloatTensor]:
+        """Compute the derived match label and distance."""
+
+        # TODO(ovallis): Add parallel for callback or inline evaluation.
+        pred_labels = tf.map_fn(self._majority_vote, lookup_labels)
+
+        # Callable type requires positional args only. Here we assume the
+        # signature to be _dist_agg(input_tensor, axis)
+        agg_dist = self._dist_agg(lookup_distances, 1)
+
+        return pred_labels, agg_dist
+
     def compute_match_indicators(self,
                                  query_labels: IntTensor,
                                  lookup_labels: IntTensor,
@@ -74,8 +89,8 @@ class MatchMajorityVote(ClassificationMatch):
                 lookup_distances
         )
 
-        # TODO(ovallis): Add parallel for callback or inline evaluation.
-        pred_labels = tf.map_fn(self._majority_vote, lookup_labels)
+        pred_labels, pred_dist = self.predict_match(
+                lookup_labels, lookup_distances)
 
         # A 1D BoolTensor [len(query_labels), 1]
         label_match = tf.math.equal(
@@ -83,12 +98,9 @@ class MatchMajorityVote(ClassificationMatch):
                 tf.expand_dims(pred_labels, axis=-1)
         )
 
-        # Callable type requires positional args only. Here we assume the
-        # signature to be _dist_agg(input_tensor, axis)
-        mean_dist = self._dist_agg(lookup_distances, 1)
         # A 2D BoolTensor [len(lookup_distance), len(self.distance_thresholds)]
         dist_mask = tf.math.less_equal(
-                tf.expand_dims(mean_dist, axis=-1),
+                tf.expand_dims(pred_dist, axis=-1),
                 self.distance_thresholds
         )
 
