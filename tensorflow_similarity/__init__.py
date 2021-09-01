@@ -20,4 +20,4 @@ The default `Index()` sub-compoments run in-memory and are optimized to be used 
 
 The default implementation can scale up to medium deployment (1M-10M+ points) easily, provided the computers have enough memory. For very large scale deployments you will need to sublcass the compoments to match your own architetctue. See FIXME colab to see how to deploy TensorFlow Similarity in production.
 """
-__version__ = '0.13.11'
+__version__ = '0.13.12'
