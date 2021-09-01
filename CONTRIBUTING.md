@@ -9,7 +9,8 @@ just a few small guidelines you need to follow.
 Contributions to this project must be accompanied by a Contributor License
 Agreement. You (or your employer) retain the copyright to your contribution;
 this simply gives us permission to use and redistribute your contributions as
-part of the project. Head over to <https://cla.developers.google.com/> to see
+part of the project. Head over to the
+[Google contribution agreement server](https://cla.developers.google.com/) to see
 your current agreements on file or to sign a new one.
 
 You generally only need to submit a CLA once, so if you've already submitted one
@@ -37,10 +38,9 @@ pull request:
 - Your functions **must** be typed.
 - Your code must pass `flake8` to ensure you follow Python coding standards.
 - You **must** provide documentation (located in documentation/src) edits that document any new function/features you added.
-- You **should** provide reference to research papers that describe the feature added if any.
-- Please **try** to include a notebook in `notebooks/` that demonstrates the features/model if possible or extend an existing one. If you add a new notebook, make sure to provide an edit to the `README.md` that link to it.
+- You **should** provide reference to research papers that describe the feature added if any exists.
+- Please **try** to include a notebook in [examples/](examples/) that demonstrates the features/model if possible or extend an existing one. If you add a new notebook, make sure to provide an edit to the `README.md` that link to it.
 - You **must** update the documentation/src/changelog.md that document the changes triggered by the PR.
-
 
 
 ## Community Guidelines

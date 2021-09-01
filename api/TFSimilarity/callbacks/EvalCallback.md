@@ -10,10 +10,10 @@ Inherits From: [`Callback`](../../TFSimilarity/callbacks/Callback.md)
 
 ```python
 TFSimilarity.callbacks.EvalCallback(
-    query_labels: List[int],
-    target_labels: List[int],
+    query_labels: Sequence[int],
+    target_labels: Sequence[int],
     distance: str = cosine,
-    metrics: List[Union[str, EvalMetric]] = [accuracy, mean_rank],
+    metrics: Sequence[Union[str, ClassificationMetric]] = [binary_accuracy, f1score],
     tb_logdir: str = None,
     k: int = 1
 )
@@ -44,7 +44,7 @@ Test examples that will be tested against the built index.
 <b>query_labels</b>
 </td>
 <td>
-Queries nearest neighboors expected labels.
+Queries nearest neighbors expected labels.
 </td>
 </tr><tr>
 <td>
@@ -73,9 +73,10 @@ between examples embeddings.
 <b>metrics</b>
 </td>
 <td>
-List of [EvalMetrics](eval_metrics.md) to be computed
-during the evaluation. Defaults to ['accuracy', 'mean_rank'].
-embedding to evaluate.
+List of
+'tf.similarity.classification_metrics.ClassificationMetric()` to
+compute during the evaluation. Defaults to ['binary_accuracy',
+'f1score'].
 </td>
 </tr><tr>
 <td>
@@ -89,7 +90,7 @@ Where to write TensorBoard logs. Defaults to None.
 <b>k</b>
 </td>
 <td>
-How many neigboors to retrive for evaluation. Defaults to 1.
+How many neighbors to retrieve for evaluation. Defaults to 1.
 </td>
 </tr>
 </table>

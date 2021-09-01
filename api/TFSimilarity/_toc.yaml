@@ -15,60 +15,46 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/callbacks
   - title: Callback
     path: /similarity/api_docs/python/TFSimilarity/callbacks/Callback
+  - title: ClassificationMetric
+    path: /similarity/api_docs/python/TFSimilarity/callbacks/ClassificationMetric
   - title: EvalCallback
     path: /similarity/api_docs/python/TFSimilarity/callbacks/EvalCallback
-  - title: EvalMetric
-    path: /similarity/api_docs/python/TFSimilarity/callbacks/EvalMetric
-  - title: FloatTensor
-    path: /similarity/api_docs/python/TFSimilarity/callbacks/FloatTensor
+  - title: Evaluator
+    path: /similarity/api_docs/python/TFSimilarity/callbacks/Evaluator
   - title: IntTensor
     path: /similarity/api_docs/python/TFSimilarity/callbacks/IntTensor
   - title: MemoryEvaluator
     path: /similarity/api_docs/python/TFSimilarity/callbacks/MemoryEvaluator
   - title: Path
     path: /similarity/api_docs/python/TFSimilarity/callbacks/Path
+  - title: SimilarityModel
+    path: /similarity/api_docs/python/TFSimilarity/callbacks/SimilarityModel
   - title: SplitValidationLoss
     path: /similarity/api_docs/python/TFSimilarity/callbacks/SplitValidationLoss
   - title: Tensor
     path: /similarity/api_docs/python/TFSimilarity/callbacks/Tensor
-  - title: make_metric
-    path: /similarity/api_docs/python/TFSimilarity/callbacks/make_metric
-- title: TFSimilarity.distance_metrics
+  - title: make_classification_metric
+    path: /similarity/api_docs/python/TFSimilarity/callbacks/make_classification_metric
+  - title: unpack_lookup_distances
+    path: /similarity/api_docs/python/TFSimilarity/callbacks/unpack_lookup_distances
+  - title: unpack_lookup_labels
+    path: /similarity/api_docs/python/TFSimilarity/callbacks/unpack_lookup_labels
+- title: TFSimilarity.classification_metrics
   section:
   - title: Overview
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics
-  - title: DistanceGapMetric
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/DistanceGapMetric
-  - title: DistanceMetric
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/DistanceMetric
-  - title: Metric
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/Metric
-  - title: avg_neg
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/avg_neg
-  - title: avg_pos
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/avg_pos
-  - title: build_masks
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/build_masks
-  - title: dist_gap
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/dist_gap
-  - title: distance_canonicalizer
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/distance_canonicalizer
-  - title: masked_max
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/masked_max
-  - title: masked_min
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/masked_min
-  - title: max_neg
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/max_neg
-  - title: max_pos
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/max_pos
-  - title: min_neg
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/min_neg
-  - title: min_pos
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/min_pos
-  - title: sum_neg
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/sum_neg
-  - title: sum_pos
-    path: /similarity/api_docs/python/TFSimilarity/distance_metrics/sum_pos
+    path: /similarity/api_docs/python/TFSimilarity/classification_metrics
+  - title: BinaryAccuracy
+    path: /similarity/api_docs/python/TFSimilarity/classification_metrics/BinaryAccuracy
+  - title: F1Score
+    path: /similarity/api_docs/python/TFSimilarity/classification_metrics/F1Score
+  - title: FalsePositiveRate
+    path: /similarity/api_docs/python/TFSimilarity/classification_metrics/FalsePositiveRate
+  - title: NegativePredictiveValue
+    path: /similarity/api_docs/python/TFSimilarity/classification_metrics/NegativePredictiveValue
+  - title: Precision
+    path: /similarity/api_docs/python/TFSimilarity/classification_metrics/Precision
+  - title: Recall
+    path: /similarity/api_docs/python/TFSimilarity/classification_metrics/Recall
 - title: TFSimilarity.distances
   section:
   - title: Overview
@@ -81,38 +67,44 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/distances/Distance
   - title: EuclideanDistance
     path: /similarity/api_docs/python/TFSimilarity/distances/EuclideanDistance
+  - title: FloatTensor
+    path: /similarity/api_docs/python/TFSimilarity/distances/FloatTensor
   - title: InnerProductSimilarity
     path: /similarity/api_docs/python/TFSimilarity/distances/InnerProductSimilarity
   - title: ManhattanDistance
     path: /similarity/api_docs/python/TFSimilarity/distances/ManhattanDistance
   - title: SquaredEuclideanDistance
     path: /similarity/api_docs/python/TFSimilarity/distances/SquaredEuclideanDistance
+  - title: distance_canonicalizer
+    path: /similarity/api_docs/python/TFSimilarity/distances/distance_canonicalizer
 - title: TFSimilarity.evaluators
   section:
   - title: Overview
     path: /similarity/api_docs/python/TFSimilarity/evaluators
-  - title: Evaluator
-    path: /similarity/api_docs/python/TFSimilarity/evaluators/Evaluator
 - title: TFSimilarity.indexer
   section:
   - title: Overview
     path: /similarity/api_docs/python/TFSimilarity/indexer
-  - title: F1Score
-    path: /similarity/api_docs/python/TFSimilarity/indexer/F1Score
+  - title: CalibrationResults
+    path: /similarity/api_docs/python/TFSimilarity/indexer/CalibrationResults
+  - title: ClassificationMatch
+    path: /similarity/api_docs/python/TFSimilarity/indexer/ClassificationMatch
   - title: Indexer
     path: /similarity/api_docs/python/TFSimilarity/indexer/Indexer
   - title: Lookup
     path: /similarity/api_docs/python/TFSimilarity/indexer/Lookup
-  - title: Matcher
-    path: /similarity/api_docs/python/TFSimilarity/indexer/Matcher
-  - title: MemoryTable
-    path: /similarity/api_docs/python/TFSimilarity/indexer/MemoryTable
-  - title: NMSLibMatcher
-    path: /similarity/api_docs/python/TFSimilarity/indexer/NMSLibMatcher
+  - title: MemoryStore
+    path: /similarity/api_docs/python/TFSimilarity/indexer/MemoryStore
+  - title: NMSLibSearch
+    path: /similarity/api_docs/python/TFSimilarity/indexer/NMSLibSearch
   - title: PandasDataFrame
     path: /similarity/api_docs/python/TFSimilarity/indexer/PandasDataFrame
-  - title: Table
-    path: /similarity/api_docs/python/TFSimilarity/indexer/Table
+  - title: RetrievalMetric
+    path: /similarity/api_docs/python/TFSimilarity/indexer/RetrievalMetric
+  - title: Search
+    path: /similarity/api_docs/python/TFSimilarity/indexer/Search
+  - title: Store
+    path: /similarity/api_docs/python/TFSimilarity/indexer/Store
   - title: defaultdict
     path: /similarity/api_docs/python/TFSimilarity/indexer/defaultdict
   - title: deque
@@ -123,6 +115,14 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/indexer/time
   - title: tqdm
     path: /similarity/api_docs/python/TFSimilarity/indexer/tqdm
+- title: TFSimilarity.layers
+  section:
+  - title: Overview
+    path: /similarity/api_docs/python/TFSimilarity/layers
+  - title: Layer
+    path: /similarity/api_docs/python/TFSimilarity/layers/Layer
+  - title: MetricEmbedding
+    path: /similarity/api_docs/python/TFSimilarity/layers/MetricEmbedding
 - title: TFSimilarity.losses
   section:
   - title: Overview
@@ -141,34 +141,30 @@ toc:
   section:
   - title: Overview
     path: /similarity/api_docs/python/TFSimilarity/matchers
-- title: TFSimilarity.metrics
-  section:
-  - title: Overview
-    path: /similarity/api_docs/python/TFSimilarity/metrics
-  - title: Accuracy
-    path: /similarity/api_docs/python/TFSimilarity/metrics/Accuracy
-  - title: FIXMEPrecision
-    path: /similarity/api_docs/python/TFSimilarity/metrics/FIXMEPrecision
-  - title: MaxRank
-    path: /similarity/api_docs/python/TFSimilarity/metrics/MaxRank
-  - title: MeanRank
-    path: /similarity/api_docs/python/TFSimilarity/metrics/MeanRank
-  - title: MinRank
-    path: /similarity/api_docs/python/TFSimilarity/metrics/MinRank
-  - title: Recall
-    path: /similarity/api_docs/python/TFSimilarity/metrics/Recall
-  - title: Sampler
-    path: /similarity/api_docs/python/TFSimilarity/metrics/Sampler
-  - title: batch_class_ratio
-    path: /similarity/api_docs/python/TFSimilarity/metrics/batch_class_ratio
-  - title: make_metrics
-    path: /similarity/api_docs/python/TFSimilarity/metrics/make_metrics
+  - title: MatchMajorityVote
+    path: /similarity/api_docs/python/TFSimilarity/matchers/MatchMajorityVote
+  - title: MatchNearest
+    path: /similarity/api_docs/python/TFSimilarity/matchers/MatchNearest
+  - title: make_classification_matcher
+    path: /similarity/api_docs/python/TFSimilarity/matchers/make_classification_matcher
 - title: TFSimilarity.models
   section:
   - title: Overview
     path: /similarity/api_docs/python/TFSimilarity/models
-  - title: SimilarityModel
-    path: /similarity/api_docs/python/TFSimilarity/models/SimilarityModel
+- title: TFSimilarity.retrieval_metrics
+  section:
+  - title: Overview
+    path: /similarity/api_docs/python/TFSimilarity/retrieval_metrics
+  - title: BNDCG
+    path: /similarity/api_docs/python/TFSimilarity/retrieval_metrics/BNDCG
+  - title: MapAtK
+    path: /similarity/api_docs/python/TFSimilarity/retrieval_metrics/MapAtK
+  - title: PrecisionAtK
+    path: /similarity/api_docs/python/TFSimilarity/retrieval_metrics/PrecisionAtK
+  - title: RecallAtK
+    path: /similarity/api_docs/python/TFSimilarity/retrieval_metrics/RecallAtK
+  - title: make_retrieval_metric
+    path: /similarity/api_docs/python/TFSimilarity/retrieval_metrics/make_retrieval_metric
 - title: TFSimilarity.samplers
   section:
   - title: Overview
@@ -183,10 +179,42 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/samplers/TFRecordDatasetSampler
   - title: select_examples
     path: /similarity/api_docs/python/TFSimilarity/samplers/select_examples
-- title: TFSimilarity.tables
+- title: TFSimilarity.search
   section:
   - title: Overview
-    path: /similarity/api_docs/python/TFSimilarity/tables
+    path: /similarity/api_docs/python/TFSimilarity/search
+- title: TFSimilarity.stores
+  section:
+  - title: Overview
+    path: /similarity/api_docs/python/TFSimilarity/stores
+- title: TFSimilarity.training_metrics
+  section:
+  - title: Overview
+    path: /similarity/api_docs/python/TFSimilarity/training_metrics
+  - title: DistanceGapMetric
+    path: /similarity/api_docs/python/TFSimilarity/training_metrics/DistanceGapMetric
+  - title: DistanceMetric
+    path: /similarity/api_docs/python/TFSimilarity/training_metrics/DistanceMetric
+  - title: avg_neg
+    path: /similarity/api_docs/python/TFSimilarity/training_metrics/avg_neg
+  - title: avg_pos
+    path: /similarity/api_docs/python/TFSimilarity/training_metrics/avg_pos
+  - title: batch_class_ratio
+    path: /similarity/api_docs/python/TFSimilarity/training_metrics/batch_class_ratio
+  - title: dist_gap
+    path: /similarity/api_docs/python/TFSimilarity/training_metrics/dist_gap
+  - title: max_neg
+    path: /similarity/api_docs/python/TFSimilarity/training_metrics/max_neg
+  - title: max_pos
+    path: /similarity/api_docs/python/TFSimilarity/training_metrics/max_pos
+  - title: min_neg
+    path: /similarity/api_docs/python/TFSimilarity/training_metrics/min_neg
+  - title: min_pos
+    path: /similarity/api_docs/python/TFSimilarity/training_metrics/min_pos
+  - title: sum_neg
+    path: /similarity/api_docs/python/TFSimilarity/training_metrics/sum_neg
+  - title: sum_pos
+    path: /similarity/api_docs/python/TFSimilarity/training_metrics/sum_pos
 - title: TFSimilarity.utils
   section:
   - title: Overview

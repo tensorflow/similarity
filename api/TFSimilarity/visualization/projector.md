@@ -8,10 +8,10 @@ Visualize the embeddings in 2D or 3D using UMAP projection
 
 ```python
 TFSimilarity.visualization.projector(
-    labels: List[Any] = None,
-    class_mapping: Optional[List[int]] = None,
+    labels: Optional[Sequence[Any]] = None,
+    class_mapping: Optional[Sequence[int]] = None,
     image_size: int = 64,
-    tooltips_info: Optional[Dict[str, List[str]]] = None,
+    tooltips_info: Optional[Mapping[str, Sequence[str]]] = None,
     pt_size: int = 3,
     colorize: bool = (True),
     pastel_factor: float = 0.1,

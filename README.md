@@ -12,7 +12,7 @@ Tensorflow Similarity offers state-of-the-art algorithms for metric learning and
 
 With TensorFlow Similarity you can train and serve models that find similar items (such as images) in a large corpus of examples. For example, as visible above, you can train a similarity model to find and cluster similar looking images of cats and dogs from the [Oxford IIIT Pet Dataset](https://www.tensorflow.org/datasets/catalog/oxford_iiit_pet) by only training on a few classes. To train your own similarity model see this [notebook](examples/supervised_visualization.ipynb).
 
-Metric learning is different from traditional classification as it's objective is different. The model learns to minimize the distance between similar examples and maximize the distance between dissimilar examples, in a supervised or self-supervised fashion. Either way, TensorFlow Similarity provides the necessary losses, metrics, samplers, visualizers, and indexing sub-system to make this quick and easy. 
+Metric learning is different from traditional classification as it's objective is different. The model learns to minimize the distance between similar examples and maximize the distance between dissimilar examples, in a supervised or self-supervised fashion. Either way, TensorFlow Similarity provides the necessary losses, metrics, samplers, visualizers, and indexing sub-system to make this quick and easy.
 
 **Currently, TensorFlow Similarity supports supervised training.** In future releases, it will support semi-supervised and self-supervised training.
 
@@ -43,13 +43,15 @@ The detailed and narrated [notebooks](examples/) are a good way to get started w
 
 For more information about specific functions, you can [check the API documentation](api/)
 
+For contributing to the project please check out the [contribution guidelines](CONTRIBUTING.md)
+
 ### Minimal Example: MNIST similarity
 
 Here is a bare bones example demonstrating how to train a TensorFlow Similarity model on the MNIST data. This example illustrates some of the main components provided by TensorFlow Similarity and how they fit together. Please refer to the [hello_world notebook](examples/supervised_hello_world.ipynb) for a more detailed introduction.
 
 ### Preparing data
 
-TensorFlow Similarity provides [data samplers](api/TFSimilarity/samplers/), for various dataset types, that balance the batches to ensure smoother training.  
+TensorFlow Similarity provides [data samplers](api/TFSimilarity/samplers/), for various dataset types, that balance the batches to ensure smoother training.
 In this example, we are using the multi-shot sampler that integrate directly from the TensorFlow dataset catalog.
 
 ```python
@@ -113,8 +115,8 @@ viz_neigbors_imgs(sampler.x[3713], sampler.y[3713], nns)
 
 ### Supervised Losses
 
-- Triplet Loss 
-- PN Loss 
+- Triplet Loss
+- PN Loss
 - Multi Sim Loss
 - Circle Loss
 
@@ -125,7 +127,7 @@ Tensorflow Similarity offers many of the most common metrics used for [classific
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | Precision | Classification | |
-| Recall | Classification | | 
+| Recall | Classification | |
 | F1 Score | Classification | |
 | Recall@K | Retrieval | |
 | Binary NDCG | Retrieval | |
