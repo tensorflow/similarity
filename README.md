@@ -139,7 +139,7 @@ Please cite this reference if you use any part of TensorFlow similarity in your 
 ```bibtex
 @article{EBSIM21,
   title={TensorFlow Similarity: A Usuable, High-Performance Metric Learning Library},
-  author={Elie Bursztein, James Long, Shun Lim, Owen Vallis, Francois Chollet},
+  author={Elie Bursztein, James Long, Shun Lin, Owen Vallis, Francois Chollet},
   journal={Fixme},
   year={2021}
 }
