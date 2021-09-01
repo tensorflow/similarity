@@ -18,9 +18,10 @@ TFSimilarity.indexer.Indexer(
 
 <!-- Placeholder for "Used in" -->
 by indexing known embeddings and make them searchable using an
-- [Approximate Nearest Neigboors Search](https://en.wikipedia.org/wiki/Nearest_neighbor_search)
-search implemented via the [<b>Matcher()</b>](matchers/overview.md) classes
-and associated data lookup via the [<b>Table()</b>](tables/overview.md) classes.
+- [Approximate Nearest Neighbors Search]
+(https://en.wikipedia.org/wiki/Nearest_neighbor_search)
+search implemented via the [<b>Search()</b>](search/overview.md) classes
+and associated data lookup via the [<b>Store()</b>](stores/overview.md) classes.
 
 The indexer allows to evaluate the quality of the constructed index and
 calibrate the [SimilarityModel.match()](similarity_model.md) function via
@@ -49,18 +50,18 @@ Defaults to 'cosine'.
 </td>
 </tr><tr>
 <td>
-<b>table</b>
+<b>kv_store</b>
 </td>
 <td>
-How to store the index records.
+How to store the indexed records.
 Defaults to 'memory'.
 </td>
 </tr><tr>
 <td>
-<b>matcher</b>
+<b>search</b>
 </td>
 <td>
-Which <b>Matcher()</b> framework to use to perfom KNN
+Which <b>Search()</b> framework to use to perform KNN
 search. Defaults to 'nmslib'.
 </td>
 </tr><tr>
@@ -76,11 +77,11 @@ performance. Defaults to in-memory one.
 <b>embedding_output</b>
 </td>
 <td>
-Which model output head predicts
-the embbedings that should be indexed. Default to None which is for
-single output model. For multi-head model, the callee, usually the
-<b>SimilarityModel()</b> class is responsible for passing the
-correct one.
+Which model output head predicts the embeddings
+that should be indexed. Default to None which is for single output
+model. For multi-head model, the callee, usually the
+<b>SimilarityModel()</b> class is responsible for passing the correct
+one.
 </td>
 </tr><tr>
 <td>
@@ -88,7 +89,7 @@ correct one.
 </td>
 <td>
 Size of the sliding windows
-buffer used to computer index performance. Defaults to 1000.
+buffer used to compute index performance. Defaults to 1000.
 </td>
 </tr>
 </table>
@@ -105,7 +106,7 @@ buffer used to computer index performance. Defaults to 1000.
 <b>ValueError</b>
 </td>
 <td>
-Invalid matcher or table.
+Invalid search framework or key value store.
 </td>
 </tr>
 </table>
@@ -116,11 +117,11 @@ Invalid matcher or table.
 
 <h3 id="add">add</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L189-L221">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L212-L245">View source</a>
 
 ```python
 add(
-    prediction: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+    prediction: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
 </a>,
     label: Optional[int] = None,
     data: <a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor```
@@ -144,7 +145,8 @@ Add a single embedding to the indexer
 <b>prediction</b>
 </td>
 <td>
-TF similarity model prediction.
+TF similarity model prediction, may be a multi-headed
+output.
 </td>
 </tr><tr>
 <td>
@@ -169,7 +171,7 @@ the embedding. Defaults to None.
 <td>
 Rebuild the index after insertion.
 Defaults to True. Set it to false if you would like to add
-multiples batchs/points and build it manually once after.
+multiples batches/points and build it manually once after.
 </td>
 </tr><tr>
 <td>
@@ -186,13 +188,13 @@ Defaults to 1.
 
 <h3 id="batch_add">batch_add</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L223-L252">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L247-L277">View source</a>
 
 ```python
 batch_add(
-    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+    predictions: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
 </a>,
-    labels: Optional[List[Optional[int]]] = None,
+    labels: Optional[Sequence[int]] = None,
     data: Optional[<a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor```
 </a>] = None,
     build: bool = (True),
@@ -214,7 +216,8 @@ Add a batch of embeddings to the indexer
 <b>predictions</b>
 </td>
 <td>
-TF similarity model predictions.
+TF similarity model predictions, may be a multi-headed
+output.
 </td>
 </tr><tr>
 <td>
@@ -237,7 +240,7 @@ input data associated with the embedding. Defaults to None.
 <td>
 Rebuild the index after insertion.
 Defaults to True. Set it to false if you would like to add
-multiples batchs/points and build it manually once after.
+multiples batches/points and build it manually once after.
 </td>
 </tr><tr>
 <td>
@@ -253,11 +256,11 @@ Display progress if set to 1. Defaults to 1.
 
 <h3 id="batch_lookup">batch_lookup</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L288-L347">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L315-L377">View source</a>
 
 ```python
 batch_lookup(
-    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+    predictions: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
 </a>,
     k: int = 5,
     verbose: int = 1
@@ -278,14 +281,15 @@ Find the k closest matches for a set of embeddings
 <b>predictions</b>
 </td>
 <td>
-model predictions.
+TF similarity model predictions, may be a multi-headed
+output.
 </td>
 </tr><tr>
 <td>
 <b>k</b>
 </td>
 <td>
-Number of nearest neighboors to lookup. Defaults to 5.
+Number of nearest neighbors to lookup. Defaults to 5.
 </td>
 </tr><tr>
 <td>
@@ -299,32 +303,35 @@ Be verbose. Defaults to 1.
 
 
 Returns
-    list of list of k nearest neighboors:
+    list of list of k nearest neighbors:
     List[List[Lookup]]
 
 <h3 id="calibrate">calibrate</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L378-L459">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L481-L572">View source</a>
 
 ```python
 calibrate(
-    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+    predictions: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
 </a>,
-    y: List[int],
-    thresholds_targets: Dict[str, float],
-    calibration_metric: Union[str, <a href="../../TFSimilarity/callbacks/EvalMetric.md">TFSimilarity.callbacks.EvalMetric```
+    target_labels: Sequence[int],
+    thresholds_targets: MutableMapping[str, float],
+    calibration_metric: Union[str, <a href="../../TFSimilarity/callbacks/ClassificationMetric.md">TFSimilarity.callbacks.ClassificationMetric```
 </a>] = f1_score,
     k: int = 1,
-    extra_metrics: List[Union[str, EvalMetric]] = [accuracy, recall],
+    matcher: Union[str, <a href="../../TFSimilarity/indexer/ClassificationMatch.md">TFSimilarity.indexer.ClassificationMatch```
+</a>] = match_nearest,
+    extra_metrics: Sequence[Union[str, ClassificationMetric]] = [precision, recall],
     rounding: int = 2,
     verbose: int = 1
-) -> Dict[str, Union[Dict[str, float], List[float]]]
+) -> <a href="../../TFSimilarity/indexer/CalibrationResults.md">TFSimilarity.indexer.CalibrationResults```
+</a>
 ```
 
 
 Calibrate model thresholds using a test dataset.
 
-FIXME: more detailed explaination.
+FIXME: more detailed explanation.
 
 <!-- Tabular view -->
  <table class="responsive fixed orange">
@@ -336,14 +343,16 @@ FIXME: more detailed explaination.
 <b>predictions</b>
 </td>
 <td>
-Test emebddings computed by the SimilarityModel.
+TF similarity model predictions, may be a multi-headed
+output.
 </td>
 </tr><tr>
 <td>
-<b>y</b>
+<b>target_labels</b>
 </td>
 <td>
-Expected labels for the nearest neighboors.
+Sequence of the expected labels associated with the
+embedded queries.
 </td>
 </tr><tr>
 <td>
@@ -358,24 +367,37 @@ meet with respect to the <b>calibration_metric</b>.
 <b>calibration_metric</b>
 </td>
 <td>
-- [Metric()](metrics/overview.md) used to
-evaluate the performance of the index.
+- [ClassificationMetric()](metrics/overview.md)
+used to evaluate the performance of the index.
 </td>
 </tr><tr>
 <td>
 <b>k</b>
 </td>
 <td>
-How many neighboors to use during the calibration.
+How many neighbors to use during the calibration.
 Defaults to 1.
+</td>
+</tr><tr>
+<td>
+<b>matcher</b>
+</td>
+<td>
+<i>'match_nearest', 'match_majority_vote'</i> or
+ClassificationMatch object. Defines the classification matching,
+e.g., match_nearest will count a True Positive if the query_label
+is equal to the label of the nearest neighbor and the distance is
+less than or equal to the distance threshold.
+Defaults to 'match_nearest'.
 </td>
 </tr><tr>
 <td>
 <b>extra_metrics</b>
 </td>
 <td>
-List of additional [Metric()](metrics/overview.md)
-to compute and report.
+List of additional
+<b>tf.similarity.classification_metrics.ClassificationMetric()</b> to
+compute and report. Defaults to ['precision', 'recall'].
 </td>
 </tr><tr>
 <td>
@@ -402,7 +424,7 @@ Be verbose and display calibration results. Defaults to 1.
 <tr><th colspan="2">Returns</th></tr>
 <tr class="alt">
 <td colspan="2">
-Calibration results: <b><i>"cutpoints": {}, "thresholds": {}</i></b>
+CalibrationResults containing the thresholds and cutpoints Dicts.
 </td>
 </tr>
 
@@ -410,19 +432,126 @@ Calibration results: <b><i>"cutpoints": {}, "thresholds": {}</i></b>
 
 
 
-<h3 id="evaluate">evaluate</h3>
+<h3 id="evaluate_classification">evaluate_classification</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L350-L376">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L415-L479">View source</a>
 
 ```python
-evaluate(
-    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+evaluate_classification(
+    predictions: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
 </a>,
-    y: List[int],
-    metrics: List[Union[str, EvalMetric]],
+    target_labels: Union[Sequence[int], <a href="../../TFSimilarity/callbacks/IntTensor.md">TFSimilarity.callbacks.IntTensor```
+</a>],
+    distance_thresholds: Union[Sequence[float], <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+</a>],
+    metrics: Sequence[Union[str, ClassificationMetric]] = [f1],
+    matcher: Union[str, <a href="../../TFSimilarity/indexer/ClassificationMatch.md">TFSimilarity.indexer.ClassificationMatch```
+</a>] = match_nearest,
     k: int = 1,
     verbose: int = 1
-) -> Dict[str, Union[float, int]]
+) -> Dict[str, np.ndarray]
+```
+
+
+Evaluate the classification performance.
+
+Compute the classification metrics given a set of queries, lookups, and
+distance thresholds.
+
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2">Args</th></tr>
+
+<tr>
+<td>
+<b>predictions</b>
+</td>
+<td>
+TF similarity model predictions, may be a multi-headed
+output.
+</td>
+</tr><tr>
+<td>
+<b>target_labels</b>
+</td>
+<td>
+Sequence of expected labels for the lookups.
+</td>
+</tr><tr>
+<td>
+<b>distance_thresholds</b>
+</td>
+<td>
+A 1D tensor denoting the distances points at
+which we compute the metrics.
+</td>
+</tr><tr>
+<td>
+<b>metrics</b>
+</td>
+<td>
+The set of classification metrics.
+</td>
+</tr><tr>
+<td>
+<b>matcher</b>
+</td>
+<td>
+<i>'match_nearest', 'match_majority_vote'</i> or
+ClassificationMatch object. Defines the classification matching,
+e.g., match_nearest will count a True Positive if the query_label
+is equal to the label of the nearest neighbor and the distance is
+less than or equal to the distance threshold.
+</td>
+</tr><tr>
+<td>
+<b>distance_rounding</b>
+</td>
+<td>
+How many digit to consider to
+decide if the distance changed. Defaults to 8.
+</td>
+</tr><tr>
+<td>
+<b>verbose</b>
+</td>
+<td>
+Be verbose. Defaults to 1.
+</td>
+</tr>
+</table>
+
+
+
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2">Returns</th></tr>
+<tr class="alt">
+<td colspan="2">
+A Mapping from metric name to the list of values computed for each
+distance threshold.
+</td>
+</tr>
+
+</table>
+
+
+
+<h3 id="evaluate_retrieval">evaluate_retrieval</h3>
+
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L380-L413">View source</a>
+
+```python
+evaluate_retrieval(
+    predictions: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+</a>,
+    target_labels: Sequence[int],
+    retrieval_metrics: Sequence[Union[str, RetrievalMetric]],
+    k: int = 1,
+    verbose: int = 1
+) -> Dict[str, np.ndarray]
 ```
 
 
@@ -439,35 +568,32 @@ Evaluate the quality of the index against a test dataset.
 <b>predictions</b>
 </td>
 <td>
-Test emebddings computed by the SimilarityModel.
+TF similarity model predictions, may be a multi-headed
+output.
 </td>
 </tr><tr>
 <td>
-<b>y</b>
+<b>target_labels</b>
 </td>
 <td>
-Expected labels for the nearest neighboors.
-</td>
-</tr><tr>
-<td>
-<b>metrics</b>
-</td>
-<td>
-List of [Metric()](metrics/overview.md) to compute.
+Sequence of the expected labels associated with the
+embedded queries.
 </td>
 </tr><tr>
 <td>
 <b>k</b>
 </td>
 <td>
-How many neighboors to use during the evaluation. Defaults to 1.
+How many neighbors to use during the calibration.
+Defaults to 1.
 </td>
 </tr><tr>
 <td>
-<b>verbose</b>
+<b>retrieval_metrics</b>
 </td>
 <td>
-Be verbose. Defaults to 1.
+List of
+- [RetrievalMetric()](retrieval_metrics/overview.md) to compute.
 </td>
 </tr>
 </table>
@@ -491,7 +617,7 @@ values are the metrics values.
 
 <h3 id="get_calibration_metric">get_calibration_metric</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L601-L602">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L715-L716">View source</a>
 
 ```python
 get_calibration_metric()
@@ -503,7 +629,7 @@ get_calibration_metric()
 
 <h3 id="load">load</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L555-L599">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L666-L713">View source</a>
 
 ``<b>python
 @staticmethod</b>``
@@ -560,11 +686,11 @@ Initialized index
 
 <h3 id="match">match</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L461-L519">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L574-L630">View source</a>
 
 ```python
 match(
-    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+    predictions: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
 </a>,
     no_match_label: int = -1,
     verbose: int = 1
@@ -579,17 +705,31 @@ Match embeddings against the various cutpoints thresholds
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
 <tr><th colspan="2">Args</th></tr>
-<tr class="alt">
-<td colspan="2">
-predictions (FloatTensor): embeddings
 
-no_match_label (int, optional): What label value to assign when
-there is no match. Defaults to -1.
-
-verbose (int): display progression. Default to 1.
+<tr>
+<td>
+<b>predictions</b>
+</td>
+<td>
+TF similarity model predictions, may be a multi-headed
+output.
+</td>
+</tr><tr>
+<td>
+<b>no_match_label</b>
+</td>
+<td>
+What label value to assign when there is no match.
+Defaults to -1.
+</td>
+</tr><tr>
+<td>
+<b>verbose</b>
+</td>
+<td>
+display progression. Default to 1.
 </td>
 </tr>
-
 </table>
 
 
@@ -604,8 +744,8 @@ performance downside to do so and it makes the code clearer
 and simpler.
 
 2. The calling function is responsible to return the list of class
-matched to allows implementation to use additional criterias
-if they choose to.
+matched to allows implementation to use additional criteria if they
+choose to.
 
 
 
@@ -615,7 +755,7 @@ if they choose to.
 <tr><th colspan="2">Returns</th></tr>
 <tr class="alt">
 <td colspan="2">
-Dict of matches list keyed by cutpoint names.
+Dict of cutpoint names mapped to lists of matches.
 </td>
 </tr>
 
@@ -625,7 +765,7 @@ Dict of matches list keyed by cutpoint names.
 
 <h3 id="print_stats">print_stats</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L631-L655">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L745-L769">View source</a>
 
 ```python
 print_stats()
@@ -637,7 +777,7 @@ display statistics in terminal friendly fashion
 
 <h3 id="reset">reset</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L103-L105">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L124-L126">View source</a>
 
 ```python
 reset() -> None
@@ -649,7 +789,7 @@ Reinitialize the indexer
 
 <h3 id="save">save</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L521-L553">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L632-L664">View source</a>
 
 ```python
 save(
@@ -688,11 +828,11 @@ Store index data compressed. Defaults to True.
 
 <h3 id="single_lookup">single_lookup</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L254-L286">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L279-L313">View source</a>
 
 ```python
 single_lookup(
-    prediction: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+    prediction: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
 </a>,
     k: int = 5
 ) -> List[<a href="../../TFSimilarity/indexer/Lookup.md">TFSimilarity.indexer.Lookup```
@@ -713,26 +853,27 @@ Find the k closest matches of a given embedding
 <b>prediction</b>
 </td>
 <td>
-model prediction.
+TF similarity model prediction, may be a multi-headed
+output.
 </td>
 </tr><tr>
 <td>
 <b>k</b>
 </td>
 <td>
-Number of nearest neighboors to lookup. Defaults to 5.
+Number of nearest neighbors to lookup. Defaults to 5.
 </td>
 </tr>
 </table>
 
 
 Returns
-    list of the k nearest neigboors info:
+    list of the k nearest neighbors info:
     List[Lookup]
 
 <h3 id="size">size</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L604-L606">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L718-L720">View source</a>
 
 ```python
 size() -> int
@@ -744,7 +885,7 @@ Return the index size
 
 <h3 id="stats">stats</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L608-L629">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L722-L743">View source</a>
 
 ```python
 stats()
@@ -756,7 +897,7 @@ return index statistics
 
 <h3 id="to_data_frame">to_data_frame</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L657-L667">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L771-L781">View source</a>
 
 ```python
 to_data_frame(

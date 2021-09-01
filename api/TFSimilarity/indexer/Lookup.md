@@ -119,7 +119,7 @@ Default None.
 
 <h3 id="__eq__">__eq__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/types.py#L136-L150">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/types.py#L113-L127">View source</a>
 
 ```python
 __eq__(

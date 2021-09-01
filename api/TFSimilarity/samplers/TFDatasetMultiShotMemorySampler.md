@@ -6,7 +6,7 @@
 
 Base object for fitting to a sequence of data, such as a dataset.
 
-Inherits From: [`MultiShotMemorySampler`](../../TFSimilarity/samplers/MultiShotMemorySampler.md), [`Sampler`](../../TFSimilarity/metrics/Sampler.md)
+Inherits From: [`MultiShotMemorySampler`](../../TFSimilarity/samplers/MultiShotMemorySampler.md)
 
 ```python
 TFSimilarity.samplers.TFDatasetMultiShotMemorySampler(
@@ -14,12 +14,12 @@ TFSimilarity.samplers.TFDatasetMultiShotMemorySampler(
     classes_per_batch: int,
     x_key: str = image,
     y_key: str = label,
-    splits: Union[str, List[str]] = [train, test],
+    splits: Union[str, Sequence[str]] = [train, test],
     examples_per_class_per_batch: int = 2,
     steps_per_epoch: int = 1000,
     class_list: Sequence[int] = None,
     total_examples_per_class: int = None,
-    preprocess_fn: Optional[Callable] = None,
+    preprocess_fn: Optional[PreProcessFn] = None,
     augmenter: Optional[Augmenter] = None,
     warmup: int = -1
 )
@@ -169,11 +169,61 @@ boolean <b>is_warmup</b>. See <b>self.get_examples()</b> Defaults to 0.
 
 
 
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
+
+<tr>
+<td>
+<b>example_shape</b>
+</td>
+<td>
+
+</td>
+</tr><tr>
+<td>
+<b>num_examples</b>
+</td>
+<td>
+
+</td>
+</tr>
+</table>
+
+
+
+
+
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
+
+<tr>
+<td>
+<b>example_shape</b>
+</td>
+<td>
+
+</td>
+</tr><tr>
+<td>
+<b>num_examples</b>
+</td>
+<td>
+
+</td>
+</tr>
+</table>
+
+
+
 ## Methods
 
 <h3 id="generate_batch">generate_batch</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L122-L144">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L135-L157">View source</a>
 
 ```python
 generate_batch(
@@ -217,7 +267,7 @@ x, y: batch
 
 <h3 id="get_examples">get_examples</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/memory_samplers.py#L116-L132">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/memory_samplers.py#L132-L152">View source</a>
 
 ```python
 get_examples(
@@ -289,9 +339,68 @@ x, y: batch of examples made of <b>num_classes</b> * <b>example_per_class</b>
 
 
 
+<h3 id="get_slice">get_slice</h3>
+
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/memory_samplers.py#L154-L174">View source</a>
+
+```python
+get_slice(
+    begin: int = 0,
+    size: int = -1
+) -> Tuple[<a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor``<b>
+</a>, <a href="../../TFSimilarity/callbacks/IntTensor.md">TFSimilarity.callbacks.IntTensor</b>``
+</a>]
+```
+
+
+Extracts a slice over both the x and y tensors.
+
+This method extracts a slice of size <b>size</b> over the first dimension of
+both the x and y tensors starting at the index specified by <b>begin</b>.
+
+The value of <b>begin + size</b> must be less than <b>self.num_examples</b>.
+
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2">Args</th></tr>
+
+<tr>
+<td>
+<b>begin</b>
+</td>
+<td>
+The starting index.
+</td>
+</tr><tr>
+<td>
+<b>size</b>
+</td>
+<td>
+The size of the slice.
+</td>
+</tr>
+</table>
+
+
+
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2">Returns</th></tr>
+<tr class="alt">
+<td colspan="2">
+A Tuple of FloatTensor and IntTensor
+</td>
+</tr>
+
+</table>
+
+
+
 <h3 id="on_epoch_end">on_epoch_end</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L107-L117">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L120-L130">View source</a>
 
 ```python
 on_epoch_end() -> None
@@ -303,7 +412,7 @@ Keep track of warmup epochs
 
 <h3 id="__getitem__">__getitem__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L119-L120">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L132-L133">View source</a>
 
 ```python
 __getitem__(
@@ -360,7 +469,7 @@ Create a generator that iterate over the Sequence.
 
 <h3 id="__len__">__len__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L103-L105">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L116-L118">View source</a>
 
 ```python
 __len__() -> int

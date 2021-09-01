@@ -89,14 +89,17 @@ Defaults to 32.
 </td>
 <td>
 How many shards to use concurrently per cycle.
-Default is None which is all of them. Can cause segv if too many shards.
+Default is None which is all of them. Can cause segv if too many
+shards.
 </td>
 </tr><tr>
 <td>
 <b>compression</b>
 </td>
 <td>
-Which compression was used when creating the dataset. <b><i>None, "ZLIB", or "GZIP"</i></b> as specified in [TFRecordDataset documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
+Which compression was used when creating the dataset.
+<b><i>None, "ZLIB", or "GZIP"</i></b> as specified in [TFRecordDataset
+documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
 Defaults to None.
 </td>
 </tr><tr>

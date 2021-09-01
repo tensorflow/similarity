@@ -4,7 +4,7 @@
 
 
 
-
+Vectorized embedding pairwise distances computation functions
 
 
 
@@ -18,7 +18,7 @@
 
 - [`class EuclideanDistance`](../TFSimilarity/distances/EuclideanDistance.md): Compute pairwise euclidean distances between embeddings.
 
-- [`class FloatTensor`](../TFSimilarity/callbacks/FloatTensor.md): Float tensor 
+- [`class FloatTensor`](../TFSimilarity/distances/FloatTensor.md): Float tensor 
 
 - [`class InnerProductSimilarity`](../TFSimilarity/distances/InnerProductSimilarity.md): Compute the pairwise inner product between embeddings.
 
@@ -28,7 +28,7 @@
 
 ## Functions
 
-- [`distance_canonicalizer(...)`](../TFSimilarity/distance_metrics/distance_canonicalizer.md): Normalize user requested distance to its matching Distance object.
+- [`distance_canonicalizer(...)`](../TFSimilarity/distances/distance_canonicalizer.md): Normalize user requested distance to its matching Distance object.
 
 
 

@@ -4,13 +4,20 @@
 
 
 
+Matchers define the classification matching strategy when using
 
-
-
+similarity models to match query examples to the classes of indexed
+examples.
 
 ## Classes
 
-- [`class Matcher`](../TFSimilarity/indexer/Matcher.md): Helper class that provides a standard way to create an ABC using
+- [`class ClassificationMatch`](../TFSimilarity/indexer/ClassificationMatch.md): Abstract base class for computing calibration metrics.
 
-- [`class NMSLibMatcher`](../TFSimilarity/indexer/NMSLibMatcher.md): Efficiently find nearest embeddings by indexing known embeddings and make
+- [`class MatchMajorityVote`](../TFSimilarity/matchers/MatchMajorityVote.md): Match metrics for the most common label in a result set.
+
+- [`class MatchNearest`](../TFSimilarity/matchers/MatchNearest.md): Match metrics for labels at k=1.
+
+## Functions
+
+- [`make_classification_matcher(...)`](../TFSimilarity/matchers/make_classification_matcher.md): Convert classification matcher from str name to object if needed.
 

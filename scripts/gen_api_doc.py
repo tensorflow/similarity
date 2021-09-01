@@ -30,6 +30,7 @@ from tensorflow_docs.api_generator import doc_controls
 from tensorflow_docs.api_generator import generate_lib
 from tensorflow_docs.api_generator import public_api
 from tensorflow_similarity import api as TFSimilarity
+
 tf.config.set_visible_devices([], 'GPU')
 
 OUTDIR = '../api/'
@@ -61,7 +62,6 @@ def replace_in_file(fname, replacements):
 
     for rep in replacements:
         content = re.sub(rep[0], rep[1], content, flags=re.MULTILINE)
-
 
     # fix the header manually as there is no easy regex
     head = []
@@ -104,14 +104,15 @@ def replace_in_file(fname, replacements):
     content = "\n".join(head)
     content += "\n".join(body)
 
-
     with open(fname, 'w+') as f:
         f.write(content)
 
 
 def _hide_layer_and_module_methods():
-    """Hide methods and properties defined in the base classes of keras layers."""
-    # __dict__ only sees attributes defined in *this* class, not on parent classes
+    """Hide methods and properties defined in the base classes
+    of keras layers."""
+    # __dict__ only sees attributes defined in *this* class,
+    # not on parent classes
     # Needed to ignore redudant subclass documentation
     layer_contents = list(tf.keras.layers.Layer.__dict__.items())
     model_contents = list(tf.keras.Model.__dict__.items())
@@ -155,7 +156,6 @@ def gen_api_docs():
     doc_generator.build(output_dir)
 
 
-
 def main(_):
     # cleanup
     outpath = Path(OUTDIR)
@@ -175,22 +175,27 @@ def main(_):
     shutil.move(OUTDIR + 'TFSimilarity.md', mfname)
 
     reps = [
-            ["<!-- Insert buttons and diff -->",
-             """TensorFlow Similarity is a TensorFlow library focused on making metric learning easy"""],
-            ["# Module: TFSimilarity", "# TensorFlow Similarity API Documentation"],
-        ]
+        [
+            "<!-- Insert buttons and diff -->",
+            """TensorFlow Similarity is a TensorFlow library focused on making metric learning easy"""
+        ],
+        [
+            "# Module: TFSimilarity",
+            "# TensorFlow Similarity API Documentation"
+        ],
+    ]
 
     replace_in_file(mfname, reps)
-
 
     cprint("[Bulk patching]", 'yellow')
     # pattern, replacement
     reps = [
-        ["description: .+", ""], # remove "pseudo frontmatter"
+        ["description: .+", ""],  # remove "pseudo frontmatter"
         ["^\[", '- ['],  # make list valid again
         ["[^#]+\# ", '# '],
         [" module", ''],
     ]
+
     for fname in Path(OUTDIR).glob('**/*md'):
         fname = str(fname)
         replace_in_file(fname, reps)
