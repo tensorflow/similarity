@@ -25,7 +25,6 @@ from .evaluator import Evaluator
 from tensorflow_similarity.classification_metrics import ClassificationMetric
 from tensorflow_similarity.matchers import ClassificationMatch
 from tensorflow_similarity.matchers import make_classification_matcher
-from tensorflow_similarity.retrieval_metrics import make_retrieval_metric
 from tensorflow_similarity.retrieval_metrics import RetrievalMetric
 from tensorflow_similarity.retrieval_metrics.utils import compute_match_mask
 from tensorflow_similarity.types import (
@@ -41,7 +40,7 @@ class MemoryEvaluator(Evaluator):
             self,
             target_labels: Sequence[int],
             lookups: Sequence[Sequence[Lookup]],
-            retrieval_metrics: Sequence[Union[str, RetrievalMetric]],
+            retrieval_metrics: Sequence[RetrievalMetric],
             distance_rounding: int = 8) -> Dict[str, np.ndarray]:
         """Evaluates lookup performances against a supplied set of metrics
 
@@ -61,16 +60,20 @@ class MemoryEvaluator(Evaluator):
             Dictionary of metric results where keys are the metric names and
             values are the metrics values.
         """
-        # [nn[{'distance': xxx}, ]]
-        # normalize metrics
-        eval_metrics: List[RetrievalMetric] = (
-            [make_retrieval_metric(m) for m in retrieval_metrics])
-
         # data preparation: flatten and rounding
         # lookups will be shape(num_queries, num_neighbors)
         # distances will be len(num_queries x num_neighbors)
         nn_labels = unpack_lookup_labels(lookups)
         distances = unpack_lookup_distances(lookups, distance_rounding)
+
+        lookup_set_size = tf.shape(nn_labels)[1]
+        for m in retrieval_metrics:
+            if lookup_set_size < m.k:
+                raise ValueError(
+                        f'Each query example returned {lookup_set_size} '
+                        f'neighbors, but retrieval metric {m.name} '
+                        f'requires the K >= {m.k}.')
+
         # ensure the target labels are an int32 tensor
         query_labels: IntTensor = tf.cast(
                 tf.convert_to_tensor(target_labels),
@@ -80,7 +83,7 @@ class MemoryEvaluator(Evaluator):
 
         # compute metrics
         evaluation = {}
-        for m in eval_metrics:
+        for m in retrieval_metrics:
             res = m.compute(
                 query_labels=query_labels,
                 lookup_labels=nn_labels,

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, Mapping, Optional, Type, Union
+from typing import Dict, Mapping, Optional, Type
 import typing
 
 import tensorflow as tf
@@ -48,12 +48,12 @@ def compute_match_mask(query_labels: IntTensor,
     return match_mask
 
 
-def make_retrieval_metric(metric: Union[str, RetrievalMetric],
+def make_retrieval_metric(metric: str,
                           k: Optional[int] = None,
                           distance_threshold: Optional[float] = None,
                           r: Optional[Mapping[int, int]] = None
                           ) -> RetrievalMetric:
-    """Convert metric from str name to object if needed.
+    """Convert metric from str name to object.
 
     Args:
         metric: RetrievalMetric() or metric name.
@@ -89,20 +89,17 @@ def make_retrieval_metric(metric: Union[str, RetrievalMetric],
         "bndcg@k": BNDCG,
     }
 
-    if isinstance(metric, str):
-        if metric.lower() in METRICS_ALIASES:
-            valid_metric: RetrievalMetric = METRICS_ALIASES[metric.lower()]()
-        else:
-            raise ValueError(f'Unknown metric name: {metric}, typo?')
+    if metric.lower() in METRICS_ALIASES:
+        valid_metric: RetrievalMetric = METRICS_ALIASES[metric.lower()]()
     else:
-        valid_metric = metric
+        raise ValueError(f'Unknown metric name: {metric}, typo?')
 
     if k:
         valid_metric.k = k
     if distance_threshold:
         valid_metric.distance_threshold = distance_threshold
     if r and valid_metric.canonical_name == "map@k":
-        # valid_matric must be MapAtK if r is not None
+        # valid_metric must be MapAtK if r is not None
         # TODO(ovallis): Find a better way to support r in MapAtK without
         # changing the protoype for RetrievalMetric
         typing.cast(MapAtK, valid_metric).r = r

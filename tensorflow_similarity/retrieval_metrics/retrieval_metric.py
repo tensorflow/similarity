@@ -47,17 +47,19 @@ class RetrievalMetric(ABC):
                  k: int = 1,
                  distance_threshold: float = math.inf,
                  average: str = 'micro') -> None:
-        self.name = name
+        self._name = name
         self.canonical_name = canonical_name
         self.k = k
         self.distance_threshold = distance_threshold
         self.average = average
 
-        if self.k and self.k > 1:
-            self.name = f'{self.name}@{k}'
-
-        if self.distance_threshold and self.distance_threshold != 0.5:
-            self.name = f'{self.name}:{self.distance_threshold}'
+    @property
+    def name(self) -> str:
+        if self.distance_threshold and self.distance_threshold != math.inf:
+            return (f'{self._name}@{self.k} : '
+                    f'distance_threshold@{self.distance_threshold}')
+        else:
+            return f'{self._name}@{self.k}'
 
     def __str__(self) -> str:
         return self.name

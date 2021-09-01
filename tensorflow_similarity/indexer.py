@@ -34,6 +34,7 @@ from .classification_metrics import make_classification_metric
 from .evaluators import Evaluator, MemoryEvaluator
 from .matchers import ClassificationMatch
 from .retrieval_metrics import RetrievalMetric
+from .retrieval_metrics import make_retrieval_metric
 from .search import Search, NMSLibSearch
 from .stores import Store, MemoryStore
 from .utils import unpack_lookup_distances, unpack_lookup_labels
@@ -393,11 +394,14 @@ class Indexer():
             target_labels: Sequence of the expected labels associated with the
             embedded queries.
 
-            k: How many neighbors to use during the calibration.
-            Defaults to 1.
-
             retrieval_metrics: List of
             [RetrievalMetric()](retrieval_metrics/overview.md) to compute.
+
+            k: How many neighbors to use during the evaluation.
+            Defaults to 1.
+
+            verbose (int, optional): Display results if set to 1 otherwise
+            results are returned silently. Defaults to 1.
 
         Returns:
             Dictionary of metric results where keys are the metric names and
@@ -406,9 +410,17 @@ class Indexer():
         # Find NN
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
+        # Convert all str to RetrievalMetric and initialize to K.
+        metrics: List[RetrievalMetric] = []
+        for m in retrieval_metrics:
+            metrics.append(
+                m if isinstance(m, RetrievalMetric)
+                else make_retrieval_metric(m, k=k)
+            )
+
         # Evaluate them
         return self.evaluator.evaluate_retrieval(
-                retrieval_metrics=retrieval_metrics,
+                retrieval_metrics=metrics,
                 target_labels=target_labels,
                 lookups=lookups)
 
