@@ -34,7 +34,6 @@ from .classification_metrics import make_classification_metric
 from .evaluators import Evaluator, MemoryEvaluator
 from .matchers import ClassificationMatch
 from .retrieval_metrics import RetrievalMetric
-from .retrieval_metrics import make_retrieval_metric
 from .search import Search, NMSLibSearch
 from .stores import Store, MemoryStore
 from .utils import unpack_lookup_distances, unpack_lookup_labels
@@ -382,7 +381,7 @@ class Indexer():
             self,
             predictions: FloatTensor,
             target_labels: Sequence[int],
-            retrieval_metrics: Sequence[Union[str, RetrievalMetric]],
+            retrieval_metrics: Sequence[RetrievalMetric],
             k: int = 1,
             verbose: int = 1) -> Dict[str, np.ndarray]:
         """Evaluate the quality of the index against a test dataset.
@@ -407,20 +406,18 @@ class Indexer():
             Dictionary of metric results where keys are the metric names and
             values are the metrics values.
         """
+        # Determine the number of neighbors needed by all metrics
+        k = 1
+        for m in retrieval_metrics:
+            if m.k > k:
+                k = m.k
+
         # Find NN
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
-        # Convert all str to RetrievalMetric and initialize to K.
-        metrics: List[RetrievalMetric] = []
-        for m in retrieval_metrics:
-            metrics.append(
-                m if isinstance(m, RetrievalMetric)
-                else make_retrieval_metric(m, k=k)
-            )
-
         # Evaluate them
         return self.evaluator.evaluate_retrieval(
-                retrieval_metrics=metrics,
+                retrieval_metrics=retrieval_metrics,
                 target_labels=target_labels,
                 lookups=lookups)
 

@@ -74,7 +74,7 @@ class MapAtK(RetrievalMetric):
     def __init__(self,
                  r: Mapping[int, int] = {},
                  name: str = 'map',
-                 k: int = 1,
+                 k: int = 5,
                  average: str = 'micro',
                  **kwargs) -> None:
         if average == 'macro':

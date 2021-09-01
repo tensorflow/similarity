@@ -407,19 +407,14 @@ class SimilarityModel(tf.keras.Model):
             self,
             x: Tensor,
             y: IntTensor,
-            retrieval_metrics: Sequence[Union[str, RetrievalMetric]] = ['recall@k'],  # noqa
-            k: int = 1,
-            verbose: int = 1
-            ) -> Dict[str, np.ndarray]:
+            retrieval_metrics: Sequence[RetrievalMetric],  # noqa
+            verbose: int = 1) -> Dict[str, np.ndarray]:
         """Evaluate the quality of the index against a test dataset.
 
         Args:
             x: Examples to be matched against the index.
 
             y: Label associated with the examples supplied.
-
-            k: How many neighbors to use during the evaluation.
-            Defaults to 1.
 
             retrieval_metrics: List of
             [RetrievalMetric()](retrieval_metrics/overview.md) to compute.
@@ -443,7 +438,6 @@ class SimilarityModel(tf.keras.Model):
                 predictions=predictions,
                 target_labels=y,
                 retrieval_metrics=retrieval_metrics,
-                k=k,
                 verbose=verbose,
         )
 

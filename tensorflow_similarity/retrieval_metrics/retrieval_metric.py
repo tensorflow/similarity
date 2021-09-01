@@ -44,7 +44,7 @@ class RetrievalMetric(ABC):
     def __init__(self,
                  name: str = '',
                  canonical_name: str = '',
-                 k: int = 1,
+                 k: int = 5,
                  distance_threshold: float = math.inf,
                  average: str = 'micro') -> None:
         self._name = name
