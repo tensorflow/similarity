@@ -41,6 +41,7 @@ from tensorflow_similarity.types import FloatTensor, Lookup, IntTensor, Tensor
 from tensorflow_similarity.types import PandasDataFrame, CalibrationResults
 
 
+
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class SimilarityModel(tf.keras.Model):
     """Specialized Keras.Model which implement the core features needed for
@@ -331,6 +332,7 @@ class SimilarityModel(tf.keras.Model):
             extra_metrics: List of additional
             `tf.similarity.classification_metrics.ClassificationMetric()`
             to compute and report. Defaults to ['precision', 'recall'].
+
 
             rounding: Metric rounding. Default to 2 digits.
 
