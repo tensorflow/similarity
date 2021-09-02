@@ -145,8 +145,10 @@ def build_effnet(x, variant, weights, trainable):
             # don't change the batchnorm weights
             if isinstance(layer, layers.BatchNormalization):
                 layer.trainable = False
-    else:
+    elif trainable=='frozen':
         effnet.trainable = False
+    else:
+        raise ValueError(f"{trainable} is not a supported option for 'trainable'.")
 
     # wire
     x = efficientnet.preprocess_input(x)
