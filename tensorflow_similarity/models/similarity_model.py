@@ -38,7 +38,8 @@ from tensorflow_similarity.retrieval_metrics import RetrievalMetric
 from tensorflow_similarity.stores import Store
 from tensorflow_similarity.search import Search
 from tensorflow_similarity.types import FloatTensor, Lookup, IntTensor, Tensor
-from tensorflow_similarity.types import PandasDataFrame
+from tensorflow_similarity.types import PandasDataFrame, CalibrationResults
+
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -300,44 +301,46 @@ class SimilarityModel(tf.keras.Model):
             matcher: Union[str, ClassificationMatch] = 'match_nearest',
             extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = ['precision', 'recall'],  # noqa
             rounding: int = 2,
-            verbose: int = 1):
+            verbose: int = 1) -> CalibrationResults:
         """Calibrate model thresholds using a test dataset.
-            FIXME: more detailed explaination.
 
-            Args:
+        TODO: more detailed explaination.
 
-                x: examples to use for the calibration.
+        Args:
 
-                y: labels associated with the calibration examples.
+            x: examples to use for the calibration.
 
-                thresholds_targets: Dict of performance targets to
-                (if possible) meet with respect to the `calibration_metric`.
+            y: labels associated with the calibration examples.
 
-                calibration_metric:
-                [ClassificationMetric()](classification_metrics/overview.md)
-                used to evaluate the performance of the index.
+            thresholds_targets: Dict of performance targets to (if possible)
+            meet with respect to the `calibration_metric`.
 
-                k: How many neighboors to use during the calibration.
-                Defaults to 1.
+            calibration_metric:
+            [ClassificationMetric()](classification_metrics/overview.md) used
+            to evaluate the performance of the index.
 
-                matcher: {'match_nearest', 'match_majority_vote'} or
-                ClassificationMatch object. Defines the classification
-                matching, e.g., match_nearest will count a True Positive if the
-                query_label is equal to the label of the nearest neighbor and
-                the distance is less than or equal to the distance threshold.
-                Defaults to 'match_nearest'.
+            k: How many neighboors to use during the calibration.
+            Defaults to 1.
 
-                extra_metrics: List of additional
-                `tf.similarity.classification_metrics.ClassificationMetric()`
-                to compute and report. Defaults to ['precision', 'recall'].
+            matcher: {'match_nearest', 'match_majority_vote'} or
+            ClassificationMatch object. Defines the classification matching,
+            e.g., match_nearest will count a True Positive if the query_label
+            is equal to the label of the nearest neighbor and the distance is
+            less than or equal to the distance threshold. Defaults to
+            'match_nearest'.
 
-                rounding: Metric rounding. Default to 2 digits.
+            extra_metrics: List of additional
+            `tf.similarity.classification_metrics.ClassificationMetric()`
+            to compute and report. Defaults to ['precision', 'recall'].
 
-                verbose: Be verbose and display calibration results.
-                Defaults to 1.
 
-            Returns:
-                Calibration results: `{"cutpoints": {}, "thresholds": {}}`
+            rounding: Metric rounding. Default to 2 digits.
+
+            verbose: Be verbose and display calibration results.
+            Defaults to 1.
+
+        Returns:
+            CalibrationResults containing the thresholds and cutpoints Dicts.
         """
 
         # predict
@@ -358,6 +361,8 @@ class SimilarityModel(tf.keras.Model):
               x: FloatTensor,
               cutpoint='optimal',
               no_match_label=-1,
+              k=1,
+              matcher: Union[str, ClassificationMatch] = 'match_nearest',
               verbose=0):
         """Match a set of examples against the calibrated index
 
@@ -373,6 +378,15 @@ class SimilarityModel(tf.keras.Model):
 
             no_match_label: Which label value to assign when there is no
             match. Defaults to -1.
+
+            k: How many neighboors to use during the calibration.
+            Defaults to 1.
+
+            matcher: {'match_nearest', 'match_majority_vote'} or
+            ClassificationMatch object. Defines the classification matching,
+            e.g., match_nearest will count a True Positive if the query_label
+            is equal to the label of the nearest neighbor and the distance is
+            less than or equal to the distance threshold.
 
             verbose. Be verbose. Defaults to 0.
 
@@ -395,6 +409,8 @@ class SimilarityModel(tf.keras.Model):
         # matching
         matches = self._index.match(predictions,
                                     no_match_label=no_match_label,
+                                    k=k,
+                                    matcher=matcher,
                                     verbose=verbose)
 
         # select which matches to return

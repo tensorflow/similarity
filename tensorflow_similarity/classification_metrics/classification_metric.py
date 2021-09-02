@@ -34,7 +34,7 @@ class ClassificationMetric(ABC):
         * `max`: Start at the max distance and search decreasing.
         * `min`: Start at the min distance and search increasing.
 
-    `ClassificationMetrics` measure the matching classification between the
+    `ClassificationMetric` measure the matching classification between the
     query label and the label derived from the set of lookup results.
 
     The `compute()` method supports computing the metric for a set of values,

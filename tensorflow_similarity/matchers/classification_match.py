@@ -24,23 +24,21 @@ from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
 class ClassificationMatch(ABC):
-    """Abstract base class for computing calibration metrics.
+    """Abstract base class for defining the classification matching strategy.
 
     Attributes:
-        name: Name associated with the metric object, e.g., match_acc
+        name: Name associated with the match object, e.g., match_nearest
 
-        canonical_name: The canonical name associated with metric,
-        e.g., match_accuracy
+        canonical_name: The canonical name associated with match strategy,
+        e.g., match_nearest
 
         distance_threshold: The max distance below which a nearest neighbor is
         considered a valid match.
-
     """
 
     def __init__(self,
                  name: str = '',
-                 canonical_name: str = '',
-                 ) -> None:
+                 canonical_name: str = '') -> None:
         self.name = name
         self.canonical_name = canonical_name
         self.distance_thresholds = None
@@ -56,6 +54,13 @@ class ClassificationMatch(ABC):
             "name": str(self.name),
             "canonical_name": str(self.canonical_name),
         }
+
+    @abstractmethod
+    def predict_match(self,
+                      lookup_labels: IntTensor,
+                      lookup_distances: FloatTensor
+                      ) -> Tuple[FloatTensor, FloatTensor]:
+        """Compute the derived match label and distance."""
 
     @abstractmethod
     def compute_match_indicators(self,
@@ -163,9 +168,8 @@ class ClassificationMatch(ABC):
         try:
             return self._tp
         except AttributeError as attribute_error:
-            raise AttributeError(f'Matcher.compute() must be called before '
+            raise AttributeError('Matcher.compute() must be called before '
                                  'accessing the counts.') from attribute_error
-
 
     @property
     def fp(self) -> FloatTensor:
@@ -182,7 +186,7 @@ class ClassificationMatch(ABC):
         try:
             return self._fp
         except AttributeError as attribute_error:
-            raise AttributeError(f'Matcher.match() must be called before '
+            raise AttributeError('Matcher.match() must be called before '
                                  'accessing the counts.') from attribute_error
 
     @property
@@ -200,7 +204,7 @@ class ClassificationMatch(ABC):
         try:
             return self._tn
         except AttributeError as attribute_error:
-            raise AttributeError(f'Matcher.match() must be called before '
+            raise AttributeError('Matcher.match() must be called before '
                                  'accessing the counts.') from attribute_error
 
     @property
@@ -218,7 +222,7 @@ class ClassificationMatch(ABC):
         try:
             return self._fn
         except AttributeError as attribute_error:
-            raise AttributeError(f'Matcher.match() must be called before '
+            raise AttributeError('Matcher.match() must be called before '
                                  'accessing the counts.') from attribute_error
 
     @property
@@ -232,7 +236,7 @@ class ClassificationMatch(ABC):
         try:
             return self._count
         except AttributeError as attribute_error:
-            raise AttributeError(f'Matcher.match() must be called before '
+            raise AttributeError('Matcher.match() must be called before '
                                  'accessing the counts.') from attribute_error
 
     @staticmethod

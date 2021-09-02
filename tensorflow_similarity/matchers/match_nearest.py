@@ -32,6 +32,14 @@ class MatchNearest(ClassificationMatch):
 
         super().__init__(name=name, **kwargs)
 
+    def predict_match(self,
+                      lookup_labels: IntTensor,
+                      lookup_distances: FloatTensor
+                      ) -> Tuple[FloatTensor, FloatTensor]:
+        """Compute the derived match label and distance."""
+
+        return lookup_labels[:, :1], lookup_distances[:, :1]
+
     def compute_match_indicators(self,
                                  query_labels: IntTensor,
                                  lookup_labels: IntTensor,
@@ -66,14 +74,17 @@ class MatchNearest(ClassificationMatch):
                 lookup_distances
         )
 
+        pred_labels, pred_dist = self.predict_match(
+                lookup_labels, lookup_distances)
+
         # A 1D BoolTensor [len(query_labels), 1]
         label_match = tf.math.equal(
                 query_labels,
-                lookup_labels[:, :1]
+                pred_labels
         )
         # A 2D BoolTensor [len(lookup_distance), len(self.distance_thresholds)]
         dist_mask = tf.math.less_equal(
-                lookup_distances[:, :1],
+                pred_dist,
                 self.distance_thresholds,
         )
 
