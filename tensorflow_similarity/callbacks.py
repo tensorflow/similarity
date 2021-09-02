@@ -303,5 +303,8 @@ def _evaluate_classification(
         metrics=metrics,
         matcher='match_nearest',
         verbose=0)
+    
+    # The callbacks don't set a distance theshold so we remove it here.
+    results.pop('distance')
 
     return results
