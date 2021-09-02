@@ -382,7 +382,6 @@ class Indexer():
             predictions: FloatTensor,
             target_labels: Sequence[int],
             retrieval_metrics: Sequence[RetrievalMetric],
-            k: int = 1,
             verbose: int = 1) -> Dict[str, np.ndarray]:
         """Evaluate the quality of the index against a test dataset.
 
@@ -396,9 +395,6 @@ class Indexer():
             retrieval_metrics: List of
             [RetrievalMetric()](retrieval_metrics/overview.md) to compute.
 
-            k: How many neighbors to use during the evaluation.
-            Defaults to 1.
-
             verbose (int, optional): Display results if set to 1 otherwise
             results are returned silently. Defaults to 1.
 
@@ -406,9 +402,14 @@ class Indexer():
             Dictionary of metric results where keys are the metric names and
             values are the metrics values.
         """
-        # Determine the number of neighbors needed by all metrics
+        # Determine the maximum number of neighbors needed by the retrieval
+        # metrics because we do a single lookup.
         k = 1
         for m in retrieval_metrics:
+            if not isinstance(m, RetrievalMetric):
+                raise ValueError(m, 'is not a valid RetrivalMetric(). The '
+                                 'RetrivialMetric() must be instantiated with '
+                                 'a valid K.')
             if m.k > k:
                 k = m.k
 
