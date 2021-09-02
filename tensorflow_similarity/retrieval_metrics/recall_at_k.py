@@ -45,7 +45,7 @@ class RecallAtK(RetrievalMetric):
     """
     def __init__(self,
                  name: str = 'recall',
-                 k: int = 1,
+                 k: int = 5,
                  **kwargs) -> None:
         if 'canonical_name' not in kwargs:
             kwargs['canonical_name'] = 'recall@k'

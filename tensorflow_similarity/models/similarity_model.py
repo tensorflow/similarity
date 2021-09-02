@@ -15,15 +15,8 @@
 from collections import defaultdict
 from copy import copy
 from pathlib import Path
-from typing import (
-        DefaultDict,
-        Dict,
-        List,
-        MutableMapping,
-        MutableSequence,
-        Optional,
-        Union)
-
+from typing import DefaultDict, Dict, List, MutableMapping, MutableSequence
+from typing import Optional, Sequence, Union
 import numpy as np
 from tabulate import tabulate
 import tensorflow as tf
@@ -41,10 +34,11 @@ from tensorflow_similarity.evaluators.evaluator import Evaluator
 from tensorflow_similarity.indexer import Indexer
 from tensorflow_similarity.losses import MetricLoss
 from tensorflow_similarity.matchers import ClassificationMatch
+from tensorflow_similarity.retrieval_metrics import RetrievalMetric
 from tensorflow_similarity.stores import Store
 from tensorflow_similarity.search import Search
-from tensorflow_similarity.types import (
-        FloatTensor, Lookup, IntTensor, Tensor, PandasDataFrame)
+from tensorflow_similarity.types import FloatTensor, Lookup, IntTensor, Tensor
+from tensorflow_similarity.types import PandasDataFrame
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -334,8 +328,8 @@ class SimilarityModel(tf.keras.Model):
                 Defaults to 'match_nearest'.
 
                 extra_metrics: List of additional
-                `tf.similarity.classification_metrics.ClassificationMetric()` to
-                compute and report. Defaults to ['precision', 'recall'].
+                `tf.similarity.classification_metrics.ClassificationMetric()`
+                to compute and report. Defaults to ['precision', 'recall'].
 
                 rounding: Metric rounding. Default to 2 digits.
 
@@ -408,6 +402,52 @@ class SimilarityModel(tf.keras.Model):
             return matches
         else:  # normal match behavior - returns a specific cut point
             return matches[cutpoint]
+
+    def evaluate_retrieval(
+            self,
+            x: Tensor,
+            y: IntTensor,
+            retrieval_metrics: Sequence[RetrievalMetric],  # noqa
+            verbose: int = 1) -> Dict[str, np.ndarray]:
+        """Evaluate the quality of the index against a test dataset.
+
+        Args:
+            x: Examples to be matched against the index.
+
+            y: Label associated with the examples supplied.
+
+            retrieval_metrics: List of
+            [RetrievalMetric()](retrieval_metrics/overview.md) to compute.
+
+            verbose (int, optional): Display results if set to 1 otherwise
+            results are returned silently. Defaults to 1.
+
+        Returns:
+            Dictionary of metric results where keys are the metric names and
+            values are the metrics values.
+        """
+        # get embeddings
+        if verbose:
+            print("|-Computing embeddings")
+        predictions = self.predict(x)
+
+        if verbose:
+            print("|-Computing retrieval metrics")
+
+        results = self._index.evaluate_retrieval(
+                predictions=predictions,
+                target_labels=y,
+                retrieval_metrics=retrieval_metrics,
+                verbose=verbose,
+        )
+
+        if verbose:
+            table = zip(results.keys(), results.values())
+            headers = ['metric', 'Value']
+            print('\n [Summary]\n')
+            print(tabulate(table, headers=headers))
+
+        return results
 
     def evaluate_classification(
             self,

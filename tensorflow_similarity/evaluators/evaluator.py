@@ -38,7 +38,7 @@ class Evaluator(ABC):
             self,
             target_labels: Sequence[int],
             lookups: Sequence[Sequence[Lookup]],
-            retrieval_metrics: Sequence[Union[str, RetrievalMetric]],
+            retrieval_metrics: Sequence[RetrievalMetric],
             distance_rounding: int = 8) -> Dict[str, np.ndarray]:
         """Evaluates lookup performances against a supplied set of metrics
 
