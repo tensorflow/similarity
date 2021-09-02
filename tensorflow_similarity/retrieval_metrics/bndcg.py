@@ -45,7 +45,7 @@ class BNDCG(RetrievalMetric):
     """
     def __init__(self,
                  name: str = 'ndcg',
-                 k: int = 1,
+                 k: int = 5,
                  **kwargs) -> None:
         if 'canonical_name' not in kwargs:
             kwargs['canonical_name'] = 'ndcg@k'
