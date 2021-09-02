@@ -202,6 +202,6 @@ def projector(embeddings: FloatTensor,
     else:
         fig.circle('x', 'y', size=pt_size, source=source)
 
-
     # render
+    output_notebook()
     show(fig, notebook_handle=True)
