@@ -32,8 +32,9 @@ class ClassificationMatch(ABC):
         canonical_name: The canonical name associated with match strategy,
         e.g., match_nearest
 
-        distance_threshold: The max distance below which a nearest neighbor is
-        considered a valid match.
+        distance_thresholds: The max distance below which a nearest neighbor is
+        considered a valid match. Defaults to None and must be set using
+        `ClassificationMatch.compile()`.
     """
 
     def __init__(self,
@@ -53,23 +54,58 @@ class ClassificationMatch(ABC):
         return {
             "name": str(self.name),
             "canonical_name": str(self.canonical_name),
+            "distance_thresholds": self.distance_thresholds,
         }
 
-    @abstractmethod
-    def predict_match(self,
-                      lookup_labels: IntTensor,
-                      lookup_distances: FloatTensor
-                      ) -> Tuple[FloatTensor, FloatTensor]:
-        """Compute the derived match label and distance."""
+    def compile(self,
+                distance_thresholds: FloatTensor = tf.constant([math.inf])):
+        """Configures the distance thresholds used during matching."""
+        self.distance_thresholds = tf.sort(
+                tf.cast(distance_thresholds, dtype='float32')
+        )
 
     @abstractmethod
+    def predict(self,
+                lookup_labels: IntTensor,
+                lookup_distances: FloatTensor
+                ) -> Tuple[FloatTensor, FloatTensor]:
+        """Compute the predicted labels and distances.
+
+        Given a set of lookup labels and distances, derive the predicted labels
+        associated with the queries.
+
+        Args:
+            lookup_labels: A 2D array where the jth row is the labels
+            associated with the set of k neighbors for the jth query.
+
+            lookup_distances: A 2D array where the jth row is the distances
+            between the jth query and the set of k neighbors.
+
+        Returns:
+            A Tuple of FloatTensors:
+                predicted_labels: A FloatTensor of shape [len(lookup_labels),
+                1] where the jth row contains the label predicted for the jth
+                query.
+
+                predicted_distances: A FloatTensor of shape
+                [len(lookup_labels), 1] where the jth row contains the distance
+                associated with the jth predicted label.
+        """
+
     def compute_match_indicators(self,
                                  query_labels: IntTensor,
                                  lookup_labels: IntTensor,
                                  lookup_distances: FloatTensor
                                  ) -> Tuple[BoolTensor, BoolTensor]:
-        """Compute the indicator tensor.
+        """Compute the match indicator tensor.
 
+        Compute the match indicator tensor given a set of query labels and a
+        set of associated lookup labels and distances.
+
+        The method first calls predict on the lookup labels and distances and
+        then compares the query labels (y_true) against the predicted labels
+        (y_pred) and checks if the predicted distance is <= to the distance
+        thresholds.
 
         Args:
             query_labels: A 1D array of the labels associated with the queries.
@@ -82,20 +118,37 @@ class ClassificationMatch(ABC):
 
         Returns:
             A Tuple of BoolTensors:
-                label_match: A len(query_labels x 1 boolean tensor. True if
-                the match label == query label, False otherwise.
+                match_mask: A BoolTensor of shape [len(query_labels), 1]. True
+                if the match label == query label, False otherwise.
 
-                dist_mask: A len(query_labels) x len(distance_thresholds)
-                boolean tensor. True if the distance of the jth match <= the
-                kth distance threshold.
+                distance_mask: A BoolTensor of shape [len(query_labels),
+                len(distance_thresholds)]. True if the distance of the jth
+                match <= the kth distance threshold.
         """
+        if tf.rank(query_labels) == 1:
+            query_labels = tf.expand_dims(query_labels, axis=-1)
 
-    def compile(self,
-                distance_thresholds: FloatTensor = tf.constant([math.inf])):
-        """Configures the distance thresholds used during matching."""
-        self.distance_thresholds = tf.sort(
-                tf.cast(distance_thresholds, dtype='float32')
+        ClassificationMatch._check_shape(
+                query_labels,
+                lookup_labels,
+                lookup_distances
         )
+
+        pred_labels, pred_dist = self.predict(lookup_labels, lookup_distances)
+
+        # Saftey check to ensure that self.predict returns the right shapes
+        if tf.rank(pred_labels) == 1:
+            pred_labels = tf.expand_dims(pred_labels, axis=-1)
+        if tf.rank(pred_dist) == 1:
+            pred_dist = tf.expand_dims(pred_dist, axis=-1)
+
+        # A 1D BoolTensor [len(query_labels), 1]
+        match_mask = tf.math.equal(pred_labels, query_labels)
+
+        # A 2D BoolTensor [len(lookup_distance), len(self.distance_thresholds)]
+        distance_mask = tf.math.less_equal(pred_dist, self.distance_thresholds)
+
+        return match_mask, distance_mask
 
     def match(self,
               query_labels: IntTensor,
@@ -115,13 +168,13 @@ class ClassificationMatch(ABC):
             lookup_distances: A 2D array where the jth row is the distances
             between the jth query and the set of k neighbors.
         """
-        label_match, dist_mask = self.compute_match_indicators(
+        match_mask, distance_mask = self.compute_match_indicators(
                 query_labels=query_labels,
                 lookup_labels=lookup_labels,
                 lookup_distances=lookup_distances
         )
 
-        self._compute_counts(label_match, dist_mask)
+        self._compute_counts(match_mask, distance_mask)
 
     def _compute_counts(self,
                         label_match: BoolTensor,
