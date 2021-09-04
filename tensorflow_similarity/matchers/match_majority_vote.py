@@ -50,7 +50,8 @@ class MatchMajorityVote(ClassificationMatch):
         associated with the queries.
 
         This strategy takes the majority label in the lookups of the jth row as
-        the predicted label for the jth query. In the case of a tie, the close
+        the predicted label for the jth query. In the case of a tie, we take the
+        predicted label closest to the query.
 
         Additionally, the distance is taken as the aggregate of the distances
         in the jth row of lookups. The aggregation function can be passed to
