@@ -17,7 +17,7 @@ from typing import Callable, Tuple
 import tensorflow as tf
 
 from .classification_match import ClassificationMatch
-from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
+from tensorflow_similarity.types import FloatTensor, IntTensor
 
 # A Distance aggregation function used to compute the agg distance over the K
 # neighbors. This distance is used, along with the distance threshold, to
@@ -40,31 +40,24 @@ class MatchMajorityVote(ClassificationMatch):
 
         self._dist_agg = dist_agg
 
-    def predict_match(self,
-                      lookup_labels: IntTensor,
-                      lookup_distances: FloatTensor
-                      ) -> Tuple[FloatTensor, FloatTensor]:
-        """Compute the derived match label and distance."""
+    def predict(self,
+                lookup_labels: IntTensor,
+                lookup_distances: FloatTensor
+                ) -> Tuple[FloatTensor, FloatTensor]:
+        """Compute the predicted labels and distances.
 
-        # TODO(ovallis): Add parallel for callback or inline evaluation.
-        pred_labels = tf.map_fn(self._majority_vote, lookup_labels)
+        Given a set of lookup labels and distances, derive the predicted labels
+        associated with the queries.
 
-        # Callable type requires positional args only. Here we assume the
-        # signature to be _dist_agg(input_tensor, axis)
-        agg_dist = self._dist_agg(lookup_distances, 1)
+        This strategy takes the majority label in the lookups of the jth row as
+        the predicted label for the jth query. In the case of a tie, the close
 
-        return pred_labels, agg_dist
-
-    def compute_match_indicators(self,
-                                 query_labels: IntTensor,
-                                 lookup_labels: IntTensor,
-                                 lookup_distances: FloatTensor
-                                 ) -> Tuple[BoolTensor, BoolTensor]:
-        """Compute the indicator tensor.
+        Additionally, the distance is taken as the aggregate of the distances
+        in the jth row of lookups. The aggregation function can be passed to
+        the constructor as a callable, and is set to tf.math.reduce_mean by
+        default.
 
         Args:
-            query_labels: A 1D array of the labels associated with the queries.
-
             lookup_labels: A 2D array where the jth row is the labels
             associated with the set of k neighbors for the jth query.
 
@@ -72,39 +65,26 @@ class MatchMajorityVote(ClassificationMatch):
             between the jth query and the set of k neighbors.
 
         Returns:
-            A Tuple of BoolTensors:
-                label_match: A len(query_labels x 1 boolean tensor. True if
-                the match label == query label, False otherwise.
+            A Tuple of FloatTensors:
+                predicted_labels: A FloatTensor of shape [len(lookup_labels),
+                1] where the jth row contains the label predicted for the jth
+                query.
 
-                dist_mask: A len(query_labels) x len(distance_thresholds)
-                boolean tensor. True if the distance of the jth match <= the
-                kth distance threshold.
+                predicted_distances: A FloatTensor of shape
+                [len(lookup_labels), 1] where the jth row contains the distance
+                associated with the jth predicted label.
         """
-        if tf.rank(query_labels) == 1:
-            query_labels = tf.expand_dims(query_labels, axis=-1)
 
-        ClassificationMatch._check_shape(
-                query_labels,
-                lookup_labels,
-                lookup_distances
-        )
+        # TODO(ovallis): Add parallel for callback or inline evaluation.
+        pred_labels = tf.map_fn(self._majority_vote, lookup_labels)
+        pred_labels = tf.expand_dims(pred_labels, axis=-1)
 
-        pred_labels, pred_dist = self.predict_match(
-                lookup_labels, lookup_distances)
+        # Callable type requires positional args only. Here we assume the
+        # signature to be _dist_agg(input_tensor, axis)
+        agg_dist = self._dist_agg(lookup_distances, 1)
+        agg_dist = tf.expand_dims(agg_dist, axis=-1)
 
-        # A 1D BoolTensor [len(query_labels), 1]
-        label_match = tf.math.equal(
-                query_labels,
-                tf.expand_dims(pred_labels, axis=-1)
-        )
-
-        # A 2D BoolTensor [len(lookup_distance), len(self.distance_thresholds)]
-        dist_mask = tf.math.less_equal(
-                tf.expand_dims(pred_dist, axis=-1),
-                self.distance_thresholds
-        )
-
-        return label_match, dist_mask
+        return pred_labels, agg_dist
 
     def _majority_vote(self, lookup_labels):
         labels, _, counts = tf.unique_with_counts(lookup_labels)
