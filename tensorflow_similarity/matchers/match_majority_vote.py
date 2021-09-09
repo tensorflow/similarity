@@ -43,15 +43,15 @@ class MatchMajorityVote(ClassificationMatch):
     def predict(self,
                 lookup_labels: IntTensor,
                 lookup_distances: FloatTensor
-                ) -> Tuple[FloatTensor, FloatTensor]:
+                ) -> Tuple[IntTensor, FloatTensor]:
         """Compute the predicted labels and distances.
 
         Given a set of lookup labels and distances, derive the predicted labels
         associated with the queries.
 
         This strategy takes the majority label in the lookups of the jth row as
-        the predicted label for the jth query. In the case of a tie, we take the
-        predicted label closest to the query.
+        the predicted label for the jth query. In the case of a tie, we take
+        the predicted label closest to the query.
 
         Additionally, the distance is taken as the aggregate of the distances
         in the jth row of lookups. The aggregation function can be passed to

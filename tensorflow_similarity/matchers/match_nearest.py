@@ -14,10 +14,8 @@
 
 from typing import Tuple
 
-import tensorflow as tf
-
 from .classification_match import ClassificationMatch
-from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
+from tensorflow_similarity.types import FloatTensor, IntTensor
 
 
 class MatchNearest(ClassificationMatch):
@@ -35,7 +33,7 @@ class MatchNearest(ClassificationMatch):
     def predict(self,
                 lookup_labels: IntTensor,
                 lookup_distances: FloatTensor
-                ) -> Tuple[FloatTensor, FloatTensor]:
+                ) -> Tuple[IntTensor, FloatTensor]:
         """Compute the predicted labels and distances.
 
         Given a set of lookup labels and distances, derive the predicted labels
