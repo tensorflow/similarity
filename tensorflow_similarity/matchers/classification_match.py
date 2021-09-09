@@ -92,11 +92,11 @@ class ClassificationMatch(ABC):
                 associated with the jth predicted label.
         """
 
-    def compute_match_indicators(self,
-                                 query_labels: IntTensor,
-                                 lookup_labels: IntTensor,
-                                 lookup_distances: FloatTensor
-                                 ) -> Tuple[BoolTensor, BoolTensor]:
+    def _compute_match_indicators(self,
+                                  query_labels: IntTensor,
+                                  lookup_labels: IntTensor,
+                                  lookup_distances: FloatTensor
+                                  ) -> Tuple[BoolTensor, BoolTensor]:
         """Compute the match indicator tensor.
 
         Compute the match indicator tensor given a set of query labels and a
@@ -168,7 +168,7 @@ class ClassificationMatch(ABC):
             lookup_distances: A 2D array where the jth row is the distances
             between the jth query and the set of k neighbors.
         """
-        match_mask, distance_mask = self.compute_match_indicators(
+        match_mask, distance_mask = self._compute_match_indicators(
                 query_labels=query_labels,
                 lookup_labels=lookup_labels,
                 lookup_distances=lookup_distances
