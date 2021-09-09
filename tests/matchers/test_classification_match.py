@@ -60,7 +60,7 @@ def test_compute_match_indicators():
     lookup_labels = tf.constant([[10], [20], [30], [40]])
     lookup_distances = tf.constant([[1.], [1.], [2.], [2.]])
 
-    match_mask, distance_mask = cm.compute_match_indicators(
+    match_mask, distance_mask = cm._compute_match_indicators(
         query_labels, lookup_labels, lookup_distances)
 
     np.testing.assert_array_equal(
@@ -86,7 +86,7 @@ def test_compute_match_indicators_1d_predict():
     lookup_labels = tf.constant([[10], [20], [30], [40]])
     lookup_distances = tf.constant([[1.], [1.], [2.], [2.]])
 
-    match_mask, distance_mask = cm.compute_match_indicators(
+    match_mask, distance_mask = cm._compute_match_indicators(
         query_labels, lookup_labels, lookup_distances)
 
     np.testing.assert_array_equal(
