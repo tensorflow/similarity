@@ -68,7 +68,7 @@ class ClassificationMatch(ABC):
     def predict(self,
                 lookup_labels: IntTensor,
                 lookup_distances: FloatTensor
-                ) -> Tuple[FloatTensor, FloatTensor]:
+                ) -> Tuple[IntTensor, FloatTensor]:
         """Compute the predicted labels and distances.
 
         Given a set of lookup labels and distances, derive the predicted labels
@@ -221,7 +221,7 @@ class ClassificationMatch(ABC):
         try:
             return self._tp
         except AttributeError as attribute_error:
-            raise AttributeError('Matcher.compute() must be called before '
+            raise AttributeError('Matcher.match() must be called before '
                                  'accessing the counts.') from attribute_error
 
     @property
@@ -279,7 +279,7 @@ class ClassificationMatch(ABC):
                                  'accessing the counts.') from attribute_error
 
     @property
-    def count(self):
+    def count(self) -> int:
         """The total number of queries.
 
         Raises:
@@ -293,14 +293,24 @@ class ClassificationMatch(ABC):
                                  'accessing the counts.') from attribute_error
 
     @staticmethod
-    def _check_shape(query_labels, lookup_labels, lookup_distances):
+    def _check_shape(query_labels, lookup_labels, lookup_distances) -> bool:
+        if tf.rank(lookup_labels) != 2:
+            raise ValueError('lookup_labels must be a 2D tensor of '
+                             'shape [len(query_labels), K].')
+        if tf.rank(lookup_distances) != 2:
+            raise ValueError('lookup_distances must be a 2D tensor of '
+                             'shape [len(query_labels), K].')
+
+        q_shape = tf.shape(query_labels)
         ll_shape = tf.shape(lookup_labels)
         ld_shape = tf.shape(lookup_distances)
 
-        if tf.shape(query_labels)[0] != ll_shape[0]:
+        if q_shape[0] != ll_shape[0]:
             raise ValueError('Number of query labels must match the number of '
                              'lookup_label sets.')
 
         if ll_shape[0] != ld_shape[0] or ll_shape[1] != ld_shape[1]:
             raise ValueError('Number of number of lookup labels must match '
                              'the number of lookup distances.')
+
+        return True
