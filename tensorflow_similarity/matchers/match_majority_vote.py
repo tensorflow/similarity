@@ -40,6 +40,13 @@ class MatchMajorityVote(ClassificationMatch):
 
         self._dist_agg = dist_agg
 
+    def get_config(self):
+        config = {
+            "dist_agg": self._dist_agg,
+        }
+        base_config = super().get_config()
+        return {**base_config, **config}
+
     def predict(self,
                 lookup_labels: IntTensor,
                 lookup_distances: FloatTensor
