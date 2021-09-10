@@ -32,22 +32,14 @@ class MatchMajorityVote(ClassificationMatch):
 
         super().__init__(name=name, **kwargs)
 
-    def predict(self,
-                lookup_labels: IntTensor,
-                lookup_distances: FloatTensor
-                ) -> Tuple[IntTensor, FloatTensor]:
-        """Compute the predicted labels and distances.
+    def derive_match(self,
+                     lookup_labels: IntTensor,
+                     lookup_distances: FloatTensor
+                     ) -> Tuple[IntTensor, FloatTensor]:
+        """Derive a match label and distance from a set of K neighbors.
 
-        Given a set of lookup labels and distances, derive the predicted labels
-        associated with the queries.
-
-        This strategy takes the majority label in the lookups of the jth row as
-        the predicted label for the jth query. In the case of a tie, we take
-        the predicted label closest to the query.
-
-        Additionally, the distance is taken as the aggregate of the distances
-        in the jth row of lookups. The aggregation function is set to
-        tf.math.reduce_mean.
+        For each query, derive a single match label and distance given the
+        associated set of lookup labels and distances.
 
         Args:
             lookup_labels: A 2D array where the jth row is the labels
@@ -58,13 +50,13 @@ class MatchMajorityVote(ClassificationMatch):
 
         Returns:
             A Tuple of FloatTensors:
-                predicted_labels: A FloatTensor of shape [len(lookup_labels),
-                1] where the jth row contains the label predicted for the jth
-                query.
+                derived_labels: A FloatTensor of shape
+                [len(lookup_labels), 1] where the jth row contains the derived
+                label for the jth query.
 
-                predicted_distances: A FloatTensor of shape
+                derived_distances: A FloatTensor of shape
                 [len(lookup_labels), 1] where the jth row contains the distance
-                associated with the jth predicted label.
+                associated with the jth derived label.
         """
 
         # TODO(ovallis): Add parallel for callback or inline evaluation.

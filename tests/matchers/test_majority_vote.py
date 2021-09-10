@@ -17,11 +17,11 @@ def test_predict():
         [2., 2.1, 2.2, 2.3, 2.4]]
     )
 
-    pred_labels, pred_dist = mn.predict(lookup_labels, lookup_distances)
+    d_labels, d_dist = mn.derive_match(lookup_labels, lookup_distances)
 
     np.testing.assert_array_equal(
-            pred_labels.numpy(),
+            d_labels.numpy(),
             np.array([[10], [20]]))
     np.testing.assert_allclose(
-            pred_dist.numpy(),
+            d_dist.numpy(),
             np.array([[1.2], [2.2]]))

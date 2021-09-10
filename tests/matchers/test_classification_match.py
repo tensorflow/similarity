@@ -12,19 +12,19 @@ attributes = ('tp', 'fp', 'tn', 'fn', 'count')
 
 
 class ConcreteClassificationMatch(ClassificationMatch):
-    def predict(self,
-                lookup_labels: IntTensor,
-                lookup_distances: FloatTensor
-                ) -> Tuple[FloatTensor, FloatTensor]:
+    def derive_match(self,
+                     lookup_labels: IntTensor,
+                     lookup_distances: FloatTensor
+                     ) -> Tuple[FloatTensor, FloatTensor]:
         return lookup_labels, lookup_distances
 
 
-class BadPredictClassificationMatch(ClassificationMatch):
-    """Predict should return 2D tensors, but here we return 1D."""
-    def predict(self,
-                lookup_labels: IntTensor,
-                lookup_distances: FloatTensor
-                ) -> Tuple[FloatTensor, FloatTensor]:
+class BadClassificationMatch(ClassificationMatch):
+    "Derive match should return 2D tensors, but here we return 1D."
+    def derive_match(self,
+                     lookup_labels: IntTensor,
+                     lookup_distances: FloatTensor
+                     ) -> Tuple[FloatTensor, FloatTensor]:
         return (
             tf.reshape(lookup_labels, (-1,)),
             tf.reshape(lookup_distances, (-1,))
@@ -73,9 +73,9 @@ def test_compute_match_indicators():
                       [False, True], [False, True]]))
 
 
-def test_compute_match_indicators_1d_predict():
-    """Check that we handle 1D predict results."""
-    cm = BadPredictClassificationMatch(
+def test_compute_match_indicators_1d():
+    """Check that we handle 1D derive match results."""
+    cm = BadClassificationMatch(
             name='foo', canonical_name='bar')
 
     # Pass distance_thresholds as a 1D tensor.
@@ -98,7 +98,8 @@ def test_compute_match_indicators_1d_predict():
             np.array([[True, True], [True, True],
                       [False, True], [False, True]]))
 
-def test_match():
+
+def test_compute_count():
     cm = ConcreteClassificationMatch(
             name='foo', canonical_name='bar')
 
@@ -110,7 +111,7 @@ def test_match():
     lookup_labels = tf.constant([[10], [20], [30], [40]])
     lookup_distances = tf.constant([[1.], [1.], [2.], [2.]])
 
-    cm.match(query_labels, lookup_labels, lookup_distances)
+    cm.compute_count(query_labels, lookup_labels, lookup_distances)
 
     np.testing.assert_array_equal(cm.tp.numpy(), np.array([2, 2]))
     np.testing.assert_array_equal(cm.fp.numpy(), np.array([0, 2]))
@@ -125,7 +126,7 @@ def test_attribute_asserts(attribute):
     cm = ConcreteClassificationMatch(
             name='foo', canonical_name='bar')
 
-    msg = "Matcher.match() must be called before accessing the counts."
+    msg = "Matcher.compute_count() must be called before accessing the counts."
 
     with pytest.raises(AttributeError, match=re.escape(msg)):
         getattr(cm, attribute)

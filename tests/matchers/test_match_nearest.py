@@ -12,11 +12,11 @@ def test_predict():
     lookup_distances = (
             tf.constant([[1., 1.5], [1., 1.7], [2., 2.1], [2., 2.2]]))
 
-    pred_labels, pred_dist = mn.predict(lookup_labels, lookup_distances)
+    d_labels, d_dist = mn.derive_match(lookup_labels, lookup_distances)
 
     np.testing.assert_array_equal(
-            pred_labels.numpy(),
+            d_labels.numpy(),
             np.array([[10], [20], [30], [40]]))
     np.testing.assert_array_equal(
-            pred_dist.numpy(),
+            d_dist.numpy(),
             np.array([[1.], [1.], [2.], [2.]]))

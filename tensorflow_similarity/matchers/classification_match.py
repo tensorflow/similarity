@@ -65,14 +65,14 @@ class ClassificationMatch(ABC):
         )
 
     @abstractmethod
-    def predict(self,
-                lookup_labels: IntTensor,
-                lookup_distances: FloatTensor
-                ) -> Tuple[IntTensor, FloatTensor]:
-        """Compute the predicted labels and distances.
+    def derive_match(self,
+                     lookup_labels: IntTensor,
+                     lookup_distances: FloatTensor
+                     ) -> Tuple[IntTensor, FloatTensor]:
+        """Derive a match label and distance from a set of K neighbors.
 
-        Given a set of lookup labels and distances, derive the predicted labels
-        associated with the queries.
+        For each query, derive a single match label and distance given the
+        associated set of lookup labels and distances.
 
         Args:
             lookup_labels: A 2D array where the jth row is the labels
@@ -83,13 +83,13 @@ class ClassificationMatch(ABC):
 
         Returns:
             A Tuple of FloatTensors:
-                predicted_labels: A FloatTensor of shape [len(lookup_labels),
-                1] where the jth row contains the label predicted for the jth
-                query.
+                derived_labels: A FloatTensor of shape
+                [len(lookup_labels), 1] where the jth row contains the derived
+                label for the jth query.
 
-                predicted_distances: A FloatTensor of shape
+                derived_distances: A FloatTensor of shape
                 [len(lookup_labels), 1] where the jth row contains the distance
-                associated with the jth predicted label.
+                associated with the jth derived label.
         """
 
     def _compute_match_indicators(self,
@@ -102,10 +102,10 @@ class ClassificationMatch(ABC):
         Compute the match indicator tensor given a set of query labels and a
         set of associated lookup labels and distances.
 
-        The method first calls predict on the lookup labels and distances and
-        then compares the query labels (y_true) against the predicted labels
-        (y_pred) and checks if the predicted distance is <= to the distance
-        thresholds.
+        The method first calls `derive_match()` on the lookup labels and
+        distances and then compares the query labels (y_true) against the
+        derived labels (y_pred) and checks if the derived distance is <= to the
+        distance thresholds.
 
         Args:
             query_labels: A 1D array of the labels associated with the queries.
@@ -134,28 +134,44 @@ class ClassificationMatch(ABC):
                 lookup_distances
         )
 
-        pred_labels, pred_dist = self.predict(lookup_labels, lookup_distances)
+        d_labels, d_dist = self.derive_match(lookup_labels, lookup_distances)
 
-        # Saftey check to ensure that self.predict returns the right shapes
-        if tf.rank(pred_labels) == 1:
-            pred_labels = tf.expand_dims(pred_labels, axis=-1)
-        if tf.rank(pred_dist) == 1:
-            pred_dist = tf.expand_dims(pred_dist, axis=-1)
+        # Safety check to ensure that self.derive_match returns the right
+        # shapes.
+        if tf.rank(d_labels) == 1:
+            d_labels = tf.expand_dims(d_labels, axis=-1)
+        if tf.rank(d_dist) == 1:
+            d_dist = tf.expand_dims(d_dist, axis=-1)
 
         # A 1D BoolTensor [len(query_labels), 1]
-        match_mask = tf.math.equal(pred_labels, query_labels)
+        match_mask = tf.math.equal(d_labels, query_labels)
 
         # A 2D BoolTensor [len(lookup_distance), len(self.distance_thresholds)]
-        distance_mask = tf.math.less_equal(pred_dist, self.distance_thresholds)
+        distance_mask = tf.math.less_equal(d_dist, self.distance_thresholds)
 
         return match_mask, distance_mask
 
-    def match(self,
-              query_labels: IntTensor,
-              lookup_labels: IntTensor,
-              lookup_distances: FloatTensor):
-        """Compares the query_label against the match label associated with the
-        lookup labels.
+    def compute_count(self,
+                      query_labels: IntTensor,
+                      lookup_labels: IntTensor,
+                      lookup_distances: FloatTensor) -> None:
+        """Computes the match counts at each of the distance thresholds.
+
+        This method computes the following at each distance threshold.
+
+        * True Positive: The query label matches the derived lookup label and
+        the derived lookup distance is <= the current distance threshold.
+
+        * False Positive: The query label does not match the derived lookup
+        label but the derived lookup distance is <= the current distance
+        threshold.
+
+        * False Negative: The query label matches the derived lookup label but
+        the derived lookup distance is > the current distance threshold.
+
+        * True Negative: The query label does not match the derived lookup
+        label and the derived lookup distance is > the current distance
+        threshold.
 
         Note: compile must be called before calling match.
 
@@ -174,11 +190,11 @@ class ClassificationMatch(ABC):
                 lookup_distances=lookup_distances
         )
 
-        self._compute_counts(match_mask, distance_mask)
+        self._compute_count(match_mask, distance_mask)
 
-    def _compute_counts(self,
-                        label_match: BoolTensor,
-                        dist_mask: BoolTensor):
+    def _compute_count(self,
+                       label_match: BoolTensor,
+                       dist_mask: BoolTensor) -> None:
         _tp = tf.math.logical_and(label_match, dist_mask)
         _tp = tf.math.count_nonzero(_tp, axis=0)
         self._tp: FloatTensor = tf.cast(_tp, dtype='float')
@@ -215,14 +231,15 @@ class ClassificationMatch(ABC):
         threshold.
 
         Raises:
-            AttributeError: Matcher.compute() must be called before accessing
-            counts.
+            AttributeError: Matcher.compute_count() must be called before
+            accessing counts.
         """
         try:
             return self._tp
         except AttributeError as attribute_error:
-            raise AttributeError('Matcher.match() must be called before '
-                                 'accessing the counts.') from attribute_error
+            raise AttributeError(
+                    'Matcher.compute_count() must be called before '
+                    'accessing the counts.') from attribute_error
 
     @property
     def fp(self) -> FloatTensor:
@@ -233,14 +250,15 @@ class ClassificationMatch(ABC):
         threshold.
 
         Raises:
-            AttributeError: Matcher.match() must be called before accessing
-            counts.
+            AttributeError: Matcher.compute_count() must be called before
+            accessing counts.
         """
         try:
             return self._fp
         except AttributeError as attribute_error:
-            raise AttributeError('Matcher.match() must be called before '
-                                 'accessing the counts.') from attribute_error
+            raise AttributeError(
+                    'Matcher.compute_count() must be called before '
+                    'accessing the counts.') from attribute_error
 
     @property
     def tn(self) -> FloatTensor:
@@ -251,14 +269,15 @@ class ClassificationMatch(ABC):
         threshold.
 
         Raises:
-            AttributeError: Matcher.match() must be called before accessing
-            counts.
+            AttributeError: Matcher.compute_count() must be called before
+            accessing counts.
         """
         try:
             return self._tn
         except AttributeError as attribute_error:
-            raise AttributeError('Matcher.match() must be called before '
-                                 'accessing the counts.') from attribute_error
+            raise AttributeError(
+                    'Matcher.compute_count() must be called before '
+                    'accessing the counts.') from attribute_error
 
     @property
     def fn(self) -> FloatTensor:
@@ -269,28 +288,30 @@ class ClassificationMatch(ABC):
         threshold.
 
         Raises:
-            AttributeError: Matcher.match() must be called before accessing
-            counts.
+            AttributeError: Matcher.compute_count() must be called before
+            accessing counts.
         """
         try:
             return self._fn
         except AttributeError as attribute_error:
-            raise AttributeError('Matcher.match() must be called before '
-                                 'accessing the counts.') from attribute_error
+            raise AttributeError(
+                    'Matcher.compute_count() must be called before '
+                    'accessing the counts.') from attribute_error
 
     @property
     def count(self) -> int:
         """The total number of queries.
 
         Raises:
-            AttributeError: Matcher.match() must be called before accessing
-            counts.
+            AttributeError: Matcher.compute_count() must be called before
+            accessing counts.
         """
         try:
             return self._count
         except AttributeError as attribute_error:
-            raise AttributeError('Matcher.match() must be called before '
-                                 'accessing the counts.') from attribute_error
+            raise AttributeError(
+                    'Matcher.compute_count() must be called before '
+                    'accessing the counts.') from attribute_error
 
     @staticmethod
     def _check_shape(query_labels, lookup_labels, lookup_distances) -> bool:
