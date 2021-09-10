@@ -25,23 +25,3 @@ def test_predict():
     np.testing.assert_allclose(
             pred_dist.numpy(),
             np.array([[1.2], [2.2]]))
-
-
-def test_custom_agg():
-    mn = MatchMajorityVote(dist_agg=tf.math.reduce_min)
-
-    lookup_labels = tf.constant([
-        [10, 12, 10, 12, 10],
-        # Ties should take the closer label.
-        [20, 13, 13, 20, 30]]
-    )
-    lookup_distances = tf.constant([
-        [1., 1., 1.2, 1.9, 1.9],
-        [2., 2., 2.3, 2.9, 2.9]]
-    )
-
-    pred_labels, pred_dist = mn.predict(lookup_labels, lookup_distances)
-
-    np.testing.assert_allclose(
-            pred_dist.numpy(),
-            np.array([[1.], [2.]]))

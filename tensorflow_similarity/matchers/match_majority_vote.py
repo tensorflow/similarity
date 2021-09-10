@@ -12,17 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Tuple
+from typing import Tuple
 
 import tensorflow as tf
 
 from .classification_match import ClassificationMatch
 from tensorflow_similarity.types import FloatTensor, IntTensor
-
-# A Distance aggregation function used to compute the agg distance over the K
-# neighbors. This distance is used, along with the distance threshold, to
-# accept or reject the match label.
-DistAgg = Callable[[FloatTensor, int], FloatTensor]
 
 
 class MatchMajorityVote(ClassificationMatch):
@@ -30,22 +25,12 @@ class MatchMajorityVote(ClassificationMatch):
 
     def __init__(self,
                  name: str = 'majority_vote',
-                 dist_agg: DistAgg = tf.math.reduce_mean,
                  **kwargs) -> None:
 
         if 'canonical_name' not in kwargs:
             kwargs['canonical_name'] = 'match_majority_vote'
 
         super().__init__(name=name, **kwargs)
-
-        self._dist_agg = dist_agg
-
-    def get_config(self):
-        config = {
-            "dist_agg": self._dist_agg,
-        }
-        base_config = super().get_config()
-        return {**base_config, **config}
 
     def predict(self,
                 lookup_labels: IntTensor,
@@ -61,9 +46,8 @@ class MatchMajorityVote(ClassificationMatch):
         the predicted label closest to the query.
 
         Additionally, the distance is taken as the aggregate of the distances
-        in the jth row of lookups. The aggregation function can be passed to
-        the constructor as a callable, and is set to tf.math.reduce_mean by
-        default.
+        in the jth row of lookups. The aggregation function is set to
+        tf.math.reduce_mean.
 
         Args:
             lookup_labels: A 2D array where the jth row is the labels
@@ -87,9 +71,7 @@ class MatchMajorityVote(ClassificationMatch):
         pred_labels = tf.map_fn(self._majority_vote, lookup_labels)
         pred_labels = tf.expand_dims(pred_labels, axis=-1)
 
-        # Callable type requires positional args only. Here we assume the
-        # signature to be _dist_agg(input_tensor, axis)
-        agg_dist = self._dist_agg(lookup_distances, 1)
+        agg_dist = tf.math.reduce_mean(lookup_distances, 1)
         agg_dist = tf.expand_dims(agg_dist, axis=-1)
 
         return pred_labels, agg_dist
