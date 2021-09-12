@@ -143,7 +143,7 @@ class MemoryEvaluator(Evaluator):
         matcher.compile(distance_thresholds=distance_thresholds)
 
         # compute the tp, fp, tn, fn counts
-        matcher.match(
+        matcher.compute_count(
                 query_labels=query_labels,
                 lookup_labels=lookup_labels,
                 lookup_distances=lookup_distances)

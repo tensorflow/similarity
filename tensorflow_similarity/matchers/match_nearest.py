@@ -14,10 +14,8 @@
 
 from typing import Tuple
 
-import tensorflow as tf
-
 from .classification_match import ClassificationMatch
-from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
+from tensorflow_similarity.types import FloatTensor, IntTensor
 
 
 class MatchNearest(ClassificationMatch):
@@ -32,24 +30,16 @@ class MatchNearest(ClassificationMatch):
 
         super().__init__(name=name, **kwargs)
 
-    def predict_match(self,
-                      lookup_labels: IntTensor,
-                      lookup_distances: FloatTensor
-                      ) -> Tuple[FloatTensor, FloatTensor]:
-        """Compute the derived match label and distance."""
+    def derive_match(self,
+                     lookup_labels: IntTensor,
+                     lookup_distances: FloatTensor
+                     ) -> Tuple[IntTensor, FloatTensor]:
+        """Derive a match label and distance from a set of K neighbors.
 
-        return lookup_labels[:, :1], lookup_distances[:, :1]
-
-    def compute_match_indicators(self,
-                                 query_labels: IntTensor,
-                                 lookup_labels: IntTensor,
-                                 lookup_distances: FloatTensor
-                                 ) -> Tuple[BoolTensor, BoolTensor]:
-        """Compute the indicator tensor.
+        For each query, derive a single match label and distance given the
+        associated set of lookup labels and distances.
 
         Args:
-            query_labels: A 1D array of the labels associated with the queries.
-
             lookup_labels: A 2D array where the jth row is the labels
             associated with the set of k neighbors for the jth query.
 
@@ -57,35 +47,14 @@ class MatchNearest(ClassificationMatch):
             between the jth query and the set of k neighbors.
 
         Returns:
-            A Tuple of BoolTensors:
-                label_match: A len(query_labels x 1 boolean tensor. True if
-                the match label == query label, False otherwise.
+            A Tuple of FloatTensors:
+                derived_labels: A FloatTensor of shape
+                [len(lookup_labels), 1] where the jth row contains the derived
+                label for the jth query.
 
-                dist_mask: A len(query_labels) x len(distance_thresholds)
-                boolean tensor. True if the distance of the jth match <= the
-                kth distance threshold.
+                derived_distances: A FloatTensor of shape
+                [len(lookup_labels), 1] where the jth row contains the distance
+                associated with the jth derived label.
         """
-        if tf.rank(query_labels) == 1:
-            query_labels = tf.expand_dims(query_labels, axis=-1)
 
-        ClassificationMatch._check_shape(
-                query_labels,
-                lookup_labels,
-                lookup_distances
-        )
-
-        pred_labels, pred_dist = self.predict_match(
-                lookup_labels, lookup_distances)
-
-        # A 1D BoolTensor [len(query_labels), 1]
-        label_match = tf.math.equal(
-                query_labels,
-                pred_labels
-        )
-        # A 2D BoolTensor [len(lookup_distance), len(self.distance_thresholds)]
-        dist_mask = tf.math.less_equal(
-                pred_dist,
-                self.distance_thresholds,
-        )
-
-        return label_match, dist_mask
+        return lookup_labels[:, :1], lookup_distances[:, :1]
