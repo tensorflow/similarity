@@ -637,7 +637,7 @@ class Indexer():
         for cp_name, cp_data in self.cutpoints.items():
             distance_threshold = float(cp_data['distance'])
 
-            pred_labels, pred_dist = matcher.predict_match(
+            pred_labels, pred_dist = matcher.derive_match(
                     lookup_labels=lookup_labels,
                     lookup_distances=lookup_distances)
 
