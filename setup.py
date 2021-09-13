@@ -34,13 +34,12 @@ def get_version(rel_path):
     raise RuntimeError("Unable to find version string.")
 
 
-long_description = "FIXME"
-
 setup(
     name="tensorflow_similarity",
     version=get_version("tensorflow_similarity/__init__.py"),
     description="Metric Learning for Humans",
-    long_description=long_description,
+    long_description=read("README.md"),
+    long_description_type='text/markdown',
     author='Tensorflow Similarity authors',
     author_email='tf-similarity@google.com',
     url='https://github.com/tensorflow/similarity',
