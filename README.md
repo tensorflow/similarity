@@ -33,7 +33,7 @@ For previous changes - see [the release changelog](./releases.md)
 
 Use pip to install the library
 
-```python
+```shell
 pip install tensorflow_similarity
 ```
 
