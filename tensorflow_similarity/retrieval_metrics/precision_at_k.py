@@ -19,17 +19,11 @@ from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
 class PrecisionAtK(RetrievalMetric):
-    r"""Precision@K is computed as.
+    """Precision@K is computed as.
 
-                         k
-                        ===
-                        \    rel
-                        /       ij
-              TP        ===
-                i      j = 1
-    P @k = --------- = -----------
-     i     TP  + FP         k
-             i     i
+    $$
+    P_i@k = \frac{TP_i}{TP_i+FP_i} = \frac{\sum_{j = 1}^{k} {rel_i_j}}{K}
+    $$
 
     Where: K is the number of neighbors in the i_th query result set.
            rel is the relevance mask (indicator function) for the i_th query.
@@ -41,7 +35,7 @@ class PrecisionAtK(RetrievalMetric):
     This metric is useful when we are interested in evaluating the embedding
     within the context of a kNN classifier or as part of a clustering method.
 
-    Attributes:
+    Args:
         name: Name associated with the metric object, e.g., precision@5
 
         canonical_name: The canonical name associated with metric,
@@ -55,10 +49,10 @@ class PrecisionAtK(RetrievalMetric):
         average: {'micro', 'macro'} Determines the type of averaging performed
         on the data.
 
-            'micro': Calculates metrics globally over all data.
+        * 'micro': Calculates metrics globally over all data.
 
-            'macro': Calculates metrics for each label and takes the unweighted
-                     mean.
+        * 'macro': Calculates metrics for each label and takes the unweighted
+                   mean.
     """
     def __init__(self,
                  name: str = 'precision',
@@ -70,7 +64,7 @@ class PrecisionAtK(RetrievalMetric):
         super().__init__(name=name, k=k, **kwargs)
 
     def compute(self,
-                *,
+                *,  # positional only arguments see PEP-570
                 query_labels: IntTensor,
                 match_mask: BoolTensor,
                 **kwargs) -> FloatTensor:
@@ -86,7 +80,7 @@ class PrecisionAtK(RetrievalMetric):
             **kwargs: Additional compute args.
 
         Returns:
-            metric results.
+            A rank 0 tensor containing the metric.
         """
         k_slice = tf.cast(match_mask[:, :self.k], dtype='float')
         tp = tf.math.reduce_sum(k_slice, axis=1)

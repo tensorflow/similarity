@@ -21,16 +21,11 @@ from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
 class MapAtK(RetrievalMetric):
-    r"""Mean Average precision (mAP) @K is computed as.
+    """Mean Average precision (mAP) @K is computed as.
 
-               k
-              ===
-              \    rel   . P @j
-              /       ij    i
-              ===
-             j = 1
-    mAP @k = ------------------
-       i           R
+    $$
+    mAP_i@K = \frac{\sum_{j = 1}^{K} {rel_i_j}\times{P_i@j}}{R}
+    $$
 
     Where: K is the number of neighbors in the i_th query result set.
            P is the rolling precision over the i_th query result set.
@@ -52,7 +47,7 @@ class MapAtK(RetrievalMetric):
     This metric is useful when we want to ensure that the top ranked results
     are relevant to the query.
 
-    Attributes:
+    Args:
         r: A mapping from class id to the number of examples in the index,
         e.g., r[4] = 10 represents 10 indexed examples from class 4
 
@@ -69,7 +64,7 @@ class MapAtK(RetrievalMetric):
         average: {'micro'} Determines the type of averaging performed over the
         queries.
 
-            'micro': Calculates metrics globally over all queries.
+        * 'micro': Calculates metrics globally over all queries.
     """
     def __init__(self,
                  r: Mapping[int, int] = {},
@@ -95,8 +90,15 @@ class MapAtK(RetrievalMetric):
         super().__init__(name=name, k=k, average=average, **kwargs)
         self.r = r
 
+    def get_config(self):
+        config = {
+            "r": self.r,
+        }
+        base_config = super().get_config()
+        return {**base_config, **config}
+
     def compute(self,
-                *,
+                *,  # positional only arguments see PEP-570
                 query_labels: IntTensor,
                 match_mask: BoolTensor,
                 **kwargs) -> FloatTensor:
@@ -112,7 +114,7 @@ class MapAtK(RetrievalMetric):
             **kwargs: Additional compute args
 
         Returns:
-            metric results.
+            A rank 0 tensor containing the metric.
         """
         k_slice = tf.cast(match_mask[:, :self.k], dtype='float')
         tp = tf.math.cumsum(k_slice, axis=1)

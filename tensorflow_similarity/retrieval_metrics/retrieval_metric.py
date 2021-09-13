@@ -22,11 +22,11 @@ from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 class RetrievalMetric(ABC):
     """Abstract base class for computing retrieval metrics.
 
-    Attributes:
+    Args:
         name: Name associated with the metric object, e.g., recall@5
 
-        canonical_name: The canonical name associated with metric,
-        e.g., recall@K
+        canonical_name: The canonical name associated with metric, e.g.,
+        recall@K
 
         k: The number of nearest neighbors over which the metric is computed.
 
@@ -36,10 +36,12 @@ class RetrievalMetric(ABC):
         average: {'micro'} Determines the type of averaging performed over the
         queries.
 
-            'micro': Calculates metrics globally over all queries.
+        * 'micro': Calculates metrics globally over all queries.
+        * 'macro': Calculates metrics for each label and takes the unweighted
+        mean.
 
-            'macro': Calculates metrics for each label and takes the unweighted
-                     mean.
+    `RetrievalMetric` measure the retrieval quality given a query label and the
+    labels from the set of lookup results.
     """
     def __init__(self,
                  name: str = '',
@@ -77,12 +79,13 @@ class RetrievalMetric(ABC):
 
     @abstractmethod
     def compute(self,
-                *,
+                *,  # positional only arguments see PEP-570
                 query_labels: IntTensor,
                 lookup_labels: IntTensor,
                 lookup_distances: FloatTensor,
-                match_mask: BoolTensor) -> FloatTensor:
-        """Compute the metric
+                match_mask: BoolTensor,
+                ) -> FloatTensor:
+        """Compute the retrieval metric.
 
         Args:
             query_labels: A 1D array of the labels associated with the queries.
@@ -97,5 +100,5 @@ class RetrievalMetric(ABC):
             jth query and the kth neighbor and a 0 indicates a mismatch.
 
         Returns:
-            metric results.
+            A rank 0 tensor containing the metric.
         """
