@@ -58,7 +58,7 @@ In this example, we are using the multi-shot sampler that integrate directly fro
 from tensorflow_similarity.samplers import TFDatasetMultiShotMemorySampler
 
 # Data sampler that generates balanced batches from MNIST dataset
-sampler = TFDatasetMultiShotMemorySampler(dataset_name='mnist', class_per_batch=10)
+sampler = TFDatasetMultiShotMemorySampler(dataset_name='mnist', classes_per_batch=10)
 ```
 
 ### Building a Similarity model
