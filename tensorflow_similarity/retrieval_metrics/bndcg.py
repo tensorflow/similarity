@@ -78,7 +78,7 @@ class BNDCG(RetrievalMetric):
         super().__init__(name=name, k=k, **kwargs)
 
     def compute(self,
-                *,  # positional only arguments see PEP-570
+                *,  # keyword only arguments see PEP-570
                 query_labels: IntTensor,
                 lookup_distances: FloatTensor,
                 match_mask: BoolTensor,

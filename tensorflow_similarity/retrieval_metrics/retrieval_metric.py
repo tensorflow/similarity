@@ -79,7 +79,7 @@ class RetrievalMetric(ABC):
 
     @abstractmethod
     def compute(self,
-                *,  # positional only arguments see PEP-570
+                *,  # keyword only arguments see PEP-570
                 query_labels: IntTensor,
                 lookup_labels: IntTensor,
                 lookup_distances: FloatTensor,
