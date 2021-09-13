@@ -19,7 +19,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools
-        pip install setuptools>= 38.6.0 wheel>=0.31.0 twine>=1.11.0
+        pip install setuptools wheel twine
         pip install types-tabulate
         pip install tensorflow
         
