@@ -54,20 +54,20 @@ class PrecisionAtK(RetrievalMetric):
         * 'macro': Calculates metrics for each label and takes the unweighted
                    mean.
     """
-    def __init__(self,
-                 name: str = 'precision',
-                 k: int = 5,
-                 **kwargs) -> None:
-        if 'canonical_name' not in kwargs:
-            kwargs['canonical_name'] = 'precision@k'
+
+    def __init__(self, name: str = "precision", k: int = 5, **kwargs) -> None:
+        if "canonical_name" not in kwargs:
+            kwargs["canonical_name"] = "precision@k"
 
         super().__init__(name=name, k=k, **kwargs)
 
-    def compute(self,
-                *,  # keyword only arguments see PEP-570
-                query_labels: IntTensor,
-                match_mask: BoolTensor,
-                **kwargs) -> FloatTensor:
+    def compute(
+        self,
+        *,  # keyword only arguments see PEP-570
+        query_labels: IntTensor,
+        match_mask: BoolTensor,
+        **kwargs,
+    ) -> FloatTensor:
         """Compute the metric
 
         Args:
@@ -82,13 +82,15 @@ class PrecisionAtK(RetrievalMetric):
         Returns:
             A rank 0 tensor containing the metric.
         """
-        k_slice = tf.cast(match_mask[:, :self.k], dtype='float')
+        self._check_shape(query_labels, match_mask)
+
+        k_slice = tf.cast(match_mask[:, : self.k], dtype="float")
         tp = tf.math.reduce_sum(k_slice, axis=1)
         per_example_p = tf.math.divide(tp, self.k)
 
-        if self.average == 'micro':
+        if self.average == "micro":
             p_at_k = tf.math.reduce_mean(per_example_p)
-        elif self.average == 'macro':
+        elif self.average == "macro":
             per_class_metrics = 0
             class_labels = tf.unique(query_labels)[0]
             for label in class_labels:
@@ -97,7 +99,8 @@ class PrecisionAtK(RetrievalMetric):
                 per_class_metrics += tf.math.reduce_mean(c_slice)
             p_at_k = tf.math.divide(per_class_metrics, len(class_labels))
         else:
-            raise ValueError(f'{self.average} is not a supported average '
-                             'option')
+            raise ValueError(
+                f"{self.average} is not a supported average " "option"
+            )
         result: FloatTensor = p_at_k
         return result

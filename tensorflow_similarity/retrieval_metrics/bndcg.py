@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import math
 
 import tensorflow as tf
 
@@ -68,21 +69,29 @@ class BNDCG(RetrievalMetric):
         * 'macro': Calculates metrics for each label and takes the unweighted
                    mean.
     """
-    def __init__(self,
-                 name: str = 'ndcg',
-                 k: int = 5,
-                 **kwargs) -> None:
-        if 'canonical_name' not in kwargs:
-            kwargs['canonical_name'] = 'ndcg@k'
 
-        super().__init__(name=name, k=k, **kwargs)
+    def __init__(
+        self,
+        name: str = "ndcg",
+        k: int = 5,
+        distance_threshold: float = math.inf,
+        **kwargs,
+    ) -> None:
+        if "canonical_name" not in kwargs:
+            kwargs["canonical_name"] = "ndcg@k"
 
-    def compute(self,
-                *,  # keyword only arguments see PEP-570
-                query_labels: IntTensor,
-                lookup_distances: FloatTensor,
-                match_mask: BoolTensor,
-                **kwargs) -> FloatTensor:
+        super().__init__(
+            name=name, k=k, distance_threshold=distance_threshold, **kwargs
+        )
+
+    def compute(
+        self,
+        *,  # keyword only arguments see PEP-570
+        query_labels: IntTensor,
+        lookup_distances: FloatTensor,
+        match_mask: BoolTensor,
+        **kwargs,
+    ) -> FloatTensor:
         """Compute the metric
 
         Computes the binary NDCG. The query labels are only used when the
@@ -101,35 +110,40 @@ class BNDCG(RetrievalMetric):
         Returns:
             A rank 0 tensor containing the metric.
         """
+        self._check_shape(query_labels, match_mask)
+
+        if tf.shape(lookup_distances)[0] != tf.shape(query_labels)[0]:
+            raise ValueError(
+                "The number of lookup distance rows must equal the number "
+                "of query labels. Number of lookup distance rows is "
+                f"{tf.shape(lookup_distances)[0]} but the number of query "
+                f"labels is {tf.shape(query_labels)[0]}."
+            )
+
         dist_mask = tf.math.less_equal(
-                lookup_distances,
-                self.distance_threshold
+            lookup_distances, self.distance_threshold
         )
 
         k_slice = tf.math.multiply(
-                tf.cast(match_mask, dtype='float'),
-                tf.cast(dist_mask, dtype='float')
-        )[:, :self.k]
+            tf.cast(match_mask, dtype="float"),
+            tf.cast(dist_mask, dtype="float"),
+        )[:, : self.k]
 
-        rank = tf.range(1, self.k+1, dtype='float')
-        rank_weights = tf.math.divide(
-                tf.math.log1p(rank),
-                tf.math.log(2.0)
-        )
+        rank = tf.range(1, self.k + 1, dtype="float")
+        rank_weights = tf.math.divide(tf.math.log1p(rank), tf.math.log(2.0))
 
         # the numerator is simplier here because we are using binary weights
-        dcg = tf.divide(k_slice, rank_weights)
-        dcg = tf.math.reduce_sum(dcg, axis=1)
+        dcg = tf.math.reduce_sum(k_slice / rank_weights, axis=1)
 
         # generate the "ideal ordering".
-        ideal_ordering = tf.sort(k_slice, direction='DESCENDING')
-        idcg = tf.math.reduce_sum(ideal_ordering/rank_weights)
+        ideal_ordering = tf.sort(k_slice, direction="DESCENDING", axis=1)
+        idcg = tf.math.reduce_sum(ideal_ordering / rank_weights, axis=1)
 
         per_example_ndcg = tf.math.divide_no_nan(dcg, idcg)
 
-        if self.average == 'micro':
+        if self.average == "micro":
             ndcg = tf.math.reduce_mean(per_example_ndcg)
-        elif self.average == 'macro':
+        elif self.average == "macro":
             per_class_metrics = 0
             class_labels = tf.unique(query_labels)[0]
             for label in class_labels:
@@ -138,8 +152,9 @@ class BNDCG(RetrievalMetric):
                 per_class_metrics += tf.math.reduce_mean(c_slice)
             ndcg = tf.math.divide(per_class_metrics, len(class_labels))
         else:
-            raise ValueError(f'{self.average} is not a supported average '
-                             'option')
+            raise ValueError(
+                f"{self.average} is not a supported average " "option"
+            )
 
         result: FloatTensor = ndcg
         return result

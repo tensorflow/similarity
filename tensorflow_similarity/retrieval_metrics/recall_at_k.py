@@ -43,20 +43,20 @@ class RecallAtK(RetrievalMetric):
         * 'macro': Calculates metrics for each label and takes the unweighted
                    mean.
     """
-    def __init__(self,
-                 name: str = 'recall',
-                 k: int = 5,
-                 **kwargs) -> None:
-        if 'canonical_name' not in kwargs:
-            kwargs['canonical_name'] = 'recall@k'
+
+    def __init__(self, name: str = "recall", k: int = 5, **kwargs) -> None:
+        if "canonical_name" not in kwargs:
+            kwargs["canonical_name"] = "recall@k"
 
         super().__init__(name=name, k=k, **kwargs)
 
-    def compute(self,
-                *,  # keyword only arguments see PEP-570
-                query_labels: IntTensor,
-                match_mask: BoolTensor,
-                **kwargs) -> FloatTensor:
+    def compute(
+        self,
+        *,  # keyword only arguments see PEP-570
+        query_labels: IntTensor,
+        match_mask: BoolTensor,
+        **kwargs,
+    ) -> FloatTensor:
         """Compute the metric
 
         Args:
@@ -71,13 +71,15 @@ class RecallAtK(RetrievalMetric):
         Returns:
             A rank 0 tensor containing the metric.
         """
-        k_slice = match_mask[:, :self.k]
-        match_indicator = tf.math.reduce_any(k_slice, axis=1)
-        match_indicator = tf.cast(match_indicator, dtype='float')
+        self._check_shape(query_labels, match_mask)
 
-        if self.average == 'micro':
+        k_slice = match_mask[:, : self.k]
+        match_indicator = tf.math.reduce_any(k_slice, axis=1)
+        match_indicator = tf.cast(match_indicator, dtype="float")
+
+        if self.average == "micro":
             recall_at_k = tf.math.reduce_mean(match_indicator)
-        elif self.average == 'macro':
+        elif self.average == "macro":
             per_class_metrics = 0
             class_labels = tf.unique(query_labels)[0]
             # TODO(ovallis): potential slowness.
@@ -87,7 +89,8 @@ class RecallAtK(RetrievalMetric):
                 per_class_metrics += tf.math.reduce_mean(c_slice)
             recall_at_k = tf.math.divide(per_class_metrics, len(class_labels))
         else:
-            raise ValueError(f'{self.average} is not a supported average '
-                             'option')
+            raise ValueError(
+                f"{self.average} is not a supported average " "option"
+            )
         result: FloatTensor = recall_at_k
         return result
