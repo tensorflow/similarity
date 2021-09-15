@@ -19,12 +19,12 @@ from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
 class RecallAtK(RetrievalMetric):
-    r"""The metric learning version of Recall@K.
+    """The metric learning version of Recall@K.
 
     A query is counted as a positive when ANY lookup in top K match the query
     class, 0 otherwise.
 
-    Attributes:
+    Args:
         name: Name associated with the metric object, e.g., recall@5
 
         canonical_name: The canonical name associated with metric,
@@ -38,10 +38,10 @@ class RecallAtK(RetrievalMetric):
         average: {'micro'} Determines the type of averaging performed over the
         queries.
 
-            'micro': Calculates metrics globally over all queries.
+        * 'micro': Calculates metrics globally over all queries.
 
-            'macro': Calculates metrics for each label and takes the unweighted
-                     mean.
+        * 'macro': Calculates metrics for each label and takes the unweighted
+                   mean.
     """
     def __init__(self,
                  name: str = 'recall',
@@ -53,7 +53,7 @@ class RecallAtK(RetrievalMetric):
         super().__init__(name=name, k=k, **kwargs)
 
     def compute(self,
-                *,
+                *,  # keyword only arguments see PEP-570
                 query_labels: IntTensor,
                 match_mask: BoolTensor,
                 **kwargs) -> FloatTensor:
@@ -69,7 +69,7 @@ class RecallAtK(RetrievalMetric):
             **kwargs: Additional compute args.
 
         Returns:
-            metric results.
+            A rank 0 tensor containing the metric.
         """
         k_slice = match_mask[:, :self.k]
         match_indicator = tf.math.reduce_any(k_slice, axis=1)
