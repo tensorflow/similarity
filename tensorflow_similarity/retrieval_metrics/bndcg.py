@@ -21,10 +21,35 @@ from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 class BNDCG(RetrievalMetric):
     """Binary normalized discounted cumulative gain.
 
-    This is normalized discounted cumulative gain where the relevance weights
-    are binary, i.e., correct match or incorrect match.
+    This is normalized discounted cumulative gain where the relevancy weights
+    are binary, i.e., either a correct match or an incorrect match.
 
-    Attributes:
+    The NDCG is a score between [0,1] representing the rank weighted results.
+    The DCG represents the sum of the correct matches weighted by the log2 of
+    the rank and is normalized by the 'ideal DCG'. The IDCG is computed as the
+    match_mask, sorted descending, weighted by the log2 of the post sorting rank
+    order. This metric takes into account both the correctness of the match and
+    the position.
+
+    The normalized DCG is computed as:
+
+    $$
+    nDCG_{p} = \frac{DCG_{p}}{IDCG_{p}}
+    $$
+
+    The DCG is computed for each query using the match_mask as:
+
+    $$
+    DCG_{p} = \sum_{i=1}^{p} \frac{match_mask_{i}}{\log_{2}(i+1)}
+    $$
+
+    The IDCG uses the same equation but sorts the match_mask descending
+    along axis=-1.
+
+    Additionally, all positive matches with a distance above the threshold are
+    set to 0, and the closest K matches are taken.
+
+    Args:
         name: Name associated with the metric object, e.g., precision@5
 
         canonical_name: The canonical name associated with metric,
@@ -38,10 +63,10 @@ class BNDCG(RetrievalMetric):
         average: {'micro', 'macro'} Determines the type of averaging performed
         on the data.
 
-            'micro': Calculates metrics globally over all data.
+        * 'micro': Calculates metrics globally over all data.
 
-            'macro': Calculates metrics for each label and takes the unweighted
-                     mean.
+        * 'macro': Calculates metrics for each label and takes the unweighted
+                   mean.
     """
     def __init__(self,
                  name: str = 'ndcg',
@@ -53,12 +78,15 @@ class BNDCG(RetrievalMetric):
         super().__init__(name=name, k=k, **kwargs)
 
     def compute(self,
-                *,
+                *,  # keyword only arguments see PEP-570
                 query_labels: IntTensor,
                 lookup_distances: FloatTensor,
                 match_mask: BoolTensor,
                 **kwargs) -> FloatTensor:
         """Compute the metric
+
+        Computes the binary NDCG. The query labels are only used when the
+        averaging is set to "macro".
 
         Args:
             query_labels: A 1D array of the labels associated with the
@@ -70,10 +98,8 @@ class BNDCG(RetrievalMetric):
             match_mask: A 2D mask where a 1 indicates a match between the
             jth query and the kth neighbor and a 0 indicates a mismatch.
 
-            **kwargs: Additional compute args.
-
         Returns:
-            metric results.
+            A rank 0 tensor containing the metric.
         """
         dist_mask = tf.math.less_equal(
                 lookup_distances,
@@ -84,6 +110,7 @@ class BNDCG(RetrievalMetric):
                 tf.cast(match_mask, dtype='float'),
                 tf.cast(dist_mask, dtype='float')
         )[:, :self.k]
+
         rank = tf.range(1, self.k+1, dtype='float')
         rank_weights = tf.math.divide(
                 tf.math.log1p(rank),
@@ -93,10 +120,12 @@ class BNDCG(RetrievalMetric):
         # the numerator is simplier here because we are using binary weights
         dcg = tf.divide(k_slice, rank_weights)
         dcg = tf.math.reduce_sum(dcg, axis=1)
-        per_example_ndcg = tf.divide(
-                dcg,
-                tf.math.reduce_sum(rank_weights)
-        )
+
+        # generate the "ideal ordering".
+        ideal_ordering = tf.sort(k_slice, direction='DESCENDING')
+        idcg = tf.math.reduce_sum(ideal_ordering/rank_weights)
+
+        per_example_ndcg = tf.math.divide_no_nan(dcg, idcg)
 
         if self.average == 'micro':
             ndcg = tf.math.reduce_mean(per_example_ndcg)

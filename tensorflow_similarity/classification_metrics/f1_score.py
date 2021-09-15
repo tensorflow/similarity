@@ -60,12 +60,16 @@ class F1Score(ClassificationMetric):
         Args:
             tp: A 1D FloatTensor containing the count of True Positives at each
             distance threshold.
-            fp: A 1D FloatTensor containing the count of False Positives at each
-            distance threshold.
+
+            fp: A 1D FloatTensor containing the count of False Positives at
+            each distance threshold.
+
             tn: A 1D FloatTensor containing the count of True Negatives at each
             distance threshold.
-            fn: A 1D FloatTensor containing the count of False Negatives at each
-            distance threshold.
+
+            fn: A 1D FloatTensor containing the count of False Negatives at
+            each distance threshold.
+
             count: The total number of queries
 
         Returns:
