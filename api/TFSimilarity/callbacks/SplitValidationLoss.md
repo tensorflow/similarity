@@ -12,6 +12,7 @@ Inherits From: [`Callback`](../../TFSimilarity/callbacks/Callback.md)
 TFSimilarity.callbacks.SplitValidationLoss(
     query_labels: Sequence[int],
     target_labels: Sequence[int],
+    known_classes: IntTensor,
     distance: str = cosine,
     metrics: Sequence[Union[str, ClassificationMetric]] = [binary_accuracy, f1score],
     tb_logdir: str = None,
