@@ -16,6 +16,8 @@ from abc import abstractmethod
 from abc import ABC
 import math
 
+import tensorflow as tf
+
 from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
@@ -43,12 +45,15 @@ class RetrievalMetric(ABC):
     `RetrievalMetric` measure the retrieval quality given a query label and the
     labels from the set of lookup results.
     """
-    def __init__(self,
-                 name: str = '',
-                 canonical_name: str = '',
-                 k: int = 5,
-                 distance_threshold: float = math.inf,
-                 average: str = 'micro') -> None:
+
+    def __init__(
+        self,
+        name: str = "",
+        canonical_name: str = "",
+        k: int = 5,
+        distance_threshold: float = math.inf,
+        average: str = "micro",
+    ) -> None:
         self._name = name
         self.canonical_name = canonical_name
         self.k = k
@@ -58,33 +63,36 @@ class RetrievalMetric(ABC):
     @property
     def name(self) -> str:
         if self.distance_threshold and self.distance_threshold != math.inf:
-            return (f'{self._name}@{self.k} : '
-                    f'distance_threshold@{self.distance_threshold}')
+            return (
+                f"{self._name}@{self.k} : "
+                f"distance_threshold@{self.distance_threshold}"
+            )
         else:
-            return f'{self._name}@{self.k}'
+            return f"{self._name}@{self.k}"
 
     def __str__(self) -> str:
         return self.name
 
     def __repr__(self) -> str:
-        return "%s:%s" % (self.canonical_name, self.name)
+        return "%s : %s" % (self.canonical_name, self.name)
 
     def get_config(self):
         return {
             "name": str(self.name),
             "canonical_name": str(self.canonical_name),
             "k": int(self.k),
-            "distance_threshold": float(self.distance_threshold)
+            "distance_threshold": float(self.distance_threshold),
         }
 
     @abstractmethod
-    def compute(self,
-                *,  # keyword only arguments see PEP-570
-                query_labels: IntTensor,
-                lookup_labels: IntTensor,
-                lookup_distances: FloatTensor,
-                match_mask: BoolTensor,
-                ) -> FloatTensor:
+    def compute(
+        self,
+        *,  # keyword only arguments see PEP-570
+        query_labels: IntTensor,
+        lookup_labels: IntTensor,
+        lookup_distances: FloatTensor,
+        match_mask: BoolTensor,
+    ) -> FloatTensor:
         """Compute the retrieval metric.
 
         Args:
@@ -102,3 +110,20 @@ class RetrievalMetric(ABC):
         Returns:
             A rank 0 tensor containing the metric.
         """
+
+    def _check_shape(
+        self, query_labels: IntTensor, match_mask: FloatTensor
+    ) -> None:
+        if tf.shape(match_mask)[1] < self.k:
+            raise ValueError(
+                f"The number of neighbors must be >= K. Number of neighbors is"
+                f" {tf.shape(match_mask)[1]} but K is {self.k}."
+            )
+
+        if tf.shape(match_mask)[0] != tf.shape(query_labels)[0]:
+            raise ValueError(
+                "The number of lookup sets must equal the number of query "
+                f"labels. Number of lookup sets is {tf.shape(match_mask)[0]} "
+                "but the number of query labels is "
+                f"{tf.shape(query_labels)[0]}."
+            )

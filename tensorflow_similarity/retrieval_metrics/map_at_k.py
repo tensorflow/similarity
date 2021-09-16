@@ -21,7 +21,7 @@ from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
 class MapAtK(RetrievalMetric):
-    """Mean Average precision (mAP) @K is computed as.
+    """Mean Average precision - mAP@K is computed as.
 
     $$
     mAP_i@K = \frac{\sum_{j = 1}^{K} {rel_i_j}\times{P_i@j}}{R}
@@ -34,22 +34,24 @@ class MapAtK(RetrievalMetric):
            i represents the i_th query.
            j represents the j_th ranked query result.
 
-    AP@K is biased towards the top ranked results and is a function of both the
-    rank (K) and the class size (R). This metric will be equal to the recall
-    when all the top results are on contiguous block of TPs.
+    AP@K is biased towards the top ranked results and is a function of the rank
+    (K), the relevancy mask (rel), and the number of indexed examples for the
+    class (R). The denominator for the i_th query is set to the number of
+    indexed examples (R) for the class associated with the i_th query.
 
-    For example, if the embedding dataset has 100 examples (R) of class 'a',
+    For example, if the index has has 100 embedded examples (R) of class 'a',
     and our query returns 50 results (K) where the top 10 results are all TPs,
     then the AP@50 will be 0.10; however, if instead the bottom 10 ranked
     results are all TPs, then the AP@50 will be much lower (0.012) because we
     apply a penalty for the 40 FPs that come before the relevant query results.
 
     This metric is useful when we want to ensure that the top ranked results
-    are relevant to the query.
+    are relevant to the query; however, it requires that we pass a mapping from
+    the class id to the number of indexed examples for that class.
 
     Args:
         r: A mapping from class id to the number of examples in the index,
-        e.g., r[4] = 10 represents 10 indexed examples from class 4
+        e.g., r[4] = 10 represents 10 indexed examples from class 4.
 
         name: Name associated with the metric object, e.g., avg_precision@5
 
@@ -66,26 +68,22 @@ class MapAtK(RetrievalMetric):
 
         * 'micro': Calculates metrics globally over all queries.
     """
-    def __init__(self,
-                 r: Mapping[int, int] = {},
-                 name: str = 'map',
-                 k: int = 5,
-                 average: str = 'micro',
-                 **kwargs) -> None:
-        if average == 'macro':
-            raise ValueError('Mean Average Precision only supports micro '
-                             'averaging.')
 
-        for label, count in r.items():
-            if count < k:
-                raise RuntimeWarning(f'Class {label} has {count} examples in '
-                                     f'the index but K is set to {k}. The '
-                                     'number of indexed examples for each '
-                                     'class must be greater than or equal '
-                                     'to K.')
+    def __init__(
+        self,
+        r: Mapping[int, int],
+        name: str = "map",
+        k: int = 5,
+        average: str = "micro",
+        **kwargs,
+    ) -> None:
+        if average == "macro":
+            raise ValueError(
+                "Mean Average Precision only supports micro averaging."
+            )
 
-        if 'canonical_name' not in kwargs:
-            kwargs['canonical_name'] = 'map@k'
+        if "canonical_name" not in kwargs:
+            kwargs["canonical_name"] = "map@k"
 
         super().__init__(name=name, k=k, average=average, **kwargs)
         self.r = r
@@ -97,11 +95,13 @@ class MapAtK(RetrievalMetric):
         base_config = super().get_config()
         return {**base_config, **config}
 
-    def compute(self,
-                *,  # keyword only arguments see PEP-570
-                query_labels: IntTensor,
-                match_mask: BoolTensor,
-                **kwargs) -> FloatTensor:
+    def compute(
+        self,
+        *,  # keyword only arguments see PEP-570
+        query_labels: IntTensor,
+        match_mask: BoolTensor,
+        **kwargs,
+    ) -> FloatTensor:
         """Compute the metric
 
         Args:
@@ -116,38 +116,34 @@ class MapAtK(RetrievalMetric):
         Returns:
             A rank 0 tensor containing the metric.
         """
-        k_slice = tf.cast(match_mask[:, :self.k], dtype='float')
+        self._check_shape(query_labels, match_mask)
+
+        k_slice = tf.cast(match_mask[:, : self.k], dtype="float")
         tp = tf.math.cumsum(k_slice, axis=1)
-        p_at_k = tf.math.divide(
-                tp,
-                tf.range(1, self.k+1, dtype='float')
-        )
+        p_at_k = tf.math.divide(tp, tf.range(1, self.k + 1, dtype="float"))
         p_at_k = tf.math.multiply(k_slice, p_at_k)
 
-        if self.average == 'micro':
-            if not self.r:
-                self.r = {label: self.k
-                          for label in tf.unique(query_labels)[0]}
-
+        if self.average == "micro":
             table = tf.lookup.StaticHashTable(
-                    tf.lookup.KeyValueTensorInitializer(
-                        list(self.r.keys()),
-                        list(self.r.values()),
-                        key_dtype=tf.int64,
-                        value_dtype=tf.int64,
-                    ),
-                    default_value=-1
+                tf.lookup.KeyValueTensorInitializer(
+                    list(self.r.keys()),
+                    list(self.r.values()),
+                    key_dtype=tf.int32,
+                    value_dtype=tf.int32,
+                ),
+                default_value=-1,
             )
             class_counts = table.lookup(query_labels)
             avg_p_at_k = tf.math.divide(
-                    tf.math.reduce_sum(p_at_k, axis=1),
-                    tf.cast(class_counts, dtype='float')
+                tf.math.reduce_sum(p_at_k, axis=1),
+                tf.cast(class_counts, dtype="float"),
             )
 
             avg_p_at_k = tf.math.reduce_mean(avg_p_at_k)
         else:
-            raise ValueError(f'{self.average} is not a supported average '
-                             'option')
+            raise ValueError(
+                f"{self.average} is not a supported average option"
+            )
 
         result: FloatTensor = avg_p_at_k
         return result
