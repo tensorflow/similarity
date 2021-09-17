@@ -18,18 +18,19 @@ from typing import Callable, Optional
 import tensorflow as tf
 
 
-def TFRecordDatasetSampler(shard_path: str,
-                           deserialization_fn: Callable,
-                           example_per_class: int = 2,
-                           batch_size: int = 32,
-                           shards_per_cycle: int = None,
-                           compression: Optional[str] = None,
-                           parallelism: int = tf.data.AUTOTUNE,
-                           file_parallelism: int = 1,
-                           prefetch_size: Optional[int] = None,
-                           shard_suffix: str = "*.tfrec") -> tf.data.Dataset:
-    """Create a [TFRecordDataset](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
-    based sampler
+def TFRecordDatasetSampler(
+    shard_path: str,
+    deserialization_fn: Callable,
+    example_per_class: int = 2,
+    batch_size: int = 32,
+    shards_per_cycle: int = None,
+    compression: Optional[str] = None,
+    parallelism: int = tf.data.AUTOTUNE,
+    file_parallelism: int = 1,
+    prefetch_size: Optional[int] = None,
+    shard_suffix: str = "*.tfrec",
+) -> tf.data.Dataset:
+    """Create a [TFRecordDataset](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset) based sampler.
 
     This sampler should be used when using a TFDataset or have a large
     dataset that needs to be stored on file.
@@ -69,8 +70,7 @@ def TFRecordDatasetSampler(shard_path: str,
         shards.
 
         compression: Which compression was used when creating the dataset.
-        `{None, "ZLIB", or "GZIP"}` as specified in [TFRecordDataset
-        documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
+        `{None, "ZLIB", or "GZIP"}` as specified in [TFRecordDataset documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
         Defaults to None.
 
         parallelism: How many parallel calls to do. If not set, will let
@@ -89,7 +89,7 @@ def TFRecordDatasetSampler(shard_path: str,
     """
     shards_list = [str(i) for i in Path(shard_path).glob(shard_suffix)]
     total_shards = len(shards_list)
-    print(f'found {total_shards} shards')
+    print(f"found {total_shards} shards")
 
     if not prefetch_size:
         prefetch_size = 10
@@ -97,7 +97,7 @@ def TFRecordDatasetSampler(shard_path: str,
     # how many shard to iterate over in parallels.
     cycle_length = shards_per_cycle if shards_per_cycle else total_shards
 
-    with tf.device('/cpu:0'):
+    with tf.device("/cpu:0"):
         # shuffle the shard order
         ds = tf.data.Dataset.from_tensor_slices(shards_list)
 

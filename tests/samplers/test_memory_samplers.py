@@ -1,7 +1,8 @@
+import pytest
 import tensorflow as tf
+
 from tensorflow_similarity.samplers import select_examples
 from tensorflow_similarity.samplers import MultiShotMemorySampler
-import pytest
 
 
 def test_valid_class_numbers():
@@ -12,8 +13,7 @@ def test_valid_class_numbers():
     class_per_batch = 42
 
     with pytest.raises(ValueError):
-        MultiShotMemorySampler(x=x, y=y,
-                               classes_per_batch=class_per_batch)
+        MultiShotMemorySampler(x=x, y=y, classes_per_batch=class_per_batch)
 
 
 @pytest.mark.parametrize("example_per_class", [2, 20])
@@ -54,10 +54,12 @@ def test_multi_shot_memory_sampler(example_per_class):
     class_per_batch = 2
     batch_size = example_per_class * class_per_batch
 
-    ms_sampler = MultiShotMemorySampler(x=x,
-                                        y=y,
-                                        classes_per_batch=class_per_batch,
-                                        examples_per_class_per_batch=example_per_class)  # noqa
+    ms_sampler = MultiShotMemorySampler(
+        x=x,
+        y=y,
+        classes_per_batch=class_per_batch,
+        examples_per_class_per_batch=example_per_class,
+    )  # noqa
 
     batch_x, batch_y = ms_sampler.generate_batch(batch_id=606)
 
@@ -78,12 +80,7 @@ def test_multi_shot_memory_sampler(example_per_class):
 def test_msms_get_slice():
     """Test the multi shot memory sampler get_slice method."""
     y = tf.constant(range(4))
-    x = tf.constant([
-        [0]*10,
-        [1]*10,
-        [2]*10,
-        [3]*10
-    ])
+    x = tf.constant([[0] * 10, [1] * 10, [2] * 10, [3] * 10])
 
     ms_sampler = MultiShotMemorySampler(x=x, y=y)
     # x and y are randomly shuffled so we fix the values here.
