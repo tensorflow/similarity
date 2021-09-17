@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 
 from tensorflow_similarity.samplers import TFRecordDatasetSampler
@@ -19,12 +20,12 @@ def to_tfrecord(sid, value):
 
 
 def create_data(tmpdir):
-    for sid in range(1,6):
+    for sid in range(100):
         shard_path = tmpdir / f"tfr_{sid}.tfrec"
 
         with tf.io.TFRecordWriter(str(shard_path)) as w:
-            for value in range(1,11):
-                example = to_tfrecord(sid, sid*value)
+            for value in range(1_000):
+                example = to_tfrecord(sid, sid*1_000+value)
                 w.write(example)
 
 
@@ -44,11 +45,20 @@ def test_basic(tmpdir):
     sampler = TFRecordDatasetSampler(
         tmpdir,
         deserialization_fn=deserialization_fn,
-        batch_size=6,
+        batch_size=10,
         example_per_class=2)
 
     si = iter(sampler)
-    for _ in range(10):
-        examples = next(si)
-        print(examples)
-    raise ValueError
+    [next(si) for _ in range(10_000)]
+    examples = next(si)
+
+    # We should get 3 pairs of shard IDs
+    sids = examples[0].numpy()
+    values = examples[1].numpy()
+    first_sid = sids[::2]
+    second_sid = sids[1::2]
+
+    assert len(sids) == 10
+    np.testing.assert_array_equal(first_sid, second_sid)
+    for sid, val in zip(sids, values):
+        assert 0 <= val - sid*1_000 < 1_000

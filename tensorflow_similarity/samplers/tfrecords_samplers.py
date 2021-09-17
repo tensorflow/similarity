@@ -26,7 +26,7 @@ def TFRecordDatasetSampler(
     shards_per_cycle: int = None,
     compression: Optional[str] = None,
     parallelism: int = tf.data.AUTOTUNE,
-    file_parallelism: int = 1,
+    async_cycle: bool = False,
     prefetch_size: Optional[int] = None,
     shard_suffix: str = "*.tfrec",
 ) -> tf.data.Dataset:
@@ -76,8 +76,11 @@ def TFRecordDatasetSampler(
         parallelism: How many parallel calls to do. If not set, will let
         TensorFlow decide by using `tf.data.AUTOTUNE` (-1).
 
-        file_parallelism: How many parallel shards to read increase number
-        if IO bound. Defaults to 1.
+        async_cycle: If True, create a threadpool of size `batch_size //
+        example_per_class` and fetch inputs from the cycle shards
+        asynchronously; however, in practice, the default single thread setting
+        is faster. We only recommend setting this to True if it is absolutely
+        necessary.
 
         prefetch_size: How many batch to precache. Defaults to 10.
 
@@ -96,6 +99,8 @@ def TFRecordDatasetSampler(
 
     # how many shard to iterate over in parallels.
     cycle_length = shards_per_cycle if shards_per_cycle else total_shards
+    # how many threads to use when fetching inputs from the cycle shards
+    num_parallel_calls = cycle_length if async_cycle else 1
 
     with tf.device("/cpu:0"):
         # shuffle the shard order
@@ -118,11 +123,11 @@ def TFRecordDatasetSampler(
             ),  # noqa
             cycle_length=cycle_length,
             block_length=example_per_class,
-            num_parallel_calls=file_parallelism,
+            num_parallel_calls=num_parallel_calls,
             deterministic=False,
         )
         ds = ds.map(deserialization_fn, num_parallel_calls=parallelism)
-        ds = ds.batch(batch_size)
         ds = ds.repeat()
+        ds = ds.batch(batch_size)
         ds = ds.prefetch(prefetch_size)
         return ds
