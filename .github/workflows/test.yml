@@ -22,8 +22,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install types-tabulate
         pip install tensorflow
+        pip install types-tabulate
+        pip install pytest
+        pip install pytest-cov
+        pip install coveralls
+
     
     - name: Installing package
       run: |
@@ -42,5 +46,10 @@ jobs:
     
     - name: Unit testing
       run: |
-        pytest --cov=tensorflow_similarity tests/
+        pytest --cov=tensorflow_similarity tests/ --cov-report xml
     
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.COVERALLS }}
+        path-to-lcov: coverage.xml
