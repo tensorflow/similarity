@@ -25,7 +25,7 @@ jobs:
         pip install tensorflow
         pip install types-tabulate
         pip install pytest
-        pip install pytest-cov
+        pip install coverage
         pip install coveralls
 
     
@@ -46,7 +46,10 @@ jobs:
     
     - name: Unit testing
       run: |
-        pytest --cov=tensorflow_similarity tests/ --cov-report xml
+        # Specify the source dir to avoid running coverage on /tmp/ test files.
+        coverage run --source tensorflow_similarity -m pytest tests/
+        # Generate the coverage xml file
+        coverage xml
     
     - name: Coveralls
       uses: coverallsapp/github-action@master
