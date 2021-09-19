@@ -47,12 +47,9 @@ jobs:
     - name: Unit testing
       run: |
         # Specify the source dir to avoid running coverage on /tmp/ test files.
-        coverage run --source tensorflow_similarity -m pytest tests/
-        # Generate the coverage xml file
-        coverage xml
+        coverage run --source=tensorflow_similarity -m pytest tests/
     
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.COVERALLS }}
-        path-to-lcov: coverage.xml
