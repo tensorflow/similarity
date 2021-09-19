@@ -25,7 +25,7 @@ jobs:
         pip install tensorflow
         pip install types-tabulate
         pip install pytest
-        pip install coverage
+        pip install pytest-cov
         pip install coveralls
 
     
@@ -47,9 +47,9 @@ jobs:
     - name: Unit testing
       run: |
         # Specify the source dir to avoid running coverage on /tmp/ test files.
-        coverage run --source=tensorflow_similarity -m pytest tests/
+        pytest --cov=tensorflow_similarity tests/
     
     - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
+      run: coveralls
+      env:
         github-token: ${{ secrets.COVERALLS }}
