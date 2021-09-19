@@ -50,6 +50,6 @@ jobs:
         pytest --cov=tensorflow_similarity tests/
     
     - name: Coveralls
-      run: coveralls
+      run: coveralls --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
