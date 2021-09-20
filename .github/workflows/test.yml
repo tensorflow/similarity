@@ -10,30 +10,26 @@ jobs:
   test:
 
     runs-on: ubuntu-latest
+      fail-fast: false
+      matrix:
+        python-version: [3.7, 3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
-        #TF don't work with 3.9 
-        python-version: '3.8.x'
-    
+        python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install tensorflow
-        pip install types-tabulate
-        pip install pytest
-        pip install coverage
         pip install coveralls
-
     
-    - name: Installing package
+    - name: Install package
       run: |
         pip install ".[dev]"
         
-    - name: Linting
+    - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -44,15 +40,12 @@ jobs:
       run: |
         mypy  tensorflow_similarity/ --raise-exceptions
     
-    - name: Unit testing
+    - name: Test with pytest
       run: |
-        # Specify the source dir to avoid running coverage on /tmp/ test files.
-        coverage run --source tensorflow_similarity -m pytest tests/
-        # Generate the coverage xml file
-        coverage xml
+        pytest --cov=tensorflow_similarity pytest tests/
     
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.COVERALLS }}
-        path-to-lcov: coverage.xml
+    # - name: Upload coverage to Coveralls
+    #   run: |
+    #     coveralls --service=github
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
