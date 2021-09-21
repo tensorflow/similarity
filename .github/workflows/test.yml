@@ -44,7 +44,7 @@ jobs:
     - name: Test with pytest
       run: |
         # Specify the source dir to avoid running coverage on /tmp/ test files.
-        pytest --cov=tensorflow_similarity tests/
+        coverage run --source=tensorflow_similarity pytest tests/
     
     - name: Upload coverage to Coveralls
       run: |

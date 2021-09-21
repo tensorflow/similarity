@@ -67,7 +67,6 @@ setup(
             "mkdocstrings",
             "mypy",
             "pytest",
-            "pytest-cov",
             "pytype",
             "setuptools",
             "twine",
