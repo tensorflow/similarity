@@ -51,3 +51,23 @@ jobs:
         coveralls --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
+        COVERALLS_PARALLEL: true
+
+  coveralls:
+
+    name: Indicate completion to coveralls.io
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install coveralls
+
+    - name: Finished
+      run: |
+        coveralls --service=github --finish
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
