@@ -46,8 +46,8 @@ jobs:
         # Specify the source dir to avoid running coverage on /tmp/ test files.
         pytest --cov=tensorflow_similarity tests/
     
-    # - name: Upload coverage to Coveralls
-    #   run: |
-    #     coveralls --service=github
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload coverage to Coveralls
+      run: |
+        coveralls --service=github
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
