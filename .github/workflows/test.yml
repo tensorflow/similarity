@@ -8,8 +8,6 @@ jobs:
   test:
 
     runs-on: ubuntu-latest
-    env:
-      BRANCH_NAME: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
     strategy:
       fail-fast: false
       matrix:
@@ -48,7 +46,7 @@ jobs:
         #     coverage run --source=tensorflow_similarity --omit=[*__init__*,/api] -m pytest tests/
 
     - name: Echo branch name
-      if: ${{ env.BRANCH_NAME == 'workflow_dev' }}
+      if: ${{ github.ref == 'refs/heads/workflow_dev' }}
       run: echo "Foo"
     
       # - name: Upload coverage to Coveralls
