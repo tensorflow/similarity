@@ -48,7 +48,7 @@ jobs:
         #     coverage run --source=tensorflow_similarity --omit=[*__init__*,/api] -m pytest tests/
 
     - name: Echo branch name
-      run: echo env.BRANCH_NAME
+      run: echo ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
     
       # - name: Upload coverage to Coveralls
       #   if: ${{ env.BRANCH_NAME  == 'master' }}
