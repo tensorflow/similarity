@@ -47,7 +47,7 @@ jobs:
 
     - name: Echo branch name
       if: ${{ github.ref == 'refs/heads/workflow_dev' }}
-      run: echo "Foo"
+      run: echo $GITHUB_REF
     
       # - name: Upload coverage to Coveralls
       #   if: ${{ env.BRANCH_NAME  == 'master' }}
