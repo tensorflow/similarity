@@ -48,7 +48,7 @@ jobs:
         #     coverage run --source=tensorflow_similarity --omit=[*__init__*,/api] -m pytest tests/
 
     - name: Echo branch name
-      if: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'workflow_dev'
+      if: ${{ env.BRANCH_NAME == 'workflow_dev' }}
       run: echo "Foo"
     
       # - name: Upload coverage to Coveralls
