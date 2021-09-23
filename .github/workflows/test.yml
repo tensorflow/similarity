@@ -45,7 +45,7 @@ jobs:
         coverage run --source=tensorflow_similarity -m pytest tests/
     
     - name: Upload coverage to Coveralls
-      if: ${{ GITHUB_REF##*/ == 'tensorflow/similarity:master' }}
+      if: ${ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'master' }
       run: |
         coveralls --service=github
       env:
@@ -66,7 +66,7 @@ jobs:
         pip install coveralls
 
     - name: Finished
-      if: ${{ GITHUB_REF##*/ == 'tensorflow/similarity:master' }}
+      if: ${ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'master' }
       run: |
         coveralls --service=github --finish
       env:
