@@ -8,6 +8,8 @@ jobs:
   test:
 
     runs-on: ubuntu-latest
+    env:
+      BRANCH_NAME: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
     strategy:
       fail-fast: false
       matrix:
@@ -45,7 +47,7 @@ jobs:
         coverage run --source=tensorflow_similarity -m pytest tests/
     
     - name: Upload coverage to Coveralls
-      if: ${ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'master' }
+      if: ${{ BRANCH_NAME  == 'master' }}
       run: |
         coveralls --service=github
       env:
@@ -66,7 +68,7 @@ jobs:
         pip install coveralls
 
     - name: Finished
-      if: ${ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'master' }
+      if: ${{ BRANCH_NAME  == 'master' }}
       run: |
         coveralls --service=github --finish
       env:
