@@ -16,64 +16,64 @@ jobs:
         python-version: [3.7, 3.8, 3.9]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install coveralls
-    
-    - name: Install package
-      run: |
-        pip install ".[dev]"
-        
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    
-    - name: Static analysis
-      run: |
-        mypy  tensorflow_similarity/ --raise-exceptions
-    
-    - name: Test with pytest
-      run: |
-        # Specify the source dir to avoid running coverage on /tmp/ test files.
-        # Also try to omit the all init files and the /api dir.
-        coverage run --source=tensorflow_similarity --omit=[*__init__*,/api] -m pytest tests/
+        # - uses: actions/checkout@v2
+        # - name: Set up Python ${{ matrix.python-version }}
+        #   uses: actions/setup-python@v2
+        #   with:
+        #     python-version: ${{ matrix.python-version }}
+        # - name: Install dependencies
+        #   run: |
+        #     python -m pip install --upgrade pip
+        #     pip install coveralls
+        # 
+        # - name: Install package
+        #   run: |
+        #     pip install ".[dev]"
+        #     
+        # - name: Lint with flake8
+        #   run: |
+        #     # stop the build if there are Python syntax errors or undefined names
+        #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        #     # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        # 
+        # - name: Static analysis
+        #   run: |
+        #     mypy  tensorflow_similarity/ --raise-exceptions
+        # 
+        # - name: Test with pytest
+        #   run: |
+        #     # Specify the source dir to avoid running coverage on /tmp/ test files.
+        #     # Also try to omit the all init files and the /api dir.
+        #     coverage run --source=tensorflow_similarity --omit=[*__init__*,/api] -m pytest tests/
 
     - name: Echo branch name
-      run: echo ${ env.BRANCH_NAME }
+      run: echo env.BRANCH_NAME
     
-    - name: Upload coverage to Coveralls
-      if: ${{ env.BRANCH_NAME  == 'master' }}
-      run: |
-        coveralls --service=github
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
-        COVERALLS_PARALLEL: true
+      # - name: Upload coverage to Coveralls
+      #   if: ${{ env.BRANCH_NAME  == 'master' }}
+      #   run: |
+      #     coveralls --service=github
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
+      #     COVERALLS_PARALLEL: true
 
-  coveralls:
+      # coveralls:
 
-    name: Indicate completion to coveralls.io
-    needs: test
-    runs-on: ubuntu-latest
+      #   name: Indicate completion to coveralls.io
+      #   needs: test
+      #   runs-on: ubuntu-latest
 
-    steps:
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install coveralls
+      #   steps:
+      #   - name: Install dependencies
+      #     run: |
+      #       python -m pip install --upgrade pip
+      #       pip install coveralls
 
-    - name: Finished
-      if: ${{ env.BRANCH_NAME  == 'master' }}
-      run: |
-        coveralls --service=github --finish
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   - name: Finished
+      #     if: ${{ env.BRANCH_NAME  == 'master' }}
+      #     run: |
+      #       coveralls --service=github --finish
+      #     env:
+      #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
