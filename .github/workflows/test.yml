@@ -44,7 +44,11 @@ jobs:
     - name: Test with pytest
       run: |
         # Specify the source dir to avoid running coverage on /tmp/ test files.
-        coverage run --source=tensorflow_similarity -m pytest tests/
+        # Also try to omit the all init files and the /api dir.
+        coverage run --source=tensorflow_similarity --omit=[*__init__*,/api] -m pytest tests/
+
+    - name: Echo branch name
+      run: echo ${ env.BRANCH_NAME }
     
     - name: Upload coverage to Coveralls
       if: ${{ env.BRANCH_NAME  == 'master' }}
