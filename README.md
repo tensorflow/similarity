@@ -1,6 +1,6 @@
 # TensorFlow Similarity: Metric Learning for Humans
 
-TensorFlow Similarity is a [TensorFLow](https://tensorflow.org) library for [similarity learning](https://en.wikipedia.org/wiki/Similarity_learning) also known as metric learning and contrastive learning.
+TensorFlow Similarity is a [TensorFlow](https://tensorflow.org) library for [similarity learning](https://en.wikipedia.org/wiki/Similarity_learning) also known as metric learning and contrastive learning.
 
 TensorFlow Similarity is still in beta.
 
