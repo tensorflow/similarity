@@ -2,9 +2,7 @@ name: Testing
 
 on:
   push:
-    branches: [ master ]
   pull_request:
-    branches: [ master ]
 
 jobs:
   test:
@@ -47,6 +45,7 @@ jobs:
         coverage run --source=tensorflow_similarity -m pytest tests/
     
     - name: Upload coverage to Coveralls
+      if: ${{ GITHUB_REF##*/ == 'tensorflow/similarity:master' }}
       run: |
         coveralls --service=github
       env:
@@ -67,6 +66,7 @@ jobs:
         pip install coveralls
 
     - name: Finished
+      if: ${{ GITHUB_REF##*/ == 'tensorflow/similarity:master' }}
       run: |
         coveralls --service=github --finish
       env:
