@@ -22,11 +22,12 @@ import numpy as np
 from tensorflow_similarity.types import IntTensor, FloatTensor
 
 
-def select_examples(x: FloatTensor,
-                    y: IntTensor,
-                    class_list: Sequence[int] = None,
-                    num_examples_per_class: int = None,
-                    ) -> Tuple[FloatTensor, IntTensor]:
+def select_examples(
+    x: FloatTensor,
+    y: IntTensor,
+    class_list: Sequence[int] = None,
+    num_examples_per_class: int = None,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Randomly select at most N examples per class
 
     Args:
@@ -78,15 +79,11 @@ def select_examples(x: FloatTensor,
             idxs.extend(class_idxs)
 
     random.shuffle(idxs)
-    # idxs = tf.constant(idxs)
+
     batch_x = []
     batch_y = []
-    for idx in tqdm(idxs, desc="collecting examples"):
+    for idx in tqdm(idxs, desc="gather examples"):
         batch_x.append(x[idx])
         batch_y.append(y[idx])
-    # # print("ere")
-    # # with tf.device("/cpu:0"):
-    # #     batch_x = tf.gather(x, indices=idxs)
-    # #     batch_y = tf.gather(y, indices=idxs)
 
     return np.array(batch_x), np.array(batch_y)

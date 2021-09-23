@@ -100,7 +100,7 @@ class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
 
             warmup: Keep track of warmup epochs and let the augmenter knows
             when the warmup is over by passing along with each batch data a
-            boolean `is_warmup`. See `self.get_examples()` Defaults to 0.
+            boolean `is_warmup`. See `self._get_examples()` Defaults to 0.
         """
 
         # dealing with users passing a single split e.g "train"
