@@ -17,7 +17,7 @@ import random
 from typing import Sequence, Tuple
 
 from tqdm.auto import tqdm
-import tensorflow as tf
+import numpy as np
 
 from tensorflow_similarity.types import IntTensor, FloatTensor
 
@@ -78,10 +78,15 @@ def select_examples(x: FloatTensor,
             idxs.extend(class_idxs)
 
     random.shuffle(idxs)
-    idxs = tf.constant(idxs)
+    # idxs = tf.constant(idxs)
+    batch_x = []
+    batch_y = []
+    for idx in tqdm(idxs, desc="collecting examples"):
+        batch_x.append(x[idx])
+        batch_y.append(y[idx])
+    # # print("ere")
+    # # with tf.device("/cpu:0"):
+    # #     batch_x = tf.gather(x, indices=idxs)
+    # #     batch_y = tf.gather(y, indices=idxs)
 
-    with tf.device("/cpu:0"):
-        batch_x = tf.gather(x, indices=idxs)
-        batch_y = tf.gather(y, indices=idxs)
-
-    return batch_x, batch_y
+    return np.array(batch_x), np.array(batch_y)
