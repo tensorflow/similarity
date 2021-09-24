@@ -41,7 +41,6 @@ from tensorflow_similarity.types import FloatTensor, Lookup, IntTensor, Tensor
 from tensorflow_similarity.types import PandasDataFrame, CalibrationResults
 
 
-
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class SimilarityModel(tf.keras.Model):
     """Specialized Keras.Model which implement the core features needed for
@@ -62,21 +61,22 @@ class SimilarityModel(tf.keras.Model):
     # def _index(self, index):
     #     self._index: Indexer = index
 
-    def compile(self,
-                optimizer: Union[Optimizer, str, Dict, List] = 'rmsprop',  # noqa
-                distance: Union[Distance, str] = 'auto',
-                loss: Union[Loss, MetricLoss, str, Dict, List] = None,
-                metrics: Union[Metric, DistanceMetric, str, Dict, List] = None,
-                embedding_output: int = None,
-                kv_store: Union[Store, str] = 'memory',
-                search: Union[Search, str] = 'nmslib',
-                evaluator: Union[Evaluator, str] = 'memory',
-                stat_buffer_size: int = 1000,
-                loss_weights: List = None,
-                weighted_metrics: List = None,
-                run_eagerly: bool = False,
-                steps_per_execution: int = 1,
-                **kwargs):
+    def compile(
+            self,
+            optimizer: Union[Optimizer, str, Dict, List] = 'rmsprop',  # noqa
+            distance: Union[Distance, str] = 'auto',
+            loss: Union[Loss, MetricLoss, str, Dict, List] = None,
+            metrics: Union[Metric, DistanceMetric, str, Dict, List] = None,
+            embedding_output: int = None,
+            kv_store: Union[Store, str] = 'memory',
+            search: Union[Search, str] = 'nmslib',
+            evaluator: Union[Evaluator, str] = 'memory',
+            stat_buffer_size: int = 1000,
+            loss_weights: List = None,
+            weighted_metrics: List = None,
+            run_eagerly: bool = False,
+            steps_per_execution: int = 1,
+            **kwargs):
         """Configures the model for training.
 
         Args:
@@ -277,7 +277,7 @@ class SimilarityModel(tf.keras.Model):
         if verbose:
             print('[Indexing 1 point]')
             print('|-Computing embeddings')
-        
+
         x = tf.expand_dims(x, axis=0)
         prediction = self.predict(x)
         self._index.add(prediction=prediction,
@@ -308,9 +308,7 @@ class SimilarityModel(tf.keras.Model):
                                         k=k,
                                         verbose=verbose)
 
-    def single_lookup(self,
-                      x: Tensor,
-                      k: int = 5) -> List[Lookup]:
+    def single_lookup(self, x: Tensor, k: int = 5) -> List[Lookup]:
         """Find the k closest matches in the index for a given sample.
 
         Args:
@@ -338,7 +336,9 @@ class SimilarityModel(tf.keras.Model):
             k: int = 1,
             calibration_metric: Union[str, ClassificationMetric] = "f1",
             matcher: Union[str, ClassificationMatch] = 'match_nearest',
-            extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = ['precision', 'recall'],  # noqa
+            extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = [
+                'precision', 'recall'
+            ],  # noqa
             rounding: int = 2,
             verbose: int = 1) -> CalibrationResults:
         """Calibrate model thresholds using a test dataset.
@@ -490,10 +490,10 @@ class SimilarityModel(tf.keras.Model):
             print("|-Computing retrieval metrics")
 
         results = self._index.evaluate_retrieval(
-                predictions=predictions,
-                target_labels=y,
-                retrieval_metrics=retrieval_metrics,
-                verbose=verbose,
+            predictions=predictions,
+            target_labels=y,
+            retrieval_metrics=retrieval_metrics,
+            verbose=verbose,
         )
 
         if verbose:
@@ -505,14 +505,16 @@ class SimilarityModel(tf.keras.Model):
         return results
 
     def evaluate_classification(
-            self,
-            x: Tensor,
-            y: IntTensor,
-            k: int = 1,
-            extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = ['precision', 'recall'],  # noqa
-            matcher: Union[str, ClassificationMatch] = 'match_nearest',
-            verbose: int = 1
-            ) -> DefaultDict[str, Dict[str, Union[str, np.ndarray]]]:
+        self,
+        x: Tensor,
+        y: IntTensor,
+        k: int = 1,
+        extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = [
+            'precision', 'recall'
+        ],  # noqa
+        matcher: Union[str, ClassificationMatch] = 'match_nearest',
+        verbose: int = 1
+    ) -> DefaultDict[str, Dict[str, Union[str, np.ndarray]]]:
         """Evaluate model classification matching on a given evaluation dataset.
 
         Args:
@@ -551,8 +553,9 @@ class SimilarityModel(tf.keras.Model):
             print("|-Computing embeddings")
         predictions = self.predict(x)
 
-        results: DefaultDict[str, Dict[str, Union[str, np.ndarray]]] = (
-                defaultdict(dict))
+        results: DefaultDict[str, Dict[str,
+                                       Union[str,
+                                             np.ndarray]]] = (defaultdict(dict))
 
         if verbose:
             pb = tqdm(total=len(self._index.cutpoints),
@@ -567,15 +570,11 @@ class SimilarityModel(tf.keras.Model):
 
             res: Dict[str, Union[str, np.ndarray]] = {}
             res.update(
-                self._index.evaluate_classification(
-                    predictions,
-                    y,
-                    [distance_threshold],
-                    metrics=metrics,
-                    matcher=matcher,
-                    k=k
-                )
-            )
+                self._index.evaluate_classification(predictions,
+                                                    y, [distance_threshold],
+                                                    metrics=metrics,
+                                                    matcher=matcher,
+                                                    k=k))
             res['distance'] = tf.constant([distance_threshold])
             res['name'] = cp_name
             results[cp_name] = res
