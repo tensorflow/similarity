@@ -26,9 +26,7 @@ from tensorflow.keras.losses import Loss
 from tqdm.auto import tqdm
 
 from tensorflow_similarity.classification_metrics import ClassificationMetric
-from tensorflow_similarity.classification_metrics import (
-    make_classification_metric,
-)  # noqa
+from tensorflow_similarity.classification_metrics import make_classification_metric  # noqa
 from tensorflow_similarity.distances import Distance
 from tensorflow_similarity.distances import distance_canonicalizer
 from tensorflow_similarity.training_metrics import DistanceMetric
@@ -308,6 +306,7 @@ class SimilarityModel(tf.keras.Model):
             print("[Indexing %d points]" % len(x))
             print("|-Computing embeddings")
         predictions = self.predict(x)
+
         self._index.batch_add(
             predictions=predictions,
             labels=y,
@@ -315,6 +314,45 @@ class SimilarityModel(tf.keras.Model):
             build=build,
             verbose=verbose,
         )
+
+    def index_single(self,
+                     x: Tensor,
+                     y: IntTensor = None,
+                     data: Optional[Tensor] = None,
+                     build: bool = True,
+                     verbose: int = 1):
+        """Index data.
+
+        Args:
+            x: Sample to index.
+
+            y: class id associated with the data if any. Defaults to None.
+
+            data: store the data associated with the samples in the key
+            value store. Defaults to None.
+
+            build: Rebuild the index after indexing. This is needed to make the
+            new samples searchable. Set it to false to save processing time
+            when calling indexing repeatidly without the need to search between
+            the indexing requests. Defaults to True.
+
+            verbose: Output indexing progress info. Defaults to 1.
+        """
+
+        if not self._index:
+            raise Exception('You need to compile the model with a valid'
+                            'distance to be able to use the indexing')
+        if verbose:
+            print('[Indexing 1 point]')
+            print('|-Computing embeddings')
+
+        x = tf.expand_dims(x, axis=0)
+        prediction = self.predict(x)
+        self._index.add(prediction=prediction,
+                        label=y,
+                        data=data,
+                        build=build,
+                        verbose=verbose)
 
     def lookup(
         self, x: Tensor, k: int = 5, verbose: int = 1
@@ -366,8 +404,7 @@ class SimilarityModel(tf.keras.Model):
         calibration_metric: Union[str, ClassificationMetric] = "f1",
         matcher: Union[str, ClassificationMatch] = "match_nearest",
         extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = [
-            "precision",
-            "recall",
+            "precision", "recall"
         ],  # noqa
         rounding: int = 2,
         verbose: int = 1,
@@ -548,8 +585,7 @@ class SimilarityModel(tf.keras.Model):
         y: IntTensor,
         k: int = 1,
         extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = [
-            "precision",
-            "recall",
+            "precision", "recall"
         ],  # noqa
         matcher: Union[str, ClassificationMatch] = "match_nearest",
         verbose: int = 1,
