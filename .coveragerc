@@ -1,0 +1,15 @@
+[run]
+source = tensorflow_similarity
+
+omit =
+    # omit anything in an api directory anywhere
+    */api/*
+    # omit all __init__.py files 
+    */__init__.py
+
+[report]
+omit =
+    # omit anything in an api directory anywhere
+    */api/*
+    # omit all __init__.py files 
+    */__init__.py
