@@ -247,7 +247,7 @@ class SimilarityModel(tf.keras.Model):
                               build=build,
                               verbose=verbose)
 
-    def single_index(self,
+    def index_single(self,
                      x: Tensor,
                      y: IntTensor = None,
                      data: Optional[Tensor] = None,
@@ -260,8 +260,8 @@ class SimilarityModel(tf.keras.Model):
 
             y: class id associated with the data if any. Defaults to None.
 
-            store_data: store the data associated with the samples in the key
-            value store. Defaults to True.
+            data: store the data associated with the samples in the key
+            value store. Defaults to None.
 
             build: Rebuild the index after indexing. This is needed to make the
             new samples searchable. Set it to false to save processing time
