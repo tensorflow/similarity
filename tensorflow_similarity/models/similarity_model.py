@@ -247,6 +247,45 @@ class SimilarityModel(tf.keras.Model):
                               build=build,
                               verbose=verbose)
 
+    def index_single(self,
+                     x: Tensor,
+                     y: IntTensor = None,
+                     data: Optional[Tensor] = None,
+                     build: bool = True,
+                     verbose: int = 1):
+        """Index data.
+
+        Args:
+            x: Sample to index.
+
+            y: class id associated with the data if any. Defaults to None.
+
+            data: store the data associated with the samples in the key
+            value store. Defaults to None.
+
+            build: Rebuild the index after indexing. This is needed to make the
+            new samples searchable. Set it to false to save processing time
+            when calling indexing repeatidly without the need to search between
+            the indexing requests. Defaults to True.
+
+            verbose: Output indexing progress info. Defaults to 1.
+        """
+
+        if not self._index:
+            raise Exception('You need to compile the model with a valid'
+                            'distance to be able to use the indexing')
+        if verbose:
+            print('[Indexing 1 point]')
+            print('|-Computing embeddings')
+        
+        x = tf.expand_dims(x, axis=0)
+        prediction = self.predict(x)
+        self._index.add(prediction=prediction,
+                        label=y,
+                        data=data,
+                        build=build,
+                        verbose=verbose)
+
     def lookup(self,
                x: Tensor,
                k: int = 5,
