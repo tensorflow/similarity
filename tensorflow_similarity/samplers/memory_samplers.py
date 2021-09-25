@@ -17,7 +17,7 @@ from collections import defaultdict
 from typing import Optional, Tuple, TypeVar, Sequence
 
 import tensorflow as tf
-from tensorflow_similarity.types import FloatTensor, IntTensor, TensorLike
+from tensorflow_similarity.types import FloatTensor, IntTensor
 from tqdm.auto import tqdm
 
 from .samplers import Augmenter, Sampler
@@ -30,8 +30,8 @@ class MultiShotMemorySampler(Sampler):
 
     def __init__(
         self,
-        x: TensorLike,
-        y: TensorLike,
+        x,
+        y,
         classes_per_batch: int = 2,
         examples_per_class_per_batch: int = 2,
         steps_per_epoch: int = 1000,
@@ -217,7 +217,7 @@ class SingleShotMemorySampler(Sampler):
 
     def __init__(
         self,
-        x: TensorLike,
+        x,
         augmenter: Augmenter,
         examples_per_batch: int,
         num_augmentations_per_example: int = 2,

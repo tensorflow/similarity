@@ -61,8 +61,6 @@ class Value(Tensor):
         pass
 
 
-TensorLike = Union[Tensor, tuple, list, np.ndarray]
-
 EqFunc = Callable[[Any, Any], bool]
 
 
