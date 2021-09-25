@@ -17,7 +17,7 @@ from collections import defaultdict
 from typing import Optional, Tuple, TypeVar, Sequence
 
 import tensorflow as tf
-from tensorflow_similarity.types import FloatTensor, IntTensor
+from tensorflow_similarity.types import FloatTensor, IntTensor, TensorLike
 from tqdm.auto import tqdm
 
 from .samplers import Augmenter, Sampler
@@ -27,11 +27,11 @@ T = TypeVar("T", FloatTensor, IntTensor)
 
 
 class MultiShotMemorySampler(Sampler):
-    # FIXME: typing x, y is hard.
+
     def __init__(
         self,
-        x,
-        y,
+        x: TensorLike,
+        y: TensorLike,
         classes_per_batch: int = 2,
         examples_per_class_per_batch: int = 2,
         steps_per_epoch: int = 1000,
@@ -107,10 +107,8 @@ class MultiShotMemorySampler(Sampler):
             self.class_list = list(set([int(c) for c in class_list]))
 
         if classes_per_batch > len(self.class_list):
-            raise ValueError(
-                "the value of classes_per_batch must be <= to the "
-                "number of existing classes in the dataset"
-            )
+            raise ValueError("the value of classes_per_batch must be <= to the "
+                             "number of existing classes in the dataset")
 
         # filter
         x, y = select_examples(
@@ -134,9 +132,8 @@ class MultiShotMemorySampler(Sampler):
             cl = cls[idx]
             self.index_per_class[cl].append(idx)
 
-    def _get_examples(
-        self, batch_id: int, num_classes: int, examples_per_class: int
-    ) -> Tuple[FloatTensor, IntTensor]:
+    def _get_examples(self, batch_id: int, num_classes: int,
+                      examples_per_class: int) -> Tuple[FloatTensor, IntTensor]:
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -167,7 +164,7 @@ class MultiShotMemorySampler(Sampler):
             idxs.extend(random.choices(class_idxs, k=examples_per_class))
 
         random.shuffle(idxs)
-        idxs_slice = tf.constant(idxs[: self.batch_size])
+        idxs_slice = tf.constant(idxs[:self.batch_size])
 
         with tf.device("/cpu:0"):
             batch_x = tf.gather(self._x, indices=idxs_slice)
@@ -175,9 +172,9 @@ class MultiShotMemorySampler(Sampler):
 
         return batch_x, batch_y
 
-    def get_slice(
-        self, begin: int = 0, size: int = -1
-    ) -> Tuple[FloatTensor, IntTensor]:
+    def get_slice(self,
+                  begin: int = 0,
+                  size: int = -1) -> Tuple[FloatTensor, IntTensor]:
         """Extracts a slice over both the x and y tensors.
 
         This method extracts a slice of size `size` over the first dimension of
@@ -217,9 +214,10 @@ class MultiShotMemorySampler(Sampler):
 
 
 class SingleShotMemorySampler(Sampler):
+
     def __init__(
         self,
-        x: FloatTensor,
+        x: TensorLike,
         augmenter: Augmenter,
         examples_per_batch: int,
         num_augmentations_per_example: int = 2,
@@ -269,7 +267,8 @@ class SingleShotMemorySampler(Sampler):
 
         super().__init__(
             examples_per_batch,
-            examples_per_class_per_batch=num_augmentations_per_example,
+            examples_per_class_per_batch=1,
+            num_augmentations_per_example=num_augmentations_per_example,
             steps_per_epoch=steps_per_epoch,
             augmenter=augmenter,
             warmup=warmup,
@@ -277,9 +276,8 @@ class SingleShotMemorySampler(Sampler):
         self._x = x
         self._y = tf.range(0, self.num_examples, dtype="int32")
 
-    def _get_examples(
-        self, batch_id: int, num_classes: int, examples_per_class: int
-    ) -> Tuple[FloatTensor, IntTensor]:
+    def _get_examples(self, batch_id: int, num_classes: int,
+                      examples_per_class: int) -> Tuple[FloatTensor, IntTensor]:
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -305,18 +303,19 @@ class SingleShotMemorySampler(Sampler):
 
         # note: we draw at random the class so the sampler can scale up to
         # millions of points. Shuffling array is simply too slow
-        idxs = tf.random.uniform(
-            (num_classes,), minval=0, maxval=self.num_examples, dtype="int32"
-        )
+        idxs = tf.random.uniform((num_classes,),
+                                 minval=0,
+                                 maxval=self.num_examples,
+                                 dtype="int32")
         # ! don't cast data as different model use different type.
         y = tf.convert_to_tensor([int(i) for i in idxs])
         x = tf.convert_to_tensor([self._x[idx] for idx in y])
 
         return x, y
 
-    def get_slice(
-        self, begin: int = 0, size: int = -1
-    ) -> Tuple[FloatTensor, IntTensor]:
+    def get_slice(self,
+                  begin: int = 0,
+                  size: int = -1) -> Tuple[FloatTensor, IntTensor]:
         """Extracts an augmented slice over both the x and y tensors.
 
         This method extracts a slice of size `size` over the first dimension of
@@ -338,7 +337,7 @@ class SingleShotMemorySampler(Sampler):
             slice_x, slice_y = self.augmenter(
                 slice_x,
                 slice_y,
-                self.examples_per_class_per_batch,
+                self.num_augmentations_per_example,
                 self.is_warmup,
             )
 

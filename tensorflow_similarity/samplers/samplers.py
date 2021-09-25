@@ -28,19 +28,20 @@ from tensorflow_similarity.types import FloatTensor, IntTensor
 #   is_warmup: If True, the sampler is still in warmup phase.
 # Returns:
 #   A Tuple containing the transformed x and y tensors.
-Augmenter = Callable[
-    [FloatTensor, IntTensor, int, bool], Tuple[FloatTensor, IntTensor]
-]
+Augmenter = Callable[[FloatTensor, IntTensor, int, bool], Tuple[FloatTensor,
+                                                                IntTensor]]
 
 # Not currently used. Might be useful to allows gradual call of augmenter
 Scheduler = Callable[[Any], Any]
 
 
 class Sampler(Sequence, metaclass=abc.ABCMeta):
+
     def __init__(
         self,
         classes_per_batch: int,
         examples_per_class_per_batch: int = 2,
+        num_augmentations_per_example: int = 0,
         steps_per_epoch: int = 1000,
         augmenter: Optional[Augmenter] = None,
         # scheduler: Optional[Scheduler] = None,
@@ -62,6 +63,9 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
             examples_per_class_per_batch: how many examples of each class to use
             per batch. Defaults to 2.
 
+            num_augmentations_per_example: how many augmented versions of an
+            example will be produced by the augmenter. Defaults to 0.
+
             steps_per_epoch: How many steps/batches per epoch. Defaults to
             1000.
 
@@ -77,7 +81,10 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
         self.epoch = 0  # track epoch count
         self.classes_per_batch = classes_per_batch
         self.examples_per_class_per_batch = examples_per_class_per_batch
+        self.num_augmentations_per_example = num_augmentations_per_example
         self.batch_size = classes_per_batch * examples_per_class_per_batch
+        self.aug_size = (self.batch_size *
+                         (1 + num_augmentations_per_example)) - self.batch_size
         self.steps_per_epoch = steps_per_epoch
         self.augmenter = augmenter
         self.warmup = warmup
@@ -85,15 +92,14 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
 
         # Tell the users what to expect as they might be unsure what the batch
         # size will be
-        print(
-            f"\nBatch size is {self.batch_size} -> {self.classes_per_batch} "
-            f"class X {self.examples_per_class_per_batch} examples"
-        )
+        print(f"\nBatch size is {self.batch_size + self.aug_size} -> "
+              f"{self.classes_per_batch} class * "
+              f"{self.examples_per_class_per_batch} examples * (1 + "
+              f"{self.num_augmentations_per_example} augmentations)")
 
     @abc.abstractmethod
-    def _get_examples(
-        self, batch_id: int, num_classes: int, examples_per_class: int
-    ) -> Tuple[FloatTensor, IntTensor]:
+    def _get_examples(self, batch_id: int, num_classes: int,
+                      examples_per_class: int) -> Tuple[FloatTensor, IntTensor]:
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -146,17 +152,15 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
             x, y: batch
         """
 
-        x, y = self._get_examples(
-            batch_id, self.classes_per_batch, self.examples_per_class_per_batch
-        )
+        x, y = self._get_examples(batch_id, self.classes_per_batch,
+                                  self.examples_per_class_per_batch)
 
         # strip examples if needed. This might happen due to rounding
-        if len(x) != self.batch_size:
-            x = x[: self.batch_size]
-            y = y[: self.batch_size]
+        if len(x) > self.batch_size:
+            x = x[:self.batch_size]
+            y = y[:self.batch_size]
 
         if self.augmenter:
-            x, y = self.augmenter(
-                x, y, self.examples_per_class_per_batch, self.is_warmup
-            )
+            x, y = self.augmenter(x, y, self.num_augmentations_per_example,
+                                  self.is_warmup)
         return x, y

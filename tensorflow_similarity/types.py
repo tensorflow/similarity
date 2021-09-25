@@ -56,9 +56,12 @@ class Value(Tensor):
     These objects represent the (usually future) output of executing an op
     immediately.
     """
+
     def numpy(self):
         pass
 
+
+TensorLike = Union[Tensor, tuple, list, np.ndarray]
 
 EqFunc = Callable[[Any, Any], bool]
 
