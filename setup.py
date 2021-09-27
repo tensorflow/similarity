@@ -53,7 +53,7 @@ setup(
         "pandas",
         "Pillow",
         "tabulate",
-        "tensorflow>=2.6",
+        "tensorflow>=2.4",
         "tensorflow-datasets>=4.2",
         "tqdm",
         "umap-learn",
