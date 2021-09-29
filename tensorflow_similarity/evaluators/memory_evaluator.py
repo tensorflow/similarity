@@ -217,6 +217,7 @@ class MemoryEvaluator(Evaluator):
         Returns:
             CalibrationResults containing the thresholds and cutpoints Dicts.
         """
+        # TODO (ovallis): Assert if index is empty, or if the lookup is empty.
 
         # making a single list of metrics
         # Need expl covariance problem

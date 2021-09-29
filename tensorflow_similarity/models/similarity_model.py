@@ -11,6 +11,33 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Similarity model used for metric learning.
+
+Subclass of Keras.Model which provides methods for indexing, matching,
+evaluation, and similarity training.
+
+```python
+from tf.keras import layers
+from tensorflow_similarity.models import SimilarityModel
+
+# Setup dataset using tf.sim samplers
+train_ds = ...
+
+# Create similarity loss
+similarity_loss = ...
+
+# Build the model
+inputs = layers.Input(shape=(28,28,1))
+x = layers.Conv2D(32, 3, activation='relu')(x)
+x = layers.Flatten()(x)
+outputs = layers.Dense(16, activation='relu')(x)
+
+model = SimilarityModel(inputs, outputs)
+model.compile(optimizer=Adam(LR), loss=similarity_loss)
+
+history = model.fit(train_ds)
+```
+"""
 
 from collections import defaultdict
 from copy import copy

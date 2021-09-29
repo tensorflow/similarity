@@ -16,6 +16,7 @@ import random
 from collections import defaultdict
 from typing import Optional, Tuple, TypeVar, Sequence
 
+import numpy as np
 import tensorflow as tf
 from tensorflow_similarity.types import FloatTensor, IntTensor
 from tqdm.auto import tqdm
@@ -163,14 +164,13 @@ class MultiShotMemorySampler(Sampler):
             class_idxs = self.index_per_class[class_id]
             idxs.extend(random.choices(class_idxs, k=examples_per_class))
 
-        random.shuffle(idxs)
-        idxs_slice = tf.constant(idxs[:self.batch_size])
+        batch_x = []
+        batch_y = []
+        for idx in idxs:
+            batch_x.append(self._x[idx])
+            batch_y.append(self._y[idx])
 
-        with tf.device("/cpu:0"):
-            batch_x = tf.gather(self._x, indices=idxs_slice)
-            batch_y = tf.gather(self._y, indices=idxs_slice)
-
-        return batch_x, batch_y
+        return np.array(batch_x), np.array(batch_y)
 
     def get_slice(self,
                   begin: int = 0,
