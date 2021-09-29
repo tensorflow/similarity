@@ -222,7 +222,8 @@ class MemoryEvaluator(Evaluator):
         """
         # TODO (ovallis): Assert if index is empty, or if the lookup is empty.
         if len(lookups) == 0:
-            raise ValueError("lookups must not be empty.")
+            raise ValueError("lookups must not be empty. Is there no data in "
+                             "the index?")
 
         # making a single list of metrics
         # Need expl covariance problem

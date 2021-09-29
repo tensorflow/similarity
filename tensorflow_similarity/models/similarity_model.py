@@ -588,7 +588,7 @@ class SimilarityModel(tf.keras.Model):
         """
         if self._index.size() == 0:
             raise IndexError("Index must contain embeddings but is "
-                             "currently empty.")
+                             "currently empty. Have you run model.index()?")
 
         # get embeddings
         if verbose:
@@ -658,7 +658,7 @@ class SimilarityModel(tf.keras.Model):
         # solution to keep the end-user API clean and doing inferences once.
         if self._index.size() == 0:
             raise IndexError("Index must contain embeddings but is "
-                             "currently empty.")
+                             "currently empty. Have you run model.index()?")
 
         if not self._index.is_calibrated:
             raise ValueError("Uncalibrated model: run model.calibration()")
