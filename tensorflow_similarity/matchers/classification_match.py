@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 import tensorflow as tf
 
@@ -58,11 +58,19 @@ class ClassificationMatch(ABC):
         }
 
     def compile(self,
-                distance_thresholds: FloatTensor = tf.constant([math.inf])):
-        """Configures the distance thresholds used during matching."""
+                distance_thresholds: Optional[FloatTensor] = None):
+        """Configures the distance thresholds used during matching.
+
+        Args:
+            distance_thresholds: The max distance below which a nearest neighbor
+            is considered a valid match. A threshold of math.inf is used if None
+            is passed.
+        """
+        if distance_thresholds is None:
+            distance_thresholds = tf.constant([math.inf])
+
         self.distance_thresholds = tf.sort(
-                tf.cast(distance_thresholds, dtype='float32')
-        )
+            tf.cast(distance_thresholds, dtype='float32'))
 
     @abstractmethod
     def derive_match(self,
