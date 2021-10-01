@@ -582,7 +582,14 @@ class SimilarityModel(tf.keras.Model):
         Returns:
             Dictionary of metric results where keys are the metric names and
             values are the metrics values.
+
+        Raises:
+            IndexError: Index must contain embeddings but is currently empty.
         """
+        if self._index.size() == 0:
+            raise IndexError("Index must contain embeddings but is "
+                             "currently empty. Have you run model.index()?")
+
         # get embeddings
         if verbose:
             print("|-Computing embeddings")
@@ -642,12 +649,20 @@ class SimilarityModel(tf.keras.Model):
 
         Returns:
             Dictionary of (distance_metrics.md)[evaluation metrics]
+
+        Raises:
+            IndexError: Index must contain embeddings but is currently empty.
+            ValueError: Uncalibrated model: run model.calibration()")
         """
         # There is some code duplication in this function but that is the best
         # solution to keep the end-user API clean and doing inferences once.
+        if self._index.size() == 0:
+            raise IndexError("Index must contain embeddings but is "
+                             "currently empty. Have you run model.index()?")
 
         if not self._index.is_calibrated:
             raise ValueError("Uncalibrated model: run model.calibration()")
+
         cal_metric = self._index.get_calibration_metric()
 
         # get embeddings

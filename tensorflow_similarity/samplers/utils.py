@@ -49,9 +49,9 @@ def select_examples(
 
     # cast class_list if it exist to avoid slowness
     if class_list is not None:
-        class_list_int = [int(c) for c in class_list]
+        class_list_int = set([int(c) for c in class_list])
     else:
-        class_list_int = list(set([int(e) for e in y]))
+        class_list_int = set([int(e) for e in y])
 
     # Mapping class to idx
     index_per_class = defaultdict(list)

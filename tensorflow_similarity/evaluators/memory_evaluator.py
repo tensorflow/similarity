@@ -216,8 +216,14 @@ class MemoryEvaluator(Evaluator):
             verbose: Be verbose. Defaults to 1.
         Returns:
             CalibrationResults containing the thresholds and cutpoints Dicts.
+
+        Raises:
+            ValueError: lookupds must not be empty.
         """
         # TODO (ovallis): Assert if index is empty, or if the lookup is empty.
+        if len(lookups) == 0:
+            raise ValueError("lookups must not be empty. Is there no data in "
+                             "the index?")
 
         # making a single list of metrics
         # Need expl covariance problem

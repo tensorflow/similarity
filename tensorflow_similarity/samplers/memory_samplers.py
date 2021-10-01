@@ -162,7 +162,7 @@ class MultiShotMemorySampler(Sampler):
         idxs = []
         for class_id in class_list:
             class_idxs = self.index_per_class[class_id]
-            idxs.extend(random.choices(class_idxs, k=examples_per_class))
+            idxs.extend(random.sample(class_idxs, k=examples_per_class))
 
         batch_x = []
         batch_y = []
