@@ -90,94 +90,106 @@ class SimilarityModel(tf.keras.Model):
 
     def compile(
         self,
-        optimizer: Union[Optimizer, str, Dict, List] = "rmsprop",  # noqa
+        optimizer: Union[Optimizer, str, Dict, List] = "rmsprop",
+        loss: Optional[Union[Loss, MetricLoss, str, Dict, List]] = None,
+        metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
+        loss_weights: Optional[Union[List, Dict]] = None,
+        weighted_metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
+        run_eagerly: bool = False,
+        steps_per_execution: int = 1,
         distance: Union[Distance, str] = "auto",
-        loss: Union[Loss, MetricLoss, str, Dict, List] = None,
-        metrics: Union[Metric, DistanceMetric, str, Dict, List] = None,
-        embedding_output: int = None,
+        embedding_output: Optional[int] = None,
         kv_store: Union[Store, str] = "memory",
         search: Union[Search, str] = "nmslib",
         evaluator: Union[Evaluator, str] = "memory",
         stat_buffer_size: int = 1000,
-        loss_weights: List = None,
-        weighted_metrics: List = None,
-        run_eagerly: bool = False,
-        steps_per_execution: int = 1,
         **kwargs
     ):
         """Configures the model for training.
 
-            Args:
+        Args:
+            optimizer: String (name of optimizer) or optimizer instance. See
+              [tf.keras.optimizers](https://www.tensorflow.org/api_docs/python/tf/keras/optimizers).
 
-                optimizer: String (name of optimizer) or optimizer instance. See
-                [tf.keras.optimizers](https://www.tensorflow.org/api_docs/python/tf/keras/optimizers).
+            loss: String (name of objective function), objective function, any
+              `tensorflow_similarity.loss.*` instance or a `tf.keras.losses.Loss`
+              instance. See the [Losses documentation](../losses.md) for a list of
+              metric learning specific losses offered by TensorFlow Similairy and
+              [tf.keras.losses](https://www.tensorflow.org/api_docs/python/tf/keras/losses)
+              for the losses available directly in TensorFlow.
 
-                loss: String (name of objective function), objective function,
-                any `tensorflow_similarity.loss.*` instance or a
-                `tf.keras.losses.Loss` instance. See the [Losses
-                documentation](../losses.md) for a list of metric learning
-                specifics loss offered by TensorFlow Similairy and
-                [tf.keras.losses](https://www.tensorflow.org/api_docs/python/tf/keras/losses)
-                for the losses available directly in TensorFlow.
+              metrics: List of metrics to be evaluated by the model during
+              training and testing. Each of those can be a string, a function or a
+              [tensorflow_similairty.metrics.*](../metrics.md) instance. Note that
+              the metrics used for some type of metric-learning such as distance
+              learning (e.g via triplet loss) have a different prototype than the
+              metrics used in standard models and you can't use the
+              `tf.keras.metrics` for those type of learning.
 
+              Additionally many distance metrics are computed based of the
+              [Indexer()](../indexer.md) performance. E.g Matching Top 1 accuracy.
+              For technical and performance reasons, indexing data at each
+              training batch to compute those is impractical so those metrics are
+              computed at epoch end via the [EvalCallback](../callbacks.md)
 
-                metrics: List of metrics to be evaluated by the model during
-                training and testing. Each of those can be a string,
-                a function or a [tensorflow_similairty.metrics.*](../metrics.md)
-                instance. Note that the metrics used for some type of
-                metric-learning such as distance learning (e.g via triplet loss)
-                have a different prototype than the metrics used in
-                standard models and you can't use the `tf.keras.metrics` for those
-                type of learning.
+              See [Evaluation Metrics](../eval_metrics.md) for a list of available
+              metrics.
 
-                Additionally many distance metrics are computed based of the
-                [Indexer()](../indexer.md) performance. E.g Matching Top 1
-                accuracy. For technical and performance reasons, indexing data at
-                each training batch to compute those is impractical so
-                those metrics are computed at epoch end via
-                the [EvalCallback](../callbacks.md)
+              For multi-output models you can specify different metrics for
+              different outputs by passing a dictionary, such as
+              `metrics={'similarity': 'min_neg_gap', 'other': ['accuracy',
+              'mse']}`.  You can also pass a list (len = len(outputs)) of lists of
+              metrics such as `metrics=[['min_neg_gap'], ['accuracy', 'mse']]` or
+              `metrics=['min_neg_gap', ['accuracy', 'mse']]`. For outputs which
+              are not related to metrics learning, you can use any of the standard
+              `tf.keras.metrics`.
 
-                See [Evaluation Metrics](../eval_metrics.md) for a list of
-                available metrics.
+            loss_weights: Optional list or dictionary specifying scalar
+              coefficients (Python floats) to weight the loss contributions of
+              different model outputs. The loss value that will be minimized by
+              the model will then be the *weighted sum* of all individual losses,
+              weighted by the `loss_weights` coefficients.  If a list, it is
+              expected to have a 1:1 mapping to the model's outputs. If a dict, it
+              is expected to map output names (strings) to scalar coefficients.
 
-                For multi-output models you can specify different metrics for
-                different outputs by passing a dictionary, such as
-                `metrics={'similarity': 'min_neg_gap', 'other': ['accuracy',
-                'mse']}`.  You can also pass a list (len = len(outputs)) of lists
-                of metrics such as `metrics=[['min_neg_gap'], ['accuracy', 'mse']]`
-                or `metrics=['min_neg_gap', ['accuracy', 'mse']]`. For outputs
-                which are not related to metrics learning, you can use any of the
-                standard `tf.keras.metrics`.
+            weighted_metrics: List of metrics to be evaluated and weighted by
+              sample_weight or class_weight during training and testing.
 
-                loss_weights: Optional list or dictionary specifying scalar
-                coefficients (Python floats) to weight the loss contributions of
-                different model outputs. The loss value that will be minimized
-                by the model will then be the *weighted sum* of all individual
-                losses, weighted by the `loss_weights` coefficients.
-                If a list, it is expected to have a 1:1 mapping to the model's
-                outputs. If a dict, it is expected to map output names (strings)
-                to scalar coefficients.
+            run_eagerly: Bool. Defaults to `False`. If `True`, this `Model`'s
+              logic will not be wrapped in a `tf.function`. Recommended to leave
+              this as `None` unless your `Model` cannot be run inside a
+              `tf.function`.
 
-                weighted_metrics: List of metrics to be evaluated and weighted by
-                sample_weight or class_weight during training and testing.
+            steps_per_execution: Int. Defaults to 1. The number of batches to
+              run during each `tf.function` call. Running multiple batches inside
+              a single `tf.function` call can greatly improve performance on TPUs
+              or small models with a large Python overhead.  At most, one full
+              epoch will be run each execution. If a number larger than the size
+              of the epoch is passed,  the execution will be truncated to the size
+              of the epoch.  Note that if `steps_per_execution` is set to `N`,
+              `Callback.on_batch_begin` and `Callback.on_batch_end` methods will
+              only be called every `N` batches (i.e. before/after each
+              `tf.function` execution).
 
+            distance: Distance used to compute embeddings proximity.  Defaults
+              to 'cosine'.
 
-                run_eagerly: Bool. Defaults to `False`. If `True`, this `Model`'s
-                logic will not be wrapped in a `tf.function`. Recommended to leave
-                this as `None` unless your `Model` cannot be run inside a
-                `tf.function`.
+            kv_store: How to store the indexed records.  Defaults to 'memory'.
 
-                steps_per_execution: Int. Defaults to 1. The number of batches to
-                run during each `tf.function` call. Running multiple batches
-                inside a single `tf.function` call can greatly improve performance
-                on TPUs or small models with a large Python overhead.
-                At most, one full epoch will be run each execution. If a number
-                larger than the size of the epoch is passed,  the execution will be
-                truncated to the size of the epoch.
-                Note that if `steps_per_execution` is set to `N`,
-                `Callback.on_batch_begin` and `Callback.on_batch_end` methods will
-                only be called every `N` batches (i.e. before/after each
-                `tf.function` execution).
+            search: Which `Search()` framework to use to perform KNN search.
+              Defaults to 'nmslib'.
+
+            evaluator: What type of `Evaluator()` to use to evaluate index
+              performance. Defaults to in-memory one.
+
+            embedding_output: Which model output head predicts the embeddings
+              that should be indexed. Default to None which is for single output
+              model. For multi-head model, the callee, usually the
+              `SimilarityModel()` class is responsible for passing the correct
+              one.
+
+            stat_buffer_size: Size of the sliding windows buffer used to compute
+              index performance. Defaults to 1000.
 
         Raises:
             ValueError: In case of invalid arguments for
