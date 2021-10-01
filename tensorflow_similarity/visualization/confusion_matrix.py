@@ -44,41 +44,43 @@ def confusion_matrix(y_pred: IntTensor,
 
         cmap: Color schema as CMAP. Defaults to 'Blues'.
     """
-    # Ensure we are working with integer tensors.
-    y_pred = tf.cast(tf.convert_to_tensor(y_pred), dtype='int32')
-    y_true = tf.cast(tf.convert_to_tensor(y_true), dtype='int32')
 
-    cm = tf.math.confusion_matrix(y_true, y_pred)
-    cm = tf.cast(cm, dtype='float')
-    accuracy = tf.linalg.trace(cm) / tf.math.reduce_sum(cm)
-    misclass = 1 - accuracy
+    with tf.device("/cpu:0"):
+        # Ensure we are working with integer tensors.
+        y_pred = tf.cast(tf.convert_to_tensor(y_pred), dtype='int32')
+        y_true = tf.cast(tf.convert_to_tensor(y_true), dtype='int32')
 
-    if normalize:
-        cm = tf.math.divide_no_nan(
-                cm,
-                tf.math.reduce_sum(cm, axis=1)[:, np.newaxis]
-        )
+        cm = tf.math.confusion_matrix(y_true, y_pred)
+        cm = tf.cast(cm, dtype='float')
+        accuracy = tf.linalg.trace(cm) / tf.math.reduce_sum(cm)
+        misclass = 1 - accuracy
 
-    plt.figure(figsize=(8, 6))
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
+        if normalize:
+            cm = tf.math.divide_no_nan(
+                    cm,
+                    tf.math.reduce_sum(cm, axis=1)[:, np.newaxis]
+            )
 
-    if labels is not None:
-        tick_marks = np.arange(len(labels))
-        plt.xticks(tick_marks, labels, rotation=45)
-        plt.yticks(tick_marks, labels)
+        plt.figure(figsize=(8, 6))
+        plt.imshow(cm, interpolation='nearest', cmap=cmap)
+        plt.title(title)
+        plt.colorbar()
 
-    cm_max = tf.math.reduce_max(cm)
-    thresh = cm_max / 1.5 if normalize else cm_max / 2.0
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        val = cm[i, j]
-        color = "white" if val > thresh else "black"
-        txt = "%.2f" % val if val > 0.0 else "0"
-        plt.text(j, i, txt, horizontalalignment="center", color=color)
+        if labels is not None:
+            tick_marks = np.arange(len(labels))
+            plt.xticks(tick_marks, labels, rotation=45)
+            plt.yticks(tick_marks, labels)
 
-    plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'.format(
-        accuracy, misclass))
-    plt.show()
+        cm_max = tf.math.reduce_max(cm)
+        thresh = cm_max / 1.5 if normalize else cm_max / 2.0
+        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+            val = cm[i, j]
+            color = "white" if val > thresh else "black"
+            txt = "%.2f" % val if val > 0.0 else "0"
+            plt.text(j, i, txt, horizontalalignment="center", color=color)
+
+        plt.tight_layout()
+        plt.ylabel('True label')
+        plt.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'.format(
+            accuracy, misclass))
+        plt.show()
