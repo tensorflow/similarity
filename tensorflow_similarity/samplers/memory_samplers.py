@@ -14,7 +14,7 @@
 
 import random
 from collections import defaultdict
-from typing import Optional, Tuple, TypeVar, Sequence
+from typing import Optional, Tuple, TypeVar, Set, Sequence
 
 import numpy as np
 import tensorflow as tf
@@ -111,6 +111,10 @@ class MultiShotMemorySampler(Sampler):
             raise ValueError("the value of classes_per_batch must be <= to the "
                              "number of existing classes in the dataset")
 
+        # We only want to warn users once per class if we are sampling with
+        # replacement
+        self._small_classes: Set[int] = set()
+
         # filter
         x, y = select_examples(
             x,
@@ -162,7 +166,19 @@ class MultiShotMemorySampler(Sampler):
         idxs = []
         for class_id in class_list:
             class_idxs = self.index_per_class[class_id]
-            idxs.extend(random.sample(class_idxs, k=examples_per_class))
+            if (len(class_idxs) < examples_per_class and
+                    class_id not in self._small_classes):
+                print(
+                    f'WARNING: Class {class_id} only has {len(class_idxs)} '
+                    'unique examples, but examples_per_class is set to '
+                    f'{examples_per_class}. The current batch will sample from '
+                    'class examples with replacement, but you may want to '
+                    'consider passing an Augmenter function or using the '
+                    'SingleShotMemorySampler().')
+                idxs.extend(random.choices(class_idxs, k=examples_per_class))
+                self._small_classes.add(class_id)
+            else:
+                idxs.extend(random.sample(class_idxs, k=examples_per_class))
 
         batch_x = []
         batch_y = []

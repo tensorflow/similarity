@@ -1517,7 +1517,9 @@ class MixupAndCutmix:
     augment_b = lambda: (images, self._smooth_labels(labels))
     # pylint: enable=g-long-lambda
 
-    return tf.cond(augment_cond, augment_a, augment_b)
+    # TODO: This should return Tuple[Tensor, Tensor].
+    result: Tuple[Any, Any] = tf.cond(augment_cond, augment_a, augment_b)
+    return result
 
   @staticmethod
   def _sample_from_beta(alpha, beta, shape):
