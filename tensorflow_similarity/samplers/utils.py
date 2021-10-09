@@ -17,16 +17,17 @@ import random
 from typing import Sequence, Tuple
 
 from tqdm.auto import tqdm
-import tensorflow as tf
+import numpy as np
 
 from tensorflow_similarity.types import IntTensor, FloatTensor
 
 
-def select_examples(x: FloatTensor,
-                    y: IntTensor,
-                    class_list: Sequence[int] = None,
-                    num_examples_per_class: int = None,
-                    ) -> Tuple[FloatTensor, IntTensor]:
+def select_examples(
+    x: FloatTensor,
+    y: IntTensor,
+    class_list: Sequence[int] = None,
+    num_examples_per_class: int = None,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Randomly select at most N examples per class
 
     Args:
@@ -48,9 +49,9 @@ def select_examples(x: FloatTensor,
 
     # cast class_list if it exist to avoid slowness
     if class_list is not None:
-        class_list_int = [int(c) for c in class_list]
+        class_list_int = set([int(c) for c in class_list])
     else:
-        class_list_int = list(set([int(e) for e in y]))
+        class_list_int = set([int(e) for e in y])
 
     # Mapping class to idx
     index_per_class = defaultdict(list)
@@ -78,10 +79,11 @@ def select_examples(x: FloatTensor,
             idxs.extend(class_idxs)
 
     random.shuffle(idxs)
-    idxs = tf.constant(idxs)
 
-    with tf.device("/cpu:0"):
-        batch_x = tf.gather(x, indices=idxs)
-        batch_y = tf.gather(y, indices=idxs)
+    batch_x = []
+    batch_y = []
+    for idx in tqdm(idxs, desc="gather examples"):
+        batch_x.append(x[idx])
+        batch_y.append(y[idx])
 
-    return batch_x, batch_y
+    return np.array(batch_x), np.array(batch_y)
