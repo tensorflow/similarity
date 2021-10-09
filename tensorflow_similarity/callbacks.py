@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Specialized callbacks that track similarity metrics during training"""
-from typing import Dict, List, Sequence, Union
+from typing import Dict, List, Optional, Sequence, Union
 from pathlib import Path
 import math
 
@@ -22,9 +22,10 @@ from tensorflow.keras.callbacks import Callback
 
 from .classification_metrics import ClassificationMetric
 from .classification_metrics import make_classification_metric  # noqa
+from .matchers import ClassificationMatch
 from .evaluators import Evaluator, MemoryEvaluator
 from .models import SimilarityModel
-from .types import Tensor, IntTensor
+from .types import Tensor, FloatTensor, IntTensor
 from .utils import unpack_lookup_distances, unpack_lookup_labels
 
 
@@ -48,7 +49,9 @@ class EvalCallback(Callback):
                 'binary_accuracy', 'f1score'
             ],  # noqa
             tb_logdir: str = None,
-            k: int = 1):
+            k: int = 1,
+            matcher: Union[str, ClassificationMatch] = 'match_nearest',
+            distance_thresholds: Optional[FloatTensor] = None):
         """Evaluate model matching quality against a validation dataset at
         epoch end.
 
@@ -71,7 +74,17 @@ class EvalCallback(Callback):
 
             tb_logdir: Where to write TensorBoard logs. Defaults to None.
 
-            k: How many neighbors to retrieve for evaluation. Defaults to 1.
+            k: The number of nearest neighbors to return for each query.
+
+            matcher: {'match_nearest', 'match_majority_vote'} or
+            ClassificationMatch object. Defines the classification matching,
+            e.g., match_nearest will count a True Positive if the query_label is
+            equal to the label of the nearest neighbor and the distance is less
+            than or equal to the distance threshold.
+
+            distance_thresholds: A 1D tensor denoting the distances points at
+            which we compute the metrics. If None, distance_thresholds is set to
+            tf.constant([math.inf])
         """
         super().__init__()
         self.queries = queries
@@ -80,12 +93,17 @@ class EvalCallback(Callback):
         self.targets = targets
         self.target_labels = target_labels
         self.distance = distance
-        self.k = k
         self.evaluator = MemoryEvaluator()
         # typing requires this weird formulation of creating a new list
         self.metrics: List[ClassificationMetric] = ([
             make_classification_metric(m) for m in metrics
         ])
+        self.k = k
+        self.matcher = matcher
+        if distance_thresholds is not None:
+            self.distance_thresholds = distance_thresholds
+        else:
+            self.distance_thresholds = tf.constant([math.inf])
 
         if tb_logdir:
             tb_logdir = str(Path(tb_logdir) / 'index/')
@@ -115,8 +133,10 @@ class EvalCallback(Callback):
             query_labels=self.query_labels,
             model=self.model,
             evaluator=self.evaluator,
+            metrics=self.metrics,
             k=self.k,
-            metrics=self.metrics)
+            matcher=self.matcher,
+            distance_thresholds=self.distance_thresholds)
 
         mstr = []
         for metric_name, vals in results.items():
@@ -126,6 +146,10 @@ class EvalCallback(Callback):
             if self.tb_writer:
                 with self.tb_writer.as_default():
                     tf.summary.scalar(metric_name, float_val, step=epoch)
+
+        # reset the index to prevent users from accidently using this after the
+        # callback
+        self.model.reset_index()
 
         print(' - '.join(mstr))
 
@@ -157,7 +181,9 @@ class SplitValidationLoss(Callback):
                 'binary_accuracy', 'f1score'
             ],  # noqa
             tb_logdir: str = None,
-            k=1):
+            k: int = 1,
+            matcher: Union[str, ClassificationMatch] = 'match_nearest',
+            distance_thresholds: Optional[FloatTensor] = None):
         """Creates the validation callbacks.
 
         Args:
@@ -181,18 +207,35 @@ class SplitValidationLoss(Callback):
 
             tb_logdir: Where to write TensorBoard logs. Defaults to None.
 
-            k: How many neighbors to retrieve for evaluation. Defaults to 1.
+            k: The number of nearest neighbors to return for each query. The
+            lookups are consumed by the Matching Strategy and used to derive the
+            matching label and distance.
+
+            matcher: {'match_nearest', 'match_majority_vote'} or
+            ClassificationMatch object. Defines the classification matching,
+            e.g., match_nearest will count a True Positive if the query_label
+            is equal to the label of the nearest neighbor and the distance is
+            less than or equal to the distance threshold.
+
+            distance_thresholds: A 1D tensor denoting the distances points at
+            which we compute the metrics. If None, distance_thresholds is set to
+            tf.constant([math.inf])
         """
         super().__init__()
         self.targets = targets
         self.target_labels = target_labels
         self.distance = distance
-        self.k = k
         self.evaluator = MemoryEvaluator()
         # typing requires this weird formulation of creating a new list
         self.metrics: List[ClassificationMetric] = ([
             make_classification_metric(m) for m in metrics
         ])
+        self.k = k
+        self.matcher = matcher
+        if distance_thresholds is not None:
+            self.distance_thresholds = distance_thresholds
+        else:
+            self.distance_thresholds = tf.constant([math.inf])
 
         if tb_logdir:
             tb_logdir = str(Path(tb_logdir) / 'index/')
@@ -264,16 +307,20 @@ class SplitValidationLoss(Callback):
             query_labels=self.query_labels_known,
             model=self.model,
             evaluator=self.evaluator,
+            metrics=self.metrics,
             k=self.k,
-            metrics=self.metrics)
+            matcher=self.matcher,
+            distance_thresholds=self.distance_thresholds)
 
         unknown_results = _compute_classification_metrics(
             queries=self.queries_unknown,
             query_labels=self.query_labels_unknown,
             model=self.model,
             evaluator=self.evaluator,
+            metrics=self.metrics,
             k=self.k,
-            metrics=self.metrics)
+            matcher=self.matcher,
+            distance_thresholds=self.distance_thresholds)
 
         mstr = []
         for metric_name, vals in known_results.items():
@@ -294,21 +341,42 @@ class SplitValidationLoss(Callback):
                 with self.tb_writer.as_default():
                     tf.summary.scalar(full_metric_name, float_val, step=epoch)
 
+        # reset the index to prevent users from accidently using this after the
+        # callback
+        self.model.reset_index()
+
         print(' - '.join(mstr))
 
 
 def _compute_classification_metrics(
         queries: Tensor, query_labels: IntTensor, model: SimilarityModel,
-        evaluator: Evaluator, k: int,
-        metrics: Sequence[ClassificationMetric]) -> Dict[str, np.ndarray]:
+        evaluator: Evaluator, metrics: Sequence[ClassificationMetric], k: int,
+        matcher: Union[str, ClassificationMatch],
+        distance_thresholds: FloatTensor) -> Dict[str, np.ndarray]:
     """Compute the classification metrics.
 
     Args:
         queries: A Tensor of embeddings representing the queries.
+
         query_labels: An IntTensor representing the class ids associated with
             the queries.
+
         model: The current similarity model.
+
+        evaluator: An Evalutar object for evaluating the index performance.
+
         metrics: A list of classification metrics objects.
+
+        k: The number of nearest neighbors to return for each query.
+
+        matcher: {'match_nearest', 'match_majority_vote'} or ClassificationMatch
+        object. Defines the classification matching, e.g., match_nearest will
+        count a True Positive if the query_label is equal to the label of the
+        nearest neighbor and the distance is less than or equal to the distance
+        threshold.
+
+        distance_thresholds: A 1D tensor denoting the distances points at which
+        we compute the metrics.
 
     Returns:
         A Python dict mapping the metric name to the copmuted value.
@@ -323,9 +391,9 @@ def _compute_classification_metrics(
         query_labels=query_labels,
         lookup_labels=lookup_labels,
         lookup_distances=lookup_distances,
-        distance_thresholds=tf.constant([math.inf]),
+        distance_thresholds=distance_thresholds,
         metrics=metrics,
-        matcher='match_nearest',
+        matcher=matcher,
         verbose=0)
 
     # The callbacks don't set a distance theshold so we remove it here.
