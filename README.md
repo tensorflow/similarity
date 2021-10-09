@@ -20,10 +20,8 @@ To learn more about the benefits of using similarity training, you can check out
 
 ## What's new
 
-- [Aug 21]: Interactive embedding `projector()` added. See this [notebook](examples/supervised_visualization.ipynb)
-- [Aug 21]: [`CircleLoss()`](api/TFSimilarity/losses/CircleLoss.md) added
-- [Aug 21]: [`PNLoss()`](api/TFSimilarity/losses/PNLoss.md) added.
-- [Aug 21]: [`MultiSimilarityLoss()`](api/TFSimilarity/losses/MultiSimilarityLoss.md) added.
+- [Oct 8]: Added `Samplers.*` IO [notebook](examples/sampler_io_cookbook.ipynb) detailing how to efficently sample your data for succesful training.
+- [Oct 8]: 0.14 is out which includes various speed improvements and post initial release bug fixes.
 
 For previous changes - see [the release changelog](./releases.md)
 
