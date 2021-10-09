@@ -56,6 +56,7 @@ class Value(Tensor):
     These objects represent the (usually future) output of executing an op
     immediately.
     """
+
     def numpy(self):
         pass
 
