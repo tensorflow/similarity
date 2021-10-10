@@ -11,7 +11,9 @@ on:
 jobs:
   publish:
     # Prevent Publish from running on forks.
-    if: github.repository == 'tensorflow/similarity'
+    if: |
+      github.repository == 'tensorflow/similarity' &&
+      ${{ github.event.workflow_run.conclusion == 'success' }}
 
     runs-on: ubuntu-latest
 
