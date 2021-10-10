@@ -106,3 +106,42 @@ def test_msms_properties():
 
     assert ms_sampler.num_examples == 4
     assert ms_sampler.example_shape == (10, 20, 3)
+
+
+def test_small_class_size(capsys):
+    """Test examples_per_class is > the number of class examples."""
+    y = tf.constant([1, 1, 1, 2])
+    x = tf.ones([4, 10, 10, 3])
+
+    ms_sampler = MultiShotMemorySampler(x=x,
+                                        y=y,
+                                        classes_per_batch=2,
+                                        examples_per_class_per_batch=3)
+
+    _, batch_y = ms_sampler.generate_batch(0)
+
+    y, _, class_counts = tf.unique_with_counts(batch_y)
+    assert tf.math.reduce_all(tf.sort(y) == tf.constant([1, 2]))
+    assert tf.math.reduce_all(class_counts == tf.constant([3, 3]))
+
+    captured = capsys.readouterr()
+    expected_msg = (
+            "WARNING: Class 2 only has 1 unique examples, but "
+            "examples_per_class is set to 3. The current batch will sample "
+            "from class examples with replacement, but you may want to "
+            "consider passing an Augmenter function or using the "
+            "SingleShotMemorySampler().")
+
+    match = re.search(expected_msg, captured.out)
+    assert bool(match)
+
+    _, batch_y = ms_sampler.generate_batch(0)
+
+    y, _, class_counts = tf.unique_with_counts(batch_y)
+    assert tf.math.reduce_all(tf.sort(y) == tf.constant([1, 2]))
+    assert tf.math.reduce_all(class_counts == tf.constant([3, 3]))
+
+    # Subsequent batch should produce the sampler warning.
+    captured = capsys.readouterr()
+    match = re.search(expected_msg, captured.out)
+    assert not bool(match)

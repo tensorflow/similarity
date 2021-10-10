@@ -166,17 +166,17 @@ class MultiShotMemorySampler(Sampler):
         idxs = []
         for class_id in class_list:
             class_idxs = self.index_per_class[class_id]
-            if (len(class_idxs) < examples_per_class and
-                    class_id not in self._small_classes):
-                print(
-                    f'WARNING: Class {class_id} only has {len(class_idxs)} '
-                    'unique examples, but examples_per_class is set to '
-                    f'{examples_per_class}. The current batch will sample from '
-                    'class examples with replacement, but you may want to '
-                    'consider passing an Augmenter function or using the '
-                    'SingleShotMemorySampler().')
+            if len(class_idxs) < examples_per_class:
+                if class_id not in self._small_classes:
+                    print(
+                        f'WARNING: Class {class_id} only has {len(class_idxs)} '
+                        'unique examples, but examples_per_class is set to '
+                        f'{examples_per_class}. The current batch will sample from '
+                        'class examples with replacement, but you may want to '
+                        'consider passing an Augmenter function or using the '
+                        'SingleShotMemorySampler().')
+                    self._small_classes.add(class_id)
                 idxs.extend(random.choices(class_idxs, k=examples_per_class))
-                self._small_classes.add(class_id)
             else:
                 idxs.extend(random.sample(class_idxs, k=examples_per_class))
 
