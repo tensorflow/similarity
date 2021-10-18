@@ -11,8 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"Collection of specialized notebook vizualization tools"
-from .projector import projector  # noqa
-from .neighbors_viz import viz_neigbors_imgs  # noqa
-from .confusion_matrix import confusion_matrix  # noqa
-from .vizualize_views import visualize_views  # noqa
+
+
+import abc
+from tensorflow_similarity.types import Tensor
+from typing import List
+
+
+class Augmenter(abc.ABC):
+
+    @abc.abstractmethod
+    def augment(self, x: Tensor, y: Tensor, num_augmentations_per_example: int,
+                is_warmup: bool) -> List[Tensor]:
+        pass
+
+    def __call__(self, x: Tensor, y: Tensor,
+                 num_augmentations_per_example: int,
+                 is_warmup: bool) -> List[Tensor]:
+        return self.augment(x, y, num_augmentations_per_example, is_warmup)

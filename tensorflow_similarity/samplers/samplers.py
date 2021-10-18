@@ -13,23 +13,12 @@
 # limitations under the License.
 
 import abc
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple, List
 
 from tensorflow.keras.utils import Sequence
-from tensorflow_similarity.types import FloatTensor, IntTensor
+from tensorflow.python.framework.ops import Tensor
+from tensorflow_similarity.augmenters import Augmenter
 
-# An Augmenter is a Map TensorLike -> TensorLike. The function must
-# implement the following signature:
-#
-# Args:
-#   x: Feature Tensors
-#   y: Label Tensors
-#   examples_per_class: The number of examples per class.
-#   is_warmup: If True, the sampler is still in warmup phase.
-# Returns:
-#   A Tuple containing the transformed x and y tensors.
-Augmenter = Callable[[FloatTensor, IntTensor, int, bool], Tuple[FloatTensor,
-                                                                IntTensor]]
 
 # Not currently used. Might be useful to allows gradual call of augmenter
 Scheduler = Callable[[Any], Any]
@@ -60,8 +49,8 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
         Args:
             classes_per_batch: Numbers of classes to include in a single batch
 
-            examples_per_class_per_batch: how many examples of each class to use
-            per batch. Defaults to 2.
+            examples_per_class_per_batch: how many examples of each class to
+            use per batch. Defaults to 2.
 
             num_augmentations_per_example: how many augmented versions of an
             example will be produced by the augmenter. Defaults to 0.
@@ -69,9 +58,9 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
             steps_per_epoch: How many steps/batches per epoch. Defaults to
             1000.
 
-            augmenter: A function that takes a batch in and returns a batch out.
-            Can alter the number of examples returned, which in turn can change
-            the batch_size used. Defaults to None.
+            augmenter: A function that takes a batch in and returns a batch
+            out. Can alter the number of examples returned, which in turn can
+            change the batch_size used. Defaults to None.
 
             warmup: Keep track of warmup epochs and let the augmenter know
             when the warmup is over by passing along with each batch a boolean
@@ -99,7 +88,7 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def _get_examples(self, batch_id: int, num_classes: int,
-                      examples_per_class: int) -> Tuple[FloatTensor, IntTensor]:
+                      examples_per_class: int) -> Tuple[Tensor, Tensor]:
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -138,10 +127,10 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
             print("Warmup complete")
             self.is_warmup = False
 
-    def __getitem__(self, batch_id: int) -> Tuple[FloatTensor, IntTensor]:
+    def __getitem__(self, batch_id: int) -> List[Tensor]:
         return self.generate_batch(batch_id)
 
-    def generate_batch(self, batch_id: int) -> Tuple[FloatTensor, IntTensor]:
+    def generate_batch(self, batch_id: int) -> List[Tensor]:
         """Generate a batch of data.
 
 
@@ -162,5 +151,5 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
 
         if self.augmenter:
             x, y = self.augmenter(x, y, self.num_augmentations_per_example,
-                                  self.is_warmup)
+                                   self.is_warmup)
         return x, y
