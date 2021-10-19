@@ -72,7 +72,7 @@ class DistanceMetric(Metric):
             else:
                 distances, _ = masked_min(pairwise_distances, positive_mask)
         else:
-            if self.negative_mining_strategy == 'easy':
+            if self.negative_mining_strategy == 'hard':
                 distances, _ = masked_min(pairwise_distances, negative_mask)
             else:
                 distances, _ = masked_max(pairwise_distances, negative_mask)
