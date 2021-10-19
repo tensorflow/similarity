@@ -1,5 +1,6 @@
-from tensorflow_similarity.samplers import TFDatasetMultiShotMemorySampler
 import pytest
+
+from tensorflow_similarity.samplers import TFDatasetMultiShotMemorySampler
 
 
 def test_basic():
