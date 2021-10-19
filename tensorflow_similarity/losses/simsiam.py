@@ -5,8 +5,8 @@ from tensorflow_similarity.types import FloatTensor
 
 
 @tf.function
-def SiamSiamLoss(z: List[Tensor], p: List[Tensor]) -> FloatTensor:
-    """SiamSiam Loss
+def SimSiamLoss(z: List[Tensor], p: List[Tensor]) -> FloatTensor:
+    """SimSiam Loss
 
     Introduced in: [Exploring Simple Siamese Representation Learning](https://openaccess.thecvf.com/content/CVPR2021/papers/Chen_Exploring_Simple_Siamese_Representation_Learning_CVPR_2021_paper.pdf)
 
