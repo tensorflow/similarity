@@ -55,6 +55,11 @@ class MetricLoss(tf.keras.losses.Loss):
         return loss
 
     def get_config(self) -> Dict[str, Any]:
+        """Contains the loss configuration.
+
+        Returns:
+            A Python dict containing the configuration of the loss.
+        """
         config = {}
         for k, v in iter(self._fn_kwargs.items()):
             if is_tensor_or_variable(v):

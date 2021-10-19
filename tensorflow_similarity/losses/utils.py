@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Utility functions for computing the metric loss."""
 
 import tensorflow as tf
 from tensorflow_similarity.algebra import masked_max, masked_min

@@ -36,4 +36,4 @@ the model, dataset and, training. Accordingly those thresholds
 need to be evaluated empirically for every use-case.
 """
 from .memory_evaluator import MemoryEvaluator  # noqa
-from .memory_evaluator import Evaluator  # noqa
+from .evaluator import Evaluator  # noqa

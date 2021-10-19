@@ -1,0 +1,45 @@
+name: NightlyPublish
+
+on:
+  workflow_dispatch:  # Allow manual triggers
+  schedule:
+    # Runs every day at 3:07am UTC.
+    - cron: '7 3 * * *'
+
+jobs:
+  publish:
+    # Prevent Publish from running on forks.
+    if: github.repository == 'tensorflow/similarity'
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: 'development'
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        
+    - name: Install package
+      run: |
+        pip install ".[dev]"
+      
+    - name: Increment dev version
+      run: |
+          # Increments the dev version and pushes the changes to development.
+          python scripts/increment_version.py
+
+    - name: Build package
+      run: |
+        python setup.py sdist bdist_wheel --project_name tfsim-nightly
+
+    - name: Publish package
+      run: |
+        twine upload -u ${{ secrets.PYPI_NIGHTLY_USERNAME }} -p ${{ secrets.PYPI_NIGHTLY_TOKEN }} dist/* --verbose

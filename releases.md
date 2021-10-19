@@ -1,5 +1,18 @@
 # Releases notes
 
+## 0.14.x
+
+Updates to the TFRecordDataset sampler.
+
+## New features
+
+## Breaking changes
+
+- TFRecordDatasetSampler:
+  1. Remove file_parallelism param.
+  2. Add async_cycle param that now defaults to setting the number of threads for the input cycle shards to 1. 
+     This is more stable and generally faster than setting multiple threads, however, setting async_cycle=True 
+     will now set the num_parallel_calls eqal to the cycle_length.
 
 ## 0.13.x - Launch release
 
