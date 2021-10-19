@@ -33,11 +33,12 @@ jobs:
       
     - name: Increment dev version
       run: |
+          # Increments the dev version and pushes the changes to development.
           python scripts/increment_version.py
 
     - name: Build package
       run: |
-        python setup.py sdist bdist_wheel tfsim-nightly "--project_name tfsim-nightly"
+        python setup.py sdist bdist_wheel --project_name tfsim-nightly
 
     - name: Publish package
       run: |
