@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Optional, Sequence, Tuple, Union
+from typing import Callable, Optional, Sequence, Tuple, TypeVar, Union
 
 from tqdm.auto import tqdm
 import tensorflow_datasets as tfds
@@ -21,11 +21,14 @@ from .samplers import Augmenter
 from .memory_samplers import MultiShotMemorySampler
 from tensorflow_similarity.types import FloatTensor, IntTensor
 
-PreProcessFn = (
-        Callable[[FloatTensor, IntTensor], Tuple[FloatTensor, IntTensor]])
+PreProcessFn = (Callable[[FloatTensor, IntTensor], Tuple[FloatTensor,
+                                                         IntTensor]])
+
+T = TypeVar("T", FloatTensor, IntTensor)
 
 
 class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
+
     def __init__(self,
                  dataset_name: str,
                  classes_per_batch: int,
@@ -100,7 +103,7 @@ class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
 
             warmup: Keep track of warmup epochs and let the augmenter knows
             when the warmup is over by passing along with each batch data a
-            boolean `is_warmup`. See `self.get_examples()` Defaults to 0.
+            boolean `is_warmup`. See `self._get_examples()` Defaults to 0.
         """
 
         # dealing with users passing a single split e.g "train"
@@ -144,12 +147,18 @@ class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
             y = y_pre
 
         # delegate to the base memorysample
-        super().__init__(x,
-                         y,
-                         classes_per_batch=classes_per_batch,
-                         examples_per_class_per_batch=examples_per_class_per_batch,  # noqa
-                         steps_per_epoch=steps_per_epoch,
-                         class_list=class_list,
-                         total_examples_per_class=total_examples_per_class,
-                         augmenter=augmenter,
-                         warmup=warmup)
+        super().__init__(
+            x,
+            y,
+            classes_per_batch=classes_per_batch,
+            examples_per_class_per_batch=examples_per_class_per_batch,
+            steps_per_epoch=steps_per_epoch,
+            class_list=class_list,
+            total_examples_per_class=total_examples_per_class,
+            augmenter=augmenter,
+            warmup=warmup)
+
+    def _get_slice(self, input_: T, begin: int, size: int) -> T:
+        # x and y are lists of tensors, so we need to use python slicing.
+        slice_: T = input_[begin:begin+size]
+        return slice_

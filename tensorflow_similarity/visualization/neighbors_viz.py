@@ -34,8 +34,8 @@ def viz_neigbors_imgs(example: Tensor,
 
         neighbors: The list of neighbors returned by the lookup()
 
-        class_mapping: Dictionary that map the class numerical ids to a class
-        name. If not set, will display the class numerical id.
+        class_mapping: Mapping from class numerical ids to a class name. If not
+        set, the plot will display the class numerical id instead.
         Defaults to None.
 
         fig_size: Size of the figure. Defaults to (24, 4).
@@ -44,36 +44,37 @@ def viz_neigbors_imgs(example: Tensor,
         Defaults to 'viridis'.
     """
     num_cols = len(neighbors) + 1
-    plt.subplots(1, num_cols, figsize=fig_size)
-    plt_idx = 1
+    _, axs = plt.subplots(1, num_cols, figsize=fig_size)
 
     # draw target
-    plt.subplot(1, num_cols, plt_idx)
-    plt.imshow(example, cmap=cmap)
-    plt.xticks([])
-    plt.yticks([])
+    axs[0].imshow(example, cmap=cmap)
+    axs[0].set_xticks([])
+    axs[0].set_yticks([])
 
-    val = class_mapping[example_class] if class_mapping else str(example_class)
-    plt.title(val)
-    plt_idx += 1
+    class_label = _get_class_label(example_class, class_mapping)
+    axs[0].set_title(class_label)
 
-    for nbg in neighbors:
-        plt.subplot(1, num_cols, plt_idx)
-        if class_mapping and nbg.label is not None:
-            val = class_mapping[nbg.label]
-        elif nbg.label is not None:
-            val = str(nbg.label)
-        else:
-            val = 'No Label'
+    for ax, nbg in zip(axs[1:], neighbors):
+        val = _get_class_label(nbg.label, class_mapping)
         legend = f"{val} - {nbg.distance:.5f}"
         if nbg.label == example_class:
             color = cmap
         else:
             color = 'Reds'
-        plt.imshow(nbg.data, cmap=color)
-        plt.title(legend)
-        plt.xticks([])
-        plt.yticks([])
+        ax.imshow(nbg.data, cmap=color)
+        ax.set_title(legend)
+        ax.set_xticks([])
+        ax.set_yticks([])
 
-        plt_idx += 1
     plt.show()
+
+
+def _get_class_label(example_class, class_mapping):
+    if example_class is None:
+        return 'No Label'
+
+    if class_mapping is None:
+        return str(example_class)
+
+    class_label = class_mapping.get(example_class)
+    return class_label if class_label is not None else str(example_class)

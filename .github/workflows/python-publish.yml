@@ -1,10 +1,19 @@
 name: Publish
 
 on:
-  push:
+  # Dependency to a testing workflow
+  workflow_run:
+    workflows: ["Testing"]
     branches: [ master ]
+    types:
+      - completed
+
 jobs:
   publish:
+    # Prevent Publish from running on forks.
+    if: |
+      github.repository == 'tensorflow/similarity' &&
+      ${{ github.event.workflow_run.conclusion == 'success' }}
 
     runs-on: ubuntu-latest
 
@@ -13,30 +22,20 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        #TF don't work with 3.9 
-        python-version: '3.8.x'
+        python-version: '3.x'
     
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip setuptools
-        pip install setuptools wheel twine
-        pip install types-tabulate
-        pip install tensorflow
+        python -m pip install --upgrade pip
         
     - name: Install package
       run: |
         pip install ".[dev]"
-            
-    - name: Static analysis
-      run: |
-        mypy  tensorflow_similarity/ --raise-exceptions
-    
-    - name: Unit testing
-      run: |
-        pytest tests/
       
-    - name: Build and publish
+    - name: Build package
       run: |
         python setup.py sdist bdist_wheel
+
+    - name: Publish package
+      run: |
         twine upload -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPY_TOKEN }} dist/* --verbose
-        # twine upload dist/*

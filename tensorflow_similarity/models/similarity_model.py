@@ -11,6 +11,33 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Similarity model used for metric learning.
+
+Subclass of Keras.Model which provides methods for indexing, matching,
+evaluation, and similarity training.
+
+```python
+from tf.keras import layers
+from tensorflow_similarity.models import SimilarityModel
+
+# Setup dataset using tf.sim samplers
+train_ds = ...
+
+# Create similarity loss
+similarity_loss = ...
+
+# Build the model
+inputs = layers.Input(shape=(28,28,1))
+x = layers.Conv2D(32, 3, activation='relu')(x)
+x = layers.Flatten()(x)
+outputs = layers.Dense(16, activation='relu')(x)
+
+model = SimilarityModel(inputs, outputs)
+model.compile(optimizer=Adam(LR), loss=similarity_loss)
+
+history = model.fit(train_ds)
+```
+"""
 
 from collections import defaultdict
 from copy import copy
@@ -41,7 +68,6 @@ from tensorflow_similarity.types import FloatTensor, Lookup, IntTensor, Tensor
 from tensorflow_similarity.types import PandasDataFrame, CalibrationResults
 
 
-
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class SimilarityModel(tf.keras.Model):
     """Specialized Keras.Model which implement the core features needed for
@@ -62,101 +88,115 @@ class SimilarityModel(tf.keras.Model):
     # def _index(self, index):
     #     self._index: Indexer = index
 
-    def compile(self,
-                optimizer: Union[Optimizer, str, Dict, List] = 'rmsprop',  # noqa
-                distance: Union[Distance, str] = 'auto',
-                loss: Union[Loss, MetricLoss, str, Dict, List] = None,
-                metrics: Union[Metric, DistanceMetric, str, Dict, List] = None,
-                embedding_output: int = None,
-                kv_store: Union[Store, str] = 'memory',
-                search: Union[Search, str] = 'nmslib',
-                evaluator: Union[Evaluator, str] = 'memory',
-                stat_buffer_size: int = 1000,
-                loss_weights: List = None,
-                weighted_metrics: List = None,
-                run_eagerly: bool = False,
-                steps_per_execution: int = 1,
-                **kwargs):
+    def compile(
+        self,
+        optimizer: Union[Optimizer, str, Dict, List] = "rmsprop",
+        loss: Optional[Union[Loss, MetricLoss, str, Dict, List]] = None,
+        metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
+        loss_weights: Optional[Union[List, Dict]] = None,
+        weighted_metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
+        run_eagerly: bool = False,
+        steps_per_execution: int = 1,
+        distance: Union[Distance, str] = "auto",
+        embedding_output: Optional[int] = None,
+        kv_store: Union[Store, str] = "memory",
+        search: Union[Search, str] = "nmslib",
+        evaluator: Union[Evaluator, str] = "memory",
+        stat_buffer_size: int = 1000,
+        **kwargs
+    ):
         """Configures the model for training.
 
         Args:
-
             optimizer: String (name of optimizer) or optimizer instance. See
-            [tf.keras.optimizers](https://www.tensorflow.org/api_docs/python/tf/keras/optimizers).
+              [tf.keras.optimizers](https://www.tensorflow.org/api_docs/python/tf/keras/optimizers).
 
-            loss: String (name of objective function), objective function,
-            any `tensorflow_similarity.loss.*` instance or a
-            `tf.keras.losses.Loss` instance. See the [Losses
-            documentation](../losses.md) for a list of metric learning
-            specifics loss offered by TensorFlow Similairy and
-            [tf.keras.losses](https://www.tensorflow.org/api_docs/python/tf/keras/losses)
-            for the losses available directly in TensorFlow.
+            loss: String (name of objective function), objective function, any
+              `tensorflow_similarity.loss.*` instance or a `tf.keras.losses.Loss`
+              instance. See the [Losses documentation](../losses.md) for a list of
+              metric learning specific losses offered by TensorFlow Similairy and
+              [tf.keras.losses](https://www.tensorflow.org/api_docs/python/tf/keras/losses)
+              for the losses available directly in TensorFlow.
 
+              metrics: List of metrics to be evaluated by the model during
+              training and testing. Each of those can be a string, a function or a
+              [tensorflow_similairty.metrics.*](../metrics.md) instance. Note that
+              the metrics used for some type of metric-learning such as distance
+              learning (e.g via triplet loss) have a different prototype than the
+              metrics used in standard models and you can't use the
+              `tf.keras.metrics` for those type of learning.
 
-            metrics: List of metrics to be evaluated by the model during
-            training and testing. Each of those can be a string,
-            a function or a [tensorflow_similairty.metrics.*](../metrics.md)
-            instance. Note that the metrics used for some type of
-            metric-learning such as distance learning (e.g via triplet loss)
-            have a different prototype than the metrics used in
-            standard models and you can't use the `tf.keras.metrics` for those
-            type of learning.
+              Additionally many distance metrics are computed based of the
+              [Indexer()](../indexer.md) performance. E.g Matching Top 1 accuracy.
+              For technical and performance reasons, indexing data at each
+              training batch to compute those is impractical so those metrics are
+              computed at epoch end via the [EvalCallback](../callbacks.md)
 
-            Additionally many distance metrics are computed based of the
-            [Indexer()](../indexer.md) performance. E.g Matching Top 1
-            accuracy. For technical and performance reasons, indexing data at
-            each training batch to compute those is impractical so
-            those metrics are computed at epoch end via
-            the [EvalCallback](../callbacks.md)
+              See [Evaluation Metrics](../eval_metrics.md) for a list of available
+              metrics.
 
-            See [Evaluation Metrics](../eval_metrics.md) for a list of
-            available metrics.
-
-            For multi-output models you can specify different metrics for
-            different outputs by passing a dictionary, such as
-            `metrics={'similarity': 'min_neg_gap', 'other': ['accuracy',
-            'mse']}`.  You can also pass a list (len = len(outputs)) of lists
-            of metrics such as `metrics=[['min_neg_gap'], ['accuracy', 'mse']]`
-            or `metrics=['min_neg_gap', ['accuracy', 'mse']]`. For outputs
-            which are not related to metrics learning, you can use any of the
-            standard `tf.keras.metrics`.
+              For multi-output models you can specify different metrics for
+              different outputs by passing a dictionary, such as
+              `metrics={'similarity': 'min_neg_gap', 'other': ['accuracy',
+              'mse']}`.  You can also pass a list (len = len(outputs)) of lists of
+              metrics such as `metrics=[['min_neg_gap'], ['accuracy', 'mse']]` or
+              `metrics=['min_neg_gap', ['accuracy', 'mse']]`. For outputs which
+              are not related to metrics learning, you can use any of the standard
+              `tf.keras.metrics`.
 
             loss_weights: Optional list or dictionary specifying scalar
-            coefficients (Python floats) to weight the loss contributions of
-            different model outputs. The loss value that will be minimized
-            by the model will then be the *weighted sum* of all individual
-            losses, weighted by the `loss_weights` coefficients.
-            If a list, it is expected to have a 1:1 mapping to the model's
-            outputs. If a dict, it is expected to map output names (strings)
-            to scalar coefficients.
+              coefficients (Python floats) to weight the loss contributions of
+              different model outputs. The loss value that will be minimized by
+              the model will then be the *weighted sum* of all individual losses,
+              weighted by the `loss_weights` coefficients.  If a list, it is
+              expected to have a 1:1 mapping to the model's outputs. If a dict, it
+              is expected to map output names (strings) to scalar coefficients.
 
             weighted_metrics: List of metrics to be evaluated and weighted by
-            sample_weight or class_weight during training and testing.
-
+              sample_weight or class_weight during training and testing.
 
             run_eagerly: Bool. Defaults to `False`. If `True`, this `Model`'s
-            logic will not be wrapped in a `tf.function`. Recommended to leave
-            this as `None` unless your `Model` cannot be run inside a
-            `tf.function`.
+              logic will not be wrapped in a `tf.function`. Recommended to leave
+              this as `None` unless your `Model` cannot be run inside a
+              `tf.function`.
 
             steps_per_execution: Int. Defaults to 1. The number of batches to
-            run during each `tf.function` call. Running multiple batches
-            inside a single `tf.function` call can greatly improve performance
-            on TPUs or small models with a large Python overhead.
-            At most, one full epoch will be run each execution. If a number
-            larger than the size of the epoch is passed,  the execution will be
-            truncated to the size of the epoch.
-            Note that if `steps_per_execution` is set to `N`,
-            `Callback.on_batch_begin` and `Callback.on_batch_end` methods will
-            only be called every `N` batches (i.e. before/after each
-            `tf.function` execution).
+              run during each `tf.function` call. Running multiple batches inside
+              a single `tf.function` call can greatly improve performance on TPUs
+              or small models with a large Python overhead.  At most, one full
+              epoch will be run each execution. If a number larger than the size
+              of the epoch is passed,  the execution will be truncated to the size
+              of the epoch.  Note that if `steps_per_execution` is set to `N`,
+              `Callback.on_batch_begin` and `Callback.on_batch_end` methods will
+              only be called every `N` batches (i.e. before/after each
+              `tf.function` execution).
 
-    Raises:
-        ValueError: In case of invalid arguments for
-            `optimizer`, `loss` or `metrics`.
-    """
+            distance: Distance used to compute embeddings proximity.  Defaults
+              to 'cosine'.
+
+            kv_store: How to store the indexed records.  Defaults to 'memory'.
+
+            search: Which `Search()` framework to use to perform KNN search.
+              Defaults to 'nmslib'.
+
+            evaluator: What type of `Evaluator()` to use to evaluate index
+              performance. Defaults to in-memory one.
+
+            embedding_output: Which model output head predicts the embeddings
+              that should be indexed. Default to None which is for single output
+              model. For multi-head model, the callee, usually the
+              `SimilarityModel()` class is responsible for passing the correct
+              one.
+
+            stat_buffer_size: Size of the sliding windows buffer used to compute
+              index performance. Defaults to 1000.
+
+        Raises:
+            ValueError: In case of invalid arguments for
+                `optimizer`, `loss` or `metrics`.
+        """
         # Fetching the distance used from the first loss if auto
-        if distance == 'auto':
+        if distance == "auto":
             if isinstance(loss, list):
                 metric_loss = loss[0]
             else:
@@ -164,25 +204,94 @@ class SimilarityModel(tf.keras.Model):
 
             try:
                 distance = metric_loss.distance
-            except:  # noqa
-                msg = "distance='auto' only works if the first loss is a\
-                       metric loss"
+            except AttributeError:
+                msg = ("distance='auto' only works if the first loss is a "
+                       "metric loss")
 
                 raise ValueError(msg)
-            print("Distance metric automatically set to", distance,
-                  "use the distance arg to override.")
+            print(
+                f"Distance metric automatically set to {distance} use the "
+                "distance arg to override.",
+            )
         else:
             distance = distance_canonicalizer(distance)
 
+        # init index
+        self.create_index(
+            distance=distance,
+            search=search,
+            kv_store=kv_store,
+            evaluator=evaluator,
+            embedding_output=embedding_output,
+            stat_buffer_size=stat_buffer_size,
+        )
+
+        # call underlying keras method
+        super().compile(
+            optimizer=optimizer,
+            loss=loss,
+            metrics=metrics,
+            loss_weights=loss_weights,
+            weighted_metrics=weighted_metrics,
+            run_eagerly=run_eagerly,
+            steps_per_execution=steps_per_execution,
+            **kwargs
+        )
+
+    def create_index(
+        self,
+        distance: Union[Distance, str] = "cosine",
+        search: Union[Search, str] = "nmslib",
+        kv_store: Union[Store, str] = "memory",
+        evaluator: Union[Evaluator, str] = "memory",
+        embedding_output: int = None,
+        stat_buffer_size: int = 1000,
+    ) -> None:
+        """Create the model index to make embeddings searchable via KNN.
+
+        This method is normally called as part of `SimilarityModel.compile()`.
+        However, this method is provided if users want to define a custom index
+        outside of the `compile()` method.
+
+        NOTE: This method sets `SimilarityModel._index` and will replace any
+        existing index.
+
+        Args:
+            distance: Distance used to compute embeddings proximity. Defaults to
+            'auto'.
+
+            kv_store: How to store the indexed records.  Defaults to 'memory'.
+
+            search: Which `Search()` framework to use to perform KNN search.
+            Defaults to 'nmslib'.
+
+            evaluator: What type of `Evaluator()` to use to evaluate index
+            performance. Defaults to in-memory one.
+
+            embedding_output: Which model output head predicts the embeddings
+            that should be indexed. Default to None which is for single output
+            model. For multi-head model, the callee, usually the
+            `SimilarityModel()` class is responsible for passing the correct
+            one.
+
+            stat_buffer_size: Size of the sliding windows buffer used to compute
+            index performance. Defaults to 1000.
+
+        Raises:
+            ValueError: Invalid search framework or key value store.
+        """
         # check if we we need to set the embedding head
         num_outputs = len(self.output_names)
-        if embedding_output and embedding_output > num_outputs:
-            raise Exception("Embedding_output value exceed number of model "
-                            "outputs")
+        if embedding_output is not None and embedding_output > num_outputs:
+            raise ValueError(
+                "Embedding_output value exceed number of model outputs"
+            )
 
-        if not embedding_output and num_outputs > 1:
-            print("Embedding output set to be model output 0",
-                  "Use the embedding_output arg to override this")
+        if embedding_output is None and num_outputs > 1:
+            print(
+                "Embedding output set to be model output 0. ",
+                "Use the embedding_output arg to override this.",
+            )
             embedding_output = 0
 
         # fetch embedding size as some ANN libs requires it for init
@@ -191,31 +300,24 @@ class SimilarityModel(tf.keras.Model):
         else:
             self.embedding_size = self.outputs[0].shape[1]
 
-        # init index
-        self._index = Indexer(embedding_size=self.embedding_size,
-                              distance=distance,
-                              search=search,
-                              kv_store=kv_store,
-                              evaluator=evaluator,
-                              embedding_output=embedding_output,
-                              stat_buffer_size=stat_buffer_size)
+        self._index = Indexer(
+            embedding_size=self.embedding_size,
+            distance=distance,
+            search=search,
+            kv_store=kv_store,
+            evaluator=evaluator,
+            embedding_output=embedding_output,
+            stat_buffer_size=stat_buffer_size,
+        )
 
-        # call underlying keras method
-        super().compile(optimizer=optimizer,
-                        loss=loss,
-                        metrics=metrics,
-                        loss_weights=loss_weights,
-                        weighted_metrics=weighted_metrics,
-                        run_eagerly=run_eagerly,
-                        steps_per_execution=steps_per_execution,
-                        **kwargs)
-
-    def index(self,
-              x: Tensor,
-              y: IntTensor = None,
-              data: Optional[Tensor] = None,
-              build: bool = True,
-              verbose: int = 1):
+    def index(
+        self,
+        x: Tensor,
+        y: IntTensor = None,
+        data: Optional[Tensor] = None,
+        build: bool = True,
+        verbose: int = 1,
+    ):
         """Index data.
 
         Args:
@@ -235,22 +337,65 @@ class SimilarityModel(tf.keras.Model):
         """
 
         if not self._index:
+            raise Exception(
+                "You need to compile the model with a valid"
+                "distance to be able to use the indexing"
+            )
+        if verbose:
+            print("[Indexing %d points]" % len(x))
+            print("|-Computing embeddings")
+        predictions = self.predict(x)
+
+        self._index.batch_add(
+            predictions=predictions,
+            labels=y,
+            data=data,
+            build=build,
+            verbose=verbose,
+        )
+
+    def index_single(self,
+                     x: Tensor,
+                     y: IntTensor = None,
+                     data: Optional[Tensor] = None,
+                     build: bool = True,
+                     verbose: int = 1):
+        """Index data.
+
+        Args:
+            x: Sample to index.
+
+            y: class id associated with the data if any. Defaults to None.
+
+            data: store the data associated with the samples in the key
+            value store. Defaults to None.
+
+            build: Rebuild the index after indexing. This is needed to make the
+            new samples searchable. Set it to false to save processing time
+            when calling indexing repeatidly without the need to search between
+            the indexing requests. Defaults to True.
+
+            verbose: Output indexing progress info. Defaults to 1.
+        """
+
+        if not self._index:
             raise Exception('You need to compile the model with a valid'
                             'distance to be able to use the indexing')
         if verbose:
-            print('[Indexing %d points]' % len(x))
+            print('[Indexing 1 point]')
             print('|-Computing embeddings')
-        predictions = self.predict(x)
-        self._index.batch_add(predictions=predictions,
-                              labels=y,
-                              data=data,
-                              build=build,
-                              verbose=verbose)
 
-    def lookup(self,
-               x: Tensor,
-               k: int = 5,
-               verbose: int = 1) -> List[List[Lookup]]:
+        x = tf.expand_dims(x, axis=0)
+        prediction = self.predict(x)
+        self._index.add(prediction=prediction,
+                        label=y,
+                        data=data,
+                        build=build,
+                        verbose=verbose)
+
+    def lookup(
+        self, x: Tensor, k: int = 5, verbose: int = 1
+    ) -> List[List[Lookup]]:
         """Find the k closest matches in the index for a set of samples.
 
         Args:
@@ -265,13 +410,11 @@ class SimilarityModel(tf.keras.Model):
             List[List[Lookup]]
         """
         predictions = self.predict(x)
-        return self._index.batch_lookup(predictions=predictions,
-                                        k=k,
-                                        verbose=verbose)
+        return self._index.batch_lookup(
+            predictions=predictions, k=k, verbose=verbose
+        )
 
-    def single_lookup(self,
-                      x: Tensor,
-                      k: int = 5) -> List[Lookup]:
+    def single_lookup(self, x: Tensor, k: int = 5) -> List[Lookup]:
         """Find the k closest matches in the index for a given sample.
 
         Args:
@@ -292,16 +435,19 @@ class SimilarityModel(tf.keras.Model):
         self._index.print_stats()
 
     def calibrate(
-            self,
-            x: FloatTensor,
-            y: IntTensor,
-            thresholds_targets: MutableMapping[str, float] = {},
-            k: int = 1,
-            calibration_metric: Union[str, ClassificationMetric] = "f1",
-            matcher: Union[str, ClassificationMatch] = 'match_nearest',
-            extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = ['precision', 'recall'],  # noqa
-            rounding: int = 2,
-            verbose: int = 1) -> CalibrationResults:
+        self,
+        x: FloatTensor,
+        y: IntTensor,
+        thresholds_targets: MutableMapping[str, float] = {},
+        k: int = 1,
+        calibration_metric: Union[str, ClassificationMetric] = "f1",
+        matcher: Union[str, ClassificationMatch] = "match_nearest",
+        extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = [
+            "precision", "recall"
+        ],  # noqa
+        rounding: int = 2,
+        verbose: int = 1,
+    ) -> CalibrationResults:
         """Calibrate model thresholds using a test dataset.
 
         TODO: more detailed explaination.
@@ -347,23 +493,27 @@ class SimilarityModel(tf.keras.Model):
         predictions = self.predict(x)
 
         # calibrate
-        return self._index.calibrate(predictions=predictions,
-                                     target_labels=y,
-                                     thresholds_targets=thresholds_targets,
-                                     k=k,
-                                     calibration_metric=calibration_metric,
-                                     matcher=matcher,
-                                     extra_metrics=extra_metrics,
-                                     rounding=rounding,
-                                     verbose=verbose)
+        return self._index.calibrate(
+            predictions=predictions,
+            target_labels=y,
+            thresholds_targets=thresholds_targets,
+            k=k,
+            calibration_metric=calibration_metric,
+            matcher=matcher,
+            extra_metrics=extra_metrics,
+            rounding=rounding,
+            verbose=verbose,
+        )
 
-    def match(self,
-              x: FloatTensor,
-              cutpoint='optimal',
-              no_match_label=-1,
-              k=1,
-              matcher: Union[str, ClassificationMatch] = 'match_nearest',
-              verbose=0):
+    def match(
+        self,
+        x: FloatTensor,
+        cutpoint="optimal",
+        no_match_label=-1,
+        k=1,
+        matcher: Union[str, ClassificationMatch] = "match_nearest",
+        verbose=0,
+    ):
         """Match a set of examples against the calibrated index
 
         For the match function to work, the index must be calibrated using
@@ -401,30 +551,33 @@ class SimilarityModel(tf.keras.Model):
         """
         # basic checks
         if not self._index.is_calibrated:
-            raise ValueError('Uncalibrated model: run model.calibration()')
+            raise ValueError("Uncalibrated model: run model.calibration()")
 
         # get predictions
         predictions = self.predict(x)
 
         # matching
-        matches = self._index.match(predictions,
-                                    no_match_label=no_match_label,
-                                    k=k,
-                                    matcher=matcher,
-                                    verbose=verbose)
+        matches = self._index.match(
+            predictions,
+            no_match_label=no_match_label,
+            k=k,
+            matcher=matcher,
+            verbose=verbose,
+        )
 
         # select which matches to return
-        if cutpoint == 'all':  # returns all the cutpoints for eval purpose.
+        if cutpoint == "all":  # returns all the cutpoints for eval purpose.
             return matches
         else:  # normal match behavior - returns a specific cut point
             return matches[cutpoint]
 
     def evaluate_retrieval(
-            self,
-            x: Tensor,
-            y: IntTensor,
-            retrieval_metrics: Sequence[RetrievalMetric],  # noqa
-            verbose: int = 1) -> Dict[str, np.ndarray]:
+        self,
+        x: Tensor,
+        y: IntTensor,
+        retrieval_metrics: Sequence[RetrievalMetric],  # noqa
+        verbose: int = 1,
+    ) -> Dict[str, np.ndarray]:
         """Evaluate the quality of the index against a test dataset.
 
         Args:
@@ -441,7 +594,14 @@ class SimilarityModel(tf.keras.Model):
         Returns:
             Dictionary of metric results where keys are the metric names and
             values are the metrics values.
+
+        Raises:
+            IndexError: Index must contain embeddings but is currently empty.
         """
+        if self._index.size() == 0:
+            raise IndexError("Index must contain embeddings but is "
+                             "currently empty. Have you run model.index()?")
+
         # get embeddings
         if verbose:
             print("|-Computing embeddings")
@@ -451,29 +611,31 @@ class SimilarityModel(tf.keras.Model):
             print("|-Computing retrieval metrics")
 
         results = self._index.evaluate_retrieval(
-                predictions=predictions,
-                target_labels=y,
-                retrieval_metrics=retrieval_metrics,
-                verbose=verbose,
+            predictions=predictions,
+            target_labels=y,
+            retrieval_metrics=retrieval_metrics,
+            verbose=verbose,
         )
 
         if verbose:
             table = zip(results.keys(), results.values())
-            headers = ['metric', 'Value']
-            print('\n [Summary]\n')
+            headers = ["metric", "Value"]
+            print("\n [Summary]\n")
             print(tabulate(table, headers=headers))
 
         return results
 
     def evaluate_classification(
-            self,
-            x: Tensor,
-            y: IntTensor,
-            k: int = 1,
-            extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = ['precision', 'recall'],  # noqa
-            matcher: Union[str, ClassificationMatch] = 'match_nearest',
-            verbose: int = 1
-            ) -> DefaultDict[str, Dict[str, Union[str, np.ndarray]]]:
+        self,
+        x: Tensor,
+        y: IntTensor,
+        k: int = 1,
+        extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = [
+            "precision", "recall"
+        ],  # noqa
+        matcher: Union[str, ClassificationMatch] = "match_nearest",
+        verbose: int = 1,
+    ) -> DefaultDict[str, Dict[str, Union[str, np.ndarray]]]:
         """Evaluate model classification matching on a given evaluation dataset.
 
         Args:
@@ -499,12 +661,20 @@ class SimilarityModel(tf.keras.Model):
 
         Returns:
             Dictionary of (distance_metrics.md)[evaluation metrics]
+
+        Raises:
+            IndexError: Index must contain embeddings but is currently empty.
+            ValueError: Uncalibrated model: run model.calibration()")
         """
         # There is some code duplication in this function but that is the best
         # solution to keep the end-user API clean and doing inferences once.
+        if self._index.size() == 0:
+            raise IndexError("Index must contain embeddings but is "
+                             "currently empty. Have you run model.index()?")
 
         if not self._index.is_calibrated:
-            raise ValueError('Uncalibrated model: run model.calibration()')
+            raise ValueError("Uncalibrated model: run model.calibration()")
+
         cal_metric = self._index.get_calibration_metric()
 
         # get embeddings
@@ -512,16 +682,18 @@ class SimilarityModel(tf.keras.Model):
             print("|-Computing embeddings")
         predictions = self.predict(x)
 
-        results: DefaultDict[str, Dict[str, Union[str, np.ndarray]]] = (
-                defaultdict(dict))
+        results: DefaultDict[
+            str, Dict[str, Union[str, np.ndarray]]
+        ] = defaultdict(dict)
 
         if verbose:
-            pb = tqdm(total=len(self._index.cutpoints),
-                      desc='Evaluating cutpoints')
+            pb = tqdm(
+                total=len(self._index.cutpoints), desc="Evaluating cutpoints"
+            )
 
         for cp_name, cp_data in self._index.cutpoints.items():
             # create a metric that match at the requested k and threshold
-            distance_threshold = float(cp_data['distance'])
+            distance_threshold = float(cp_data["distance"])
             metric = make_classification_metric(cal_metric.name)
             metrics = copy(extra_metrics)
             metrics.append(metric)
@@ -534,11 +706,11 @@ class SimilarityModel(tf.keras.Model):
                     [distance_threshold],
                     metrics=metrics,
                     matcher=matcher,
-                    k=k
+                    k=k,
                 )
             )
-            res['distance'] = tf.constant([distance_threshold])
-            res['name'] = cp_name
+            res["distance"] = tf.constant([distance_threshold])
+            res["name"] = cp_name
             results[cp_name] = res
             if verbose:
                 pb.update()
@@ -547,14 +719,14 @@ class SimilarityModel(tf.keras.Model):
             pb.close()
 
         if verbose:
-            headers = ['name', cal_metric.name]
-            for i in results['optimal'].keys():
+            headers = ["name", cal_metric.name]
+            for i in results["optimal"].keys():
                 if i not in headers:
                     headers.append(str(i))
             rows = []
             for data in results.values():
                 rows.append([data[v] for v in headers])
-            print('\n [Summary]\n')
+            print("\n [Summary]\n")
             print(tabulate(rows, headers=headers))
 
         return results
@@ -589,15 +761,17 @@ class SimilarityModel(tf.keras.Model):
         index_path = Path(filepath) / "index"
         self._index.save(index_path, compression=compression)
 
-    def save(self,
-             filepath: str,
-             save_index: bool = True,
-             compression: bool = True,
-             overwrite: bool = True,
-             include_optimizer: bool = True,
-             signatures=None,
-             options=None,
-             save_traces: bool = True):
+    def save(
+        self,
+        filepath: str,
+        save_index: bool = True,
+        compression: bool = True,
+        overwrite: bool = True,
+        include_optimizer: bool = True,
+        signatures=None,
+        options=None,
+        save_traces: bool = True,
+    ):
         """Save the model and the index.
 
         Args:
@@ -628,17 +802,19 @@ class SimilarityModel(tf.keras.Model):
         # using it
 
         # call underlying keras method to save the mode graph and its weights
-        tf.keras.models.save_model(self,
-                                   filepath,
-                                   overwrite=overwrite,
-                                   include_optimizer=include_optimizer,
-                                   signatures=signatures,
-                                   options=options,
-                                   save_traces=save_traces)
-        if hasattr(self, '_index') and self._index and save_index:
+        tf.keras.models.save_model(
+            self,
+            filepath,
+            overwrite=overwrite,
+            include_optimizer=include_optimizer,
+            signatures=signatures,
+            options=options,
+            save_traces=save_traces,
+        )
+        if hasattr(self, "_index") and self._index and save_index:
             self.save_index(filepath, compression=compression)
         else:
-            print('Index not saved as save_index=False')
+            print("Index not saved as save_index=False")
 
     def to_data_frame(self, num_items: int = 0) -> PandasDataFrame:
         """Export data as pandas dataframe
