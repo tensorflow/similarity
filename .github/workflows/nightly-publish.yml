@@ -42,5 +42,4 @@ jobs:
 
     - name: Publish package
       run: |
-        twine upload -u ${{ secrets.PYPI_NIGHTLY_USERNAME }} -p ${{ secrets.PYPY_NIGHTLY_TOKEN }} dist/* --verbose
-
+        twine upload -u ${{ secrets.PYPI_NIGHTLY_USERNAME }} -p ${{ secrets.PYPI_NIGHTLY_TOKEN }} dist/* --verbose

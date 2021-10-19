@@ -50,13 +50,12 @@ def update_version(rel_path):
 if __name__ == "__main__":
     version_path = "../tensorflow_similarity/__init__.py"
 
-    os.system("git checkout development")
     os.system("git config --global user.email '<>'")
     os.system("git config --global user.name 'Github Actions Bot'")
 
     # Assumes we are in the scripts/ dir
     new_version = update_version(version_path)
 
-    os.system(f"git add {version_path}")
+    os.system(f"git add -u")
     os.system(f"git commit -m '[nightly] Increase version to {new_version}'")
     os.system("git push")
