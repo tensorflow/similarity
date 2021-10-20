@@ -53,7 +53,7 @@ def make_classification_metric(
 
     if isinstance(metric, str):
         if metric.lower() in METRICS_ALIASES:
-            metric = METRICS_ALIASES[metric.lower()]()
+            metric = METRICS_ALIASES[metric.lower()](name=metric.lower())
         else:
             raise ValueError(f'Unknown metric name: {metric}, typo?')
 
