@@ -20,7 +20,7 @@ import functools
 import tensorflow.compat.v2 as tf
 from tensorflow import Tensor
 
-from typing import List
+from typing import List, Optional
 from tensorflow_similarity.augmenters.augmenter import Augmenter
 
 
@@ -547,7 +547,7 @@ class SimCLRAugmenter(Augmenter):
                  eval_crop_proportion: float = 0.875,  # imagenet standard
                  flip: bool = True,
                  version: str = "v2",
-                 num_cpu: int = os.cpu_count()
+                 num_cpu: Optional[int] = os.cpu_count()
                  ):
 
         self.width = width
@@ -580,7 +580,6 @@ class SimCLRAugmenter(Augmenter):
 
         with tf.device("/cpu:0"):
             inputs = tf.stack(x)
-            #inputs = tf.cast(inputs, dtype='float32')
             inputs = tf.cast(inputs, dtype='float32') / 255.0
             views = []
 
