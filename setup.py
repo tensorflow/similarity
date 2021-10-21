@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import sys
 
 from setuptools import find_packages
 from setuptools import setup
@@ -34,8 +35,19 @@ def get_version(rel_path):
     raise RuntimeError("Unable to find version string.")
 
 
+# We use the same setup.py for both tensorflow_similarity and tfsim-nightly
+# packages. The package is controlled from the argument line when building the
+# pip package.
+project_name = "tensorflow_similarity"
+if "--project_name" in sys.argv:
+    project_name_idx = sys.argv.index("--project_name")
+    project_name = sys.argv[project_name_idx + 1]
+    sys.argv.remove("--project_name")
+    sys.argv.pop(project_name_idx)
+
+
 setup(
-    name="tensorflow_similarity",
+    name=project_name,
     version=get_version("tensorflow_similarity/__init__.py"),
     description="Metric Learning for Humans",
     long_description=read("README.md"),
@@ -69,6 +81,7 @@ setup(
             "pytest",
             "pytype",
             "setuptools",
+            "types-termcolor",
             "twine",
             "types-tabulate",
             "wheel",

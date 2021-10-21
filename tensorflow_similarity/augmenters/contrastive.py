@@ -16,14 +16,14 @@ import tensorflow as tf
 import os
 from .augmenter import Augmenter
 from tensorflow_similarity.types import Tensor
-from typing import List, Callable
+from typing import Callable, List, Optional
 
 
 class ContrastiveAugmenter(Augmenter):
 
     def __init__(self,
                  process: Callable,
-                 num_cpu: int = os.cpu_count()):
+                 num_cpu: Optional[int] = os.cpu_count()):
         self.process = process
         self.num_cpu = num_cpu
 

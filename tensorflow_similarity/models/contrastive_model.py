@@ -5,6 +5,8 @@ import json
 from typing import Dict, Any
 
 # @tf.keras.utils.register_keras_serializable(package="Similarity")
+
+
 class ContrastiveModel(tf.keras.Model):
     def __init__(
         self, encoder_model, projector_model, swap_representation=False
@@ -46,7 +48,7 @@ class ContrastiveModel(tf.keras.Model):
 
             l1 = self.compiled_loss(*l1_args)
             l2 = self.compiled_loss(*l2_args)
-            loss = l1 + l2
+            loss = tf.math.reduce_mean(l1 + l2)
 
         # collect train variables from both the encoder and the projector
         tvars = self.encoder.trainable_variables + self.projector.trainable_variables  # noqa
