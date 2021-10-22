@@ -1,14 +1,17 @@
 import tensorflow as tf
 from termcolor import cprint
+from pathlib import Path
+import json
+from typing import Any, Callable, Dict, Mapping, Optional, Union
 
 # @tf.keras.utils.register_keras_serializable(package="Similarity")
-class ContrastiveModel(tf.keras.Model):
 
-    def __init__(self,
-                 encoder_model,
-                 projector_model,
-                 swap_representation=False) -> None:
-        super(ContrastiveModel, self).__init__()
+
+class ContrastiveModel(tf.keras.Model):
+    def __init__(
+        self, encoder_model, projector_model, swap_representation=False
+    ) -> None:
+        super().__init__()
 
         self.encoder = encoder_model
         self.projector = projector_model
@@ -48,7 +51,10 @@ class ContrastiveModel(tf.keras.Model):
             loss = tf.math.reduce_mean(l1 + l2)
 
         # collect train variables from both the encoder and the projector
-        tvars = self.encoder.trainable_variables + self.projector.trainable_variables
+        tvars = (
+            self.encoder.trainable_variables
+            + self.projector.trainable_variables
+        )  # noqa
 
         # Compute gradients
         gradients = tape.gradient(loss, tvars)
@@ -77,10 +83,58 @@ class ContrastiveModel(tf.keras.Model):
         return self.encoder
 
     def summary(self):
-        cprint("[Encoder]", 'green')
+        cprint("[Encoder]", "green")
         self.encoder.summary()
-        cprint("\n[Projector]", 'magenta')
+        cprint("\n[Projector]", "magenta")
         self.projector.summary()
 
-    def save(self):
+    def save(
+        self,
+        filepath: Union[str, Path],
+        overwrite: bool = True,
+        include_optimizer: bool = True,
+        save_format: Optional[str] = None,
+        signatures: Optional[Union[Callable, Mapping[str, Callable]]] = None,
+        options: Optional[tf.saved_model.SaveOptions] = None,
+        save_traces: bool = True,
+    ) -> None:
+        """Save Constrative model encoder and projector"""
+        spath = Path(filepath)
+        epath = spath / "encoder"
+        ppath = spath / "projector"
+        cpath = spath / "config.json"
+
+        cprint("[Saving projector model]", "blue")
+        cprint("|-path:%s" % ppath, "green")
+        self.projector.save(
+            str(ppath),
+            overwrite=overwrite,
+            include_optimizer=include_optimizer,
+            save_format=save_format,
+            signatures=signatures,
+            options=options,
+            save_traces=save_traces,
+        )
+
+        cprint("[Saving encoder model]", "blue")
+        cprint("|-path:%s" % epath, "green")
+        self.encoder.save(
+            str(epath),
+            overwrite=overwrite,
+            include_optimizer=include_optimizer,
+            save_format=save_format,
+            signatures=signatures,
+            options=options,
+            save_traces=save_traces,
+        )
+
+        with open(str(cpath), "w+") as o:
+            config = self.to_config()
+            json.dump(config, o)
+
+    def to_config(self) -> Dict[str, Any]:
+        return {"swap_representation": self.swap_representation}
+
+    @staticmethod
+    def load(path: str):
         raise NotImplementedError()

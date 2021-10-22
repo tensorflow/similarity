@@ -1,14 +1,12 @@
 import math
 
 import tensorflow as tf
-from tensorflow import Tensor
-from typing import List
 from tensorflow_similarity.types import FloatTensor
 
 
 @tf.function
-def SiamSiamLoss(z: FloatTensor, p: FloatTensor, angular: bool = True) -> FloatTensor:
-    """SiamSiam Loss
+def SimSiamLoss(z: FloatTensor, p: FloatTensor, angular: bool = True) -> FloatTensor:
+    """SimSiam Loss
 
     Introduced in: [Exploring Simple Siamese Representation Learning](https://openaccess.thecvf.com/content/CVPR2021/papers/Chen_Exploring_Simple_Siamese_Representation_Learning_CVPR_2021_paper.pdf)
 
