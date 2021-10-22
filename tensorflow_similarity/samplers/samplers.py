@@ -13,15 +13,21 @@
 # limitations under the License.
 
 import abc
-from typing import Any, Callable, Optional, Tuple, List
+from typing import Any, Callable, List, Mapping, Optional, Tuple, Union
+
+import numpy as np
+from tensorflow import Tensor
 
 from tensorflow.keras.utils import Sequence
-from tensorflow.python.framework.ops import Tensor
 from tensorflow_similarity.augmenters import Augmenter
-
 
 # Not currently used. Might be useful to allows gradual call of augmenter
 Scheduler = Callable[[Any], Any]
+
+# All basic types accepted by tf.keras.Model.fit(). This doesn't include tf.data
+# datasets or keras generators.
+Batch = Union[np.ndarray, List[np.ndarray], Tensor, List[Tensor],
+              Mapping[str, Union[np.ndarray, Tensor]]]
 
 
 class Sampler(Sequence, metaclass=abc.ABCMeta):
@@ -72,8 +78,6 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
         self.examples_per_class_per_batch = examples_per_class_per_batch
         self.num_augmentations_per_example = num_augmentations_per_example
         self.batch_size = classes_per_batch * examples_per_class_per_batch
-        self.aug_size = (self.batch_size *
-                         (1 + num_augmentations_per_example)) - self.batch_size
         self.steps_per_epoch = steps_per_epoch
         self.augmenter = augmenter
         self.warmup = warmup
@@ -81,14 +85,14 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
 
         # Tell the users what to expect as they might be unsure what the batch
         # size will be
-        print(f"\nThe initial batch size is {self.batch_size + self.aug_size} "
+        print(f"\nThe initial batch size is {self.batch_size} "
               f"({self.classes_per_batch} classes * "
               f"{self.examples_per_class_per_batch} examples per class) with "
               f"{self.num_augmentations_per_example} augmenters")
 
     @abc.abstractmethod
     def _get_examples(self, batch_id: int, num_classes: int,
-                      examples_per_class: int) -> Tuple[Tensor, Tensor]:
+                      examples_per_class: int) -> Tuple[Batch, Batch]:
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -127,10 +131,10 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
             print("Warmup complete")
             self.is_warmup = False
 
-    def __getitem__(self, batch_id: int) -> List[Tensor]:
+    def __getitem__(self, batch_id: int) -> Tuple[Batch, Batch]:
         return self.generate_batch(batch_id)
 
-    def generate_batch(self, batch_id: int) -> List[Tensor]:
+    def generate_batch(self, batch_id: int) -> Tuple[Batch, Batch]:
         """Generate a batch of data.
 
 
@@ -138,18 +142,13 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
             batch_id ([type]): [description]
 
         Returns:
-            x, y: batch
+            x, y: Batch
         """
 
         x, y = self._get_examples(batch_id, self.classes_per_batch,
                                   self.examples_per_class_per_batch)
 
-        # strip examples if needed. This might happen due to rounding
-        if len(x) > self.batch_size:
-            x = x[:self.batch_size]
-            y = y[:self.batch_size]
-
         if self.augmenter:
             x, y = self.augmenter(x, y, self.num_augmentations_per_example,
-                                   self.is_warmup)
+                                  self.is_warmup)
         return x, y

@@ -180,13 +180,14 @@ class MultiShotMemorySampler(Sampler):
             else:
                 idxs.extend(random.sample(class_idxs, k=examples_per_class))
 
-        batch_x = []
-        batch_y = []
-        for idx in idxs:
-            batch_x.append(self._x[idx])
-            batch_y.append(self._y[idx])
+        x = []
+        y = []
+        # strip examples if needed. This might happen due to rounding
+        for idx in idxs[:self.batch_size]:
+            x.append(self._x[idx])
+            y.append(self._y[idx])
 
-        return np.array(batch_x), np.array(batch_y)
+        return np.array(x), np.array(y)
 
     def get_slice(self,
                   begin: int = 0,
@@ -326,6 +327,11 @@ class SingleShotMemorySampler(Sampler):
         # ! don't cast data as different model use different type.
         y = tf.convert_to_tensor([int(i) for i in idxs])
         x = tf.convert_to_tensor([self._x[idx] for idx in y])
+
+        # strip examples if needed. This might happen due to rounding
+        if len(x) > self.batch_size:
+            x = x[:self.batch_size]
+            y = y[:self.batch_size]
 
         return x, y
 

@@ -2,7 +2,7 @@ import tensorflow as tf
 from termcolor import cprint
 from pathlib import Path
 import json
-from typing import Dict, Any
+from typing import Any, Callable, Dict, Mapping, Optional, Union
 
 # @tf.keras.utils.register_keras_serializable(package="Similarity")
 
@@ -11,7 +11,7 @@ class ContrastiveModel(tf.keras.Model):
     def __init__(
         self, encoder_model, projector_model, swap_representation=False
     ) -> None:
-        super(ContrastiveModel, self).__init__()
+        super().__init__()
 
         self.encoder = encoder_model
         self.projector = projector_model
@@ -51,7 +51,10 @@ class ContrastiveModel(tf.keras.Model):
             loss = tf.math.reduce_mean(l1 + l2)
 
         # collect train variables from both the encoder and the projector
-        tvars = self.encoder.trainable_variables + self.projector.trainable_variables  # noqa
+        tvars = (
+            self.encoder.trainable_variables
+            + self.projector.trainable_variables
+        )  # noqa
 
         # Compute gradients
         gradients = tape.gradient(loss, tvars)
@@ -85,18 +88,20 @@ class ContrastiveModel(tf.keras.Model):
         cprint("\n[Projector]", "magenta")
         self.projector.summary()
 
-    def save(self,
-             filepath,
-             overwrite=True,
-             include_optimizer=True,
-             save_format=None,
-             signatures=None,
-             options=None,
-             save_traces=True):
+    def save(
+        self,
+        filepath: Union[str, Path],
+        overwrite: bool = True,
+        include_optimizer: bool = True,
+        save_format: Optional[str] = None,
+        signatures: Optional[Union[Callable, Mapping[str, Callable]]] = None,
+        options: Optional[tf.saved_model.SaveOptions] = None,
+        save_traces: bool = True,
+    ) -> None:
         """Save Constrative model encoder and projector"""
         spath = Path(filepath)
-        epath = spath / "encoder/"
-        ppath = spath / "projector/"
+        epath = spath / "encoder"
+        ppath = spath / "projector"
         cpath = spath / "config.json"
 
         cprint("[Saving projector model]", "blue")
@@ -128,9 +133,7 @@ class ContrastiveModel(tf.keras.Model):
             json.dump(config, o)
 
     def to_config(self) -> Dict[str, Any]:
-        return {
-                "swap_representation": self.swap_representation
-            }
+        return {"swap_representation": self.swap_representation}
 
     @staticmethod
     def load(path: str):
