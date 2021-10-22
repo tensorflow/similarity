@@ -38,13 +38,15 @@ class ContrastiveModel(tf.keras.Model):
             p1 = self.projector(z1)
             p2 = self.projector(z2)
 
-            # Allows to swap projections (ala SiamSiam)
+            # Allows to swap projections (ala SimSiam)
             if self.swap_representation:
+                # SimSiam
                 l1_args = (z1, p2)
                 l2_args = (z2, p1)
             else:
-                l1_args = (z1, p1)
-                l2_args = (z2, p2)
+                # SimCLR
+                l1_args = (z1, z2)
+                l2_args = (z2, z1)
 
             l1 = self.compiled_loss(*l1_args)
             l2 = self.compiled_loss(*l2_args)
