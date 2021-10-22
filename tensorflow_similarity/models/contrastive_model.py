@@ -56,7 +56,7 @@ class ContrastiveModel(tf.keras.Model):
         tvars = (
             self.encoder.trainable_variables
             + self.projector.trainable_variables
-        )  # noqa
+        )
 
         # Compute gradients
         gradients = tape.gradient(loss, tvars)
