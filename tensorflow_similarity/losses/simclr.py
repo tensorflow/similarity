@@ -1,5 +1,5 @@
 import tensorflow as tf
-from typing import Any, Dict
+from typing import Any, Callable, Dict, Optional
 from tensorflow_similarity.types import FloatTensor
 from tensorflow.keras.losses import Loss
 
@@ -15,39 +15,39 @@ class SimCLRLoss(Loss):
     used in [Big Self-Supervised Models are Strong Semi-Supervised Learners](https://arxiv.org/abs/2006.10029)
     code adapted from [orignal github](https://github.com/google-research/simclr/tree/master/tf2)
     """
-    def __init__(self,
-                 temperature: float = 1.0,
-                 use_hidden_norm: bool = True,
-                 **kwargs):
-        super().__init__(kwargs)
-        self.temperature = tf.constant(temperature, dtype='float32')
+
+    def __init__(
+        self,
+        temperature: float = 0.05,
+        use_hidden_norm: bool = True,
+        reduction: Callable = tf.keras.losses.Reduction.AUTO,
+        name: Optional[str] = None,
+        **kwargs
+    ):
+        super().__init__(reduction=reduction, name=name, **kwargs)
+        self.temperature = tf.constant(temperature, dtype="float32")
         self.use_hidden_norm = use_hidden_norm
 
-    def call(self,
-             hs: FloatTensor,
-             zs: FloatTensor) -> FloatTensor:
+    def call(self, va: FloatTensor, vb: FloatTensor) -> FloatTensor:
         """compute the loast.
         Args:
-        h: Encoders outputs
-        z: Projectors outputs
+            va: View A
 
+            vb: View B
         Returns:
-        loss
+            loss
         """
-        # unpack
-        za, zb = zs
-
         # compute the diagonal
-        batch_size = tf.size(za)
-        diag = tf.linalg.diag(tf.ones(batch_size, dtype=tf.float32))
+        batch_size = tf.shape(va)[0]
+        diag = tf.one_hot(tf.range(batch_size), batch_size)
 
         if self.use_hidden_norm:
-            za = tf.math.l2_normalize(za)
-            zb = tf.math.l2_normalize(zb)
+            va = tf.math.l2_normalize(va)
+            vb = tf.math.l2_normalize(vb)
 
         # compute pairwise
-        ab = tf.matmul(za, zb, transpose_b=True)
-        aa = tf.matmul(za, za, transpose_b=True)
+        ab = tf.matmul(va, vb, transpose_b=True)
+        aa = tf.matmul(va, va, transpose_b=True)
 
         # divide by temperature once to go faster
         ab = ab / self.temperature
@@ -58,13 +58,16 @@ class SimCLRLoss(Loss):
         aa = aa - diag * LARGE_NUM
 
         distances = tf.concat((ab, aa), axis=1)
+        labels = tf.one_hot(tf.range(batch_size), batch_size * 2)
 
-        per_example_loss: FloatTensor = tf.nn.softmax_cross_entropy_with_logits(diag, distances)
+        per_example_loss: FloatTensor = tf.nn.softmax_cross_entropy_with_logits(
+            labels, distances
+        )
 
         return per_example_loss
 
     def to_config(self) -> Dict[str, Any]:
         return {
             "temperature": self.temperature,
-            "use_hidden_norm": self.use_hidden_norm
+            "use_hidden_norm": self.use_hidden_norm,
         }
