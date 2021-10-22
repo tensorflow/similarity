@@ -1,4 +1,19 @@
 # Releases notes
+## 0.15.x - Initial support of self supervised algorithms
+
+- Refactored Augmenters to be a class
+- Added SimCLRAugmenter
+- Added `SiamSiamLoss()`
+- Added SimCLR Loss
+- Added `ContrastiveModel()` for self-supervised training
+- Added `encoder_dev()` metrics as suggested in SiamSiam to detect collapsing
+- Added `visualize_views()` to see view side by side
+- Added self-supervised hello world narrated notebook
+- Refactored `Augmenter()` as class.
+
+## 0.14.x - Post Launch bugfix release
+
+Many bugs fixed based on the community feedback. Thanks!
 
 ## 0.14.x
 

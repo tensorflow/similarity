@@ -24,3 +24,4 @@ from .distance_metrics import min_pos # noqa
 from .distance_metrics import min_neg # noqa
 from .distance_metrics import sum_pos # noqa
 from .distance_metrics import sum_neg # noqa
+from .contrastive_metrics import encoder_std  # noqa
