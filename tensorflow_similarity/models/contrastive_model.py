@@ -50,7 +50,7 @@ class ContrastiveModel(tf.keras.Model):
 
             l1 = self.compiled_loss(*l1_args)
             l2 = self.compiled_loss(*l2_args)
-            loss = tf.math.reduce_mean(l1 + l2)
+            loss = tf.math.reduce_mean(l1) + tf.math.reduce_mean(l2)
 
         # collect train variables from both the encoder and the projector
         tvars = (
