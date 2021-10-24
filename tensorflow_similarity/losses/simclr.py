@@ -1,14 +1,14 @@
-import tensorflow as tf
 from typing import Any, Callable, Dict, Optional
-from tensorflow_similarity.types import FloatTensor
+
+import tensorflow as tf
 from tensorflow.keras.losses import Loss
+
+from tensorflow_similarity.types import FloatTensor
 
 LARGE_NUM = 1e9
 
-# FIXME: make sure to register
-# @tf.keras.utils.register_keras_serializable(package="Similarity")
 
-
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 class SimCLRLoss(Loss):
     """SimCLR Loss
     # FIXME original reference
@@ -29,11 +29,12 @@ class SimCLRLoss(Loss):
         self.use_hidden_norm = use_hidden_norm
 
     def call(self, va: FloatTensor, vb: FloatTensor) -> FloatTensor:
-        """compute the loast.
+        """Compute the lost.
+
         Args:
             va: View A
-
             vb: View B
+
         Returns:
             loss
         """
