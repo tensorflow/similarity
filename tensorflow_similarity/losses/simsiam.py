@@ -14,8 +14,8 @@ def SimSiamLoss(z: FloatTensor, p: FloatTensor, angular: bool = True) -> FloatTe
     - Stopping the gradient is critical according to the paper for convergence.
 
     Args:
-        z: Encoders outputs
-        p: Projectors outputs
+        z: Encoder outputs
+        p: Predictor outputs
         angular: If True, convert the cosine similarity to angular similarity
 
     Returns:
