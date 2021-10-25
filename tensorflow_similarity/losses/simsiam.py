@@ -8,15 +8,18 @@ from tensorflow_similarity.types import FloatTensor
 
 
 def negative_cosine_sim(sim: FloatTensor) -> FloatTensor:
-    return -1.0 * sim
+    loss: FloatTensor = tf.constant([-1.0]) * sim
+    return loss
 
 
 def cosine_distance(sim: FloatTensor) -> FloatTensor:
-    return 1.0 - sim
+    loss: FloatTensor = tf.constant([1.0]) - sim
+    return loss
 
 
 def angular_distance(sim: FloatTensor) -> FloatTensor:
-    return tf.math.acos(sim) / tf.constant(math.pi)
+    loss: FloatTensor = tf.math.acos(sim) / tf.constant(math.pi)
+    return loss
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -77,7 +80,8 @@ class SimSiamLoss(Loss):
         vals = p * z
         sim = tf.reduce_sum(vals, axis=1)
 
-        return self._loss(sim) * 0.5
+        loss: FloatTensor = self._loss(sim) * tf.constant([0.5])
+        return loss
 
     def to_config(self) -> Dict[str, Any]:
         return {
