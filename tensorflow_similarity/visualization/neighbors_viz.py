@@ -25,7 +25,7 @@ def viz_neigbors_imgs(example: Tensor,
                       class_mapping: Optional[Mapping[int, str]] = None,
                       fig_size: Tuple[int, int] = (24, 4),
                       cmap: str = 'viridis',
-                      plot: bool = True):
+                      show: bool = True):
     """Display images nearest neighboors
 
     Args:
@@ -66,7 +66,7 @@ def viz_neigbors_imgs(example: Tensor,
         ax.set_title(legend)
         ax.set_xticks([])
         ax.set_yticks([])
-    if plot:
+    if show:
         plt.show()
     else:
         return plt
