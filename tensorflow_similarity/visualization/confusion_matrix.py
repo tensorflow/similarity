@@ -44,6 +44,8 @@ def confusion_matrix(y_pred: IntTensor,
         title: Title of the confusion matrix. Defaults to 'Confusion matrix'.
 
         cmap: Color schema as CMAP. Defaults to 'Blues'.
+        
+        show: If the plot is going to be shown or not. Defaults to 'True'.
     """
 
     with tf.device("/cpu:0"):
