@@ -68,7 +68,7 @@ def viz_neigbors_imgs(example: Tensor,
         ax.set_yticks([])
     if plot:
       plt.show()
-   else:
+    else:
       return plt
 
 
