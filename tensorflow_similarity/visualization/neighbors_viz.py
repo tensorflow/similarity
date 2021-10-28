@@ -67,9 +67,9 @@ def viz_neigbors_imgs(example: Tensor,
         ax.set_xticks([])
         ax.set_yticks([])
     if plot:
-      plt.show()
+        plt.show()
     else:
-      return plt
+        return plt
 
 
 def _get_class_label(example_class, class_mapping):
