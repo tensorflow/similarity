@@ -26,7 +26,8 @@ def confusion_matrix(y_pred: IntTensor,
                      normalize: bool = True,
                      labels: IntTensor = None,
                      title: str = 'Confusion matrix',
-                     cmap: str = 'Blues'):
+                     cmap: str = 'Blues',
+                     plot: bool = True):
     """Plot confusion matrix
 
     Args:
@@ -83,4 +84,7 @@ def confusion_matrix(y_pred: IntTensor,
         plt.ylabel('True label')
         plt.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'.format(
             accuracy, misclass))
-        plt.show()
+        if plot:
+            plt.show()
+        else:
+            return plt
