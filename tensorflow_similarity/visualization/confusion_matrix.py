@@ -26,7 +26,8 @@ def confusion_matrix(y_pred: IntTensor,
                      normalize: bool = True,
                      labels: IntTensor = None,
                      title: str = 'Confusion matrix',
-                     cmap: str = 'Blues'):
+                     cmap: str = 'Blues',
+                     show: bool = True):
     """Plot confusion matrix
 
     Args:
@@ -43,6 +44,8 @@ def confusion_matrix(y_pred: IntTensor,
         title: Title of the confusion matrix. Defaults to 'Confusion matrix'.
 
         cmap: Color schema as CMAP. Defaults to 'Blues'.
+        
+        show: If the plot is going to be shown or not. Defaults to True.
     """
 
     with tf.device("/cpu:0"):
@@ -83,4 +86,7 @@ def confusion_matrix(y_pred: IntTensor,
         plt.ylabel('True label')
         plt.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'.format(
             accuracy, misclass))
-        plt.show()
+        if show:
+            plt.show()
+        else:
+            return plt
