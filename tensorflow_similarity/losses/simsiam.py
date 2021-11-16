@@ -7,16 +7,19 @@ from tensorflow.keras.losses import Loss
 from tensorflow_similarity.types import FloatTensor
 
 
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 def negative_cosine_sim(sim: FloatTensor) -> FloatTensor:
     loss: FloatTensor = tf.constant([-1.0]) * sim
     return loss
 
 
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 def cosine_distance(sim: FloatTensor) -> FloatTensor:
     loss: FloatTensor = tf.constant([1.0]) - sim
     return loss
 
 
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 def angular_distance(sim: FloatTensor) -> FloatTensor:
     loss: FloatTensor = tf.math.acos(sim) / tf.constant(math.pi)
     return loss
@@ -31,7 +34,8 @@ class SimSiamLoss(Loss):
 
     def __init__(
         self,
-        loss_type: str = "negative_cosine_sim",
+        projection_type: str = "negative_cosine_sim",
+        margin: float = 0.001,
         reduction: Callable = tf.keras.losses.Reduction.AUTO,
         name: Optional[str] = None,
         **kwargs,
@@ -39,27 +43,31 @@ class SimSiamLoss(Loss):
         """Create the SimSiam Loss.
 
         Args:
-          loss_type: Determines the way the final loss is computed between views.
+          projection_type: Projects results into a metric space to allow KNN
+          search.
             negative_cosine_sim: -1.0 * cosine similarity.
             cosine_distance: 1.0 - cosine similarity.
             angular_distance: 1.0 - angular similarity.
+          margin: Offset to prevent a distance of 0.
           reduction: (Optional) Type of `tf.keras.losses.Reduction` to apply to
             loss. Default value is `AUTO`.
           name: (Optional) name for the loss.
           **kwargs: The keyword arguments that are passed on to `fn`.
         """
         super().__init__(reduction=reduction, name=name, **kwargs)
-        self.loss_type = loss_type
+        self.projection_type = projection_type
+        self.margin = margin
 
-        if self.loss_type == "negative_cosine_sim":
-            self._loss = negative_cosine_sim
-        elif self.loss_type == "cosine_distance":
-            self._loss = cosine_distance
-        elif self.loss_type == "angular_distance":
-            self._loss = angular_distance
+        if self.projection_type == "negative_cosine_sim":
+            self._projection = negative_cosine_sim
+        elif self.projection_type == "cosine_distance":
+            self._projection = cosine_distance
+        elif self.projection_type == "angular_distance":
+            self._projection = angular_distance
         else:
-            raise ValueError(f"{self.loss_type} is not supported.")
+            raise ValueError(f"{self.projection_type} is not supported.")
 
+    @tf.function
     def call(self, z: FloatTensor, p: FloatTensor) -> FloatTensor:
         """Compute the loss
         Notes:
@@ -77,13 +85,21 @@ class SimSiamLoss(Loss):
         p = tf.math.l2_normalize(p, axis=1)
         z = tf.math.l2_normalize(z, axis=1)
 
+        # 2D tensor
         vals = p * z
-        sim = tf.reduce_sum(vals, axis=1)
+        # 1D tensor
+        cosine_simlarity = tf.reduce_sum(vals, axis=1)
 
-        loss: FloatTensor = self._loss(sim) * tf.constant([0.5])
+        per_example_projection = self._projection(cosine_simlarity)
+
+        # Scaler float
+        loss: FloatTensor = tf.math.reduce_mean(per_example_projection)
+        loss = loss * 0.5 + self.margin
+
         return loss
 
     def to_config(self) -> Dict[str, Any]:
         return {
-            "loss_type": self.loss_type,
+            "projection_type": self.projection_type,
+            "margin": self.margin,
         }
