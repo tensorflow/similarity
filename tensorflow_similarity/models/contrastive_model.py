@@ -1,62 +1,79 @@
-import tensorflow as tf
-from termcolor import cprint
 from pathlib import Path
 import json
-from typing import Any, Callable, Dict, Mapping, Optional, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
+
+import tensorflow as tf
+from tensorflow_similarity.types import FloatTensor
+from termcolor import cprint
+
 
 # @tf.keras.utils.register_keras_serializable(package="Similarity")
-
-
 class ContrastiveModel(tf.keras.Model):
-    def __init__(
-        self, encoder_model, projector_model, swap_representation=False
-    ) -> None:
-        super().__init__()
 
-        self.encoder = encoder_model
+    def __init__(
+        self,
+        backbone_model: tf.keras.Model,
+        projector_model: tf.keras.Model,
+        predictor_model: Optional[tf.keras.Model] = None,
+        method: str = "simsiam",
+        **kwargs,
+    ) -> None:
+        super().__init__(**kwargs)
+
+        self.backbone = backbone_model
         self.projector = projector_model
-        self.swap_representation = swap_representation
+        self.predictor = predictor_model
+        self.method = method
         self.loss_tracker = tf.keras.metrics.Mean(name="loss")
+        self.supported_methods = ("simsiam", "simclr", "barlow")
+
+        if self.method not in self.supported_methods:
+            raise ValueError(f"{self.method} is not a supported method."
+                             f"Supported methods are {self.supported_methods}.")
 
     @tf.function
     def train_step(self, data):
-        if len(data) == 2:
-            view1 = data[0]
-            view2 = data[1]
-        else:
-            view1 = data[0]
-            view2 = data[0]
+        view1, view2 = self._parse_views(data)
 
         # Forward pass through the encoder and predictor
         with tf.GradientTape() as tape:
+            h1 = self.backbone(view1)
+            h2 = self.backbone(view2)
 
-            # compute representation
-            z1 = self.encoder(view1)
-            z2 = self.encoder(view2)
+            z1 = self.projector(h1)
+            z2 = self.projector(h2)
 
-            # compute projection
-            p1 = self.projector(z1)
-            p2 = self.projector(z2)
+            if self.predictor:
+                p1 = self.predictor(z1)
+                p2 = self.predictor(z2)
 
-            # Allows to swap projections (ala SimSiam)
-            if self.swap_representation:
-                # SimSiam
+            if self.method == "simsiam":
+                h1 = tf.stop_gradient(h1)
+                h2 = tf.stop_gradient(h2)
                 l1_args = (z1, p2)
                 l2_args = (z2, p1)
-            else:
-                # SimCLR
+            elif self.method in ("simclr", "barlow"):
                 l1_args = (z1, z2)
                 l2_args = (z2, z1)
 
             l1 = self.compiled_loss(*l1_args)
             l2 = self.compiled_loss(*l2_args)
-            loss = tf.math.reduce_mean(l1) + tf.math.reduce_mean(l2)
+            loss = l1 + l2
 
         # collect train variables from both the encoder and the projector
-        tvars = (
-            self.encoder.trainable_variables
-            + self.projector.trainable_variables
-        )
+        tvars = self.backbone.trainable_variables
+        tvars += self.projector.trainable_variables
+        if self.predictor:
+            tvars += self.predictor.trainable_variables
 
         # Compute gradients
         gradients = tape.gradient(loss, tvars)
@@ -68,7 +85,11 @@ class ContrastiveModel(tf.keras.Model):
         # !This are contrastive metrics with different input
         # TODO: figure out interesting metrics -- z Mae?
         # TODO: check metrics are of the right type in compile?
-        self.compiled_metrics.update_state([z1, z2], [p1, p2])
+        if self.predictor:
+            y = [p2, p1]
+        else:
+            y = [z2, z1]
+        self.compiled_metrics.update_state([z1, z2], y)
 
         # report loss manually
         self.loss_tracker.update_state(loss)
@@ -102,14 +123,27 @@ class ContrastiveModel(tf.keras.Model):
     ) -> None:
         """Save Constrative model encoder and projector"""
         spath = Path(filepath)
-        epath = spath / "encoder"
-        ppath = spath / "projector"
-        cpath = spath / "config.json"
+        backbone_path = spath / "backbone"
+        proj_path = spath / "projector"
+        pred_path = spath / "predictor"
+        config_path = spath / "config.json"
+
+        cprint("[Saving backbone model]", "blue")
+        cprint("|-path:%s" % backbone_path, "green")
+        self.backbone.save(
+            str(backbone_path),
+            overwrite=overwrite,
+            include_optimizer=include_optimizer,
+            save_format=save_format,
+            signatures=signatures,
+            options=options,
+            save_traces=save_traces,
+        )
 
         cprint("[Saving projector model]", "blue")
-        cprint("|-path:%s" % ppath, "green")
+        cprint("|-path:%s" % proj_path, "green")
         self.projector.save(
-            str(ppath),
+            str(proj_path),
             overwrite=overwrite,
             include_optimizer=include_optimizer,
             save_format=save_format,
@@ -118,10 +152,10 @@ class ContrastiveModel(tf.keras.Model):
             save_traces=save_traces,
         )
 
-        cprint("[Saving encoder model]", "blue")
-        cprint("|-path:%s" % epath, "green")
-        self.encoder.save(
-            str(epath),
+        cprint("[Saving predictor model]", "blue")
+        cprint("|-path:%s" % pred_path, "green")
+        self.projector.save(
+            str(pred_path),
             overwrite=overwrite,
             include_optimizer=include_optimizer,
             save_format=save_format,
@@ -130,13 +164,57 @@ class ContrastiveModel(tf.keras.Model):
             save_traces=save_traces,
         )
 
-        with open(str(cpath), "w+") as o:
-            config = self.to_config()
+        super().save(
+            str(spath),
+            overwrite=overwrite,
+            include_optimizer=include_optimizer,
+            save_format=save_format,
+            signatures=signatures,
+            options=options,
+            save_traces=save_traces)
+
+        with open(str(config_path), "w+") as o:
+            config = self.get_config()
             json.dump(config, o)
 
-    def to_config(self) -> Dict[str, Any]:
-        return {"swap_representation": self.swap_representation}
+    def get_config(self) -> Dict[str, Any]:
+        config = {
+            "backbone_model": self.backbone_model,
+            "projector_model": self.projector_model,
+            "predictor_model": self.predictor_model,
+            "method": self.method,
+        }
+        base_config = super().get_config()
+        return {**base_config, **config()}
 
-    @staticmethod
-    def load(path: str):
-        raise NotImplementedError()
+    def _parse_views(self, data: Sequence[FloatTensor]) -> Tuple[FloatTensor]:
+        if len(data) == 2:
+            view1 = data[0]
+            view2 = data[1]
+        else:
+            view1 = data[0]
+            view2 = data[0]
+
+        return view1, view2
+
+    def predict(
+        self,
+        x: FloatTensor,
+        batch_size: Optional[int] = None,
+        verbose: int = 0,
+        steps: Optional[int] = None,
+        callbacks: Optional[tf.keras.Callback] = None,
+        max_queue_size: int = 10,
+        workers: int = 1,
+        use_multiprocessing: bool = False,
+    ) -> FloatTensor:
+        return self.backbone(
+            x,
+            batch_size,
+            verbose,
+            steps,
+            callbacks,
+            max_queue_size,
+            workers,
+            use_multiprocessing,
+        )
