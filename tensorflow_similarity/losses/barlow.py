@@ -11,8 +11,8 @@ class Barlow(Loss):
     """Barlow Loss"""
 
     def __init__(self,
-                 lambda_: float = 0.005,
-                 margin: float = 10e-8,
+                 lambda_: float = 5e-3,
+                 margin: float = 1e-12,
                  reduction: Callable = tf.keras.losses.Reduction.AUTO,
                  name: Optional[str] = None,
                  **kwargs):
@@ -42,6 +42,7 @@ class Barlow(Loss):
         c = c / tf.cast(batch_size, dtype="float32")
 
         on_diag = 1.0 - tf.linalg.diag_part(c)
+        on_diag = tf.math.pow(on_diag, 2)
         on_diag = tf.math.reduce_sum(on_diag)
 
         off_diag = self.off_diagonal(c)
@@ -50,7 +51,7 @@ class Barlow(Loss):
 
         loss = on_diag + off_diag * self.lambda_
 
-        loss = loss * 0.5 + self.margin
+        loss = loss + self.margin
 
         return loss
 
@@ -70,4 +71,4 @@ class Barlow(Loss):
         col_mean = tf.math.reduce_mean(x, axis=0)
         col_std = tf.math.reduce_std(x, axis=0)
 
-        return (x - col_mean) / col_std
+        return tf.math.divide_no_nan((x - col_mean),  col_std)

@@ -59,16 +59,16 @@ class ContrastiveModel(tf.keras.Model):
             if self.method == "simsiam":
                 h1 = tf.stop_gradient(h1)
                 h2 = tf.stop_gradient(h2)
-                l1_args = (z1, p2)
-                l2_args = (z2, p1)
-            elif self.method in ("simclr", "barlow"):
-                l1_args = (z1, z2)
-                l2_args = (z2, z1)
+                l1 = self.compiled_loss(z1, p2)
+                l2 = self.compiled_loss(z2, p1)
+            elif self.method == "simclr":
+                l1 = self.compiled_loss(z1, z2)
+                l2 = self.compiled_loss(z2, z1)
+            elif self.method == "barlow":
+                l1 = self.compiled_loss(z1, z2)
+                l2 = 0
 
-            l1 = self.compiled_loss(*l1_args)
-            l2 = self.compiled_loss(*l2_args)
             loss = l1 + l2
-
         # collect train variables from both the encoder and the projector
         tvars = self.backbone.trainable_variables
         tvars += self.projector.trainable_variables
@@ -203,7 +203,7 @@ class ContrastiveModel(tf.keras.Model):
         batch_size: Optional[int] = None,
         verbose: int = 0,
         steps: Optional[int] = None,
-        callbacks: Optional[tf.keras.Callback] = None,
+        callbacks: Optional[tf.keras.callbacks.Callback] = None,
         max_queue_size: int = 10,
         workers: int = 1,
         use_multiprocessing: bool = False,
