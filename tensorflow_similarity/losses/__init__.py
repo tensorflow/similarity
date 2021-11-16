@@ -22,3 +22,4 @@ from .circle_loss import CircleLoss  # noqa
 from .multisim_loss import MultiSimilarityLoss  # noqa
 from .simsiam import SimSiamLoss  # noqa
 from .simclr import SimCLRLoss  # noqa
+from .barlow import Barlow  # noqa
