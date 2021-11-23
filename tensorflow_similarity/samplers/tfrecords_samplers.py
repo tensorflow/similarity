@@ -91,11 +91,12 @@ def TFRecordDatasetSampler(
         A `TF.data.dataset` ready to be consumed by the model.
     """
     shards_list = [
-        str(i)
+        i.decode()
         for i in tf.io.matching_files(os.path.join(shard_path, shard_suffix))
         .numpy()
         .tolist()
     ]
+    print(f"found {shards_list}")
     total_shards = len(shards_list)
     print(f"found {total_shards} shards")
 
