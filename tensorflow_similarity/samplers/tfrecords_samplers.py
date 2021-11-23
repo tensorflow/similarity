@@ -13,8 +13,6 @@
 # limitations under the License.
 
 import os
-
-from pathlib import Path
 from typing import Callable, Optional
 
 import tensorflow as tf
