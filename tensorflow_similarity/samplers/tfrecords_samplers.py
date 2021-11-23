@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -90,7 +92,12 @@ def TFRecordDatasetSampler(
     Returns:
         A `TF.data.dataset` ready to be consumed by the model.
     """
-    shards_list = [str(i) for i in Path(shard_path).glob(shard_suffix)]
+    shards_list = [
+        str(i)
+        for i in tf.io.matching_files(os.path.join(shard_path, shard_suffix))
+        .numpy()
+        .tolist()
+    ]
     total_shards = len(shards_list)
     print(f"found {total_shards} shards")
 
