@@ -49,9 +49,7 @@ class Barlow(Loss):
         off_diag = tf.math.pow(off_diag, 2)
         off_diag = tf.math.reduce_sum(off_diag)
 
-        loss = on_diag + off_diag * self.lambda_
-
-        loss = loss + self.margin
+        loss: FloatTensor = off_diag * self.lambda_ + on_diag + self.margin
 
         return loss
 
@@ -64,11 +62,13 @@ class Barlow(Loss):
     def off_diagonal(self, x: FloatTensor) -> FloatTensor:
         n = tf.shape(x)[0]
         flattened = tf.reshape(x, [-1])[:-1]
-        off_diagonals = tf.reshape(flattened, (n-1, n+1))[:, 1:]
-        return tf.reshape(off_diagonals, [-1])
+        off_diagonals = tf.reshape(flattened, (n - 1, n + 1))[:, 1:]
+        off_diag: FloatTensor = tf.reshape(off_diagonals, [-1])
+        return off_diag
 
     def normalize_columns(self, x: FloatTensor) -> FloatTensor:
         col_mean = tf.math.reduce_mean(x, axis=0)
         col_std = tf.math.reduce_std(x, axis=0)
 
-        return tf.math.divide_no_nan((x - col_mean),  col_std)
+        norm_col: FloatTensor = tf.math.divide_no_nan((x - col_mean), col_std)
+        return norm_col

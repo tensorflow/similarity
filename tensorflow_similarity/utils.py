@@ -17,6 +17,7 @@ from typing import Optional, Sequence
 
 import tensorflow as tf
 
+from tensorflow_similarity.types import BoolTensor
 from tensorflow_similarity.types import FloatTensor
 from tensorflow_similarity.types import IntTensor
 from tensorflow_similarity.types import Lookup
@@ -82,7 +83,7 @@ def unpack_lookup_distances(
     return dists
 
 
-def _same_length_rows(x: tf.RaggedTensor) -> bool:
+def _same_length_rows(x: tf.RaggedTensor) -> BoolTensor:
     """Check if the rows are all the same length.
 
     Args:
@@ -93,10 +94,11 @@ def _same_length_rows(x: tf.RaggedTensor) -> bool:
     """
     dims = tf.expand_dims(x.row_lengths(), axis=-1)
     pairwise_equality = tf.equal(dims, tf.transpose(dims))
-    return tf.math.reduce_all(pairwise_equality)
+    is_same_length: BoolTensor = tf.math.reduce_all(pairwise_equality)
+    return is_same_length
 
 
-def _count_of_small_lookup_sets(x: tf.RaggedTensor) -> int:
+def _count_of_small_lookup_sets(x: tf.RaggedTensor) -> IntTensor:
     """The count of lookup sets smaller than x.bounding_shape()[1]
 
     Args:
@@ -108,4 +110,5 @@ def _count_of_small_lookup_sets(x: tf.RaggedTensor) -> int:
     rl = x.row_lengths()
     max_rl = x.bounding_shape()[1]
     short_lookup_sets = tf.cast(rl != max_rl, dtype="int32")
-    return tf.math.reduce_sum(short_lookup_sets)
+    small_lookup_count: IntTensor = tf.math.reduce_sum(short_lookup_sets)
+    return small_lookup_count

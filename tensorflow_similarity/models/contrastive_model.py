@@ -18,7 +18,6 @@ from termcolor import cprint
 
 # @tf.keras.utils.register_keras_serializable(package="Similarity")
 class ContrastiveModel(tf.keras.Model):
-
     def __init__(
         self,
         backbone_model: tf.keras.Model,
@@ -37,8 +36,10 @@ class ContrastiveModel(tf.keras.Model):
         self.supported_methods = ("simsiam", "simclr", "barlow")
 
         if self.method not in self.supported_methods:
-            raise ValueError(f"{self.method} is not a supported method."
-                             f"Supported methods are {self.supported_methods}.")
+            raise ValueError(
+                f"{self.method} is not a supported method."
+                f"Supported methods are {self.supported_methods}."
+            )
 
     @tf.function
     def train_step(self, data):
@@ -171,7 +172,8 @@ class ContrastiveModel(tf.keras.Model):
             save_format=save_format,
             signatures=signatures,
             options=options,
-            save_traces=save_traces)
+            save_traces=save_traces,
+        )
 
         with open(str(config_path), "w+") as o:
             config = self.get_config()
@@ -185,9 +187,11 @@ class ContrastiveModel(tf.keras.Model):
             "method": self.method,
         }
         base_config = super().get_config()
-        return {**base_config, **config()}
+        return {**base_config, **config}
 
-    def _parse_views(self, data: Sequence[FloatTensor]) -> Tuple[FloatTensor]:
+    def _parse_views(
+        self, data: Sequence[FloatTensor]
+    ) -> Tuple[FloatTensor, FloatTensor]:
         if len(data) == 2:
             view1 = data[0]
             view2 = data[1]
@@ -208,7 +212,8 @@ class ContrastiveModel(tf.keras.Model):
         workers: int = 1,
         use_multiprocessing: bool = False,
     ) -> FloatTensor:
-        return self.backbone(
+        # Here we assume the backbone has a single output layer.
+        output: FloatTensor = self.backbone(
             x,
             batch_size,
             verbose,
@@ -218,3 +223,5 @@ class ContrastiveModel(tf.keras.Model):
             workers,
             use_multiprocessing,
         )
+
+        return output

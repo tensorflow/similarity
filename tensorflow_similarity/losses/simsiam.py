@@ -93,8 +93,9 @@ class SimSiamLoss(Loss):
         per_example_projection = self._projection(cosine_simlarity)
 
         # Scaler float
-        loss: FloatTensor = tf.math.reduce_mean(per_example_projection)
-        loss = loss * 0.5 + self.margin
+        loss: FloatTensor = (
+            tf.math.reduce_mean(per_example_projection) * 0.5 + self.margin
+        )
 
         return loss
 
