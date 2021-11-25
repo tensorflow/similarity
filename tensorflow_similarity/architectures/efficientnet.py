@@ -45,53 +45,56 @@ EFF_ARCHITECTURE = {
 
 
 # Create an image augmentation pipeline.
-def EfficientNetSim(input_shape: Tuple[int],
-                    embedding_size: int = 128,
-                    variant: str = "B0",
-                    weights: str = "imagenet",
-                    augmentation: Union[Callable, str] = "basic",
-                    trainable: str = "frozen",
-                    l2_norm: bool = True):
+def EfficientNetSim(
+    input_shape: Tuple[int],
+    embedding_size: int = 128,
+    variant: str = "B0",
+    weights: str = "imagenet",
+    augmentation: Union[Callable, str] = "basic",
+    trainable: str = "frozen",
+    l2_norm: bool = True,
+):
     """Build an EffecientNet Model backbone for similarity learning
 
-    Architecture from [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks
-](https://arxiv.org/abs/1905.11946)
+        Architecture from [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks
+    ](https://arxiv.org/abs/1905.11946)
 
-    Args:
-        input_shape: Size of the image input prior to augmentation,
-        must be bigger than the size of Effnet version you use. See below for
-        min input size.
+        Args:
+            input_shape: Size of the image input prior to augmentation,
+            must be bigger than the size of Effnet version you use. See below for
+            min input size.
 
-        embedding_size: Size of the output embedding. Usually between 64
-        and 512. Defaults to 128.
-        variant: Which Variant of the EfficientNEt to use. Defaults to "B0".
+            embedding_size: Size of the output embedding. Usually between 64
+            and 512. Defaults to 128.
 
-        weights: Use pre-trained weights - the only available currently being
-        imagenet. Defaults to "imagenet".
+            variant: Which Variant of the EfficientNEt to use. Defaults to "B0".
 
-        augmentation: How to augment the data - either pass a Sequential model
-        of keras.preprocessing.layers or use the built in one or set it to
-        None to disable. Defaults to "basic".
+            weights: Use pre-trained weights - the only available currently being
+            imagenet. Defaults to "imagenet".
 
-        trainable: Make the EfficienNet backbone fully trainable or partially
-        trainable. Either "full" to make the entire backbone trainable,
-        "partial" to only make the last 3 block trainable or "frozen" to make
-        it not trainable. Defaults to "frozen".
+            augmentation: How to augment the data - either pass a Sequential model
+            of keras.preprocessing.layers or use the built in one or set it to
+            None to disable. Defaults to "basic".
 
-        l2_norm: If True, tensorflow_similarity.layers.MetricEmbedding is used
-        as the last layer, otherwise keras.layers.Dense is used. This should be
-        true when using cosine distance. Defaults to True.
+            trainable: Make the EfficienNet backbone fully trainable or partially
+            trainable. Either "full" to make the entire backbone trainable,
+            "partial" to only make the last 3 block trainable or "frozen" to make
+            it not trainable. Defaults to "frozen".
 
-    Note:
-        EfficientNet expects images at the following size:
-         - "B0": 224,
-         - "B1": 240,
-         - "B2": 260,
-         - "B3": 300,
-         - "B4": 380,
-         - "B5": 456,
-         - "B6": 528,
-         - "B7": 600,
+            l2_norm: If True, tensorflow_similarity.layers.MetricEmbedding is used
+            as the last layer, otherwise keras.layers.Dense is used. This should be
+            true when using cosine distance. Defaults to True.
+
+        Note:
+            EfficientNet expects images at the following size:
+             - "B0": 224,
+             - "B1": 240,
+             - "B2": 260,
+             - "B3": 300,
+             - "B4": 380,
+             - "B5": 456,
+             - "B6": 528,
+             - "B7": 600,
 
     """
 
@@ -106,10 +109,14 @@ def EfficientNetSim(input_shape: Tuple[int],
     # augmentation
     if augmentation == "basic":
         # augs usually used in benchmark and work almost always well
-        augmentation_layers = tf.keras.Sequential([
-            layers.experimental.preprocessing.RandomCrop(img_size, img_size),
-            layers.experimental.preprocessing.RandomFlip("horizontal")
-        ])
+        augmentation_layers = tf.keras.Sequential(
+            [
+                layers.experimental.preprocessing.RandomCrop(
+                    img_size, img_size
+                ),
+                layers.experimental.preprocessing.RandomFlip("horizontal"),
+            ]
+        )
     else:
         augmentation_layers = augmentation
 
@@ -126,11 +133,30 @@ def EfficientNetSim(input_shape: Tuple[int],
     return SimilarityModel(inputs, outputs)
 
 
-def build_effnet(x, variant, weights, trainable):
-    "Build the requested efficient net."
+def build_effnet(
+    x: layers.Layer, variant: str, weights: str, trainable: str
+) -> layers.Layer:
+    """Build the requested efficient net.
+
+    Args:
+        x: The input layer to the efficientnet.
+
+        variant: Which Variant of the EfficientNEt to use.
+
+        weights: Use pre-trained weights - the only available currently being
+        imagenet.
+
+        trainable: Make the EfficienNet backbone fully trainable or partially
+        trainable. Either "full" to make the entire backbone trainable,
+        "partial" to only make the last 3 block trainable or "frozen" to make
+        it not trainable.
+
+    Returns:
+        The ouptut layer of the efficientnet model
+    """
 
     # init
-    effnet_fn = EFF_ARCHITECTURE[variant]
+    effnet_fn = EFF_ARCHITECTURE[variant.upper()]
     effnet = effnet_fn(weights=weights, include_top=False)
 
     if trainable == "full":
@@ -145,13 +171,14 @@ def build_effnet(x, variant, weights, trainable):
             # don't change the batchnorm weights
             if isinstance(layer, layers.BatchNormalization):
                 layer.trainable = False
-    elif trainable=='frozen':
+    elif trainable == "frozen":
         effnet.trainable = False
     else:
-        raise ValueError(f"{trainable} is not a supported option for 'trainable'.")
+        raise ValueError(
+            f"{trainable} is not a supported option for 'trainable'."
+        )
 
     # wire
-    x = efficientnet.preprocess_input(x)
     x = effnet(x)
 
     return x
