@@ -16,6 +16,7 @@ import os
 from typing import Callable, Optional
 
 import tensorflow as tf
+from absl import logging
 
 
 def TFRecordDatasetSampler(
@@ -96,9 +97,9 @@ def TFRecordDatasetSampler(
         .numpy()
         .tolist()
     ]
-    print(f"found {shards_list}")
+    logging.info(f"found {shards_list}")
     total_shards = len(shards_list)
-    print(f"found {total_shards} shards")
+    logging.info(f"found {total_shards} shards")
 
     if not prefetch_size:
         prefetch_size = 10
