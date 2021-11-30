@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pathlib import Path
+import os
 from typing import Callable, Optional
 
 import tensorflow as tf
+from absl import logging
 
 
 def TFRecordDatasetSampler(
@@ -93,9 +94,15 @@ def TFRecordDatasetSampler(
     Returns:
         A `TF.data.dataset` ready to be consumed by the model.
     """
-    shards_list = [str(i) for i in Path(shard_path).glob(shard_suffix)]
+    shards_list = [
+        i.decode()
+        for i in tf.io.matching_files(os.path.join(shard_path, shard_suffix))
+        .numpy()
+        .tolist()
+    ]
+    logging.debug(f"found {shards_list}")
     total_shards = len(shards_list)
-    print(f"found {total_shards} shards")
+    logging.info(f"found {total_shards} shards")
 
     if not prefetch_size:
         prefetch_size = 10
