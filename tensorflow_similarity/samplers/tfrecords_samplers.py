@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pathlib import Path
+import os
 from typing import Callable, Optional
 
 import tensorflow as tf
+from absl import logging
 
 
 def TFRecordDatasetSampler(
@@ -29,6 +30,7 @@ def TFRecordDatasetSampler(
     async_cycle: bool = False,
     prefetch_size: Optional[int] = None,
     shard_suffix: str = "*.tfrec",
+    num_repeat: int = -1,
 ) -> tf.data.Dataset:
     """Create a [TFRecordDataset](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset) based sampler.
 
@@ -87,12 +89,20 @@ def TFRecordDatasetSampler(
         shard_suffix: Glog pattern used to collect the shard files list.
         Defaults to "*.tfrec".
 
+        num_repeat: How many times to repeat the dataset. Defaults to -1 (infinite).
+
     Returns:
         A `TF.data.dataset` ready to be consumed by the model.
     """
-    shards_list = [str(i) for i in Path(shard_path).glob(shard_suffix)]
+    shards_list = [
+        i.decode()
+        for i in tf.io.matching_files(os.path.join(shard_path, shard_suffix))
+        .numpy()
+        .tolist()
+    ]
+    logging.debug(f"found {shards_list}")
     total_shards = len(shards_list)
-    print(f"found {total_shards} shards")
+    logging.info(f"found {total_shards} shards")
 
     if not prefetch_size:
         prefetch_size = 10
@@ -127,7 +137,7 @@ def TFRecordDatasetSampler(
             deterministic=False,
         )
         ds = ds.map(deserialization_fn, num_parallel_calls=parallelism)
-        ds = ds.repeat()
+        ds = ds.repeat(count=num_repeat)
         ds = ds.batch(batch_size)
         ds = ds.prefetch(prefetch_size)
         return ds

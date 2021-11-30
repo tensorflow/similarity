@@ -187,7 +187,7 @@ class MultiShotMemorySampler(Sampler):
             x.append(self._x[idx])
             y.append(self._y[idx])
 
-        return np.array(x), np.array(y)
+        return tf.convert_to_tensor(batch_x), tf.convert_to_tensor(batch_y)
 
     def get_slice(self,
                   begin: int = 0,
