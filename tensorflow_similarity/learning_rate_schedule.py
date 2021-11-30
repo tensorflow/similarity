@@ -5,6 +5,7 @@ import tensorflow as tf
 from tensorflow_similarity.types import FloatTensor
 
 
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 class WarmUpCosine(tf.keras.optimizers.schedules.LearningRateSchedule):
     """A LearningRateSchedule that uses a cosine decay schedule with a warmup period.
 
