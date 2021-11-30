@@ -180,12 +180,12 @@ class MultiShotMemorySampler(Sampler):
             else:
                 idxs.extend(random.sample(class_idxs, k=examples_per_class))
 
-        x = []
-        y = []
+        batch_x = []
+        batch_y = []
         # strip examples if needed. This might happen due to rounding
         for idx in idxs[:self.batch_size]:
-            x.append(self._x[idx])
-            y.append(self._y[idx])
+            batch_x.append(self._x[idx])
+            batch_y.append(self._y[idx])
 
         return tf.convert_to_tensor(batch_x), tf.convert_to_tensor(batch_y)
 
