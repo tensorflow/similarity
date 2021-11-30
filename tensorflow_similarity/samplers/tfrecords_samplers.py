@@ -29,6 +29,7 @@ def TFRecordDatasetSampler(
     async_cycle: bool = False,
     prefetch_size: Optional[int] = None,
     shard_suffix: str = "*.tfrec",
+    num_repeat: int = -1,
 ) -> tf.data.Dataset:
     """Create a [TFRecordDataset](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset) based sampler.
 
@@ -87,6 +88,8 @@ def TFRecordDatasetSampler(
         shard_suffix: Glog pattern used to collect the shard files list.
         Defaults to "*.tfrec".
 
+        num_repeat: How many times to repeat the dataset. Defaults to -1 (infinite).
+
     Returns:
         A `TF.data.dataset` ready to be consumed by the model.
     """
@@ -127,7 +130,7 @@ def TFRecordDatasetSampler(
             deterministic=False,
         )
         ds = ds.map(deserialization_fn, num_parallel_calls=parallelism)
-        ds = ds.repeat()
+        ds = ds.repeat(count=num_repeat)
         ds = ds.batch(batch_size)
         ds = ds.prefetch(prefetch_size)
         return ds
