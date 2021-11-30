@@ -1,19 +1,14 @@
 name: Publish
 
 on:
-  # Dependency to a testing workflow
-  workflow_run:
-    workflows: ["Testing"]
-    branches: [ master ]
-    types:
-      - completed
+  workflow_dispatch:  # Allow manual triggers
 
 jobs:
   publish:
     # Prevent Publish from running on forks.
     if: |
-      github.repository == 'tensorflow/similarity' &&
-      ${{ github.event.workflow_run.conclusion == 'success' }}
+      github.ref == 'refs/heads/master' &&
+      github.repository == 'tensorflow/similarity'
 
     runs-on: ubuntu-latest
 
