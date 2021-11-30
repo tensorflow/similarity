@@ -97,7 +97,7 @@ def TFRecordDatasetSampler(
         .numpy()
         .tolist()
     ]
-    logging.info(f"found {shards_list}")
+    logging.debug(f"found {shards_list}")
     total_shards = len(shards_list)
     logging.info(f"found {total_shards} shards")
 
