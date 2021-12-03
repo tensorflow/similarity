@@ -191,14 +191,18 @@ class GeneralizedMeanPooling2D(Layer):
         input_shape = tf.TensorShape(input_shape).as_list()
         if self.data_format == "channels_last":
             if self.keepdims:
-                return tf.TensorShape([input_shape[0], 1, 1, input_shape[3]])
+                w: IntTensor = tf.TensorShape([input_shape[0], 1, 1, input_shape[3]])
+                return w
             else:
-                return tf.TensorShape([input_shape[0], input_shape[3]])
+                x: IntTensor = tf.TensorShape([input_shape[0], input_shape[3]])
+                return x
         else:
             if self.keepdims:
-                return tf.TensorShape([input_shape[0], input_shape[1], 1, 1])
+                y: IntTensor = tf.TensorShape([input_shape[0], input_shape[1], 1, 1])
+                return y
             else:
-                return tf.TensorShape([input_shape[0], input_shape[1]])
+                z: IntTensor = tf.TensorShape([input_shape[0], input_shape[1]])
+                return z
 
     def call(self, inputs: FloatTensor) -> FloatTensor:
         x = inputs
