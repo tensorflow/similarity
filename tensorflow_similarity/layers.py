@@ -109,6 +109,155 @@ class MetricEmbedding(Layer):
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
+class GeneralizedMeanPooling1D(Layer):
+    """Computes the Generalized Mean of each channel in a tensor.
+
+    $$
+    \textbf{e} = \left[\left(\frac{1}{|\Omega|}\sum_{u\in{\Omega}}x^{p}_{cu}\right)^{\frac{1}{p}}\right]_{c=1,\cdots,C}
+    $$
+
+    The Generalized Mean (GeM) provides a parameter `p` that sets an exponent
+    enabling the pooling to increase or decrease the contrast between salient
+    features in the feature map.
+
+    The pooling is equal to GlobalAveragePooling1D when `p` is 1.0 and equal
+    to MaxPool1D when `p` is `inf`.
+
+    This implementation shifts the feature map values such that the minimum
+    value is equal to 1.0, then computes the mean pooling, and finally shifts
+    the values back. This ensures that all values are positive as the
+    generalized mean is only valid over positive real values.
+
+    Args:
+      p: Set the power of the mean. A value of 1.0 is equivalent to the
+        arithmetic mean, while a value of `inf` is equivalent to MaxPool2D.
+        Note, math.inf, -math.inf, and 0.0 are all supported, as well as most
+        positive and negative values of `p`. However, large positive values for
+        `p` may lead to overflow. In practice, math.inf should be used for any
+        `p` larger than > 25.
+      data_format: One of `channels_last` (default) or `channels_first`. The
+        ordering of the dimensions in the inputs.  `channels_last`
+        corresponds to inputs with shape `(batch, steps, features)` while
+        `channels_first` corresponds to inputs with shape
+        `(batch, features, steps)`.
+      keepdims: A boolean, whether to keep the temporal dimension or not.
+        If `keepdims` is `False` (default), the rank of the tensor is reduced
+        for spatial dimensions.  If `keepdims` is `True`, the temporal
+        dimension are retained with length 1.  The behavior is the same as
+        for `tf.reduce_max` or `np.max`.
+
+    Input shape:
+      - If `data_format='channels_last'`:
+        3D tensor with shape:
+        `(batch_size, steps, features)`
+      - If `data_format='channels_first'`:
+        3D tensor with shape:
+        `(batch_size, features, steps)`
+    Output shape:
+      - If `keepdims`=False:
+        2D tensor with shape `(batch_size, features)`.
+      - If `keepdims`=True:
+        - If `data_format='channels_last'`:
+          3D tensor with shape `(batch_size, 1, features)`
+        - If `data_format='channels_first'`:
+          3D tensor with shape `(batch_size, features, 1)`
+    """
+
+    def __init__(
+        self,
+        p: float = 1.0,
+        data_format: Optional[str] = None,
+        keepdims: bool = False,
+        **kwargs
+    ) -> None:
+        super().__init__(**kwargs)
+
+        self.p = p
+        self.data_format = conv_utils.normalize_data_format(data_format)
+        self.keepdims = keepdims
+        self.input_spec = tf.keras.layers.InputSpec(ndim=3)
+        self.gap = tf.keras.layers.GlobalAveragePooling1D(
+            data_format=data_format, keepdims=keepdims
+        )
+        self.step_axis = 1 if self.data_format == "channels_last" else 2
+
+        if tf.math.abs(self.p) < 0.00001:
+            self.compute_mean = self._geometric_mean
+        elif self.p == math.inf:
+            self.compute_mean = self._pos_inf
+        elif self.p == -math.inf:
+            self.compute_mean = self._neg_inf
+        else:
+            self.compute_mean = self._generalized_mean
+
+    def compute_output_shape(self, input_shape: IntTensor) -> IntTensor:
+        input_shape = tf.TensorShape(input_shape).as_list()
+        if self.data_format == "channels_last":
+            if self.keepdims:
+                w: IntTensor = tf.TensorShape(
+                    [input_shape[0], input_shape[1], 1]
+                )
+                return w
+            else:
+                x: IntTensor = tf.TensorShape([input_shape[0], input_shape[1]])
+                return x
+        else:
+            if self.keepdims:
+                y: IntTensor = tf.TensorShape(
+                    [input_shape[0], 1, input_shape[2]]
+                )
+                return y
+            else:
+                z: IntTensor = tf.TensorShape([input_shape[0], input_shape[2]])
+                return z
+
+    def call(self, inputs: FloatTensor) -> FloatTensor:
+        x = inputs
+        if self.data_format == "channels_last":
+            mins = tf.math.reduce_min(x, axis=self.step_axis)
+            x_offset = x - mins[:, tf.newaxis, :] + 1
+            if self.keepdims:
+                mins = mins[:, tf.newaxis, :]
+        else:
+            mins = tf.math.reduce_min(x, axis=self.step_axis)
+            x_offset = x - mins[:, :, tf.newaxis] + 1
+            if self.keepdims:
+                mins = mins[:, :, tf.newaxis]
+
+        x_offset = self.compute_mean(x_offset)
+        x = x_offset + mins - 1
+
+        return x
+
+    def _geometric_mean(self, x):
+        x = tf.math.log(x)
+        x = self.gap(x)
+        return tf.math.exp(x)
+
+    def _generalized_mean(self, x):
+        x = tf.math.pow(x, self.p)
+        x = self.gap(x)
+        return tf.math.pow(x, 1.0 / self.p)
+
+    def _pos_inf(self, x):
+        mpl = tf.keras.layers.GlobalMaxPool1D(data_format=self.data_format)
+        x = mpl(x)
+        return x
+
+    def _neg_inf(self, x):
+        return self._pos_inf(x * -1) * -1
+
+    def get_config(self) -> Dict[str, Any]:
+        config = {
+            "p": self.p,
+            "data_format": self.data_format,
+            "keepdims": self.keepdims,
+        }
+        base_config = super().get_config()
+        return {**base_config, **config}
+
+
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 class GeneralizedMeanPooling2D(Layer):
     """Computes the Generalized Mean of each channel in a tensor.
 
@@ -191,14 +340,18 @@ class GeneralizedMeanPooling2D(Layer):
         input_shape = tf.TensorShape(input_shape).as_list()
         if self.data_format == "channels_last":
             if self.keepdims:
-                w: IntTensor = tf.TensorShape([input_shape[0], 1, 1, input_shape[3]])
+                w: IntTensor = tf.TensorShape(
+                    [input_shape[0], 1, 1, input_shape[3]]
+                )
                 return w
             else:
                 x: IntTensor = tf.TensorShape([input_shape[0], input_shape[3]])
                 return x
         else:
             if self.keepdims:
-                y: IntTensor = tf.TensorShape([input_shape[0], input_shape[1], 1, 1])
+                y: IntTensor = tf.TensorShape(
+                    [input_shape[0], input_shape[1], 1, 1]
+                )
                 return y
             else:
                 z: IntTensor = tf.TensorShape([input_shape[0], input_shape[1]])
@@ -237,7 +390,6 @@ class GeneralizedMeanPooling2D(Layer):
             pool_size = (x.shape[1], x.shape[2])
         else:
             pool_size = (x.shape[2], x.shape[3])
-        print(x.shape)
         mpl = tf.keras.layers.MaxPool2D(
             pool_size=pool_size, data_format=self.data_format
         )
