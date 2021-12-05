@@ -132,7 +132,8 @@ class GeneralizedMeanPooling(Layer):
             self.compute_mean = self._generalized_mean
 
     def compute_output_shape(self, input_shape: IntTensor) -> IntTensor:
-        return self.gap.compute_output_shape(input_shape)
+        output_shape: IntTensor = self.gap.compute_output_shape(input_shape)
+        return output_shape
 
     def call(self, inputs: FloatTensor) -> FloatTensor:
         raise NotImplementedError
