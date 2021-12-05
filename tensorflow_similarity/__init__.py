@@ -34,4 +34,4 @@ from . import training_metrics  # noqa
 from . import types  # noqa
 from . import utils  # noqa
 from . import visualization  # noqa
-from . import learning_rate_schedule as schedules # noqa
+from . import schedules # noqa
