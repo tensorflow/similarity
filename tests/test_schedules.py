@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from tensorflow_similarity.learning_rate_schedule import WarmUpCosine
+from tensorflow_similarity.schedules import WarmUpCosine
 
 testdata = [
     range(10),
