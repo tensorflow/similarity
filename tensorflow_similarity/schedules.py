@@ -85,7 +85,7 @@ class WarmUpCosine(tf.keras.optimizers.schedules.LearningRateSchedule):
             self.learning_rate_delta = tf.constant([1.0], self.dtype)
 
     def __call__(self, step: FloatTensor) -> FloatTensor:
-        global_step_recomp = tf.convert_to_tensor(step, self.dtype)
+        global_step_recomp = tf.cast(step, self.dtype)
         warmup_scaler = tf.minimum(
             1.0, self.warmup_inc * global_step_recomp + self.learning_rate_delta
         )
