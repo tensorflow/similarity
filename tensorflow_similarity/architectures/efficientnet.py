@@ -54,7 +54,7 @@ def EfficientNetSim(
     augmentation: Union[Callable, str, None] = "basic",
     trainable: str = "frozen",
     l2_norm: bool = True,
-    p=1.0,
+    gem_p=1.0,
 ) -> SimilarityModel:
     """Build an EffecientNet Model backbone for similarity learning
 
@@ -87,10 +87,10 @@ def EfficientNetSim(
             as the last layer, otherwise keras.layers.Dense is used. This should be
             true when using cosine distance. Defaults to True.
 
-            p: Sets the power in the GeneralizedMeanPooling2D layer. A value of
-            1.0 is equivelent to GlobalMeanPooling2D, while larger values will
-            increase the contrast between activations within each feature map,
-            and a value of math.inf will be equivelent to MaxPool2d.
+            gem_p: Sets the power in the GeneralizedMeanPooling2D layer. A value
+            of 1.0 is equivelent to GlobalMeanPooling2D, while larger values
+            will increase the contrast between activations within each feature
+            map, and a value of math.inf will be equivelent to MaxPool2d.
 
         Note:
             EfficientNet expects images at the following size:
@@ -132,7 +132,7 @@ def EfficientNetSim(
         x = augmentation_layers(x)
 
     x = build_effnet(x, variant, weights, trainable)
-    x = GeneralizedMeanPooling2D(p=3.0)(x)
+    x = GeneralizedMeanPooling2D(p=gem_p)(x)
     if l2_norm:
         outputs = MetricEmbedding(embedding_size)(x)
     else:
