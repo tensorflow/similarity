@@ -16,14 +16,13 @@ import math
 from typing import Any, Dict, Optional
 
 import tensorflow as tf
-from tensorflow.keras.layers import Layer
 from tensorflow.keras import layers
 from tensorflow.python.keras.utils import conv_utils
 from .types import FloatTensor, IntTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class MetricEmbedding(Layer):
+class MetricEmbedding(tf.keras.layers.Layer):
     def __init__(
         self,
         units: int,
@@ -108,7 +107,7 @@ class MetricEmbedding(Layer):
         return {**base_config, **config}
 
 
-class GeneralizedMeanPooling(Layer):
+class GeneralizedMeanPooling(tf.keras.layers.Layer):
     def __init__(
         self,
         p: float = 1.0,
