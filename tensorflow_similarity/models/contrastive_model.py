@@ -87,8 +87,8 @@ class ContrastiveModel(tf.keras.Model):
         weighted_metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
         run_eagerly: bool = False,
         steps_per_execution: int = 1,
-        distance: Union[str] = "cosine",
-        embedding_output: Optional[int] = None,
+        distance: Union[Distance, str] = "cosine",
+        embedding_output: int = 0,
         kv_store: Union[Store, str] = "memory",
         search: Union[Search, str] = "nmslib",
         evaluator: Union[Evaluator, str] = "memory",
@@ -173,7 +173,7 @@ class ContrastiveModel(tf.keras.Model):
               performance. Defaults to in-memory one.
 
             embedding_output: Which model output head predicts the embeddings
-              that should be indexed. Default to None which is for single output
+              that should be indexed. Defaults to 0 which is for single output
               model. For multi-head model, the callee, usually the
               `SimilarityModel()` class is responsible for passing the correct
               one.
@@ -185,12 +185,11 @@ class ContrastiveModel(tf.keras.Model):
             ValueError: In case of invalid arguments for
                 `optimizer`, `loss` or `metrics`.
         """
-        # Fetching the distance used from the first loss if auto
-        distance = distance_canonicalizer(distance)
+        distance_obj = distance_canonicalizer(distance)
 
         # init index
         self.create_index(
-            distance=distance,
+            distance=distance_obj,
             search=search,
             kv_store=kv_store,
             evaluator=evaluator,
@@ -472,7 +471,7 @@ class ContrastiveModel(tf.keras.Model):
         search: Union[Search, str] = "nmslib",
         kv_store: Union[Store, str] = "memory",
         evaluator: Union[Evaluator, str] = "memory",
-        embedding_output: int = None,
+        embedding_output: int = 0,
         stat_buffer_size: int = 1000,
     ) -> None:
         """Create the model index to make embeddings searchable via KNN.
@@ -497,7 +496,7 @@ class ContrastiveModel(tf.keras.Model):
             performance. Defaults to in-memory one.
 
             embedding_output: Which model output head predicts the embeddings
-            that should be indexed. Default to None which is for single output
+            that should be indexed. Defaults to 0 which is for single output
             model. For multi-head model, the callee, usually the
             `SimilarityModel()` class is responsible for passing the correct
             one.
@@ -510,23 +509,13 @@ class ContrastiveModel(tf.keras.Model):
         """
         # check if we we need to set the embedding head
         num_outputs = len(self.output_names)
-        if embedding_output is not None and embedding_output > num_outputs:
+        if embedding_output >= num_outputs:
             raise ValueError(
                 "Embedding_output value exceed number of model outputs"
             )
 
-        if embedding_output is None and num_outputs > 1:
-            print(
-                "Embedding output set to be model output 0. ",
-                "Use the embedding_output arg to override this.",
-            )
-            embedding_output = 0
-
         # fetch embedding size as some ANN libs requires it for init
-        if num_outputs > 1:
-            self.embedding_size = self.outputs[embedding_output].shape[1]
-        else:
-            self.embedding_size = self.outputs[0].shape[1]
+        self.embedding_size = self.outputs[embedding_output].shape[1]
 
         self._index = Indexer(
             embedding_size=self.embedding_size,
