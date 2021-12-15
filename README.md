@@ -119,6 +119,7 @@ viz_neigbors_imgs(qx[0], qy[0], nns)
 - PN Loss
 - Multi Sim Loss
 - Circle Loss
+- Soft Nearest Neighbor Loss
 
 ### Metrics
 
