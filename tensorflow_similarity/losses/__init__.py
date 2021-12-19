@@ -23,3 +23,4 @@ from .multisim_loss import MultiSimilarityLoss  # noqa
 from .simsiam import SimSiamLoss  # noqa
 from .simclr import SimCLRLoss  # noqa
 from .barlow import Barlow  # noqa
+from .softnn_loss import SoftNearestNeighborLoss  # noqa

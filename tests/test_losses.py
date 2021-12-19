@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.losses import PNLoss
+from tensorflow_similarity.losses import SoftNearestNeighborLoss
 
 
 # [triplet loss]
@@ -124,3 +125,56 @@ def test_np_loss():
     # y_true, y_preds
     loss = pnl(y_true, y_preds)
     assert loss > 0.9
+
+
+# [soft neasrest neighbor loss]
+def test_softnn_loss_serialization():
+    loss = SoftNearestNeighborLoss(distance="cosine", temperature=50)
+    config = loss.get_config()
+    loss2 = SoftNearestNeighborLoss.from_config(config)
+    assert loss.name == loss2.name
+    assert loss.distance == loss2.distance
+    assert loss.temperature == loss2.temperature
+
+
+def softnn_util(y_true, x, temperature = 1):
+    """
+    A simple loop based implementation of soft
+    nearest neighbor loss to test the code.
+    https://arxiv.org/pdf/1902.01889.pdf
+    """
+
+    y_true = y_true.numpy()
+    x = x.numpy()
+    batch_size = y_true.shape[0]
+    loss = 0
+    eps = 1e-9
+    for i in range(batch_size):
+        numerator = 0
+        denominator = 0
+        for j in range(batch_size):
+            if i == j: continue
+            if y_true[i] == y_true[j]:
+                numerator += np.exp(-1 * 
+                    np.sum(np.square(x[i] - x[j])) / temperature)
+            denominator += np.exp(-1 * 
+                    np.sum(np.square(x[i] - x[j])) / temperature)
+        if numerator == 0: continue
+        loss += np.log(numerator/denominator)
+    return -loss/batch_size
+
+
+def test_softnn_loss():
+    num_inputs = 10
+    n_classes = 10
+    # y_true: labels
+    y_true = tf.random.uniform((num_inputs,), 0, n_classes, dtype=tf.int32)
+    # x: embeddings
+    x = tf.random.uniform((num_inputs, 20), 0, 1)
+
+    temperature = np.random.uniform(0.1, 50)
+    softnn = SoftNearestNeighborLoss(temperature=temperature)
+    loss = softnn(y_true, x)
+    loss_check = softnn_util(y_true, x, temperature)
+    loss_diff = loss.numpy() - loss_check
+    assert np.abs(loss_diff) < 1e-3
