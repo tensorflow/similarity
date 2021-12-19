@@ -22,7 +22,7 @@ from .types import FloatTensor, IntTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class MetricEmbedding(tf.keras.layers.Layer):
+class MetricEmbedding(layers.Layer):
     def __init__(
         self,
         units: int,
@@ -83,7 +83,7 @@ class MetricEmbedding(tf.keras.layers.Layer):
             kernel_constraint=kernel_constraint,
             bias_constraint=bias_constraint,
         )
-        self.input_spec = tf.keras.layers.InputSpec(min_ndim=2)
+        self.input_spec = layers.InputSpec(min_ndim=2)
 
     def call(self, inputs: FloatTensor) -> FloatTensor:
         x = self.dense(inputs)
@@ -107,7 +107,7 @@ class MetricEmbedding(tf.keras.layers.Layer):
         return {**base_config, **config}
 
 
-class GeneralizedMeanPooling(tf.keras.layers.Layer):
+class GeneralizedMeanPooling(layers.Layer):
     def __init__(
         self,
         p: float = 1.0,
@@ -225,10 +225,12 @@ class GeneralizedMeanPooling1D(GeneralizedMeanPooling):
         keepdims: bool = False,
         **kwargs
     ) -> None:
-        super().__init__(p=p, data_format=data_format, keepdims=keepdims, **kwargs)
+        super().__init__(
+            p=p, data_format=data_format, keepdims=keepdims, **kwargs
+        )
 
-        self.input_spec = tf.keras.layers.InputSpec(ndim=3)
-        self.gap = tf.keras.layers.GlobalAveragePooling1D(
+        self.input_spec = layers.InputSpec(ndim=3)
+        self.gap = layers.GlobalAveragePooling1D(
             data_format=data_format, keepdims=keepdims
         )
         self.step_axis = 1 if self.data_format == "channels_last" else 2
@@ -252,7 +254,7 @@ class GeneralizedMeanPooling1D(GeneralizedMeanPooling):
         return x
 
     def _pos_inf(self, x):
-        mpl = tf.keras.layers.GlobalMaxPool1D(data_format=self.data_format)
+        mpl = layers.GlobalMaxPool1D(data_format=self.data_format)
         x = mpl(x)
         return x
 
@@ -311,6 +313,7 @@ class GeneralizedMeanPooling2D(GeneralizedMeanPooling):
         - If `data_format='channels_first'`:
           3D tensor with shape `(batch_size, features, 1)`
     """
+
     def __init__(
         self,
         p: float = 1.0,
@@ -318,10 +321,12 @@ class GeneralizedMeanPooling2D(GeneralizedMeanPooling):
         keepdims: bool = False,
         **kwargs
     ) -> None:
-        super().__init__(p=p, data_format=data_format, keepdims=keepdims, **kwargs)
+        super().__init__(
+            p=p, data_format=data_format, keepdims=keepdims, **kwargs
+        )
 
-        self.input_spec = tf.keras.layers.InputSpec(ndim=4)
-        self.gap = tf.keras.layers.GlobalAveragePooling2D(data_format, keepdims)
+        self.input_spec = layers.InputSpec(ndim=4)
+        self.gap = layers.GlobalAveragePooling2D(data_format, keepdims)
 
     def call(self, inputs: FloatTensor) -> FloatTensor:
         x = inputs
@@ -346,7 +351,7 @@ class GeneralizedMeanPooling2D(GeneralizedMeanPooling):
             pool_size = (x.shape[1], x.shape[2])
         else:
             pool_size = (x.shape[2], x.shape[3])
-        mpl = tf.keras.layers.MaxPool2D(
+        mpl = layers.MaxPool2D(
             pool_size=pool_size, data_format=self.data_format
         )
         x = mpl(x)
@@ -356,3 +361,21 @@ class GeneralizedMeanPooling2D(GeneralizedMeanPooling):
             else:
                 x = tf.reshape(x, (x.shape[0], x.shape[1]))
         return x
+
+
+class ActivationStdLoggingLayer(layers.Layer):
+    """Computes the mean std of the activations of a layer.
+
+    x = reduce_std(l2_normalize(inputs, axis=0), axis=-1)
+
+    And then aggregate the per-batch mean of x over each epoch.
+    """
+
+    def __init__(self, name, **kwargs):
+        super().__init__(name=name, **kwargs)
+
+    def call(self, inputs):
+        x = tf.math.l2_normalize(inputs, axis=-1)
+        x = tf.math.reduce_std(x, axis=0)
+        self.add_metric(x, name=self.name, aggregation="mean")
+        return inputs  # Pass-through layer.
