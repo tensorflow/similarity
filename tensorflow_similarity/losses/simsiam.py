@@ -9,13 +9,13 @@ from tensorflow_similarity.types import FloatTensor
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 def negative_cosine_sim(sim: FloatTensor) -> FloatTensor:
-    loss: FloatTensor = tf.constant([-1.0]) * sim
+    loss: FloatTensor = -1.0 * sim
     return loss
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 def cosine_distance(sim: FloatTensor) -> FloatTensor:
-    loss: FloatTensor = tf.constant([1.0]) - sim
+    loss: FloatTensor = 1.0 - sim
     return loss
 
 
@@ -68,25 +68,24 @@ class SimSiamLoss(Loss):
             raise ValueError(f"{self.projection_type} is not supported.")
 
     @tf.function
-    def call(self, z: FloatTensor, p: FloatTensor) -> FloatTensor:
+    def call(self, projector: FloatTensor, predictor: FloatTensor) -> FloatTensor:
         """Compute the loss
         Notes:
         - Stopping the gradient is critical according to the paper for convergence.
 
         Args:
-            z: Encoder outputs
-            p: Predictor outputs
+            projector: Projector outputs
+            predictor: Predictor outputs
 
         Returns:
-            The per example distance between z_i and p_i.
+            The per example distance between projector_i and predictor_i.
         """
-        z = tf.stop_gradient(z)
 
-        p = tf.math.l2_normalize(p, axis=1)
-        z = tf.math.l2_normalize(z, axis=1)
+        projector = tf.math.l2_normalize(projector, axis=1)
+        predictor = tf.math.l2_normalize(predictor, axis=1)
 
         # 2D tensor
-        vals = p * z
+        vals = predictor * projector
         # 1D tensor
         cosine_simlarity = tf.reduce_sum(vals, axis=1)
 
