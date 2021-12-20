@@ -4,6 +4,7 @@ import numpy as np
 from tensorflow_similarity.distances import CosineDistance, InnerProductSimilarity
 from tensorflow_similarity.distances import EuclideanDistance
 from tensorflow_similarity.distances import ManhattanDistance
+from tensorflow_similarity.distances import SNRDistance
 from tensorflow_similarity.distances import distance_canonicalizer
 from tensorflow_similarity.distances import DISTANCES
 
@@ -131,3 +132,29 @@ def test_innerprod():
     d = InnerProductSimilarity()
     vals = d(a)
     assert tf.round(tf.reduce_sum(vals)) == 65
+
+
+def test_snr_dist():
+    """
+    Comparing SNRDistance with simple loop based implementation
+    of SNR distance.
+    """
+    num_inputs = 3
+    dims = 5
+    x = np.random.uniform(0, 1, (num_inputs, dims))
+
+    # Computing SNR distance values using loop
+    snr_pairs = []
+    for i in range(num_inputs):
+        row = []
+        for j in range(num_inputs):
+            dist = np.var(x[i]-x[j])/np.var(x[i])
+            row.append(dist)
+        snr_pairs.append(row)
+    snr_pairs = np.array(snr_pairs)
+
+    x = tf.convert_to_tensor(x)
+    snr_distances = SNRDistance()(x).numpy()
+    assert np.all(snr_distances >= 0)
+    diff = snr_distances - snr_pairs
+    assert np.all(np.abs(diff) < 1e-4)
