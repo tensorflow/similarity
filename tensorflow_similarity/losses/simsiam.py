@@ -9,13 +9,13 @@ from tensorflow_similarity.types import FloatTensor
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 def negative_cosine_sim(sim: FloatTensor) -> FloatTensor:
-    loss: FloatTensor = -1.0 * sim
+    loss: FloatTensor = tf.constant([-1.0]) * sim
     return loss
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 def cosine_distance(sim: FloatTensor) -> FloatTensor:
-    loss: FloatTensor = 1.0 - sim
+    loss: FloatTensor = tf.constant([1.0]) - sim
     return loss
 
 
