@@ -64,13 +64,9 @@ class ContrastiveModel(tf.keras.Model):
         self.outputs = [self.backbone.output]
         self.output_names = ["backbone_output"]
         self.algorithm = algorithm
-        self.contrastive_loss_tracker = tf.keras.metrics.Mean(
-            name="contrastive_loss"
-        )
-        self.regularization_loss_tracker = tf.keras.metrics.Mean(
-            name="regularization_loss"
-        )
-        self.combined_loss_tracker = tf.keras.metrics.Mean(name="loss")
+
+        self._create_loss_trackers()
+
         self.supported_algorithms = ("simsiam", "simclr", "barlow")
 
         if self.algorithm not in self.supported_algorithms:
@@ -214,15 +210,29 @@ class ContrastiveModel(tf.keras.Model):
             **kwargs,
         )
 
+    def _create_loss_trackers(self):
+        self.loss_trackers = {}
+        self.loss_trackers['loss'] = tf.keras.metrics.Mean(name="loss")
+
+        self.reg_loss_len = len(self.backbone.losses) + len(self.projector.losses)
+        if self.predictor is not None:
+            self.reg_loss_len += len(self.predictor.losses)
+
+        if self.reg_loss_len:
+            self.loss_trackers['contrastive_loss'] = tf.keras.metrics.Mean(
+                name="contrastive_loss"
+            )
+            self.loss_trackers['regularization_loss'] = tf.keras.metrics.Mean(
+                name="regularization_loss"
+            )
+
     @property
     def metrics(self):
-        base_metrics = super().metrics
-        custom_metrics = [
-            self.contrastive_loss_tracker,
-            self.regularization_loss_tracker,
-            self.combined_loss_tracker,
-        ]
-        return itertools.chain(custom_metrics, base_metrics)
+        # We remove the compiled loss metric because we want to manually track
+        # the loss in train_step and test_step.
+        base_metrics = [m for m in super().metrics if m.name != "loss"]
+        loss_trackers = self.loss_trackers.values()
+        return itertools.chain(loss_trackers, base_metrics)
 
     @tf.function
     def train_step(self, data):
@@ -259,9 +269,10 @@ class ContrastiveModel(tf.keras.Model):
         self.compiled_metrics.update_state([z1, z2], [pred2, pred1])
 
         # report loss manually
-        self.contrastive_loss_tracker.update_state(contrastive_loss)
-        self.regularization_loss_tracker.update_state(regularization_loss)
-        self.combined_loss_tracker.update_state(combined_loss)
+        self.loss_trackers['loss'].update_state(combined_loss)
+        if self.reg_loss_len:
+            self.loss_trackers['contrastive_loss'].update_state(contrastive_loss)
+            self.loss_trackers['regularization_loss'].update_state(regularization_loss)
 
         # Collect metrics to return
         return_metrics = {}
@@ -293,9 +304,10 @@ class ContrastiveModel(tf.keras.Model):
         self.compiled_metrics.update_state([z1, z2], [pred2, pred1])
 
         # report loss manually
-        self.contrastive_loss_tracker.update_state(contrastive_loss)
-        self.regularization_loss_tracker.update_state(regularization_loss)
-        self.combined_loss_tracker.update_state(combined_loss)
+        self.loss_trackers['loss'].update_state(combined_loss)
+        if self.reg_loss_len:
+            self.loss_trackers['contrastive_loss'].update_state(contrastive_loss)
+            self.loss_trackers['regularization_loss'].update_state(regularization_loss)
 
         # Collect metrics to return
         return_metrics = {}
@@ -330,7 +342,6 @@ class ContrastiveModel(tf.keras.Model):
             pred1, pred2 = z1, z2
 
         loss = l1 + l2
-        # loss = tf.math.reduce_mean((l1 + l2) / 2.0)
 
         return loss, pred1, pred2, z1, z2
 
@@ -484,7 +495,7 @@ class ContrastiveModel(tf.keras.Model):
     ) -> FloatTensor:
         """Generates output predictions for the input samples.
 
-        The predict returns projector.predict(backbone.predict(x)).
+        The predict returns the L2 normalized output of the projector.
 
         This can be used for indexing and querying examples, and is used by the
         EvalCallback.
@@ -574,7 +585,7 @@ class ContrastiveModel(tf.keras.Model):
             embedding_output = 0
 
         # fetch embedding size as some ANN libs requires it for init
-        if num_outputs > 1:
+        if num_outputs > 1 and embedding_output is not None:
             self.embedding_size = self.outputs[embedding_output].shape[1]
         else:
             self.embedding_size = self.outputs[0].shape[1]
