@@ -152,16 +152,14 @@ def build_resnet(x: layers.Layer, data_format, preproc_mode) -> layers.Layer:
     )(inputs)
     x = tf.keras.layers.Conv2D(
         64,
-        3,
-        strides=2,
+        kernel_size=3,
+        strides=1,
         use_bias=False,
-        kernel_initializer=_torch_initializer(3),
+        kernel_initializer=tf.keras.initializers.LecunUniform(),
         name="conv1_conv",
     )(x)
     x = tf.keras.layers.BatchNormalization(epsilon=1.001e-5, name="conv1_bn")(x)
     x = tf.keras.layers.Activation("relu", name="conv1_relu")(x)
-    # x = layers.ZeroPadding2D(padding=((1, 1), (1, 1)), name="pool1_pad")(x)
-    # x = layers.MaxPooling2D(3, strides=2, name="pool1_pool")(x)
 
     outputs = stack_fn(x)
 
@@ -182,9 +180,9 @@ def block0(
             filters,
             1,
             strides=stride,
-            name=name + "_0_conv",
             use_bias=False,
-            kernel_initializer=_torch_initializer(filters),
+            kernel_initializer=tf.keras.initializers.LecunUniform(),
+            name=name + "_0_conv",
         )(x)
         shortcut = tf.keras.layers.BatchNormalization(
             epsilon=1.001e-5, name=name + "_0_bn"
@@ -197,9 +195,9 @@ def block0(
         kernel_size,
         strides=stride,
         padding="SAME",
-        name=name + "_1_conv",
         use_bias=False,
-        kernel_initializer=_torch_initializer(filters),
+        kernel_initializer=tf.keras.initializers.LecunUniform(),
+        name=name + "_1_conv",
     )(x)
     x = tf.keras.layers.BatchNormalization(
         epsilon=1.001e-5, name=name + "_1_bn"
@@ -210,9 +208,9 @@ def block0(
         filters,
         kernel_size,
         padding="SAME",
-        name=name + "_2_conv",
         use_bias=False,
-        kernel_initializer=_torch_initializer(filters),
+        kernel_initializer=tf.keras.initializers.LecunUniform(),
+        name=name + "_2_conv",
     )(x)
     x = tf.keras.layers.BatchNormalization(
         epsilon=1.001e-5, name=name + "_2_bn"
@@ -240,20 +238,3 @@ def stack_fn(x):
     x = stack0(x, 128, 2, name="conv3")
     x = stack0(x, 256, 2, name="conv4")
     return stack0(x, 512, 2, name="conv5")
-
-
-def _torch_initializer(num_filters: int):
-    """Kernel Initializer based on the pytorch initializer.
-
-    k = 1.0 / num_filters
-    weights = random_uniform(-sqrt(k), sqrt(k))
-
-    Args:
-        num_filters: The number of filters in the conv layer
-    """
-    k = 1.0 / num_filters
-    intializer = tf.keras.initializers.RandomUniform(
-        minval=-tf.math.sqrt(k),
-        maxval=tf.math.sqrt(k),
-    )
-    return intializer
