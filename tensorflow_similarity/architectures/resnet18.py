@@ -13,7 +13,7 @@
 # limitations under the License.
 
 "ResNet50 backbone for similarity learning"
-from typing import Tuple, Callable, Optional, Union
+from typing import Tuple, Callable, Union
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.applications import imagenet_utils
@@ -24,35 +24,30 @@ from tensorflow_similarity.models import SimilarityModel
 
 # Create an image augmentation pipeline.
 def ResNet18Sim(
-    input_shape: Tuple[int],
+    input_shape: Tuple[int, int, int],
     embedding_size: int = 128,
     augmentation: Union[Callable, str, None] = "basic",
     l2_norm: bool = True,
     include_top: bool = True,
     pooling: str = "gem",
     gem_p=1.0,
-    weight_decay: float = 5e-4,
-    data_format: Optional[str] = None,
     preproc_mode: str = "torch",
 ) -> SimilarityModel:
-    """Build an ResNet Model backbone for similarity learning
-
-    This is a smaller ResNet where the inputs are 32x32 and the feature map
-    sizes are {(32, 32, 64), (16,16, 128), (8, 8, 256), (4, 4, 512)}.
+    """Build an ResNet18 Model backbone for similarity learning
 
     Architecture from [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)
 
     Args:
-        input_shape: Expected to be (32, 32, 3) unless passing to an
-        augmentation function.
+        input_shape: Expected to be betweeen 32 and 224 and in the (H, W, C)
+        data_format augmentation function.
 
         embedding_size: Size of the output embedding. Usually between 64
         and 512. Defaults to 128.
 
         augmentation: How to augment the data - either pass a Sequential model
         of keras.preprocessing.layers or use the built in one or set it to
-        None to disable. Defaults to "basic" and random crops to (32, 32) and
-        random flip.
+        None to disable. Defaults to "basic" and random crops to
+        (input_shape[0], input_shape[1]) and random flip.
 
         l2_norm: If True and include_top is also True, then
         tfsim.layers.MetricEmbedding is used as the last layer, otherwise
@@ -78,11 +73,6 @@ def ResNet18Sim(
         will increase the contrast between activations within each feature
         map, and a value of math.inf will be equivelent to MaxPool2d.
 
-        weight_decay: Weight decay is applied to the dense layers within the
-        ResNet.
-
-        data_format: Data format of the image tensor.
-
         preproc_mode: One of "caffe", "tf" or "torch".
         - caffe: will convert the images from RGB to BGR, then will zero-center
           each color channel with respect to the ImageNet dataset, without
@@ -101,7 +91,9 @@ def ResNet18Sim(
         # augs usually used in benchmark and work almost always well
         augmentation_layers = tf.keras.Sequential(
             [
-                layers.experimental.preprocessing.RandomCrop(32, 32),
+                layers.experimental.preprocessing.RandomCrop(
+                    input_shape[0], input_shape[1]
+                ),
                 layers.experimental.preprocessing.RandomFlip("horizontal"),
             ]
         )
@@ -112,7 +104,7 @@ def ResNet18Sim(
     if augmentation:
         x = augmentation_layers(x)
 
-    resnet = build_resnet(x, data_format, preproc_mode, weight_decay)
+    resnet = build_resnet(x, 'channels_last', preproc_mode)
     x = resnet(x)
 
     if pooling == "gem":
@@ -133,9 +125,7 @@ def ResNet18Sim(
     return SimilarityModel(inputs, outputs)
 
 
-def build_resnet(
-    x: layers.Layer, data_format, preproc_mode, weight_decay: float = 5e-4
-) -> layers.Layer:
+def build_resnet(x: layers.Layer, data_format, preproc_mode) -> layers.Layer:
     """Build the requested ResNet.
 
     Args:
@@ -144,8 +134,6 @@ def build_resnet(
         data_format: Data format of the image tensor.
 
         preproc_mode: One of "caffe", "tf" or "torch".
-
-        weight_decay: Weight decay is applied as a kernel_regularizer.
 
     Returns:
         The ouptut layer of the ResNet model
@@ -162,37 +150,33 @@ def build_resnet(
     x = tf.keras.layers.ZeroPadding2D(
         padding=((1, 1), (1, 1)), name="conv1_pad"
     )(inputs)
-    k = 1.0 / 64
     x = tf.keras.layers.Conv2D(
         64,
         3,
-        name="conv1_conv",
+        strides=2,
         use_bias=False,
-        kernel_initializer=tf.keras.initializers.RandomUniform(
-            minval=-tf.math.sqrt(k),
-            maxval=tf.math.sqrt(k),
-        ),
-        kernel_regularizer=tf.keras.regularizers.l2(weight_decay),
+        kernel_initializer=_torch_initializer(3),
+        name="conv1_conv",
     )(x)
     x = tf.keras.layers.BatchNormalization(epsilon=1.001e-5, name="conv1_bn")(x)
     x = tf.keras.layers.Activation("relu", name="conv1_relu")(x)
+    # x = layers.ZeroPadding2D(padding=((1, 1), (1, 1)), name="pool1_pad")(x)
+    # x = layers.MaxPooling2D(3, strides=2, name="pool1_pool")(x)
 
-    outputs = stack_fn(x, weight_decay)
+    outputs = stack_fn(x)
 
-    model = tf.keras.Model(inputs, outputs, name="ResNet18")
+    model = tf.keras.Model(inputs, outputs, name="resnet18")
     return model
 
 
 def block0(
     x,
-    weight_decay,
     filters,
     kernel_size=3,
     stride=1,
     conv_shortcut=True,
     name=None,
 ):
-    k = 1.0 / filters
     if conv_shortcut:
         shortcut = tf.keras.layers.Conv2D(
             filters,
@@ -200,11 +184,7 @@ def block0(
             strides=stride,
             name=name + "_0_conv",
             use_bias=False,
-            kernel_initializer=tf.keras.initializers.RandomUniform(
-                minval=-tf.math.sqrt(k),
-                maxval=tf.math.sqrt(k),
-            ),
-            kernel_regularizer=tf.keras.regularizers.l2(weight_decay),
+            kernel_initializer=_torch_initializer(filters),
         )(x)
         shortcut = tf.keras.layers.BatchNormalization(
             epsilon=1.001e-5, name=name + "_0_bn"
@@ -219,11 +199,7 @@ def block0(
         padding="SAME",
         name=name + "_1_conv",
         use_bias=False,
-        kernel_initializer=tf.keras.initializers.RandomUniform(
-            minval=-tf.math.sqrt(k),
-            maxval=tf.math.sqrt(k),
-        ),
-        kernel_regularizer=tf.keras.regularizers.l2(weight_decay),
+        kernel_initializer=_torch_initializer(filters),
     )(x)
     x = tf.keras.layers.BatchNormalization(
         epsilon=1.001e-5, name=name + "_1_bn"
@@ -236,11 +212,7 @@ def block0(
         padding="SAME",
         name=name + "_2_conv",
         use_bias=False,
-        kernel_initializer=tf.keras.initializers.RandomUniform(
-            minval=-tf.math.sqrt(k),
-            maxval=tf.math.sqrt(k),
-        ),
-        kernel_regularizer=tf.keras.regularizers.l2(weight_decay),
+        kernel_initializer=_torch_initializer(filters),
     )(x)
     x = tf.keras.layers.BatchNormalization(
         epsilon=1.001e-5, name=name + "_2_bn"
@@ -251,12 +223,11 @@ def block0(
     return x
 
 
-def stack0(x, weight_decay, filters, blocks, stride1=2, name=None):
-    x = block0(x, weight_decay, filters, stride=stride1, name=name + "_block1")
+def stack0(x, filters, blocks, stride1=2, name=None):
+    x = block0(x, filters, stride=stride1, name=name + "_block1")
     for i in range(2, blocks + 1):
         x = block0(
             x,
-            weight_decay,
             filters,
             conv_shortcut=False,
             name=name + "_block" + str(i),
@@ -264,8 +235,25 @@ def stack0(x, weight_decay, filters, blocks, stride1=2, name=None):
     return x
 
 
-def stack_fn(x, weight_decay):
-    x = stack0(x, weight_decay, 64, 2, stride1=1, name="conv2")
-    x = stack0(x, weight_decay, 128, 2, name="conv3")
-    x = stack0(x, weight_decay, 256, 2, name="conv4")
-    return stack0(x, weight_decay, 512, 2, name="conv5")
+def stack_fn(x):
+    x = stack0(x, 64, 2, stride1=1, name="conv2")
+    x = stack0(x, 128, 2, name="conv3")
+    x = stack0(x, 256, 2, name="conv4")
+    return stack0(x, 512, 2, name="conv5")
+
+
+def _torch_initializer(num_filters: int):
+    """Kernel Initializer based on the pytorch initializer.
+
+    k = 1.0 / num_filters
+    weights = random_uniform(-sqrt(k), sqrt(k))
+
+    Args:
+        num_filters: The number of filters in the conv layer
+    """
+    k = 1.0 / num_filters
+    intializer = tf.keras.initializers.RandomUniform(
+        minval=-tf.math.sqrt(k),
+        maxval=tf.math.sqrt(k),
+    )
+    return intializer
