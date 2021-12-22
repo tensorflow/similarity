@@ -29,10 +29,12 @@ For previous changes - see [the release changelog](./releases.md)
 
 ### Installation
 
-Use pip to install the library
+Use pip to install the library.
+
+**NOTE**: The Tensorflow extra_require key can be omitted if you already have tensorflow>=2.4 installed.
 
 ```shell
-pip install tensorflow_similarity
+pip install --upgrade-strategy=only-if-needed tensorflow_similarity[tensorflow] 
 ```
 
 ### Documentation
