@@ -2,7 +2,6 @@ from collections import defaultdict
 from copy import copy
 import itertools
 from pathlib import Path
-import json
 from typing import (
     Any,
     Callable,
@@ -396,8 +395,7 @@ class ContrastiveModel(tf.keras.Model):
             include_optimizer: Save optimizer state. Defaults to True.
             save_format: Either 'tf' or 'h5', indicating whether to save the
               model to Tensorflow SavedModel or HDF5. Defaults to 'tf' in
-              TF 2.X, and 'h5' in TF 1.X.  signatures: Signatures to save with
-              the model. Defaults to None.
+              TF 2.X, and 'h5' in TF 1.X.
             signatures: Signatures to save with the SavedModel. Applicable to
               the 'tf' format only. Please see the signatures argument in
               tf.saved_model.save for details.
@@ -414,7 +412,6 @@ class ContrastiveModel(tf.keras.Model):
         backbone_path = spath / "backbone"
         proj_path = spath / "projector"
         pred_path = spath / "predictor"
-        config_path = spath / "config.json"
 
         cprint("[Saving backbone model]", "blue")
         cprint("|-path:%s" % backbone_path, "green")
@@ -462,10 +459,6 @@ class ContrastiveModel(tf.keras.Model):
             options=options,
             save_traces=save_traces,
         )
-
-        with open(str(config_path), "w+") as o:
-            config = self.get_config()
-            json.dump(config, o)
 
         if hasattr(self, "_index") and self._index and save_index:
             self.save_index(filepath, compression=compression)
