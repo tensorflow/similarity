@@ -29,7 +29,7 @@ jobs:
         
     - name: Install package
       run: |
-        pip install ".[dev]"
+        pip install ".[tensorflow,dev]"
       
     - name: Increment dev version
       run: |
