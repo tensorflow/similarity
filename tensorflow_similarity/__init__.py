@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-__version__ = '0.15.0.dev3'
+__version__ = '0.15.0.dev62'
 
 
 from . import algebra  # noqa
@@ -34,3 +34,4 @@ from . import training_metrics  # noqa
 from . import types  # noqa
 from . import utils  # noqa
 from . import visualization  # noqa
+from . import schedules # noqa

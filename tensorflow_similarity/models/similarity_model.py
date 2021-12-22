@@ -38,19 +38,27 @@ model.compile(optimizer=Adam(LR), loss=similarity_loss)
 history = model.fit(train_ds)
 ```
 """
-
 from collections import defaultdict
 from copy import copy
 from pathlib import Path
-from typing import DefaultDict, Dict, List, MutableMapping, MutableSequence
-from typing import Optional, Sequence, Union
+from typing import (
+    DefaultDict,
+    Dict,
+    List,
+    MutableMapping,
+    MutableSequence,
+    Optional,
+    Sequence,
+    Union,
+)
+
 import numpy as np
 from tabulate import tabulate
 import tensorflow as tf
+from tqdm.auto import tqdm
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.losses import Loss
-from tqdm.auto import tqdm
 
 from tensorflow_similarity.classification_metrics import ClassificationMetric
 from tensorflow_similarity.classification_metrics import make_classification_metric  # noqa
@@ -78,15 +86,8 @@ class SimilarityModel(tf.keras.Model):
     core features.
     """
 
-    # @property
-    # def _index(self):
-    #     if not hasattr(self, '_index'):
-    #         ValueError("Index doesn't exist: index data before quering it")
-    #     return self._index
-
-    # @index.setter
-    # def _index(self, index):
-    #     self._index: Indexer = index
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def compile(
         self,
@@ -237,6 +238,8 @@ class SimilarityModel(tf.keras.Model):
             steps_per_execution=steps_per_execution,
             **kwargs
         )
+
+    # TODO (ovallis): Refactor the following indexing code into a MixIn.
 
     def create_index(
         self,

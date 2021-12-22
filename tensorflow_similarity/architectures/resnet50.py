@@ -12,44 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"EfficientNet backbone for similarity learning"
+"ResNet50 backbone for similarity learning"
 import re
 from typing import Tuple, Callable, Union
 import tensorflow as tf
 from tensorflow.keras import layers
-from tensorflow.keras.applications import efficientnet
+from tensorflow.keras.applications import resnet50
 from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.layers import GeneralizedMeanPooling2D
 from tensorflow_similarity.models import SimilarityModel
 
-EFF_INPUT_SIZE = {
-    "B0": 224,
-    "B1": 240,
-    "B2": 260,
-    "B3": 300,
-    "B4": 380,
-    "B5": 456,
-    "B6": 528,
-    "B7": 600,
-}
-
-EFF_ARCHITECTURE = {
-    "B0": efficientnet.EfficientNetB0,
-    "B1": efficientnet.EfficientNetB1,
-    "B2": efficientnet.EfficientNetB2,
-    "B3": efficientnet.EfficientNetB3,
-    "B4": efficientnet.EfficientNetB4,
-    "B5": efficientnet.EfficientNetB5,
-    "B6": efficientnet.EfficientNetB6,
-    "B7": efficientnet.EfficientNetB7,
-}
-
-
 # Create an image augmentation pipeline.
-def EfficientNetSim(
+def ResNet50Sim(
     input_shape: Tuple[int],
     embedding_size: int = 128,
-    variant: str = "B0",
     weights: str = "imagenet",
     augmentation: Union[Callable, str, None] = "basic",
     trainable: str = "frozen",
@@ -58,19 +34,17 @@ def EfficientNetSim(
     pooling: str = "gem",
     gem_p=1.0,
 ) -> SimilarityModel:
-    """Build an EffecientNet Model backbone for similarity learning
+    """Build an ResNet50 Model backbone for similarity learning
 
-        Architecture from [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946)
+        Architecture from [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)
 
         Args:
             input_shape: Size of the image input prior to augmentation,
-            must be bigger than the size of Effnet version you use. See below for
-            min input size.
+            must be bigger than the size of ResNet version you use. See below for
+            min input size of 244.
 
             embedding_size: Size of the output embedding. Usually between 64
             and 512. Defaults to 128.
-
-            variant: Which Variant of the EfficientNet to use. Defaults to "B0".
 
             weights: Use pre-trained weights - the only available currently being
             imagenet. Defaults to "imagenet".
@@ -79,10 +53,10 @@ def EfficientNetSim(
             of keras.preprocessing.layers or use the built in one or set it to
             None to disable. Defaults to "basic".
 
-            trainable: Make the EfficienNet backbone fully trainable or partially
+            trainable: Make the ResNet backbone fully trainable or partially
             trainable.
             - "full" to make the entire backbone trainable,
-            - "partial" to only make the last 3 block trainable
+            - "partial" to only make the last conv5_block trainable
             - "frozen" to make it not trainable.
 
             l2_norm: If True and include_top is also True, then
@@ -108,27 +82,11 @@ def EfficientNetSim(
             of 1.0 is equivelent to GlobalMeanPooling2D, while larger values
             will increase the contrast between activations within each feature
             map, and a value of math.inf will be equivelent to MaxPool2d.
-
-        Note:
-            EfficientNet expects images at the following size:
-             - "B0": 224,
-             - "B1": 240,
-             - "B2": 260,
-             - "B3": 300,
-             - "B4": 380,
-             - "B5": 456,
-             - "B6": 528,
-             - "B7": 600,
-
     """
 
     # input
     inputs = layers.Input(shape=input_shape)
     x = inputs
-
-    if variant not in EFF_INPUT_SIZE:
-        raise ValueError("Unknown efficientnet variant. Valid B0...B7")
-    img_size = EFF_INPUT_SIZE[variant]
 
     # augmentation
     if augmentation == "basic":
@@ -136,7 +94,7 @@ def EfficientNetSim(
         augmentation_layers = tf.keras.Sequential(
             [
                 layers.experimental.preprocessing.RandomCrop(
-                    img_size, img_size
+                    224, 224
                 ),
                 layers.experimental.preprocessing.RandomFlip("horizontal"),
             ]
@@ -148,7 +106,7 @@ def EfficientNetSim(
     if augmentation:
         x = augmentation_layers(x)
 
-    x = build_effnet(x, variant, weights, trainable)
+    x = build_resnet(x, weights, trainable)
 
     if include_top:
         x = GeneralizedMeanPooling2D(p=gem_p, name='gem_pool')(x)
@@ -168,53 +126,50 @@ def EfficientNetSim(
     return SimilarityModel(inputs, outputs)
 
 
-def build_effnet(
-    x: layers.Layer, variant: str, weights: str, trainable: str
+def build_resnet(
+    x: layers.Layer, weights: str, trainable: str
 ) -> layers.Layer:
-    """Build the requested efficient net.
+    """Build the requested ResNet.
 
     Args:
-        x: The input layer to the efficientnet.
-
-        variant: Which Variant of the EfficientNet to use.
+        x: The input layer to the ResNet.
 
         weights: Use pre-trained weights - the only available currently being
         imagenet.
 
-        trainable: Make the EfficienNet backbone fully trainable or partially
+        trainable: Make the ResNet backbone fully trainable or partially
         trainable.
         - "full" to make the entire backbone trainable,
-        - "partial" to only make the last 3 block trainable
+        - "partial" to only make the last conv5_block trainable
         - "frozen" to make it not trainable.
 
     Returns:
-        The ouptut layer of the efficientnet model
+        The ouptut layer of the ResNet model
     """
 
     # init
-    effnet_fn = EFF_ARCHITECTURE[variant.upper()]
-    effnet = effnet_fn(weights=weights, include_top=False)
+    resnet = resnet50.ResNet50(weights=weights, include_top=False)
 
     if trainable == "full":
-        effnet.trainable = True
+        resnet.trainable = True
     elif trainable == "partial":
         # let's mark the top part of the network as trainable
-        effnet.trainable = True
-        for layer in effnet.layers:
+        resnet.trainable = True
+        for layer in resnet.layers:
             # Freeze all the layers before the the last 3 blocks
-            if not re.search("^block[5,6,7]|^top", layer.name):
+            if not re.search("^conv5|^top", layer.name):
                 layer.trainable = False
             # don't change the batchnorm weights
             if isinstance(layer, layers.BatchNormalization):
                 layer.trainable = False
     elif trainable == "frozen":
-        effnet.trainable = False
+        resnet.trainable = False
     else:
         raise ValueError(
             f"{trainable} is not a supported option for 'trainable'."
         )
 
     # wire
-    x = effnet(x)
+    x = resnet(x)
 
     return x

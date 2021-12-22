@@ -1,45 +1,49 @@
+from typing import Any, Callable, Dict, Optional
+
 import tensorflow as tf
-from typing import Any, Dict
-from tensorflow_similarity.types import FloatTensor
 from tensorflow.keras.losses import Loss
+
+from tensorflow_similarity.types import FloatTensor
 
 LARGE_NUM = 1e9
 
-# FIXME: make sure to register
-# @tf.keras.utils.register_keras_serializable(package="Similarity")
 
-
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 class SimCLRLoss(Loss):
     """SimCLR Loss
     # FIXME original reference
     used in [Big Self-Supervised Models are Strong Semi-Supervised Learners](https://arxiv.org/abs/2006.10029)
     code adapted from [orignal github](https://github.com/google-research/simclr/tree/master/tf2)
     """
-    def __init__(self,
-                 temperature: float = 1.0,
-                 use_hidden_norm: bool = True,
-                 **kwargs):
-        super().__init__(kwargs)
-        self.temperature = tf.constant(temperature, dtype='float32')
-        self.use_hidden_norm = use_hidden_norm
 
-    def call(self,
-             hs: FloatTensor,
-             zs: FloatTensor) -> FloatTensor:
-        """compute the loast.
+    def __init__(
+        self,
+        temperature: float = 0.05,
+        use_hidden_norm: bool = True,
+        margin: float = 0.001,
+        reduction: Callable = tf.keras.losses.Reduction.AUTO,
+        name: Optional[str] = None,
+        **kwargs
+    ):
+        super().__init__(reduction=reduction, name=name, **kwargs)
+        self.temperature = tf.constant(temperature, dtype="float32")
+        self.use_hidden_norm = use_hidden_norm
+        self.margin = margin
+
+    @tf.function
+    def call(self, za: FloatTensor, zb: FloatTensor) -> FloatTensor:
+        """Compute the lost.
+
         Args:
-        h: Encoders outputs
-        z: Projectors outputs
+            za: Embedding A
+            zb: Embedding B
 
         Returns:
-        loss
+            loss
         """
-        # unpack
-        za, zb = zs
-
         # compute the diagonal
-        batch_size = tf.size(za)
-        diag = tf.linalg.diag(tf.ones(batch_size, dtype=tf.float32))
+        batch_size = tf.shape(za)[0]
+        diag = tf.one_hot(tf.range(batch_size), batch_size)
 
         if self.use_hidden_norm:
             za = tf.math.l2_normalize(za)
@@ -58,13 +62,21 @@ class SimCLRLoss(Loss):
         aa = aa - diag * LARGE_NUM
 
         distances = tf.concat((ab, aa), axis=1)
+        labels = tf.one_hot(tf.range(batch_size), batch_size * 2)
 
-        per_example_loss: FloatTensor = tf.nn.softmax_cross_entropy_with_logits(diag, distances)
+        per_example_loss = tf.nn.softmax_cross_entropy_with_logits(
+            labels, distances
+        )
 
-        return per_example_loss
+        loss: FloatTensor = (
+            tf.math.reduce_mean(per_example_loss) * 0.5 + self.margin
+        )
+
+        return loss
 
     def to_config(self) -> Dict[str, Any]:
         return {
             "temperature": self.temperature,
-            "use_hidden_norm": self.use_hidden_norm
+            "use_hidden_norm": self.use_hidden_norm,
+            "margin": self.margin,
         }
