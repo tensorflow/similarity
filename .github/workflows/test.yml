@@ -27,7 +27,7 @@ jobs:
     
     - name: Install package
       run: |
-        pip install ".[dev]"
+        pip install ".[tensorflow,dev]"
         
     - name: Lint with flake8
       run: |
