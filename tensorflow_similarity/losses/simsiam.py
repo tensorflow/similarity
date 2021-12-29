@@ -91,15 +91,15 @@ class SimSiamLoss(Loss):
 
         per_example_projection = self._projection(cosine_simlarity)
 
-        # Scaler float
-        loss: FloatTensor = (
-            tf.math.reduce_mean(per_example_projection) * 0.5 + self.margin
-        )
+        # 1D tensor
+        loss: FloatTensor = per_example_projection * 0.5 + self.margin
 
         return loss
 
-    def to_config(self) -> Dict[str, Any]:
-        return {
+    def get_config(self) -> Dict[str, Any]:
+        config = {
             "projection_type": self.projection_type,
             "margin": self.margin,
         }
+        base_config = super().get_config()
+        return {**base_config, **config}

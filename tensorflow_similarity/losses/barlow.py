@@ -49,15 +49,18 @@ class Barlow(Loss):
         off_diag = tf.math.pow(off_diag, 2)
         off_diag = tf.math.reduce_sum(off_diag)
 
+        # 1D Tensor
         loss: FloatTensor = off_diag * self.lambda_ + on_diag + self.margin
 
         return loss
 
-    def to_config(self) -> Dict[str, Any]:
-        return {
+    def get_config(self) -> Dict[str, Any]:
+        config = {
             "lambda_": self.lambda_,
             "margin": self.margin,
         }
+        base_config = super().get_config()
+        return {**base_config, **config}
 
     def off_diagonal(self, x: FloatTensor) -> FloatTensor:
         n = tf.shape(x)[0]
