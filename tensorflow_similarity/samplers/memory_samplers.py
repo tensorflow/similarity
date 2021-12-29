@@ -16,7 +16,6 @@ import random
 from collections import defaultdict
 from typing import Optional, Tuple, TypeVar, Set, Sequence
 
-import numpy as np
 import tensorflow as tf
 from tensorflow_similarity.types import FloatTensor, IntTensor
 from tqdm.auto import tqdm
