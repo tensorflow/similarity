@@ -33,7 +33,7 @@ def ResNet18Sim(
     gem_p=1.0,
     preproc_mode: str = "torch",
     similarity_model: bool = True,
-) -> Union[SimilarityModel, tf.keras.Model]:
+) -> SimilarityModel:
     """Build an ResNet18 Model backbone for similarity learning
 
     Architecture from [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)
@@ -81,9 +81,6 @@ def ResNet18Sim(
         - tf: will scale pixels between -1 and 1, sample-wise.
         - torch: will scale pixels between 0 and 1 and then will normalize each
           channel with respect to the ImageNet dataset.
-
-        similarity_model: If true, return a SimilarityModel otherwise return a
-        tf.keras.Model.
     """
 
     # input
@@ -126,13 +123,7 @@ def ResNet18Sim(
     else:
         outputs = x
 
-    # TODO(ovallis): Would be better to not to mix return types here.
-    if similarity_model:
-        model = SimilarityModel(inputs, outputs)
-    else:
-        model = tf.keras.Model(inputs, outputs)
-
-    return model
+    return SimilarityModel(inputs, outputs, name='resnet18sim')
 
 
 def build_resnet(x: layers.Layer, data_format, preproc_mode) -> layers.Layer:
