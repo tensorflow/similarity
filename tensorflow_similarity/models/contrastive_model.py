@@ -1,9 +1,10 @@
 from collections import defaultdict
 from copy import copy
 import itertools
+import json
+import os
 from pathlib import Path
 from typing import (
-    Any,
     Callable,
     DefaultDict,
     Dict,
@@ -43,6 +44,69 @@ from tensorflow_similarity.search import Search
 from tensorflow_similarity.types import FloatTensor, Lookup, IntTensor, Tensor
 from tensorflow_similarity.types import PandasDataFrame, CalibrationResults
 from termcolor import cprint
+
+
+class NumpyFloatValuesEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.float32):
+            return float(obj)
+        return json.JSONEncoder.default(self, obj)
+
+
+def load_model(filepath):
+    spath = Path(filepath)
+    backbone_path = spath / "backbone"
+    proj_path = spath / "projector"
+    pred_path = spath / "predictor"
+    optw_path = spath / "opt_weights.npy"
+    config_path = spath / "config.json"
+
+    backbone = tf.keras.models.load_model(backbone_path)
+    projector = tf.keras.models.load_model(proj_path)
+
+    if os.path.isdir(pred_path):
+        predictor = tf.keras.models.load_model(pred_path)
+    else:
+        predictor = None
+
+    with open(config_path, "r") as f:
+        config = json.load(f)
+        metadata = json.loads(config)
+
+    optimizer = tf.keras.optimizers.deserialize(metadata["optimizer"])
+    opt_weights = np.load(optw_path, allow_pickle=True)
+    loss = tf.keras.losses.deserialize(metadata["loss"])
+    metrics = [tf.keras.metrics.deserialize(m) for m in metadata["metrics"]]
+    algorithm = metadata["algorithm"]
+
+    model = ContrastiveModel(
+        backbone=backbone,
+        projector=projector,
+        predictor=predictor,
+        algorithm=algorithm,
+    )
+
+    model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
+
+    # collect train variables from both the backbone, projector, and projector
+    tvars = model.backbone.trainable_variables
+    tvars = tvars + model.projector.trainable_variables
+    if model.predictor is not None:
+        tvars = tvars + model.predictor.trainable_variables
+
+    # dummy zero gradients
+    zero_grads = [tf.zeros_like(w) for w in tvars]
+    # save current state of variables
+    saved_vars = [tf.identity(w) for w in tvars]
+
+    optimizer.apply_gradients(zip(zero_grads, tvars))
+
+    # Reload variables
+    [x.assign(y) for x, y in zip(tvars, saved_vars)]
+
+    optimizer.set_weights(opt_weights)
+
+    return model
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -211,17 +275,19 @@ class ContrastiveModel(tf.keras.Model):
 
     def _create_loss_trackers(self):
         self.loss_trackers = {}
-        self.loss_trackers['loss'] = tf.keras.metrics.Mean(name="loss")
+        self.loss_trackers["loss"] = tf.keras.metrics.Mean(name="loss")
 
-        self.reg_loss_len = len(self.backbone.losses) + len(self.projector.losses)
+        self.reg_loss_len = len(self.backbone.losses) + len(
+            self.projector.losses
+        )
         if self.predictor is not None:
             self.reg_loss_len += len(self.predictor.losses)
 
         if self.reg_loss_len:
-            self.loss_trackers['contrastive_loss'] = tf.keras.metrics.Mean(
+            self.loss_trackers["contrastive_loss"] = tf.keras.metrics.Mean(
                 name="contrastive_loss"
             )
-            self.loss_trackers['regularization_loss'] = tf.keras.metrics.Mean(
+            self.loss_trackers["regularization_loss"] = tf.keras.metrics.Mean(
                 name="regularization_loss"
             )
 
@@ -265,13 +331,17 @@ class ContrastiveModel(tf.keras.Model):
         # !This are contrastive metrics with different input
         # TODO: figure out interesting metrics -- z Mae?
         # TODO: check metrics are of the right type in compile?
-        self.compiled_metrics.update_state([z1, z2], [pred2, pred1])
+        # self.compiled_metrics.update_state([z1, z2], [pred2, pred1])
 
         # report loss manually
-        self.loss_trackers['loss'].update_state(combined_loss)
+        self.loss_trackers["loss"].update_state(combined_loss)
         if self.reg_loss_len:
-            self.loss_trackers['contrastive_loss'].update_state(contrastive_loss)
-            self.loss_trackers['regularization_loss'].update_state(regularization_loss)
+            self.loss_trackers["contrastive_loss"].update_state(
+                contrastive_loss
+            )
+            self.loss_trackers["regularization_loss"].update_state(
+                regularization_loss
+            )
 
         # Collect metrics to return
         return_metrics = {}
@@ -300,13 +370,17 @@ class ContrastiveModel(tf.keras.Model):
         # !This are contrastive metrics with different input
         # TODO: figure out interesting metrics -- z Mae?
         # TODO: check metrics are of the right type in compile?
-        self.compiled_metrics.update_state([z1, z2], [pred2, pred1])
+        # self.compiled_metrics.update_state([z1, z2], [pred2, pred1])
 
         # report loss manually
-        self.loss_trackers['loss'].update_state(combined_loss)
+        self.loss_trackers["loss"].update_state(combined_loss)
         if self.reg_loss_len:
-            self.loss_trackers['contrastive_loss'].update_state(contrastive_loss)
-            self.loss_trackers['regularization_loss'].update_state(regularization_loss)
+            self.loss_trackers["contrastive_loss"].update_state(
+                contrastive_loss
+            )
+            self.loss_trackers["regularization_loss"].update_state(
+                regularization_loss
+            )
 
         # Collect metrics to return
         return_metrics = {}
@@ -412,11 +486,13 @@ class ContrastiveModel(tf.keras.Model):
         backbone_path = spath / "backbone"
         proj_path = spath / "projector"
         pred_path = spath / "predictor"
+        optw_path = spath / "opt_weights.npy"
+        config_path = spath / "config.json"
 
         cprint("[Saving backbone model]", "blue")
         cprint("|-path:%s" % backbone_path, "green")
         self.backbone.save(
-            str(backbone_path),
+            backbone_path,
             overwrite=overwrite,
             include_optimizer=include_optimizer,
             save_format=save_format,
@@ -428,7 +504,7 @@ class ContrastiveModel(tf.keras.Model):
         cprint("[Saving projector model]", "blue")
         cprint("|-path:%s" % proj_path, "green")
         self.projector.save(
-            str(proj_path),
+            proj_path,
             overwrite=overwrite,
             include_optimizer=include_optimizer,
             save_format=save_format,
@@ -440,8 +516,8 @@ class ContrastiveModel(tf.keras.Model):
         if self.predictor is not None:
             cprint("[Saving predictor model]", "blue")
             cprint("|-path:%s" % pred_path, "green")
-            self.projector.save(
-                str(pred_path),
+            self.predictor.save(
+                pred_path,
                 overwrite=overwrite,
                 include_optimizer=include_optimizer,
                 save_format=save_format,
@@ -450,30 +526,36 @@ class ContrastiveModel(tf.keras.Model):
                 save_traces=save_traces,
             )
 
-        super().save(
-            str(spath),
-            overwrite=overwrite,
-            include_optimizer=include_optimizer,
-            save_format=save_format,
-            signatures=signatures,
-            options=options,
-            save_traces=save_traces,
-        )
+        metadata = {}
+        base_metrics = [m for m in super().metrics if m.name != "loss"]
+        metadata["metrics"] = [
+            tf.keras.metrics.serialize(m) for m in base_metrics
+        ]
+        metadata["loss"] = tf.keras.losses.serialize(self.loss)
+        metadata["optimizer"] = tf.keras.optimizers.serialize(self.optimizer)
+        np.save(optw_path, self.optimizer.get_weights())
+
+        with open(config_path, "w") as f:
+            base_config = self.get_config()
+            config = json.dumps(
+                {**metadata, **base_config}, cls=NumpyFloatValuesEncoder
+            )
+            json.dump(config, f)
 
         if hasattr(self, "_index") and self._index and save_index:
             self.save_index(filepath, compression=compression)
         else:
             print("Index not saved as save_index=False")
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self):
         config = {
-            "backbone": self.backbone,
-            "projector": self.projector,
-            "predictor": self.predictor,
             "algorithm": self.algorithm,
         }
-        base_config = super().get_config()
-        return {**base_config, **config}
+        return config
+
+    # TODO(ovallis): Overwrite load
+
+    # TODO(ovallis): Overwrite summary to show the whole model.
 
     def predict(
         self,
