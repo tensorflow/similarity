@@ -72,8 +72,8 @@ def soft_nn_loss(labels: IntTensor,
     excl = tf.cast(excl, tf.float32)
 
     loss = tf.math.divide(sacn, alcn)
-    loss = tf.multiply(tf.math.log(eps+loss), excl)
-    loss = -tf.math.reduce_mean(loss)
+    loss = -tf.multiply(tf.math.log(eps+loss), excl)
+
     return loss
 
 
@@ -96,7 +96,8 @@ class SoftNearestNeighborLoss(MetricLoss):
     def __init__(self,
                  distance: Union[Distance, str] = 'sql2',
                  temperature: float = 1,
-                 name: str = "SoftNearestNeighborLoss"):
+                 name: str = "SoftNearestNeighborLoss",
+                 **kwargs):
         """Initializes the SoftNearestNeighborLoss Loss
 
         Args:
@@ -115,7 +116,7 @@ class SoftNearestNeighborLoss(MetricLoss):
         self.temperature = temperature
 
         super().__init__(fn=soft_nn_loss,
-                         reduction=tf.keras.losses.Reduction.NONE,
                          name=name,
                          distance=distance,
-                         temperature=temperature)
+                         temperature=temperature,
+                         **kwargs)

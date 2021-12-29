@@ -96,7 +96,6 @@ def triplet_loss(labels: IntTensor,
     triplet_loss = compute_loss(pos_distances, neg_distances,
                                 soft_margin, margin)
 
-    triplet_loss = tf.reduce_mean(triplet_loss)
     return triplet_loss
 
 
@@ -126,7 +125,8 @@ class TripletLoss(MetricLoss):
                  negative_mining_strategy: str = 'semi-hard',
                  soft_margin: bool = False,
                  margin: float = 1.0,
-                 name: str = 'TripletLoss'):
+                 name: str = 'TripletLoss',
+                 **kwargs):
         """Initializes the TripletLoss
 
         Args:
@@ -174,9 +174,9 @@ class TripletLoss(MetricLoss):
 
         super().__init__(triplet_loss,
                          name=name,
-                         reduction=tf.keras.losses.Reduction.NONE,
                          distance=distance,
                          positive_mining_strategy=positive_mining_strategy,
                          negative_mining_strategy=negative_mining_strategy,
                          soft_margin=soft_margin,
-                         margin=margin)
+                         margin=margin,
+                         **kwargs)
