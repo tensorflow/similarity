@@ -96,7 +96,7 @@ class DistanceMetric(Metric):
         return self.aggregated_distances
 
     def get_config(self):
-        config =  {
+        config = {
             "distance": self.distance.name,
             "aggregate": self.aggregate,
             "anchor": self.anchor,

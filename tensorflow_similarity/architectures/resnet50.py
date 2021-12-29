@@ -22,6 +22,7 @@ from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.layers import GeneralizedMeanPooling2D
 from tensorflow_similarity.models import SimilarityModel
 
+
 # Create an image augmentation pipeline.
 def ResNet50Sim(
     input_shape: Tuple[int],
@@ -36,52 +37,52 @@ def ResNet50Sim(
 ) -> SimilarityModel:
     """Build an ResNet50 Model backbone for similarity learning
 
-        Architecture from [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)
+    Architecture from [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)
 
-        Args:
-            input_shape: Size of the image input prior to augmentation,
-            must be bigger than the size of ResNet version you use. See below for
-            min input size of 244.
+    Args:
+        input_shape: Size of the image input prior to augmentation,
+        must be bigger than the size of ResNet version you use. See below for
+        min input size of 244.
 
-            embedding_size: Size of the output embedding. Usually between 64
-            and 512. Defaults to 128.
+        embedding_size: Size of the output embedding. Usually between 64
+        and 512. Defaults to 128.
 
-            weights: Use pre-trained weights - the only available currently being
-            imagenet. Defaults to "imagenet".
+        weights: Use pre-trained weights - the only available currently being
+        imagenet. Defaults to "imagenet".
 
-            augmentation: How to augment the data - either pass a Sequential model
-            of keras.preprocessing.layers or use the built in one or set it to
-            None to disable. Defaults to "basic".
+        augmentation: How to augment the data - either pass a Sequential model
+        of keras.preprocessing.layers or use the built in one or set it to
+        None to disable. Defaults to "basic".
 
-            trainable: Make the ResNet backbone fully trainable or partially
-            trainable.
-            - "full" to make the entire backbone trainable,
-            - "partial" to only make the last conv5_block trainable
-            - "frozen" to make it not trainable.
+        trainable: Make the ResNet backbone fully trainable or partially
+        trainable.
+        - "full" to make the entire backbone trainable,
+        - "partial" to only make the last conv5_block trainable
+        - "frozen" to make it not trainable.
 
-            l2_norm: If True and include_top is also True, then
-            tfsim.layers.MetricEmbedding is used as the last layer, otherwise
-            keras.layers.Dense is used. This should be true when using cosine
-            distance. Defaults to True.
+        l2_norm: If True and include_top is also True, then
+        tfsim.layers.MetricEmbedding is used as the last layer, otherwise
+        keras.layers.Dense is used. This should be true when using cosine
+        distance. Defaults to True.
 
-            include_top: Whether to include the fully-connected layer at the top
-            of the network. Defaults to True.
+        include_top: Whether to include the fully-connected layer at the top
+        of the network. Defaults to True.
 
-            pooling: Optional pooling mode for feature extraction when
-            include_top is False. Defaults to gem.
-            - None means that the output of the model will be the 4D tensor
-              output of the last convolutional layer.
-            - avg means that global average pooling will be applied to the
-              output of the last convolutional layer, and thus the output of the
-              model will be a 2D tensor.
-            - max means that global max pooling will be applied.
-            - gem means that global GeneralizedMeanPooling2D will be applied.
-              The gem_p param sets the contrast amount on the pooling.
+        pooling: Optional pooling mode for feature extraction when
+        include_top is False. Defaults to gem.
+        - None means that the output of the model will be the 4D tensor
+          output of the last convolutional layer.
+        - avg means that global average pooling will be applied to the
+          output of the last convolutional layer, and thus the output of the
+          model will be a 2D tensor.
+        - max means that global max pooling will be applied.
+        - gem means that global GeneralizedMeanPooling2D will be applied.
+          The gem_p param sets the contrast amount on the pooling.
 
-            gem_p: Sets the power in the GeneralizedMeanPooling2D layer. A value
-            of 1.0 is equivelent to GlobalMeanPooling2D, while larger values
-            will increase the contrast between activations within each feature
-            map, and a value of math.inf will be equivelent to MaxPool2d.
+        gem_p: Sets the power in the GeneralizedMeanPooling2D layer. A value
+        of 1.0 is equivelent to GlobalMeanPooling2D, while larger values
+        will increase the contrast between activations within each feature
+        map, and a value of math.inf will be equivelent to MaxPool2d.
     """
 
     # input
@@ -93,9 +94,7 @@ def ResNet50Sim(
         # augs usually used in benchmark and work almost always well
         augmentation_layers = tf.keras.Sequential(
             [
-                layers.experimental.preprocessing.RandomCrop(
-                    224, 224
-                ),
+                layers.experimental.preprocessing.RandomCrop(224, 224),
                 layers.experimental.preprocessing.RandomFlip("horizontal"),
             ]
         )
@@ -109,14 +108,14 @@ def ResNet50Sim(
     x = build_resnet(x, weights, trainable)
 
     if include_top:
-        x = GeneralizedMeanPooling2D(p=gem_p, name='gem_pool')(x)
+        x = GeneralizedMeanPooling2D(p=gem_p, name="gem_pool")(x)
         if l2_norm:
             outputs = MetricEmbedding(embedding_size)(x)
         else:
             outputs = layers.Dense(embedding_size)(x)
     else:
         if pooling == "gem":
-            x = GeneralizedMeanPooling2D(p=gem_p, name='gem_pool')(x)
+            x = GeneralizedMeanPooling2D(p=gem_p, name="gem_pool")(x)
         elif pooling == "avg":
             x = layers.GlobalAveragePooling2D(name="avg_pool")(x)
         elif pooling == "max":
@@ -126,9 +125,7 @@ def ResNet50Sim(
     return SimilarityModel(inputs, outputs)
 
 
-def build_resnet(
-    x: layers.Layer, weights: str, trainable: str
-) -> layers.Layer:
+def build_resnet(x: layers.Layer, weights: str, trainable: str) -> layers.Layer:
     """Build the requested ResNet.
 
     Args:
