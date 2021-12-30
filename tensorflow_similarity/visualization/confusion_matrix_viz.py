@@ -54,8 +54,12 @@ def confusion_matrix(y_pred: IntTensor,
 
     with tf.device("/cpu:0"):
         # Ensure we are working with integer tensors.
-        y_pred = tf.cast(tf.convert_to_tensor(y_pred), dtype='int32')
-        y_true = tf.cast(tf.convert_to_tensor(y_true), dtype='int32')
+        if not tf.is_tensor(y_pred):
+            y_pred = tf.convert_to_tensor(np.array(y_pred))
+        y_pred = tf.cast(y_pred, dtype='int32')
+        if not tf.is_tensor(y_true):
+            y_true = tf.convert_to_tensor(np.array(y_true))
+        y_true = tf.cast(y_true, dtype='int32')
 
         cm = tf.math.confusion_matrix(y_true, y_pred)
         cm = tf.cast(cm, dtype='float')
