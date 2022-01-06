@@ -434,10 +434,6 @@ class ContrastiveModel(tf.keras.Model):
     def call(self, inputs):
         return inputs
 
-    def get_backbone(self):
-        "Return backbone model"
-        return self.backbone
-
     def summary(self):
         cprint("[Backbone]", "green")
         self.backbone.summary()
