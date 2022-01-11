@@ -10,6 +10,7 @@ Randomly select at most N examples per class
 TFSimilarity.samplers.select_examples(
     class_list: Sequence[int] = None,
     num_examples_per_class: int = None
+) -> Tuple[np.ndarray, np.ndarray]
 ```
 
 

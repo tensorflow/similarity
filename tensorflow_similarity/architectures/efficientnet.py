@@ -14,11 +14,11 @@
 
 "EfficientNet backbone for similarity learning"
 import re
-from typing import Tuple, Callable, Union
-import tensorflow as tf
+from typing import Tuple
 from tensorflow.keras import layers
 from tensorflow.keras.applications import efficientnet
 from tensorflow_similarity.layers import MetricEmbedding
+from tensorflow_similarity.layers import GeneralizedMeanPooling2D
 from tensorflow_similarity.models import SimilarityModel
 
 EFF_INPUT_SIZE = {
@@ -45,17 +45,20 @@ EFF_ARCHITECTURE = {
 
 
 # Create an image augmentation pipeline.
-def EfficientNetSim(input_shape: Tuple[int],
-                    embedding_size: int = 128,
-                    variant: str = "B0",
-                    weights: str = "imagenet",
-                    augmentation: Union[Callable, str] = "basic",
-                    trainable: str = "frozen",
-                    l2_norm: bool = True):
+def EfficientNetSim(
+    input_shape: Tuple[int],
+    embedding_size: int = 128,
+    variant: str = "B0",
+    weights: str = "imagenet",
+    trainable: str = "frozen",
+    l2_norm: bool = True,
+    include_top: bool = True,
+    pooling: str = "gem",
+    gem_p=1.0,
+) -> SimilarityModel:
     """Build an EffecientNet Model backbone for similarity learning
 
-    Architecture from [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks
-](https://arxiv.org/abs/1905.11946)
+    Architecture from [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946)
 
     Args:
         input_shape: Size of the image input prior to augmentation,
@@ -64,23 +67,41 @@ def EfficientNetSim(input_shape: Tuple[int],
 
         embedding_size: Size of the output embedding. Usually between 64
         and 512. Defaults to 128.
-        variant: Which Variant of the EfficientNEt to use. Defaults to "B0".
+
+        variant: Which Variant of the EfficientNet to use. Defaults to "B0".
 
         weights: Use pre-trained weights - the only available currently being
         imagenet. Defaults to "imagenet".
 
-        augmentation: How to augment the data - either pass a Sequential model
-        of keras.preprocessing.layers or use the built in one or set it to
-        None to disable. Defaults to "basic".
-
         trainable: Make the EfficienNet backbone fully trainable or partially
-        trainable. Either "full" to make the entire backbone trainable,
-        "partial" to only make the last 3 block trainable or "frozen" to make
-        it not trainable. Defaults to "frozen".
+        trainable.
+        - "full" to make the entire backbone trainable,
+        - "partial" to only make the last 3 block trainable
+        - "frozen" to make it not trainable.
 
-        l2_norm: If True, tensorflow_similarity.layers.MetricEmbedding is used
-        as the last layer, otherwise keras.layers.Dense is used. This should be
-        true when using cosine distance. Defaults to True.
+        l2_norm: If True and include_top is also True, then
+        tfsim.layers.MetricEmbedding is used as the last layer, otherwise
+        keras.layers.Dense is used. This should be true when using cosine
+        distance. Defaults to True.
+
+        include_top: Whether to include the fully-connected layer at the top
+        of the network. Defaults to True.
+
+        pooling: Optional pooling mode for feature extraction when
+        include_top is False. Defaults to gem.
+        - None means that the output of the model will be the 4D tensor
+          output of the last convolutional layer.
+        - avg means that global average pooling will be applied to the
+          output of the last convolutional layer, and thus the output of the
+          model will be a 2D tensor.
+        - max means that global max pooling will be applied.
+        - gem means that global GeneralizedMeanPooling2D will be applied.
+          The gem_p param sets the contrast amount on the pooling.
+
+        gem_p: Sets the power in the GeneralizedMeanPooling2D layer. A value
+        of 1.0 is equivelent to GlobalMeanPooling2D, while larger values
+        will increase the contrast between activations within each feature
+        map, and a value of math.inf will be equivelent to MaxPool2d.
 
     Note:
         EfficientNet expects images at the following size:
@@ -101,36 +122,52 @@ def EfficientNetSim(input_shape: Tuple[int],
 
     if variant not in EFF_INPUT_SIZE:
         raise ValueError("Unknown efficientnet variant. Valid B0...B7")
-    img_size = EFF_INPUT_SIZE[variant]
-
-    # augmentation
-    if augmentation == "basic":
-        # augs usually used in benchmark and work almost always well
-        augmentation_layers = tf.keras.Sequential([
-            layers.experimental.preprocessing.RandomCrop(img_size, img_size),
-            layers.experimental.preprocessing.RandomFlip("horizontal")
-        ])
-    else:
-        augmentation_layers = augmentation
-
-    # add the basic version or the suppplied one.
-    if augmentation:
-        x = augmentation_layers(x)
 
     x = build_effnet(x, variant, weights, trainable)
-    x = layers.GlobalAveragePooling2D()(x)
-    if l2_norm:
-        outputs = MetricEmbedding(embedding_size)(x)
+
+    if include_top:
+        x = GeneralizedMeanPooling2D(p=gem_p, name="gem_pool")(x)
+        if l2_norm:
+            outputs = MetricEmbedding(embedding_size)(x)
+        else:
+            outputs = layers.Dense(embedding_size)(x)
     else:
-        outputs = layers.Dense(embedding_size)(x)
+        if pooling == "gem":
+            x = GeneralizedMeanPooling2D(p=gem_p, name="gem_pool")(x)
+        elif pooling == "avg":
+            x = layers.GlobalAveragePooling2D(name="avg_pool")(x)
+        elif pooling == "max":
+            x = layers.GlobalMaxPooling2D(name="max_pool")(x)
+        outputs = x
+
     return SimilarityModel(inputs, outputs)
 
 
-def build_effnet(x, variant, weights, trainable):
-    "Build the requested efficient net."
+def build_effnet(
+    x: layers.Layer, variant: str, weights: str, trainable: str
+) -> layers.Layer:
+    """Build the requested efficient net.
+
+    Args:
+        x: The input layer to the efficientnet.
+
+        variant: Which Variant of the EfficientNet to use.
+
+        weights: Use pre-trained weights - the only available currently being
+        imagenet.
+
+        trainable: Make the EfficienNet backbone fully trainable or partially
+        trainable.
+        - "full" to make the entire backbone trainable,
+        - "partial" to only make the last 3 block trainable
+        - "frozen" to make it not trainable.
+
+    Returns:
+        The ouptut layer of the efficientnet model
+    """
 
     # init
-    effnet_fn = EFF_ARCHITECTURE[variant]
+    effnet_fn = EFF_ARCHITECTURE[variant.upper()]
     effnet = effnet_fn(weights=weights, include_top=False)
 
     if trainable == "full":
@@ -145,13 +182,14 @@ def build_effnet(x, variant, weights, trainable):
             # don't change the batchnorm weights
             if isinstance(layer, layers.BatchNormalization):
                 layer.trainable = False
-    elif trainable=='frozen':
+    elif trainable == "frozen":
         effnet.trainable = False
     else:
-        raise ValueError(f"{trainable} is not a supported option for 'trainable'.")
+        raise ValueError(
+            f"{trainable} is not a supported option for 'trainable'."
+        )
 
     # wire
-    x = efficientnet.preprocess_input(x)
     x = effnet(x)
 
     return x

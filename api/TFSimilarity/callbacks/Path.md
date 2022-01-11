@@ -24,91 +24,6 @@ instantiating a Path will return either a PosixPath or a WindowsPath
 object. You can also instantiate a PosixPath or WindowsPath directly,
 but cannot instantiate a WindowsPath on a POSIX system or vice versa.
 
-<!-- Tabular view -->
- <table class="responsive fixed orange">
-<colgroup><col width="214px"><col></colgroup>
-<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
-
-<tr>
-<td>
-<b>anchor</b>
-</td>
-<td>
-The concatenation of the drive and root, or ''.
-</td>
-</tr><tr>
-<td>
-<b>drive</b>
-</td>
-<td>
-The drive prefix (letter or UNC path), if any.
-</td>
-</tr><tr>
-<td>
-<b>name</b>
-</td>
-<td>
-The final path component, if any.
-</td>
-</tr><tr>
-<td>
-<b>parent</b>
-</td>
-<td>
-The logical parent of the path.
-</td>
-</tr><tr>
-<td>
-<b>parents</b>
-</td>
-<td>
-A sequence of this path's logical parents.
-</td>
-</tr><tr>
-<td>
-<b>parts</b>
-</td>
-<td>
-An object providing sequence-like access to the
-components in the filesystem path.
-</td>
-</tr><tr>
-<td>
-<b>root</b>
-</td>
-<td>
-The root of the path, if any.
-</td>
-</tr><tr>
-<td>
-<b>stem</b>
-</td>
-<td>
-The final path component, minus its last suffix.
-</td>
-</tr><tr>
-<td>
-<b>suffix</b>
-</td>
-<td>
-The final component's last suffix, if any.
-
-This includes the leading period. For example: '.txt'
-</td>
-</tr><tr>
-<td>
-<b>suffixes</b>
-</td>
-<td>
-A list of the final component's suffixes, if any.
-
-These include the leading periods. For example: ['.tar', '.gz']
-</td>
-</tr>
-</table>
-
-
-
 
 
 <!-- Tabular view -->
@@ -447,22 +362,6 @@ lchmod(
 Like chmod(), except if the path points to a symlink, the symlink's
 permissions are changed, rather than its target's.
 
-<h3 id="link_to">link_to</h3>
-
-```python
-link_to(
-    target
-)
-```
-
-
-Make the target path a hard link pointing to this path.
-
-Note this function does not make this path a hard link to *target*,
-despite the implication of the function and argument names. The order
-of arguments (target, link) is the reverse of Path.symlink_to, but
-matches that of os.link.
-
 <h3 id="lstat">lstat</h3>
 
 ```python
@@ -489,7 +388,7 @@ Return True if this path matches the given pattern.
 
 ```python
 mkdir(
-    mode=511, parents=(False), exist_ok=(False)
+    mode=511, parents=False, exist_ok=False
 )
 ```
 
@@ -563,13 +462,8 @@ rename(
 ```
 
 
-Rename this path to the target path.
+Rename this path to the given path.
 
-The target path may be absolute or relative. Relative paths are
-interpreted relative to the current working directory, *not* the
-directory of the Path object.
-
-Returns the new Path instance pointing to the target path.
 
 <h3 id="replace">replace</h3>
 
@@ -580,19 +474,14 @@ replace(
 ```
 
 
-Rename this path to the target path, overwriting if that path exists.
-
-The target path may be absolute or relative. Relative paths are
-interpreted relative to the current working directory, *not* the
-directory of the Path object.
-
-Returns the new Path instance pointing to the target path.
+Rename this path to the given path, clobbering the existing
+destination if it exists.
 
 <h3 id="resolve">resolve</h3>
 
 ```python
 resolve(
-    strict=(False)
+    strict=False
 )
 ```
 
@@ -650,19 +539,19 @@ os.stat() does.
 
 ```python
 symlink_to(
-    target, target_is_directory=(False)
+    target, target_is_directory=False
 )
 ```
 
 
-Make this path a symlink pointing to the target path.
-Note the order of arguments (link, target) is the reverse of os.symlink.
+Make this path a symlink pointing to the given path.
+Note the order of arguments (self, target) is the reverse of os.symlink's.
 
 <h3 id="touch">touch</h3>
 
 ```python
 touch(
-    mode=438, exist_ok=(True)
+    mode=438, exist_ok=True
 )
 ```
 
@@ -673,9 +562,7 @@ Create this file with the given access mode, if it doesn't exist.
 <h3 id="unlink">unlink</h3>
 
 ```python
-unlink(
-    missing_ok=(False)
-)
+unlink()
 ```
 
 

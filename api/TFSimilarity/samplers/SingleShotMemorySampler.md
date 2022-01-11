@@ -8,8 +8,9 @@ Base object for fitting to a sequence of data, such as a dataset.
 
 ```python
 TFSimilarity.samplers.SingleShotMemorySampler(
-    augmenter: Augmenter,
-    class_per_batch: int,
+    x,
+    examples_per_batch: int,
+    num_augmentations_per_example: int = 2,
     steps_per_epoch: int = 1000,
     warmup: int = -1
 ) -> None
@@ -84,11 +85,20 @@ How many steps/batch per epoch. Defaults to 1000.
 </td>
 </tr><tr>
 <td>
-<b>class_per_batch</b>
+<b>examples_per_batch</b>
 </td>
 <td>
-effectively the number of element to pass to the
-augmenter for each batch request in the single shot setting.
+effectively the number of element to pass to
+the augmenter for each batch request in the single shot setting.
+</td>
+</tr><tr>
+<td>
+<b>num_augmentations_per_example</b>
+</td>
+<td>
+how many augmented examples must be
+returned by the augmenter for each example. The augmenter is
+responsible to decide if one of those is the original or not.
 </td>
 </tr><tr>
 <td>
@@ -97,7 +107,33 @@ augmenter for each batch request in the single shot setting.
 <td>
 Keep track of warmup epochs and let the augmenter knows
 when the warmup is over by passing along with each batch data a
-boolean <b>is_warmup</b>. See <b>self.get_examples()</b> Defaults to 0.
+boolean <b>is_warmup</b>. See <b>self._get_examples()</b> Defaults to 0.
+</td>
+</tr>
+</table>
+
+
+
+
+
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
+
+<tr>
+<td>
+<b>example_shape</b>
+</td>
+<td>
+
+</td>
+</tr><tr>
+<td>
+<b>num_examples</b>
+</td>
+<td>
+
 </td>
 </tr>
 </table>
@@ -108,14 +144,12 @@ boolean <b>is_warmup</b>. See <b>self.get_examples()</b> Defaults to 0.
 
 <h3 id="generate_batch">generate_batch</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L135-L157">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L137-L154">View source</a>
 
 ```python
 generate_batch(
     batch_id: int
-) -> Tuple[<a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor``<b>
-</a>, <a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor</b>``
-</a>]
+) -> Tuple[Batch, Batch]
 ```
 
 
@@ -142,7 +176,7 @@ batch_id ([type]): [description]
 <tr><th colspan="2">Returns</th></tr>
 <tr class="alt">
 <td colspan="2">
-x, y: batch
+x, y: Batch
 </td>
 </tr>
 
@@ -150,34 +184,26 @@ x, y: batch
 
 
 
-<h3 id="get_examples">get_examples</h3>
+<h3 id="get_slice">get_slice</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/memory_samplers.py#L249-L264">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/memory_samplers.py#L343-L371">View source</a>
 
 ```python
-get_examples(
-    batch_id: int,
-    num_classes: int,
-    example_per_class: int
-) -> Tuple[<a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor``<b>
-</a>, <a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor</b>``
+get_slice(
+    begin: int = 0,
+    size: int = -1
+) -> Tuple[<a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor``<b>
+</a>, <a href="../../TFSimilarity/callbacks/IntTensor.md">TFSimilarity.callbacks.IntTensor</b>``
 </a>]
 ```
 
 
-Get the set of examples that would be used to create a single batch.
+Extracts an augmented slice over both the x and y tensors.
 
+This method extracts a slice of size <b>size</b> over the first dimension of
+both the x and y tensors starting at the index specified by <b>begin</b>.
 
-#### Notes:
-
-- before passing the batch data to TF, the sampler will call the
-  augmenter function (if any) on the returned example.
-
-- A batch_size = num_classes * example_per_class
-
-- This function must be defined in the subclass.
-
-
+The value of <b>begin + size</b> must be less than <b>self.num_examples</b>.
 
 <!-- Tabular view -->
  <table class="responsive fixed orange">
@@ -186,24 +212,17 @@ Get the set of examples that would be used to create a single batch.
 
 <tr>
 <td>
-<b>batch_id</b>
+<b>begin</b>
 </td>
 <td>
-id of the batch in the epoch.
-</td>
-</tr><tr>
-<td>
-<b>num_classes</b>
-</td>
-<td>
-How many class should be present in the examples.
+The starting index.
 </td>
 </tr><tr>
 <td>
-<b>example_per_class</b>
+<b>size</b>
 </td>
 <td>
-How many example per class should be returned.
+The size of the slice.
 </td>
 </tr>
 </table>
@@ -216,7 +235,7 @@ How many example per class should be returned.
 <tr><th colspan="2">Returns</th></tr>
 <tr class="alt">
 <td colspan="2">
-x, y: batch of examples made of <b>num_classes</b> * <b>example_per_class</b>
+A Tuple of FloatTensor and IntTensor
 </td>
 </tr>
 
@@ -226,7 +245,7 @@ x, y: batch of examples made of <b>num_classes</b> * <b>example_per_class</b>
 
 <h3 id="on_epoch_end">on_epoch_end</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L120-L130">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L122-L132">View source</a>
 
 ```python
 on_epoch_end() -> None
@@ -238,14 +257,12 @@ Keep track of warmup epochs
 
 <h3 id="__getitem__">__getitem__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L132-L133">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L134-L135">View source</a>
 
 ```python
 __getitem__(
     batch_id: int
-) -> Tuple[<a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor``<b>
-</a>, <a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor</b>``
-</a>]
+) -> Tuple[Batch, Batch]
 ```
 
 
@@ -295,7 +312,7 @@ Create a generator that iterate over the Sequence.
 
 <h3 id="__len__">__len__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L116-L118">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L118-L120">View source</a>
 
 ```python
 __len__() -> int

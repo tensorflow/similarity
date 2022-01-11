@@ -4,7 +4,7 @@
 
 
 
-Create a [TFRecordDataset](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
+Create a [TFRecordDataset](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset) based sampler.
 
 ```python
 TFSimilarity.samplers.TFRecordDatasetSampler(
@@ -15,16 +15,16 @@ TFSimilarity.samplers.TFRecordDatasetSampler(
     shards_per_cycle: int = None,
     compression: Optional[str] = None,
     parallelism: int = tf.data.AUTOTUNE,
-    file_parallelism: int = 1,
+    async_cycle: bool = False,
     prefetch_size: Optional[int] = None,
-    shard_suffix: str = *.tfrec
+    shard_suffix: str = *.tfrec,
+    num_repeat: int = -1
 ) -> tf.data.Dataset
 ```
 
 
 
 <!-- Placeholder for "Used in" -->
-based sampler
 
 This sampler should be used when using a TFDataset or have a large
 dataset that needs to be stored on file.
@@ -98,8 +98,7 @@ shards.
 </td>
 <td>
 Which compression was used when creating the dataset.
-<b><i>None, "ZLIB", or "GZIP"</i></b> as specified in [TFRecordDataset
-documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
+<b><i>None, "ZLIB", or "GZIP"</i></b> as specified in [TFRecordDataset documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
 Defaults to None.
 </td>
 </tr><tr>
@@ -112,11 +111,14 @@ TensorFlow decide by using <b>tf.data.AUTOTUNE</b> (-1).
 </td>
 </tr><tr>
 <td>
-<b>file_parallelism</b>
+<b>async_cycle</b>
 </td>
 <td>
-How many parallel shards to read increase number
-if IO bound. Defaults to 1.
+If True, create a threadpool of size `batch_size //
+example_per_class` and fetch inputs from the cycle shards
+asynchronously; however, in practice, the default single thread setting
+is faster. We only recommend setting this to True if it is absolutely
+necessary.
 </td>
 </tr><tr>
 <td>
@@ -132,6 +134,13 @@ How many batch to precache. Defaults to 10.
 <td>
 Glog pattern used to collect the shard files list.
 Defaults to "*.tfrec".
+</td>
+</tr><tr>
+<td>
+<b>num_repeat</b>
+</td>
+<td>
+How many times to repeat the dataset. Defaults to -1 (infinite).
 </td>
 </tr>
 </table>

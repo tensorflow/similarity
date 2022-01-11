@@ -14,4 +14,5 @@
 "Collection of specialized notebook vizualization tools"
 from .projector import projector  # noqa
 from .neighbors_viz import viz_neigbors_imgs  # noqa
-from .confusion_matrix import confusion_matrix  # noqa
+from .confusion_matrix_viz import confusion_matrix  # noqa
+from .vizualize_views import visualize_views  # noqa

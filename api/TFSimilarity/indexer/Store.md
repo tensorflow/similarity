@@ -19,7 +19,7 @@ inheritance.
 
 ```python
 add(
-    embedding: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    embedding: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     label: Optional[int] = None,
     data: Optional[<a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor```
@@ -82,7 +82,7 @@ Associated record id.
 
 ```python
 batch_add(
-    embeddings: Sequence[<a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    embeddings: Sequence[<a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>],
     labels: Optional[Sequence[int]] = None,
     data: Optional[Sequence[Tensor]] = None
@@ -286,7 +286,7 @@ Number of records reloaded.
 ```python
 save(
     path: str,
-    compression: bool = (True)
+    compression: bool = True
 ) -> None
 ```
 

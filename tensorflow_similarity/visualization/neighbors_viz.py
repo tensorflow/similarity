@@ -43,7 +43,7 @@ def viz_neigbors_imgs(example: Tensor,
 
         cmap: Default color scheme for black and white images e.g mnist.
         Defaults to 'viridis'.
-        
+
         show: If the plot is going to be shown or not. Defaults to True.
     """
     num_cols = len(neighbors) + 1

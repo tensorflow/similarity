@@ -108,7 +108,6 @@ def pn_loss(labels: IntTensor,
     # [PN loss computation]
     pn_loss = compute_loss(pos_distances, neg_distances, soft_margin, margin)
 
-    pn_loss = tf.reduce_mean(pn_loss)
     return pn_loss
 
 
@@ -145,7 +144,8 @@ class PNLoss(MetricLoss):
                  negative_mining_strategy: str = 'semi-hard',
                  soft_margin: bool = False,
                  margin: float = 1.0,
-                 name: str = 'PNLoss'):
+                 name: str = 'PNLoss',
+                 **kwargs):
         """Initializes the PN Loss
 
         Args:
@@ -193,9 +193,9 @@ class PNLoss(MetricLoss):
 
         super().__init__(pn_loss,
                          name=name,
-                         reduction=tf.keras.losses.Reduction.NONE,
                          distance=distance,
                          positive_mining_strategy=positive_mining_strategy,
                          negative_mining_strategy=negative_mining_strategy,
                          soft_margin=soft_margin,
-                         margin=margin)
+                         margin=margin,
+                         **kwargs)

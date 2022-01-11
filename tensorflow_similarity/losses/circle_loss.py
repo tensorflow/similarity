@@ -120,8 +120,6 @@ def circle_loss(labels: IntTensor,
             p_loss + n_loss,
             tf.reshape(valid_anchors, (-1, 1))
     )
-    # reduce and scale loss so it isn't a function of the batch size.
-    circle_loss = tf.math.reduce_mean(circle_loss)
 
     return circle_loss
 
@@ -149,7 +147,8 @@ class CircleLoss(MetricLoss):
                  distance: Union[Distance, str] = 'cosine',
                  gamma: float = 80.0,
                  margin: float = 0.40,
-                 name: str = 'CircleLoss'):
+                 name: str = 'CircleLoss',
+                 **kwargs):
         """Initializes a CircleLoss
 
         Args:
@@ -175,7 +174,7 @@ class CircleLoss(MetricLoss):
 
         super().__init__(circle_loss,
                          name=name,
-                         reduction=tf.keras.losses.Reduction.NONE,
                          distance=distance,
                          gamma=gamma,
-                         margin=margin)
+                         margin=margin,
+                         **kwargs)

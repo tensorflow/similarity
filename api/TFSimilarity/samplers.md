@@ -32,7 +32,7 @@ the dataset.
 
 ## Functions
 
-- [`TFRecordDatasetSampler(...)`](../TFSimilarity/samplers/TFRecordDatasetSampler.md): Create a [TFRecordDataset](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
+- [`TFRecordDatasetSampler(...)`](../TFSimilarity/samplers/TFRecordDatasetSampler.md): Create a [TFRecordDataset](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset) based sampler.
 
 - [`select_examples(...)`](../TFSimilarity/samplers/select_examples.md): Randomly select at most N examples per class
 

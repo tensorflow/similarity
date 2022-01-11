@@ -12,7 +12,7 @@ TFSimilarity.indexer.tabulate(
     tabular_data, headers=(), tablefmt=simple,
     floatfmt=_DEFAULT_FLOATFMT, numalign=_DEFAULT_ALIGN, stralign=_DEFAULT_ALIGN,
     missingval=_DEFAULT_MISSINGVAL, showindex=default,
-    disable_numparse=(False), colalign=None
+    disable_numparse=False, colalign=None
 )
 ```
 

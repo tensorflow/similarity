@@ -69,82 +69,6 @@ If the op is not an <b>Operation</b>.
 
 
 
-<!-- Tabular view -->
- <table class="responsive fixed orange">
-<colgroup><col width="214px"><col></colgroup>
-<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
-
-<tr>
-<td>
-<b>device</b>
-</td>
-<td>
-The name of the device on which this tensor will be produced, or None.
-</td>
-</tr><tr>
-<td>
-<b>dtype</b>
-</td>
-<td>
-The <b>DType</b> of elements in this tensor.
-</td>
-</tr><tr>
-<td>
-<b>graph</b>
-</td>
-<td>
-The <b>Graph</b> that contains this tensor.
-</td>
-</tr><tr>
-<td>
-<b>name</b>
-</td>
-<td>
-The string name of this tensor.
-</td>
-</tr><tr>
-<td>
-<b>op</b>
-</td>
-<td>
-The <b>Operation</b> that produces this tensor as an output.
-</td>
-</tr><tr>
-<td>
-<b>shape</b>
-</td>
-<td>
-Returns a <b>tf.TensorShape</b> that represents the shape of this tensor.
-
-```
->>> t = tf.constant([1,2,3,4,5])
->>> t.shape
-TensorShape([5])
-```
-
-<b>tf.Tensor.shape</b> is equivalent to <b>tf.Tensor.get_shape()</b>.
-
-In a <b>tf.function</b> or when building a model using
-<b>tf.keras.Input</b>, they return the build-time shape of the
-tensor, which may be partially unknown.
-
-A <b>tf.TensorShape</b> is not a tensor. Use <b>tf.shape(t)</b> to get a tensor
-containing the shape, calculated at runtime.
-
-See <b>tf.Tensor.get_shape()</b>, and <b>tf.TensorShape</b> for details and examples.
-</td>
-</tr><tr>
-<td>
-<b>value_index</b>
-</td>
-<td>
-The index of this tensor in the outputs of its <b>Operation</b>.
-</td>
-</tr>
-</table>
-
-
-
 
 
 <!-- Tabular view -->
@@ -668,8 +592,8 @@ Warning: THIS FUNCTION IS DEPRECATED. It will be removed in a future version.
 Instructions for updating:
 Deprecated in favor of operator or tf.math.divide.
 
-NOTE: Prefer using the Tensor division operator or tf.divide which obey Python
-3 division operator semantics.
+
+
 
 This function divides <b>x</b> and <b>y</b>, forcing Python 2 semantics. That is, if <b>x</b>
 and <b>y</b> are both integers then the result will be an integer. This is in
@@ -718,6 +642,18 @@ A name for the operation (optional).
 </tr>
 
 </table>
+
+
+
+ <section><devsite-expandable >
+ <h4 class="showalways">Migrate to TF2</h4>
+
+This function is deprecated in TF2. Prefer using the Tensor division operator,
+<b>tf.divide</b>, or <b>tf.math.divide</b>, which obey the Python 3 division operator
+semantics.
+
+
+ </devsite-expandable></section>
 
 
 

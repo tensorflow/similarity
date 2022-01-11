@@ -63,11 +63,11 @@ be verbose.
 
 ```python
 add(
-    embedding: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    embedding: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     idx: int,
     verbose: int = 1,
-    build: bool = (True),
+    build: bool = True,
     **kwargs
 )
 ```
@@ -126,11 +126,11 @@ Defaults to True.
 
 ```python
 batch_add(
-    embeddings: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     idxs: Sequence[int],
     verbose: int = 1,
-    build: bool = (True),
+    build: bool = True,
     **kwargs
 )
 ```
@@ -182,7 +182,7 @@ time between successive addition. Defaults to True.
 
 ```python
 batch_lookup(
-    embeddings: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     k: int = 5
 ) -> Tuple[List[List[int]], List[List[float]]]
@@ -253,7 +253,7 @@ where to store the data
 
 ```python
 lookup(
-    embedding: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    embedding: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     k: int = 5
 ) -> Tuple[List[int], List[float]]
