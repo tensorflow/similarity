@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Remove augmentation argument from architectures as the augmentation arg could lead to issues when saving the model or training on TPU. 
+
 ## [0.14.x] - Post Launch bugfix release
 
 ### Added
