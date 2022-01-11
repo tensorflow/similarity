@@ -256,7 +256,6 @@ class SNRDistance(Distance):
         anchor_var = tf.math.reduce_variance(query_embeddings, axis=1)
 
         # Calculating pairwise noise variances
-
         q_rs = tf.reshape(query_embeddings, shape=[tf.shape(query_embeddings)[0], -1])
         k_rs = tf.reshape(key_embeddings, shape=[tf.shape(key_embeddings)[0], -1])
         delta = tf.expand_dims(q_rs, axis=1) - tf.expand_dims(k_rs, axis=0)
