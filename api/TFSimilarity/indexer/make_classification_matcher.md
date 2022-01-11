@@ -1,4 +1,4 @@
-# TFSimilarity.matchers.make_classification_matcher
+# TFSimilarity.indexer.make_classification_matcher
 
 
 
@@ -6,8 +6,9 @@
 
 Convert classification matcher from str name to object if needed.
 
+
 ```python
-TFSimilarity.matchers.make_classification_matcher(
+TFSimilarity.indexer.make_classification_matcher(
 ```
 
 

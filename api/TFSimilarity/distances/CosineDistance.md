@@ -23,16 +23,16 @@ an angular distance that varies from 0 (similar) to 1 (dissimilar).
 
 <h3 id="call">call</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distances.py#L98-L111">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distances.py#L97-L111">View source</a>
 
 ``<b>python
 @tf.function</b>``
 
 ```python
 call(
-    embeddings: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
-) -> <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+) -> <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
 ```
 
@@ -50,7 +50,8 @@ Compute pairwise distances for a given batch of embeddings.
 <b>embeddings</b>
 </td>
 <td>
-Embeddings to compute the pairwise one.
+Embeddings to compute the pairwise one. The embeddings
+are expected to be normalized.
 </td>
 </tr>
 </table>
@@ -92,7 +93,7 @@ get_config()
 
 ```python
 __call__(
-    embeddings: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
 )
 ```

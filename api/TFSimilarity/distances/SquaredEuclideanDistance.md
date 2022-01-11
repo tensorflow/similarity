@@ -16,7 +16,7 @@ TFSimilarity.distances.SquaredEuclideanDistance()
 
 <!-- Placeholder for "Used in" -->
 
-The [Sequared Euclidean Distance](https://en.wikipedia.org/wiki/Euclidean_distance#Squared_Euclidean_distance) is
+The [Squared Euclidean Distance](https://en.wikipedia.org/wiki/Euclidean_distance#Squared_Euclidean_distance) is
 a distance that varies from 0 (similar) to infinity (dissimilar).
 
 ## Methods
@@ -30,9 +30,9 @@ a distance that varies from 0 (similar) to infinity (dissimilar).
 
 ```python
 call(
-    embeddings: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
-) -> <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+) -> <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
 ```
 
@@ -92,7 +92,7 @@ get_config()
 
 ```python
 __call__(
-    embeddings: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
 )
 ```

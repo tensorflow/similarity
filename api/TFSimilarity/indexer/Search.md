@@ -62,7 +62,7 @@ be verbose.
 
 ```python
 add(
-    embedding: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    embedding: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     idx: int,
     verbose: int = 1,
@@ -107,7 +107,7 @@ the data associated with a given embedding.
 
 ```python
 batch_add(
-    embeddings: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     idxs: Sequence[int],
     verbose: int = 1,
@@ -153,7 +153,7 @@ Be verbose. Defaults to 1.
 
 ```python
 batch_lookup(
-    embeddings: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     k: int = 5
 ) -> Tuple[List[List[int]], List[List[float]]]
@@ -224,7 +224,7 @@ where to store the data
 
 ```python
 lookup(
-    embedding: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    embedding: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     k: int = 5
 ) -> Tuple[List[int], List[float]]
