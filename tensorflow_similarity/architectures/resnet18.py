@@ -26,12 +26,12 @@ from tensorflow_similarity.models import SimilarityModel
 def ResNet18Sim(
     input_shape: Tuple[int, int, int],
     embedding_size: int = 128,
-    augmentation: Union[Callable, str, None] = "basic",
     l2_norm: bool = True,
     include_top: bool = True,
     pooling: str = "gem",
     gem_p=1.0,
     preproc_mode: str = "torch",
+    similarity_model: bool = True,
 ) -> SimilarityModel:
     """Build an ResNet18 Model backbone for similarity learning
 
@@ -43,12 +43,7 @@ def ResNet18Sim(
 
         embedding_size: Size of the output embedding. Usually between 64
         and 512. Defaults to 128.
-
-        augmentation: How to augment the data - either pass a Sequential model
-        of keras.preprocessing.layers or use the built in one or set it to
-        None to disable. Defaults to "basic" and random crops to
-        (input_shape[0], input_shape[1]) and random flip.
-
+        
         l2_norm: If True and include_top is also True, then
         tfsim.layers.MetricEmbedding is used as the last layer, otherwise
         keras.layers.Dense is used. This should be true when using cosine
@@ -85,25 +80,7 @@ def ResNet18Sim(
     # input
     inputs = layers.Input(shape=input_shape)
     x = inputs
-
-    # augmentation
-    if augmentation == "basic":
-        # augs usually used in benchmark and work almost always well
-        augmentation_layers = tf.keras.Sequential(
-            [
-                layers.experimental.preprocessing.RandomCrop(
-                    input_shape[0], input_shape[1]
-                ),
-                layers.experimental.preprocessing.RandomFlip("horizontal"),
-            ]
-        )
-    else:
-        augmentation_layers = augmentation
-
-    # add the basic version or the suppplied one.
-    if augmentation:
-        x = augmentation_layers(x)
-
+    
     resnet = build_resnet(x, 'channels_last', preproc_mode)
     x = resnet(x)
 
@@ -122,7 +99,7 @@ def ResNet18Sim(
     else:
         outputs = x
 
-    return SimilarityModel(inputs, outputs)
+    return SimilarityModel(inputs, outputs, name='resnet18sim')
 
 
 def build_resnet(x: layers.Layer, data_format, preproc_mode) -> layers.Layer:

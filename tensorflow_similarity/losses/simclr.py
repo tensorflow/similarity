@@ -64,19 +64,21 @@ class SimCLRLoss(Loss):
         distances = tf.concat((ab, aa), axis=1)
         labels = tf.one_hot(tf.range(batch_size), batch_size * 2)
 
+        # 1D tensor
         per_example_loss = tf.nn.softmax_cross_entropy_with_logits(
             labels, distances
         )
 
-        loss: FloatTensor = (
-            tf.math.reduce_mean(per_example_loss) * 0.5 + self.margin
-        )
+        # 1D tensor
+        loss: FloatTensor = per_example_loss * 0.5 + self.margin
 
         return loss
 
-    def to_config(self) -> Dict[str, Any]:
-        return {
+    def get_config(self) -> Dict[str, Any]:
+        config = {
             "temperature": self.temperature,
             "use_hidden_norm": self.use_hidden_norm,
             "margin": self.margin,
         }
+        base_config = super().get_config()
+        return {**base_config, **config}

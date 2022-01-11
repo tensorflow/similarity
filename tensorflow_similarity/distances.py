@@ -79,8 +79,7 @@ class InnerProductSimilarity(Distance):
             FloatTensor: Pairwise distance tensor.
         """
 
-        tensor = tf.linalg.matmul(embeddings, embeddings, transpose_b=True)
-        sims: FloatTensor = tf.reduce_sum(tensor, axis=1, keepdims=True)
+        sims: FloatTensor = tf.linalg.matmul(embeddings, embeddings, transpose_b=True)
         return sims
 
 
@@ -100,7 +99,8 @@ class CosineDistance(Distance):
         """Compute pairwise distances for a given batch of embeddings.
 
         Args:
-            embeddings: Embeddings to compute the pairwise one.
+            embeddings: Embeddings to compute the pairwise one. The embeddings
+            are expected to be normalized.
 
         Returns:
             FloatTensor: Pairwise distance tensor.

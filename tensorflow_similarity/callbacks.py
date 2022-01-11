@@ -90,9 +90,9 @@ class EvalCallback(Callback):
         """
         super().__init__()
         self.queries = queries
-        self.query_labels: IntTensor = tf.cast(
-            tf.convert_to_tensor(query_labels), dtype="int32"
-        )
+        if not tf.is_tensor(query_labels):
+            query_labels = tf.convert_to_tensor(np.array(query_labels))
+        self.query_labels: IntTensor = tf.cast(query_labels, dtype='int32')
         self.targets = targets
         self.target_labels = target_labels
         self.distance = distance
@@ -250,8 +250,9 @@ class SplitValidationLoss(Callback):
         else:
             self.tb_writer = None
 
-        query_labels = tf.convert_to_tensor(query_labels)
-        query_labels = tf.cast(query_labels, dtype="int32")
+        if not tf.is_tensor(query_labels):
+            query_labels = tf.convert_to_tensor(np.array(query_labels))
+        query_labels = tf.cast(query_labels, dtype='int32')
 
         # Create separate validation sets for the known and unknown classes
         known_classes = tf.cast(known_classes, dtype="int32")

@@ -75,10 +75,11 @@ class MemoryEvaluator(Evaluator):
                         f'requires the K >= {m.k}.')
 
         # ensure the target labels are an int32 tensor
-        query_labels: IntTensor = tf.cast(
-                tf.convert_to_tensor(target_labels),
-                dtype='int32'
-        )
+        # we also convert to np.ndarray first to avoid a slow down if
+        # convert_to_tensor is called on a List.
+        if not tf.is_tensor(target_labels):
+            target_labels = tf.convert_to_tensor(np.array(target_labels))
+        query_labels: IntTensor = tf.cast(target_labels, dtype='int32')
         match_mask = compute_match_mask(query_labels, nn_labels)
 
         # compute metrics

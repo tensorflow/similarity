@@ -53,7 +53,6 @@ def visualize_views(views: Tensor,
         elif labels:
             ax.set_title("Label: {}".format(label))
 
-
         ax.set_xticks([])
         ax.set_yticks([])
     plt.show()
