@@ -13,7 +13,7 @@
 # limitations under the License.
 
 "ResNet50 backbone for similarity learning"
-from typing import Tuple, Callable, Union
+from typing import Tuple
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.applications import imagenet_utils
@@ -43,7 +43,7 @@ def ResNet18Sim(
 
         embedding_size: Size of the output embedding. Usually between 64
         and 512. Defaults to 128.
-        
+
         l2_norm: If True and include_top is also True, then
         tfsim.layers.MetricEmbedding is used as the last layer, otherwise
         keras.layers.Dense is used. This should be true when using cosine
@@ -80,8 +80,8 @@ def ResNet18Sim(
     # input
     inputs = layers.Input(shape=input_shape)
     x = inputs
-    
-    resnet = build_resnet(x, 'channels_last', preproc_mode)
+
+    resnet = build_resnet(x, "channels_last", preproc_mode)
     x = resnet(x)
 
     if pooling == "gem":
@@ -99,7 +99,7 @@ def ResNet18Sim(
     else:
         outputs = x
 
-    return SimilarityModel(inputs, outputs, name='resnet18sim')
+    return SimilarityModel(inputs, outputs, name="resnet18sim")
 
 
 def build_resnet(x: layers.Layer, data_format, preproc_mode) -> layers.Layer:
