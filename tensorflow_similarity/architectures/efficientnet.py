@@ -14,8 +14,7 @@
 
 "EfficientNet backbone for similarity learning"
 import re
-from typing import Tuple, Callable, Union
-import tensorflow as tf
+from typing import Tuple
 from tensorflow.keras import layers
 from tensorflow.keras.applications import efficientnet
 from tensorflow_similarity.layers import MetricEmbedding
@@ -59,61 +58,61 @@ def EfficientNetSim(
 ) -> SimilarityModel:
     """Build an EffecientNet Model backbone for similarity learning
 
-        Architecture from [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946)
+    Architecture from [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946)
 
-        Args:
-            input_shape: Size of the image input prior to augmentation,
-            must be bigger than the size of Effnet version you use. See below for
-            min input size.
+    Args:
+        input_shape: Size of the image input prior to augmentation,
+        must be bigger than the size of Effnet version you use. See below for
+        min input size.
 
-            embedding_size: Size of the output embedding. Usually between 64
-            and 512. Defaults to 128.
+        embedding_size: Size of the output embedding. Usually between 64
+        and 512. Defaults to 128.
 
-            variant: Which Variant of the EfficientNet to use. Defaults to "B0".
+        variant: Which Variant of the EfficientNet to use. Defaults to "B0".
 
-            weights: Use pre-trained weights - the only available currently being
-            imagenet. Defaults to "imagenet".
+        weights: Use pre-trained weights - the only available currently being
+        imagenet. Defaults to "imagenet".
 
-            trainable: Make the EfficienNet backbone fully trainable or partially
-            trainable.
-            - "full" to make the entire backbone trainable,
-            - "partial" to only make the last 3 block trainable
-            - "frozen" to make it not trainable.
+        trainable: Make the EfficienNet backbone fully trainable or partially
+        trainable.
+        - "full" to make the entire backbone trainable,
+        - "partial" to only make the last 3 block trainable
+        - "frozen" to make it not trainable.
 
-            l2_norm: If True and include_top is also True, then
-            tfsim.layers.MetricEmbedding is used as the last layer, otherwise
-            keras.layers.Dense is used. This should be true when using cosine
-            distance. Defaults to True.
+        l2_norm: If True and include_top is also True, then
+        tfsim.layers.MetricEmbedding is used as the last layer, otherwise
+        keras.layers.Dense is used. This should be true when using cosine
+        distance. Defaults to True.
 
-            include_top: Whether to include the fully-connected layer at the top
-            of the network. Defaults to True.
+        include_top: Whether to include the fully-connected layer at the top
+        of the network. Defaults to True.
 
-            pooling: Optional pooling mode for feature extraction when
-            include_top is False. Defaults to gem.
-            - None means that the output of the model will be the 4D tensor
-              output of the last convolutional layer.
-            - avg means that global average pooling will be applied to the
-              output of the last convolutional layer, and thus the output of the
-              model will be a 2D tensor.
-            - max means that global max pooling will be applied.
-            - gem means that global GeneralizedMeanPooling2D will be applied.
-              The gem_p param sets the contrast amount on the pooling.
+        pooling: Optional pooling mode for feature extraction when
+        include_top is False. Defaults to gem.
+        - None means that the output of the model will be the 4D tensor
+          output of the last convolutional layer.
+        - avg means that global average pooling will be applied to the
+          output of the last convolutional layer, and thus the output of the
+          model will be a 2D tensor.
+        - max means that global max pooling will be applied.
+        - gem means that global GeneralizedMeanPooling2D will be applied.
+          The gem_p param sets the contrast amount on the pooling.
 
-            gem_p: Sets the power in the GeneralizedMeanPooling2D layer. A value
-            of 1.0 is equivelent to GlobalMeanPooling2D, while larger values
-            will increase the contrast between activations within each feature
-            map, and a value of math.inf will be equivelent to MaxPool2d.
+        gem_p: Sets the power in the GeneralizedMeanPooling2D layer. A value
+        of 1.0 is equivelent to GlobalMeanPooling2D, while larger values
+        will increase the contrast between activations within each feature
+        map, and a value of math.inf will be equivelent to MaxPool2d.
 
-        Note:
-            EfficientNet expects images at the following size:
-             - "B0": 224,
-             - "B1": 240,
-             - "B2": 260,
-             - "B3": 300,
-             - "B4": 380,
-             - "B5": 456,
-             - "B6": 528,
-             - "B7": 600,
+    Note:
+        EfficientNet expects images at the following size:
+         - "B0": 224,
+         - "B1": 240,
+         - "B2": 260,
+         - "B3": 300,
+         - "B4": 380,
+         - "B5": 456,
+         - "B6": 528,
+         - "B7": 600,
 
     """
 
@@ -123,19 +122,18 @@ def EfficientNetSim(
 
     if variant not in EFF_INPUT_SIZE:
         raise ValueError("Unknown efficientnet variant. Valid B0...B7")
-    img_size = EFF_INPUT_SIZE[variant]
 
     x = build_effnet(x, variant, weights, trainable)
 
     if include_top:
-        x = GeneralizedMeanPooling2D(p=gem_p, name='gem_pool')(x)
+        x = GeneralizedMeanPooling2D(p=gem_p, name="gem_pool")(x)
         if l2_norm:
             outputs = MetricEmbedding(embedding_size)(x)
         else:
             outputs = layers.Dense(embedding_size)(x)
     else:
         if pooling == "gem":
-            x = GeneralizedMeanPooling2D(p=gem_p, name='gem_pool')(x)
+            x = GeneralizedMeanPooling2D(p=gem_p, name="gem_pool")(x)
         elif pooling == "avg":
             x = layers.GlobalAveragePooling2D(name="avg_pool")(x)
         elif pooling == "max":

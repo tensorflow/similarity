@@ -14,8 +14,7 @@
 
 "ResNet50 backbone for similarity learning"
 import re
-from typing import Tuple, Callable, Union
-import tensorflow as tf
+from typing import Tuple
 from tensorflow.keras import layers
 from tensorflow.keras.applications import resnet50
 from tensorflow_similarity.layers import MetricEmbedding
@@ -83,7 +82,7 @@ def ResNet50Sim(
     # input
     inputs = layers.Input(shape=input_shape)
     x = inputs
-    
+
     x = build_resnet(x, weights, trainable)
 
     if include_top:
