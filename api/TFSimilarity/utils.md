@@ -10,7 +10,9 @@ Various utilities functions for improved quality of life.
 
 ## Classes
 
-- [`class FloatTensor`](../TFSimilarity/distances/FloatTensor.md): Float tensor 
+- [`class BoolTensor`](../TFSimilarity/utils/BoolTensor.md): Bool tensor 
+
+- [`class FloatTensor`](../TFSimilarity/callbacks/FloatTensor.md): Float tensor 
 
 - [`class IntTensor`](../TFSimilarity/callbacks/IntTensor.md): Integer tensor
 

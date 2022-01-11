@@ -38,19 +38,27 @@ model.compile(optimizer=Adam(LR), loss=similarity_loss)
 history = model.fit(train_ds)
 ```
 """
-
 from collections import defaultdict
 from copy import copy
 from pathlib import Path
-from typing import DefaultDict, Dict, List, MutableMapping, MutableSequence
-from typing import Optional, Sequence, Union
+from typing import (
+    DefaultDict,
+    Dict,
+    List,
+    MutableMapping,
+    MutableSequence,
+    Optional,
+    Sequence,
+    Union,
+)
+
 import numpy as np
 from tabulate import tabulate
 import tensorflow as tf
+from tqdm.auto import tqdm
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.losses import Loss
-from tqdm.auto import tqdm
 
 from tensorflow_similarity.classification_metrics import ClassificationMetric
 from tensorflow_similarity.classification_metrics import make_classification_metric  # noqa
@@ -78,15 +86,8 @@ class SimilarityModel(tf.keras.Model):
     core features.
     """
 
-    # @property
-    # def _index(self):
-    #     if not hasattr(self, '_index'):
-    #         ValueError("Index doesn't exist: index data before quering it")
-    #     return self._index
-
-    # @index.setter
-    # def _index(self, index):
-    #     self._index: Indexer = index
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def compile(
         self,
@@ -118,7 +119,7 @@ class SimilarityModel(tf.keras.Model):
               [tf.keras.losses](https://www.tensorflow.org/api_docs/python/tf/keras/losses)
               for the losses available directly in TensorFlow.
 
-              metrics: List of metrics to be evaluated by the model during
+            metrics: List of metrics to be evaluated by the model during
               training and testing. Each of those can be a string, a function or a
               [tensorflow_similairty.metrics.*](../metrics.md) instance. Note that
               the metrics used for some type of metric-learning such as distance
@@ -174,6 +175,12 @@ class SimilarityModel(tf.keras.Model):
             distance: Distance used to compute embeddings proximity.  Defaults
               to 'cosine'.
 
+            embedding_output: Which model output head predicts the embeddings
+              that should be indexed. Default to None which is for single output
+              model. For multi-head model, the callee, usually the
+              `SimilarityModel()` class is responsible for passing the correct
+              one.
+
             kv_store: How to store the indexed records.  Defaults to 'memory'.
 
             search: Which `Search()` framework to use to perform KNN search.
@@ -181,12 +188,6 @@ class SimilarityModel(tf.keras.Model):
 
             evaluator: What type of `Evaluator()` to use to evaluate index
               performance. Defaults to in-memory one.
-
-            embedding_output: Which model output head predicts the embeddings
-              that should be indexed. Default to None which is for single output
-              model. For multi-head model, the callee, usually the
-              `SimilarityModel()` class is responsible for passing the correct
-              one.
 
             stat_buffer_size: Size of the sliding windows buffer used to compute
               index performance. Defaults to 1000.
@@ -237,6 +238,8 @@ class SimilarityModel(tf.keras.Model):
             steps_per_execution=steps_per_execution,
             **kwargs
         )
+
+    # TODO (ovallis): Refactor the following indexing code into a MixIn.
 
     def create_index(
         self,
@@ -768,6 +771,7 @@ class SimilarityModel(tf.keras.Model):
         compression: bool = True,
         overwrite: bool = True,
         include_optimizer: bool = True,
+        save_format: Optional[str] = None,
         signatures=None,
         options=None,
         save_traces: bool = True,
@@ -785,6 +789,10 @@ class SimilarityModel(tf.keras.Model):
 
             include_optimizer: Save optimizer state. Defaults to True.
 
+            save_format: Either 'tf' or 'h5', indicating whether to save the
+            model to Tensorflow SavedModel or HDF5. Defaults to 'tf' in
+            TF 2.X, and 'h5' in TF 1.X.
+
             signatures: Signatures to save with the model. Defaults to None.
 
             options: A `tf.saved_model.SaveOptions` to save with the model.
@@ -798,19 +806,17 @@ class SimilarityModel(tf.keras.Model):
             custom layers/models implement a get_config() method.
         """
 
-        # save trace doesn't exist prior to 2.4 -- asking for it but not
-        # using it
-
         # call underlying keras method to save the mode graph and its weights
-        tf.keras.models.save_model(
-            self,
+        super().save(
             filepath,
             overwrite=overwrite,
             include_optimizer=include_optimizer,
+            save_format=save_format,
             signatures=signatures,
             options=options,
             save_traces=save_traces,
         )
+
         if hasattr(self, "_index") and self._index and save_index:
             self.save_index(filepath, compression=compression)
         else:

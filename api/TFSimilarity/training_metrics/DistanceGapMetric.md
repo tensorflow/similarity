@@ -6,8 +6,6 @@
 
 Encapsulates metric logic and state.
 
-Inherits From: [`Layer`](../../TFSimilarity/layers/Layer.md)
-
 ```python
 TFSimilarity.training_metrics.DistanceGapMetric(
     distance, name=None, **kwargs
@@ -116,6 +114,76 @@ class BinaryTruePositives(tf.keras.metrics.Metric):
 ```
 
 ## Methods
+
+<h3 id="merge_state">merge_state</h3>
+
+```python
+merge_state(
+    metrics
+)
+```
+
+
+Merges the state from one or more metrics.
+
+This method can be used by distributed systems to merge the state computed
+by different metric instances. Typically the state will be stored in the
+form of the metric's weights. For example, a tf.keras.metrics.Mean metric
+contains a list of two weight values: a total and a count. If there were two
+instances of a tf.keras.metrics.Accuracy that each independently aggregated
+partial state for an overall accuracy calculation, these two metric's states
+could be combined as follows:
+
+```
+>>> m1 = tf.keras.metrics.Accuracy()
+>>> _ = m1.update_state([[1], [2]], [[0], [2]])
+```
+
+```
+>>> m2 = tf.keras.metrics.Accuracy()
+>>> _ = m2.update_state([[3], [4]], [[3], [4]])
+```
+
+```
+>>> m2.merge_state([m1])
+>>> m2.result().numpy()
+0.75
+```
+
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2">Args</th></tr>
+
+<tr>
+<td>
+<b>metrics</b>
+</td>
+<td>
+an iterable of metrics. The metrics must have compatible state.
+</td>
+</tr>
+</table>
+
+
+
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2">Raises</th></tr>
+
+<tr>
+<td>
+<b>ValueError</b>
+</td>
+<td>
+If the provided iterable does not contain metrics matching the
+metric's required specifications.
+</td>
+</tr>
+</table>
+
+
 
 <h3 id="reset_state">reset_state</h3>
 

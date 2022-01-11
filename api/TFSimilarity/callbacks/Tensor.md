@@ -1,37 +1,8 @@
-# # Compute some values using a Tensor
->>> c = tf.constant([[1.0, 2.0], [3.0, 4.0]])
->>> d = tf.constant([[1.0, 1.0], [0.0, 1.0]])
->>> e = tf.matmul(c, d)
->>> print(e)
-tf.Tensor(
-- [[1. 3.]
- [3. 7.]], shape=(2, 2), dtype=float32)
+# # # tf.Tensor([4 2 3], shape=(3,), dtype=int64)
 ```
 
-Note that during eager execution, you may discover your `Tensors` are actually
-of type `EagerTensor`.  This is an internal detail, but it does give you
-access to a useful function, `numpy`:
-
-```
->>> type(e)
->>> print(e.numpy())
-  [[1. 3.]
-   [3. 7.]]
-```
-
-In TensorFlow, `tf.function`s are a common way to define graph execution.
-
-A Tensor's shape (that is, the rank of the Tensor and the size of
-each dimension) may not always be fully known.  In `tf.function`
-definitions, the shape may only be partially known.
-
-Most operations produce tensors of fully-known shapes if the shapes of their
-inputs are also fully known, but in some cases it's only possible to find the
-shape of a tensor at execution time.
-
-A number of specialized tensors are available: see `tf.Variable`,
-`tf.constant`, `tf.placeholder`, `tf.sparse.SparseTensor`, and
-`tf.RaggedTensor`.
+Note: this is an implementation detail that is subject to change and users
+should not rely on this behaviour.
 
 For more on Tensors, see the [guide](https://tensorflow.org/guide/tensor).
 
@@ -49,41 +20,6 @@ A `DType`. Type of elements stored in this tensor.
 
 `TypeError`
 If the op is not an `Operation`.
-
-
-
-
-`device`
-The name of the device on which this tensor will be produced, or None.
-`dtype`
-The `DType` of elements in this tensor.
-`graph`
-The `Graph` that contains this tensor.
-`name`
-The string name of this tensor.
-`op`
-The `Operation` that produces this tensor as an output.
-`shape`
-Returns a `tf.TensorShape` that represents the shape of this tensor.
-
-```
->>> t = tf.constant([1,2,3,4,5])
->>> t.shape
-TensorShape([5])
-```
-
-`tf.Tensor.shape` is equivalent to `tf.Tensor.get_shape()`.
-
-In a `tf.function` or when building a model using
-`tf.keras.Input`, they return the build-time shape of the
-tensor, which may be partially unknown.
-
-A `tf.TensorShape` is not a tensor. Use `tf.shape(t)` to get a tensor
-containing the shape, calculated at runtime.
-
-See `tf.Tensor.get_shape()`, and `tf.TensorShape` for details and examples.
-`value_index`
-The index of this tensor in the outputs of its `Operation`.
 
 
 
@@ -448,8 +384,8 @@ Warning: THIS FUNCTION IS DEPRECATED. It will be removed in a future version.
 Instructions for updating:
 Deprecated in favor of operator or tf.math.divide.
 
-NOTE: Prefer using the Tensor division operator or tf.divide which obey Python
-3 division operator semantics.
+
+
 
 This function divides `x` and `y`, forcing Python 2 semantics. That is, if `x`
 and `y` are both integers then the result will be an integer. This is in
@@ -467,6 +403,15 @@ A name for the operation (optional).
 
 
 `x / y` returns the quotient of x and y.
+
+
+
+
+
+This function is deprecated in TF2. Prefer using the Tensor division operator,
+`tf.divide`, or `tf.math.divide`, which obey the Python 3 division operator
+semantics.
+
 
 
 
