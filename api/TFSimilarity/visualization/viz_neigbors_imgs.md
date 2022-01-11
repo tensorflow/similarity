@@ -11,7 +11,8 @@ TFSimilarity.visualization.viz_neigbors_imgs(
     example_class: int,
     class_mapping: Optional[Mapping[int, str]] = None,
     fig_size: Tuple[int, int] = (24, 4),
-    cmap: str = viridis
+    cmap: str = viridis,
+    show: bool = True
 )
 ```
 
@@ -51,8 +52,8 @@ The list of neighbors returned by the lookup()
 <b>class_mapping</b>
 </td>
 <td>
-Dictionary that map the class numerical ids to a class
-name. If not set, will display the class numerical id.
+Mapping from class numerical ids to a class name. If not
+set, the plot will display the class numerical id instead.
 Defaults to None.
 </td>
 </tr><tr>
@@ -69,6 +70,13 @@ Size of the figure. Defaults to (24, 4).
 <td>
 Default color scheme for black and white images e.g mnist.
 Defaults to 'viridis'.
+</td>
+</tr><tr>
+<td>
+<b>show</b>
+</td>
+<td>
+If the plot is going to be shown or not. Defaults to True.
 </td>
 </tr>
 </table>

@@ -19,6 +19,25 @@ TFSimilarity.indexer.deque(
 
 A list-like sequence optimized for data accesses near its endpoints.
 
+
+
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
+
+<tr>
+<td>
+<b>maxlen</b>
+</td>
+<td>
+maximum size of a deque or None if unbounded
+</td>
+</tr>
+</table>
+
+
+
 ## Methods
 
 <h3 id="append">append</h3>
@@ -324,23 +343,4 @@ Return value*self.
 
 
 
-
-
-
-<!-- Tabular view -->
- <table class="responsive fixed orange">
-<colgroup><col width="214px"><col></colgroup>
-<tr><th colspan="2"><h2 class="add-link">Class Variables</h2></th></tr>
-
-<tr>
-<td>
-maxlen<a id="maxlen"></a>
-</td>
-<td>
-Instance of <b>getset_descriptor</b>
-
-maximum size of a deque or None if unbounded
-</td>
-</tr>
-</table>
 

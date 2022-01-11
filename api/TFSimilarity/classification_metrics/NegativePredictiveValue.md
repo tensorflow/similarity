@@ -42,20 +42,20 @@ model.calibrate(x=query_examples,
 
 <h3 id="compute">compute</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/classification_metrics/negative_predictive_value.py#L47-L74">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/classification_metrics/negative_predictive_value.py#L47-L78">View source</a>
 
 ```python
 compute(
-    tp: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    tp: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
-    fp: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    fp: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
-    tn: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    tn: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
-    fn: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    fn: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     count: int
-) -> <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+) -> <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
 ```
 
@@ -84,8 +84,8 @@ distance threshold.
 <b>fp</b>
 </td>
 <td>
-A 1D FloatTensor containing the count of False Positives at each
-distance threshold.
+A 1D FloatTensor containing the count of False Positives at
+each distance threshold.
 </td>
 </tr><tr>
 <td>
@@ -100,8 +100,8 @@ distance threshold.
 <b>fn</b>
 </td>
 <td>
-A 1D FloatTensor containing the count of False Negatives at each
-distance threshold.
+A 1D FloatTensor containing the count of False Negatives at
+each distance threshold.
 </td>
 </tr><tr>
 <td>

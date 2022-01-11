@@ -11,7 +11,7 @@ examples.
 
 ## Classes
 
-- [`class ClassificationMatch`](../TFSimilarity/indexer/ClassificationMatch.md): Abstract base class for computing calibration metrics.
+- [`class ClassificationMatch`](../TFSimilarity/callbacks/ClassificationMatch.md): Abstract base class for defining the classification matching strategy.
 
 - [`class MatchMajorityVote`](../TFSimilarity/matchers/MatchMajorityVote.md): Match metrics for the most common label in a result set.
 
@@ -19,5 +19,5 @@ examples.
 
 ## Functions
 
-- [`make_classification_matcher(...)`](../TFSimilarity/matchers/make_classification_matcher.md): Convert classification matcher from str name to object if needed.
+- [`make_classification_matcher(...)`](../TFSimilarity/indexer/make_classification_matcher.md): Convert classification matcher from str name to object if needed.
 

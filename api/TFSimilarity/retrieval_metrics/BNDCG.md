@@ -11,7 +11,8 @@ Inherits From: [`RetrievalMetric`](../../TFSimilarity/indexer/RetrievalMetric.md
 ```python
 TFSimilarity.retrieval_metrics.BNDCG(
     name: str = ndcg,
-    k: int = 1,
+    k: int = 5,
+    distance_threshold: float = math.inf,
     **kwargs
 ) -> None
 ```
@@ -20,13 +21,40 @@ TFSimilarity.retrieval_metrics.BNDCG(
 
 <!-- Placeholder for "Used in" -->
 
-This is normalized discounted cumulative gain where the relevance weights
-are binary, i.e., correct match or incorrect match.
+This is normalized discounted cumulative gain where the relevancy weights
+are binary, i.e., either a correct match or an incorrect match.
+
+The NDCG is a score between [0,1] representing the rank weighted results.
+The DCG represents the sum of the correct matches weighted by the log2 of
+the rank and is normalized by the 'ideal DCG'. The IDCG is computed as the
+match_mask, sorted descending, weighted by the log2 of the post sorting rank
+order. This metric takes into account both the correctness of the match and
+the position.
+
+The normalized DCG is computed as:
+
+$$
+nDCG_<i>p</i> = 
+rac<i>DCG_{p}}{IDCG_{p}</i>
+$$
+
+The DCG is computed for each query using the match_mask as:
+
+$$
+DCG_<i>p} = \sum_{i=1}^{p</i> 
+rac<i>match_mask_{i}}{\log_{2}(i+1)</i>
+$$
+
+The IDCG uses the same equation but sorts the match_mask descending
+along axis=-1.
+
+Additionally, all positive matches with a distance above the threshold are
+set to 0, and the closest K matches are taken.
 
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
-<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
+<tr><th colspan="2"><h2 class="add-link">Args</h2></th></tr>
 
 <tr>
 <td>
@@ -66,10 +94,10 @@ considered a valid match.
 <i>'micro', 'macro'</i> Determines the type of averaging performed
 on the data.
 
-    'micro': Calculates metrics globally over all data.
+* 'micro': Calculates metrics globally over all data.
 
-    'macro': Calculates metrics for each label and takes the unweighted
-             mean.
+* 'macro': Calculates metrics for each label and takes the unweighted
+           mean.
 </td>
 </tr>
 </table>
@@ -88,43 +116,7 @@ on the data.
 <b>name</b>
 </td>
 <td>
-Name associated with the metric object, e.g., precision@5
-</td>
-</tr><tr>
-<td>
-<b>canonical_name</b>
-</td>
-<td>
-The canonical name associated with metric,
-e.g., precision@K
-</td>
-</tr><tr>
-<td>
-<b>k</b>
-</td>
-<td>
-The number of nearest neighbors over which the metric is computed.
-</td>
-</tr><tr>
-<td>
-<b>distance_threshold</b>
-</td>
-<td>
-The max distance below which a nearest neighbor is
-considered a valid match.
-</td>
-</tr><tr>
-<td>
-<b>average</b>
-</td>
-<td>
-<i>'micro', 'macro'</i> Determines the type of averaging performed
-on the data.
 
-    'micro': Calculates metrics globally over all data.
-
-    'macro': Calculates metrics for each label and takes the unweighted
-             mean.
 </td>
 </tr>
 </table>
@@ -135,24 +127,27 @@ on the data.
 
 <h3 id="compute">compute</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/bndcg.py#L55-L116">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/bndcg.py#L87-L160">View source</a>
 
 ```python
 compute(
     *,
     query_labels: <a href="../../TFSimilarity/callbacks/IntTensor.md">TFSimilarity.callbacks.IntTensor```
 </a>,
-    lookup_distances: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    lookup_distances: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
-    match_mask: BoolTensor,
+    match_mask: <a href="../../TFSimilarity/utils/BoolTensor.md">TFSimilarity.utils.BoolTensor```
+</a>,
     **kwargs
-) -> <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+) -> <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
 ```
 
 
 Compute the metric
 
+Computes the binary NDCG. The query labels are only used when the
+averaging is set to "macro".
 
 <!-- Tabular view -->
  <table class="responsive fixed orange">
@@ -183,13 +178,6 @@ between the jth query and the set of k neighbors.
 A 2D mask where a 1 indicates a match between the
 jth query and the kth neighbor and a 0 indicates a mismatch.
 </td>
-</tr><tr>
-<td>
-<b>**kwargs</b>
-</td>
-<td>
-Additional compute args.
-</td>
 </tr>
 </table>
 
@@ -201,7 +189,7 @@ Additional compute args.
 <tr><th colspan="2">Returns</th></tr>
 <tr class="alt">
 <td colspan="2">
-metric results.
+A rank 0 tensor containing the metric.
 </td>
 </tr>
 
@@ -211,7 +199,7 @@ metric results.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/retrieval_metric.py#L68-L74">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/retrieval_metric.py#L79-L85">View source</a>
 
 ```python
 get_config()

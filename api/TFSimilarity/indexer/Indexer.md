@@ -121,12 +121,12 @@ Invalid search framework or key value store.
 
 ```python
 add(
-    prediction: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    prediction: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     label: Optional[int] = None,
     data: <a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor```
 </a> = None,
-    build: bool = (True),
+    build: bool = True,
     verbose: int = 1
 )
 ```
@@ -192,12 +192,12 @@ Defaults to 1.
 
 ```python
 batch_add(
-    predictions: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     labels: Optional[Sequence[int]] = None,
     data: Optional[<a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor```
 </a>] = None,
-    build: bool = (True),
+    build: bool = True,
     verbose: int = 1
 )
 ```
@@ -260,7 +260,7 @@ Display progress if set to 1. Defaults to 1.
 
 ```python
 batch_lookup(
-    predictions: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     k: int = 5,
     verbose: int = 1
@@ -308,18 +308,18 @@ Returns
 
 <h3 id="calibrate">calibrate</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L481-L572">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L491-L582">View source</a>
 
 ```python
 calibrate(
-    predictions: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     target_labels: Sequence[int],
     thresholds_targets: MutableMapping[str, float],
     calibration_metric: Union[str, <a href="../../TFSimilarity/callbacks/ClassificationMetric.md">TFSimilarity.callbacks.ClassificationMetric```
 </a>] = f1_score,
     k: int = 1,
-    matcher: Union[str, <a href="../../TFSimilarity/indexer/ClassificationMatch.md">TFSimilarity.indexer.ClassificationMatch```
+    matcher: Union[str, <a href="../../TFSimilarity/callbacks/ClassificationMatch.md">TFSimilarity.callbacks.ClassificationMatch```
 </a>] = match_nearest,
     extra_metrics: Sequence[Union[str, ClassificationMetric]] = [precision, recall],
     rounding: int = 2,
@@ -434,18 +434,18 @@ CalibrationResults containing the thresholds and cutpoints Dicts.
 
 <h3 id="evaluate_classification">evaluate_classification</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L415-L479">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L425-L489">View source</a>
 
 ```python
 evaluate_classification(
-    predictions: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     target_labels: Union[Sequence[int], <a href="../../TFSimilarity/callbacks/IntTensor.md">TFSimilarity.callbacks.IntTensor```
 </a>],
-    distance_thresholds: Union[Sequence[float], <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    distance_thresholds: Union[Sequence[float], <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>],
     metrics: Sequence[Union[str, ClassificationMetric]] = [f1],
-    matcher: Union[str, <a href="../../TFSimilarity/indexer/ClassificationMatch.md">TFSimilarity.indexer.ClassificationMatch```
+    matcher: Union[str, <a href="../../TFSimilarity/callbacks/ClassificationMatch.md">TFSimilarity.callbacks.ClassificationMatch```
 </a>] = match_nearest,
     k: int = 1,
     verbose: int = 1
@@ -541,15 +541,15 @@ distance threshold.
 
 <h3 id="evaluate_retrieval">evaluate_retrieval</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L380-L413">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L380-L423">View source</a>
 
 ```python
 evaluate_retrieval(
-    predictions: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     target_labels: Sequence[int],
-    retrieval_metrics: Sequence[Union[str, RetrievalMetric]],
-    k: int = 1,
+    retrieval_metrics: Sequence[<a href="../../TFSimilarity/indexer/RetrievalMetric.md">TFSimilarity.indexer.RetrievalMetric```
+</a>],
     verbose: int = 1
 ) -> Dict[str, np.ndarray]
 ```
@@ -581,19 +581,14 @@ embedded queries.
 </td>
 </tr><tr>
 <td>
-<b>k</b>
-</td>
-<td>
-How many neighbors to use during the calibration.
-Defaults to 1.
-</td>
-</tr><tr>
-<td>
 <b>retrieval_metrics</b>
 </td>
 <td>
 List of
 - [RetrievalMetric()](retrieval_metrics/overview.md) to compute.
+
+verbose (int, optional): Display results if set to 1 otherwise
+results are returned silently. Defaults to 1.
 </td>
 </tr>
 </table>
@@ -617,7 +612,7 @@ values are the metrics values.
 
 <h3 id="get_calibration_metric">get_calibration_metric</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L715-L716">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L743-L744">View source</a>
 
 ```python
 get_calibration_metric()
@@ -629,7 +624,7 @@ get_calibration_metric()
 
 <h3 id="load">load</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L666-L713">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L694-L741">View source</a>
 
 ``<b>python
 @staticmethod</b>``
@@ -686,13 +681,16 @@ Initialized index
 
 <h3 id="match">match</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L574-L630">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L584-L658">View source</a>
 
 ```python
 match(
-    predictions: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    predictions: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     no_match_label: int = -1,
+    k=1,
+    matcher: Union[str, <a href="../../TFSimilarity/callbacks/ClassificationMatch.md">TFSimilarity.callbacks.ClassificationMatch```
+</a>] = match_nearest,
     verbose: int = 1
 ) -> Dict[str, List[int]]
 ```
@@ -721,6 +719,25 @@ output.
 <td>
 What label value to assign when there is no match.
 Defaults to -1.
+</td>
+</tr><tr>
+<td>
+<b>k</b>
+</td>
+<td>
+How many neighboors to use during the calibration.
+Defaults to 1.
+</td>
+</tr><tr>
+<td>
+<b>matcher</b>
+</td>
+<td>
+<i>'match_nearest', 'match_majority_vote'</i> or
+ClassificationMatch object. Defines the classification matching,
+e.g., match_nearest will count a True Positive if the query_label
+is equal to the label of the nearest neighbor and the distance is
+less than or equal to the distance threshold.
 </td>
 </tr><tr>
 <td>
@@ -765,7 +782,7 @@ Dict of cutpoint names mapped to lists of matches.
 
 <h3 id="print_stats">print_stats</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L745-L769">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L773-L797">View source</a>
 
 ```python
 print_stats()
@@ -789,12 +806,12 @@ Reinitialize the indexer
 
 <h3 id="save">save</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L632-L664">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L660-L692">View source</a>
 
 ```python
 save(
     path: str,
-    compression: bool = (True)
+    compression: bool = True
 )
 ```
 
@@ -832,7 +849,7 @@ Store index data compressed. Defaults to True.
 
 ```python
 single_lookup(
-    prediction: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    prediction: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     k: int = 5
 ) -> List[<a href="../../TFSimilarity/indexer/Lookup.md">TFSimilarity.indexer.Lookup```
@@ -873,7 +890,7 @@ Returns
 
 <h3 id="size">size</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L718-L720">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L746-L748">View source</a>
 
 ```python
 size() -> int
@@ -885,7 +902,7 @@ Return the index size
 
 <h3 id="stats">stats</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L722-L743">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L750-L771">View source</a>
 
 ```python
 stats()
@@ -897,7 +914,7 @@ return index statistics
 
 <h3 id="to_data_frame">to_data_frame</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L771-L781">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/indexer.py#L799-L809">View source</a>
 
 ```python
 to_data_frame(
