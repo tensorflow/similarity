@@ -28,7 +28,6 @@ def ResNet50Sim(
     input_shape: Tuple[int],
     embedding_size: int = 128,
     weights: str = "imagenet",
-    augmentation: Union[Callable, str, None] = "basic",
     trainable: str = "frozen",
     l2_norm: bool = True,
     include_top: bool = True,
@@ -49,10 +48,6 @@ def ResNet50Sim(
 
         weights: Use pre-trained weights - the only available currently being
         imagenet. Defaults to "imagenet".
-
-        augmentation: How to augment the data - either pass a Sequential model
-        of keras.preprocessing.layers or use the built in one or set it to
-        None to disable. Defaults to "basic".
 
         trainable: Make the ResNet backbone fully trainable or partially
         trainable.
@@ -88,23 +83,7 @@ def ResNet50Sim(
     # input
     inputs = layers.Input(shape=input_shape)
     x = inputs
-
-    # augmentation
-    if augmentation == "basic":
-        # augs usually used in benchmark and work almost always well
-        augmentation_layers = tf.keras.Sequential(
-            [
-                layers.experimental.preprocessing.RandomCrop(224, 224),
-                layers.experimental.preprocessing.RandomFlip("horizontal"),
-            ]
-        )
-    else:
-        augmentation_layers = augmentation
-
-    # add the basic version or the suppplied one.
-    if augmentation:
-        x = augmentation_layers(x)
-
+    
     x = build_resnet(x, weights, trainable)
 
     if include_top:

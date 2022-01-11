@@ -51,7 +51,6 @@ def EfficientNetSim(
     embedding_size: int = 128,
     variant: str = "B0",
     weights: str = "imagenet",
-    augmentation: Union[Callable, str, None] = "basic",
     trainable: str = "frozen",
     l2_norm: bool = True,
     include_top: bool = True,
@@ -74,10 +73,6 @@ def EfficientNetSim(
 
             weights: Use pre-trained weights - the only available currently being
             imagenet. Defaults to "imagenet".
-
-            augmentation: How to augment the data - either pass a Sequential model
-            of keras.preprocessing.layers or use the built in one or set it to
-            None to disable. Defaults to "basic".
 
             trainable: Make the EfficienNet backbone fully trainable or partially
             trainable.
@@ -129,24 +124,6 @@ def EfficientNetSim(
     if variant not in EFF_INPUT_SIZE:
         raise ValueError("Unknown efficientnet variant. Valid B0...B7")
     img_size = EFF_INPUT_SIZE[variant]
-
-    # augmentation
-    if augmentation == "basic":
-        # augs usually used in benchmark and work almost always well
-        augmentation_layers = tf.keras.Sequential(
-            [
-                layers.experimental.preprocessing.RandomCrop(
-                    img_size, img_size
-                ),
-                layers.experimental.preprocessing.RandomFlip("horizontal"),
-            ]
-        )
-    else:
-        augmentation_layers = augmentation
-
-    # add the basic version or the suppplied one.
-    if augmentation:
-        x = augmentation_layers(x)
 
     x = build_effnet(x, variant, weights, trainable)
 
