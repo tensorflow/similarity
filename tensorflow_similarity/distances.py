@@ -31,18 +31,19 @@ class Distance(ABC):
         self.aliases = aliases
 
     @abstractmethod
-    def call(self, embeddings: FloatTensor) -> FloatTensor:
+    def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
         """Compute pairwise distances for a given batch.
 
         Args:
-            embeddings: Embeddings to compute the pairwise one.
+            query_embeddings: Embeddings to compute the pairwise one.
+            key_embeddings: Embeddings to compute the pairwise one.
 
         Returns:
             FloatTensor: Pairwise distance tensor.
         """
 
-    def __call__(self, embeddings: FloatTensor):
-        return self.call(embeddings)
+    def __call__(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor):
+        return self.call(query_embeddings, key_embeddings)
 
     def __str__(self) -> str:
         return self.name
@@ -69,17 +70,18 @@ class InnerProductSimilarity(Distance):
         super().__init__('inner_product', ['ip'])
 
     @tf.function
-    def call(self, embeddings: FloatTensor) -> FloatTensor:
+    def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
         """Compute pairwise similarities for a given batch of embeddings.
 
         Args:
-            embeddings: Embeddings to compute the pairwise one.
+            query_embeddings: Embeddings to compute the pairwise one.
+            key_embeddings: Embeddings to compute the pairwise one.
 
         Returns:
             FloatTensor: Pairwise distance tensor.
         """
 
-        sims: FloatTensor = tf.linalg.matmul(embeddings, embeddings, transpose_b=True)
+        sims: FloatTensor = tf.linalg.matmul(query_embeddings, key_embeddings, transpose_b=True)
         return sims
 
 
@@ -95,18 +97,20 @@ class CosineDistance(Distance):
         super().__init__('cosine')
 
     @tf.function
-    def call(self, embeddings: FloatTensor) -> FloatTensor:
+    def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
         """Compute pairwise distances for a given batch of embeddings.
 
         Args:
-            embeddings: Embeddings to compute the pairwise one. The embeddings
+            query_embeddings: Embeddings to compute the pairwise one. The embeddings
+            are expected to be normalized.
+            key_embeddings: Embeddings to compute the pairwise one. The embeddings
             are expected to be normalized.
 
         Returns:
             FloatTensor: Pairwise distance tensor.
         """
         distances = 1 - tf.linalg.matmul(
-                embeddings, embeddings, transpose_b=True)
+                query_embeddings, key_embeddings, transpose_b=True)
         min_clip_distances: FloatTensor = tf.math.maximum(distances, 0.0)
         return min_clip_distances
 
@@ -127,21 +131,25 @@ class EuclideanDistance(Distance):
         super().__init__('euclidean', ['l2', 'pythagorean'])
 
     @tf.function
-    def call(self, embeddings: FloatTensor) -> FloatTensor:
+    def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
         """Compute pairwise distances for a given batch of embeddings.
 
         Args:
-            embeddings: Embeddings to compute the pairwise one.
+            query_embeddings: Embeddings to compute the pairwise one.
+            key_embeddings: Embeddings to compute the pairwise one.
 
         Returns:
             FloatTensor: Pairwise distance tensor.
         """
-        squared_norm = tf.math.square(embeddings)
-        squared_norm = tf.math.reduce_sum(squared_norm, axis=1, keepdims=True)
+        q_squared_norm = tf.math.square(query_embeddings)
+        q_squared_norm = tf.math.reduce_sum(q_squared_norm, axis=1, keepdims=True)
+
+        k_squared_norm = tf.math.square(key_embeddings)
+        k_squared_norm = tf.math.reduce_sum(k_squared_norm, axis=1, keepdims=True)
 
         distances: FloatTensor = 2.0 * tf.linalg.matmul(
-            embeddings, embeddings, transpose_b=True)
-        distances = squared_norm - distances + tf.transpose(squared_norm)
+            query_embeddings, key_embeddings, transpose_b=True)
+        distances = q_squared_norm - distances + tf.transpose(k_squared_norm)
 
         # Avoid NaN and inf gradients when back propagating through the sqrt.
         # values smaller than 1e-18 produce inf for the gradient, and 0.0
@@ -165,21 +173,25 @@ class SquaredEuclideanDistance(Distance):
         super().__init__('squared_euclidean', ['sql2', 'sqeuclidean'])
 
     @tf.function
-    def call(self, embeddings: FloatTensor) -> FloatTensor:
+    def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
         """Compute pairwise distances for a given batch of embeddings.
 
         Args:
-            embeddings: Embeddings to compute the pairwise one.
+            query_embeddings: Embeddings to compute the pairwise one.
+            key_embeddings: Embeddings to compute the pairwise one.
 
         Returns:
             FloatTensor: Pairwise distance tensor.
         """
-        squared_norm = tf.math.square(embeddings)
-        squared_norm = tf.math.reduce_sum(squared_norm, axis=1, keepdims=True)
+        q_squared_norm = tf.math.square(query_embeddings)
+        q_squared_norm = tf.math.reduce_sum(q_squared_norm, axis=1, keepdims=True)
+
+        k_squared_norm = tf.math.square(key_embeddings)
+        k_squared_norm = tf.math.reduce_sum(k_squared_norm, axis=1, keepdims=True)
 
         distances: FloatTensor = 2.0 * tf.linalg.matmul(
-            embeddings, embeddings, transpose_b=True)
-        distances = squared_norm - distances + tf.transpose(squared_norm)
+            query_embeddings, key_embeddings, transpose_b=True)
+        distances = q_squared_norm - distances + tf.transpose(k_squared_norm)
         distances = tf.math.maximum(distances, 0.0)
 
         return distances
@@ -199,17 +211,19 @@ class ManhattanDistance(Distance):
         super().__init__('manhattan', ['l1', 'taxicab'])
 
     @tf.function
-    def call(self, embeddings: FloatTensor) -> FloatTensor:
+    def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
         """Compute pairwise distances for a given batch of embeddings.
 
         Args:
-            embeddings: Embeddings to compute the pairwise one.
+            query_embeddings: Embeddings to compute the pairwise one.
+            key_embeddings: Embeddings to compute the pairwise one.
 
         Returns:
             FloatTensor: Pairwise distance tensor.
         """
-        x_rs = tf.reshape(embeddings, shape=[tf.shape(embeddings)[0], -1])
-        deltas = tf.expand_dims(x_rs, axis=1) - tf.expand_dims(x_rs, axis=0)
+        q_rs = tf.reshape(query_embeddings, shape=[tf.shape(query_embeddings)[0], -1])
+        k_rs = tf.reshape(key_embeddings, shape=[tf.shape(key_embeddings)[0], -1])
+        deltas = tf.expand_dims(q_rs, axis=1) - tf.expand_dims(k_rs, axis=0)
         distances: FloatTensor = tf.norm(deltas, 1, axis=2)
         return distances
 
@@ -227,30 +241,26 @@ class SNRDistance(Distance):
         super().__init__('snr')
 
     @tf.function
-    def call(self, embeddings: FloatTensor) -> FloatTensor:
+    def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
         """Compute pairwise snr distances for a given batch of embeddings.
         SNR(i, j): anchor i and compared feature j
         SNR(i,j) may not be equal to SNR(j, i)
 
         Args:
-            embeddings: Embeddings to compute the pairwise one.
+            query_embeddings: Embeddings to compute the pairwise one.
 
         Returns:
             FloatTensor: Pairwise distance tensor.
         """
         # Calculating feature variance for each example
-        embed_mean = tf.math.reduce_mean(embeddings, axis=1)
-        embed_square = tf.math.square(embeddings)
-        embed_sq_mean = tf.math.reduce_mean(embed_square, axis=1)
-        anchor_var = embed_sq_mean - tf.square(embed_mean)
+        anchor_var = tf.math.reduce_variance(query_embeddings, axis=1)
 
         # Calculating pairwise noise variances
-        x_rs = tf.reshape(embeddings, shape=[tf.shape(embeddings)[0], -1])
-        delta = tf.expand_dims(x_rs, axis=1) - tf.expand_dims(x_rs, axis=0)
-        delta_mean = tf.math.reduce_mean(delta, axis=2)
-        delta_sq = tf.math.square(delta)
-        delta_sq_mean = tf.math.reduce_mean(delta_sq, axis=2)
-        noise_var = delta_sq_mean - tf.square(delta_mean)
+
+        q_rs = tf.reshape(query_embeddings, shape=[tf.shape(query_embeddings)[0], -1])
+        k_rs = tf.reshape(key_embeddings, shape=[tf.shape(key_embeddings)[0], -1])
+        delta = tf.expand_dims(q_rs, axis=1) - tf.expand_dims(k_rs, axis=0)
+        noise_var = tf.math.reduce_variance(delta, axis=2)
 
         distances: FloatTensor = tf.divide(noise_var,
                                            tf.expand_dims(anchor_var, axis=1))
