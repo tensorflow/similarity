@@ -15,7 +15,7 @@ Inherits From: [`Evaluator`](../../TFSimilarity/callbacks/Evaluator.md), [`ABC`]
 
 <h3 id="calibrate">calibrate</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/memory_evaluator.py#L172-L355">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/memory_evaluator.py#L176-L366">View source</a>
 
 ```python
 calibrate(
@@ -24,7 +24,7 @@ calibrate(
     thresholds_targets: MutableMapping[str, float],
     calibration_metric: <a href="../../TFSimilarity/callbacks/ClassificationMetric.md">TFSimilarity.callbacks.ClassificationMetric```
 </a>,
-    matcher: Union[str, <a href="../../TFSimilarity/indexer/ClassificationMatch.md">TFSimilarity.indexer.ClassificationMatch```
+    matcher: Union[str, <a href="../../TFSimilarity/callbacks/ClassificationMatch.md">TFSimilarity.callbacks.ClassificationMatch```
 </a>],
     extra_metrics: Sequence[<a href="../../TFSimilarity/callbacks/ClassificationMetric.md">TFSimilarity.callbacks.ClassificationMetric```
 </a>] = [],
@@ -135,9 +135,26 @@ CalibrationResults containing the thresholds and cutpoints Dicts.
 
 
 
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2">Raises</th></tr>
+
+<tr>
+<td>
+<b>ValueError</b>
+</td>
+<td>
+lookupds must not be empty.
+</td>
+</tr>
+</table>
+
+
+
 <h3 id="evaluate_classification">evaluate_classification</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/memory_evaluator.py#L94-L170">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/memory_evaluator.py#L98-L174">View source</a>
 
 ```python
 evaluate_classification(
@@ -145,13 +162,13 @@ evaluate_classification(
 </a>,
     lookup_labels: <a href="../../TFSimilarity/callbacks/IntTensor.md">TFSimilarity.callbacks.IntTensor```
 </a>,
-    lookup_distances: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    lookup_distances: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
-    distance_thresholds: <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+    distance_thresholds: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>,
     metrics: Sequence[<a href="../../TFSimilarity/callbacks/ClassificationMetric.md">TFSimilarity.callbacks.ClassificationMetric```
 </a>],
-    matcher: Union[str, <a href="../../TFSimilarity/indexer/ClassificationMatch.md">TFSimilarity.indexer.ClassificationMatch```
+    matcher: Union[str, <a href="../../TFSimilarity/callbacks/ClassificationMatch.md">TFSimilarity.callbacks.ClassificationMatch```
 </a>],
     distance_rounding: int = 8,
     verbose: int = 1
@@ -255,13 +272,14 @@ distance threshold.
 
 <h3 id="evaluate_retrieval">evaluate_retrieval</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/memory_evaluator.py#L40-L92">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/memory_evaluator.py#L39-L96">View source</a>
 
 ```python
 evaluate_retrieval(
     target_labels: Sequence[int],
     lookups: Sequence[Sequence[Lookup]],
-    retrieval_metrics: Sequence[Union[str, RetrievalMetric]],
+    retrieval_metrics: Sequence[<a href="../../TFSimilarity/indexer/RetrievalMetric.md">TFSimilarity.indexer.RetrievalMetric```
+</a>],
     distance_rounding: int = 8
 ) -> Dict[str, np.ndarray]
 ```

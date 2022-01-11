@@ -11,7 +11,7 @@ Inherits From: [`RetrievalMetric`](../../TFSimilarity/indexer/RetrievalMetric.md
 ```python
 TFSimilarity.retrieval_metrics.RecallAtK(
     name: str = recall,
-    k: int = 1,
+    k: int = 5,
     **kwargs
 ) -> None
 ```
@@ -26,7 +26,7 @@ class, 0 otherwise.
 <!-- Tabular view -->
  <table class="responsive fixed orange">
 <colgroup><col width="214px"><col></colgroup>
-<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
+<tr><th colspan="2"><h2 class="add-link">Args</h2></th></tr>
 
 <tr>
 <td>
@@ -66,10 +66,10 @@ considered a valid match.
 <i>'micro'</i> Determines the type of averaging performed over the
 queries.
 
-    'micro': Calculates metrics globally over all queries.
+* 'micro': Calculates metrics globally over all queries.
 
-    'macro': Calculates metrics for each label and takes the unweighted
-             mean.
+* 'macro': Calculates metrics for each label and takes the unweighted
+           mean.
 </td>
 </tr>
 </table>
@@ -88,43 +88,7 @@ queries.
 <b>name</b>
 </td>
 <td>
-Name associated with the metric object, e.g., recall@5
-</td>
-</tr><tr>
-<td>
-<b>canonical_name</b>
-</td>
-<td>
-The canonical name associated with metric,
-e.g., recall@K
-</td>
-</tr><tr>
-<td>
-<b>k</b>
-</td>
-<td>
-The number of nearest neighbors over which the metric is computed.
-</td>
-</tr><tr>
-<td>
-<b>distance_threshold</b>
-</td>
-<td>
-The max distance below which a nearest neighbor is
-considered a valid match.
-</td>
-</tr><tr>
-<td>
-<b>average</b>
-</td>
-<td>
-<i>'micro'</i> Determines the type of averaging performed over the
-queries.
 
-    'micro': Calculates metrics globally over all queries.
-
-    'macro': Calculates metrics for each label and takes the unweighted
-             mean.
 </td>
 </tr>
 </table>
@@ -135,16 +99,17 @@ queries.
 
 <h3 id="compute">compute</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/recall_at_k.py#L55-L93">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/recall_at_k.py#L53-L96">View source</a>
 
 ```python
 compute(
     *,
     query_labels: <a href="../../TFSimilarity/callbacks/IntTensor.md">TFSimilarity.callbacks.IntTensor```
 </a>,
-    match_mask: BoolTensor,
+    match_mask: <a href="../../TFSimilarity/utils/BoolTensor.md">TFSimilarity.utils.BoolTensor```
+</a>,
     **kwargs
-) -> <a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor```
+) -> <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
 ```
 
@@ -191,7 +156,7 @@ Additional compute args.
 <tr><th colspan="2">Returns</th></tr>
 <tr class="alt">
 <td colspan="2">
-metric results.
+A rank 0 tensor containing the metric.
 </td>
 </tr>
 
@@ -201,7 +166,7 @@ metric results.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/retrieval_metric.py#L68-L74">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/retrieval_metric.py#L79-L85">View source</a>
 
 ```python
 get_config()

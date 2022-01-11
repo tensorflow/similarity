@@ -12,11 +12,10 @@ Inherits From: [`Callback`](../../TFSimilarity/callbacks/Callback.md)
 TFSimilarity.callbacks.SplitValidationLoss(
     query_labels: Sequence[int],
     target_labels: Sequence[int],
-    known_classes: IntTensor,
     distance: str = cosine,
     metrics: Sequence[Union[str, ClassificationMetric]] = [binary_accuracy, f1score],
     tb_logdir: str = None,
-    k=1
+    k: int = 1,
 )
 ```
 
@@ -105,7 +104,29 @@ Where to write TensorBoard logs. Defaults to None.
 <b>k</b>
 </td>
 <td>
-How many neighbors to retrieve for evaluation. Defaults to 1.
+The number of nearest neighbors to return for each query. The
+lookups are consumed by the Matching Strategy and used to derive the
+matching label and distance.
+</td>
+</tr><tr>
+<td>
+<b>matcher</b>
+</td>
+<td>
+<i>'match_nearest', 'match_majority_vote'</i> or
+ClassificationMatch object. Defines the classification matching,
+e.g., match_nearest will count a True Positive if the query_label
+is equal to the label of the nearest neighbor and the distance is
+less than or equal to the distance threshold.
+</td>
+</tr><tr>
+<td>
+<b>distance_thresholds</b>
+</td>
+<td>
+A 1D tensor denoting the distances points at
+which we compute the metrics. If None, distance_thresholds is set to
+tf.constant([math.inf])
 </td>
 </tr>
 </table>

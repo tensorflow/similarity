@@ -6,12 +6,20 @@
 
 This is the class from which all layers inherit.
 
-Inherits From: [`Layer`](../../TFSimilarity/layers/Layer.md)
-
 ```python
 TFSimilarity.layers.MetricEmbedding(
-    unit: int
-)
+    units: int,
+    activation: Optional[Any] = None,
+    use_bias: bool = True,
+    kernel_initializer: Optional[Any] = glorot_uniform,
+    bias_initializer: Optional[Any] = zeros,
+    kernel_regularizer: Optional[Any] = None,
+    bias_regularizer: Optional[Any] = None,
+    activity_regularizer: Optional[Any] = None,
+    kernel_constraint: Optional[Any] = None,
+    bias_constraint: Optional[Any] = None,
+    **kwargs
+) -> None
 ```
 
 
@@ -109,96 +117,6 @@ assert my_sum.trainable_weights == []
 For more information about creating layers, see the guide
 - [Making new Layers and Models via subclassing](
   https://www.tensorflow.org/guide/keras/custom_layers_and_models)
-
-<!-- Tabular view -->
- <table class="responsive fixed orange">
-<colgroup><col width="214px"><col></colgroup>
-<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
-
-<tr>
-<td>
-<b>name</b>
-</td>
-<td>
-The name of the layer (string).
-</td>
-</tr><tr>
-<td>
-<b>dtype</b>
-</td>
-<td>
-The dtype of the layer's weights.
-</td>
-</tr><tr>
-<td>
-<b>variable_dtype</b>
-</td>
-<td>
-Alias of <b>dtype</b>.
-</td>
-</tr><tr>
-<td>
-<b>compute_dtype</b>
-</td>
-<td>
-The dtype of the layer's computations. Layers automatically
-cast inputs to this dtype which causes the computations and output to also
-be in this dtype. When mixed precision is used with a
-<b>tf.keras.mixed_precision.Policy</b>, this will be different than
-<b>variable_dtype</b>.
-</td>
-</tr><tr>
-<td>
-<b>dtype_policy</b>
-</td>
-<td>
-The layer's dtype policy. See the
-<b>tf.keras.mixed_precision.Policy</b> documentation for details.
-</td>
-</tr><tr>
-<td>
-<b>trainable_weights</b>
-</td>
-<td>
-List of variables to be included in backprop.
-</td>
-</tr><tr>
-<td>
-<b>non_trainable_weights</b>
-</td>
-<td>
-List of variables that should not be
-included in backprop.
-</td>
-</tr><tr>
-<td>
-<b>weights</b>
-</td>
-<td>
-The concatenation of the lists trainable_weights and
-non_trainable_weights (in this order).
-</td>
-</tr><tr>
-<td>
-<b>trainable</b>
-</td>
-<td>
-Whether the layer should be trained (boolean), i.e. whether
-its potentially-trainable weights should be returned as part of
-<b>layer.trainable_weights</b>.
-</td>
-</tr><tr>
-<td>
-<b>input_spec</b>
-</td>
-<td>
-Optional (list of) <b>InputSpec</b> object(s) specifying the
-constraints on inputs that can be accepted by the layer.
-</td>
-</tr>
-</table>
-
-
 
 
 

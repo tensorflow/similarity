@@ -8,10 +8,10 @@ Plot confusion matrix
 
 ```python
 TFSimilarity.visualization.confusion_matrix(
-    normalize: bool = (True),
+    normalize: bool = True,
     title: str = Confusion matrix,
-    cmap: str = Blues
-)
+    cmap: str = Blues,
+    show: bool = True
 ```
 
 
@@ -68,6 +68,27 @@ Title of the confusion matrix. Defaults to 'Confusion matrix'.
 <td>
 Color schema as CMAP. Defaults to 'Blues'.
 </td>
+</tr><tr>
+<td>
+<b>show</b>
+</td>
+<td>
+If the plot is going to be shown or not. Defaults to True.
+</td>
 </tr>
+</table>
+
+
+
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2"><h2 class="add-link">Returns</h2></th></tr>
+<tr class="alt">
+<td colspan="2">
+A Tuple containing the plot and confusion matrix.
+</td>
+</tr>
+
 </table>
 

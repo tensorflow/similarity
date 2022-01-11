@@ -20,7 +20,6 @@ TFSimilarity.samplers.TFDatasetMultiShotMemorySampler(
     class_list: Sequence[int] = None,
     total_examples_per_class: int = None,
     preprocess_fn: Optional[PreProcessFn] = None,
-    augmenter: Optional[Augmenter] = None,
     warmup: int = -1
 )
 ```
@@ -162,31 +161,7 @@ batch_size used. Defaults to None.
 <td>
 Keep track of warmup epochs and let the augmenter knows
 when the warmup is over by passing along with each batch data a
-boolean <b>is_warmup</b>. See <b>self.get_examples()</b> Defaults to 0.
-</td>
-</tr>
-</table>
-
-
-
-<!-- Tabular view -->
- <table class="responsive fixed orange">
-<colgroup><col width="214px"><col></colgroup>
-<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
-
-<tr>
-<td>
-<b>example_shape</b>
-</td>
-<td>
-
-</td>
-</tr><tr>
-<td>
-<b>num_examples</b>
-</td>
-<td>
-
+boolean <b>is_warmup</b>. See <b>self._get_examples()</b> Defaults to 0.
 </td>
 </tr>
 </table>
@@ -223,14 +198,12 @@ boolean <b>is_warmup</b>. See <b>self.get_examples()</b> Defaults to 0.
 
 <h3 id="generate_batch">generate_batch</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L135-L157">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L137-L154">View source</a>
 
 ```python
 generate_batch(
     batch_id: int
-) -> Tuple[<a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor``<b>
-</a>, <a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor</b>``
-</a>]
+) -> Tuple[Batch, Batch]
 ```
 
 
@@ -257,81 +230,7 @@ batch_id ([type]): [description]
 <tr><th colspan="2">Returns</th></tr>
 <tr class="alt">
 <td colspan="2">
-x, y: batch
-</td>
-</tr>
-
-</table>
-
-
-
-<h3 id="get_examples">get_examples</h3>
-
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/memory_samplers.py#L132-L152">View source</a>
-
-```python
-get_examples(
-    batch_id: int,
-    num_classes: int,
-    examples_per_class: int
-) -> Tuple[<a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor``<b>
-</a>, <a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor</b>``
-</a>]
-```
-
-
-Get the set of examples that would be used to create a single batch.
-
-
-#### Notes:
-
-- before passing the batch data to TF, the sampler will call the
-  augmenter function (if any) on the returned example.
-
-- A batch_size = num_classes * example_per_class
-
-- This function must be defined in the subclass.
-
-
-
-<!-- Tabular view -->
- <table class="responsive fixed orange">
-<colgroup><col width="214px"><col></colgroup>
-<tr><th colspan="2">Args</th></tr>
-
-<tr>
-<td>
-<b>batch_id</b>
-</td>
-<td>
-id of the batch in the epoch.
-</td>
-</tr><tr>
-<td>
-<b>num_classes</b>
-</td>
-<td>
-How many class should be present in the examples.
-</td>
-</tr><tr>
-<td>
-<b>example_per_class</b>
-</td>
-<td>
-How many example per class should be returned.
-</td>
-</tr>
-</table>
-
-
-
-<!-- Tabular view -->
- <table class="responsive fixed orange">
-<colgroup><col width="214px"><col></colgroup>
-<tr><th colspan="2">Returns</th></tr>
-<tr class="alt">
-<td colspan="2">
-x, y: batch of examples made of <b>num_classes</b> * <b>example_per_class</b>
+x, y: Batch
 </td>
 </tr>
 
@@ -341,13 +240,13 @@ x, y: batch of examples made of <b>num_classes</b> * <b>example_per_class</b>
 
 <h3 id="get_slice">get_slice</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/memory_samplers.py#L154-L174">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/memory_samplers.py#L198-L219">View source</a>
 
 ```python
 get_slice(
     begin: int = 0,
     size: int = -1
-) -> Tuple[<a href="../../TFSimilarity/distances/FloatTensor.md">TFSimilarity.distances.FloatTensor``<b>
+) -> Tuple[<a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor``<b>
 </a>, <a href="../../TFSimilarity/callbacks/IntTensor.md">TFSimilarity.callbacks.IntTensor</b>``
 </a>]
 ```
@@ -400,7 +299,7 @@ A Tuple of FloatTensor and IntTensor
 
 <h3 id="on_epoch_end">on_epoch_end</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L120-L130">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L122-L132">View source</a>
 
 ```python
 on_epoch_end() -> None
@@ -412,14 +311,12 @@ Keep track of warmup epochs
 
 <h3 id="__getitem__">__getitem__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L132-L133">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L134-L135">View source</a>
 
 ```python
 __getitem__(
     batch_id: int
-) -> Tuple[<a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor``<b>
-</a>, <a href="../../TFSimilarity/callbacks/Tensor.md">TFSimilarity.callbacks.Tensor</b>``
-</a>]
+) -> Tuple[Batch, Batch]
 ```
 
 
@@ -469,7 +366,7 @@ Create a generator that iterate over the Sequence.
 
 <h3 id="__len__">__len__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L116-L118">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L118-L120">View source</a>
 
 ```python
 __len__() -> int

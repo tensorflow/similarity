@@ -30,6 +30,8 @@ The default implementation can scale up to medium deployment (1M-10M+ points) ea
 
 - [`architectures`](./TFSimilarity/architectures.md): Deep-learning model architectures tweaked to work well for similarity
 
+- [`augmenters`](./TFSimilarity/augmenters.md)
+
 - [`callbacks`](./TFSimilarity/callbacks.md): Specialized callbacks that track similarity metrics during training
 
 - [`classification_metrics`](./TFSimilarity/classification_metrics.md): Classification metrics measure matching classification quality between a

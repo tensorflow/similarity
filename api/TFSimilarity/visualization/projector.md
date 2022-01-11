@@ -13,11 +13,11 @@ TFSimilarity.visualization.projector(
     image_size: int = 64,
     tooltips_info: Optional[Mapping[str, Sequence[str]]] = None,
     pt_size: int = 3,
-    colorize: bool = (True),
+    colorize: bool = True,
     pastel_factor: float = 0.1,
     plot_size: int = 600,
     active_drag: str = box_zoom,
-    densmap: bool = (True)
+    densmap: bool = True
 )
 ```
 

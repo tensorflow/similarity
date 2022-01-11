@@ -12,7 +12,8 @@ Inherits From: [`MetricLoss`](../../TFSimilarity/losses/MetricLoss.md)
 TFSimilarity.losses.CircleLoss(
     gamma: float = 80.0,
     margin: float = 0.4,
-    name: str = CircleLoss
+    name: str = CircleLoss,
+    **kwargs
 )
 ```
 
@@ -130,14 +131,28 @@ A <b>Loss</b> instance.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/metric_loss.py#L57-L70">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/metric_loss.py#L57-L71">View source</a>
 
 ```python
 get_config() -> Dict[str, Any]
 ```
 
 
-Returns the config dictionary for a <b>Loss</b> instance.
+Contains the loss configuration.
+
+
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2">Returns</th></tr>
+<tr class="alt">
+<td colspan="2">
+A Python dict containing the configuration of the loss.
+</td>
+</tr>
+
+</table>
+
 
 
 <h3 id="__call__">__call__</h3>

@@ -9,18 +9,44 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/architectures
   - title: EfficientNetSim
     path: /similarity/api_docs/python/TFSimilarity/architectures/EfficientNetSim
+  - title: ResNet18Sim
+    path: /similarity/api_docs/python/TFSimilarity/architectures/ResNet18Sim
+  - title: ResNet50Sim
+    path: /similarity/api_docs/python/TFSimilarity/architectures/ResNet50Sim
+- title: TFSimilarity.augmenters
+  section:
+  - title: Overview
+    path: /similarity/api_docs/python/TFSimilarity/augmenters
+  - title: Augmenter
+    path: /similarity/api_docs/python/TFSimilarity/augmenters/Augmenter
+  - title: AutoAugment
+    path: /similarity/api_docs/python/TFSimilarity/augmenters/AutoAugment
+  - title: ContrastiveAugmenter
+    path: /similarity/api_docs/python/TFSimilarity/augmenters/ContrastiveAugmenter
+  - title: MixupAndCutmix
+    path: /similarity/api_docs/python/TFSimilarity/augmenters/MixupAndCutmix
+  - title: RandAugment
+    path: /similarity/api_docs/python/TFSimilarity/augmenters/RandAugment
+  - title: RandomErasing
+    path: /similarity/api_docs/python/TFSimilarity/augmenters/RandomErasing
+  - title: SimCLRAugmenter
+    path: /similarity/api_docs/python/TFSimilarity/augmenters/SimCLRAugmenter
 - title: TFSimilarity.callbacks
   section:
   - title: Overview
     path: /similarity/api_docs/python/TFSimilarity/callbacks
   - title: Callback
     path: /similarity/api_docs/python/TFSimilarity/callbacks/Callback
+  - title: ClassificationMatch
+    path: /similarity/api_docs/python/TFSimilarity/callbacks/ClassificationMatch
   - title: ClassificationMetric
     path: /similarity/api_docs/python/TFSimilarity/callbacks/ClassificationMetric
   - title: EvalCallback
     path: /similarity/api_docs/python/TFSimilarity/callbacks/EvalCallback
   - title: Evaluator
     path: /similarity/api_docs/python/TFSimilarity/callbacks/Evaluator
+  - title: FloatTensor
+    path: /similarity/api_docs/python/TFSimilarity/callbacks/FloatTensor
   - title: IntTensor
     path: /similarity/api_docs/python/TFSimilarity/callbacks/IntTensor
   - title: MemoryEvaluator
@@ -67,12 +93,12 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/distances/Distance
   - title: EuclideanDistance
     path: /similarity/api_docs/python/TFSimilarity/distances/EuclideanDistance
-  - title: FloatTensor
-    path: /similarity/api_docs/python/TFSimilarity/distances/FloatTensor
   - title: InnerProductSimilarity
     path: /similarity/api_docs/python/TFSimilarity/distances/InnerProductSimilarity
   - title: ManhattanDistance
     path: /similarity/api_docs/python/TFSimilarity/distances/ManhattanDistance
+  - title: SNRDistance
+    path: /similarity/api_docs/python/TFSimilarity/distances/SNRDistance
   - title: SquaredEuclideanDistance
     path: /similarity/api_docs/python/TFSimilarity/distances/SquaredEuclideanDistance
   - title: distance_canonicalizer
@@ -87,8 +113,6 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/indexer
   - title: CalibrationResults
     path: /similarity/api_docs/python/TFSimilarity/indexer/CalibrationResults
-  - title: ClassificationMatch
-    path: /similarity/api_docs/python/TFSimilarity/indexer/ClassificationMatch
   - title: Indexer
     path: /similarity/api_docs/python/TFSimilarity/indexer/Indexer
   - title: Lookup
@@ -109,6 +133,8 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/indexer/defaultdict
   - title: deque
     path: /similarity/api_docs/python/TFSimilarity/indexer/deque
+  - title: make_classification_matcher
+    path: /similarity/api_docs/python/TFSimilarity/indexer/make_classification_matcher
   - title: tabulate
     path: /similarity/api_docs/python/TFSimilarity/indexer/tabulate
   - title: time
@@ -119,14 +145,22 @@ toc:
   section:
   - title: Overview
     path: /similarity/api_docs/python/TFSimilarity/layers
-  - title: Layer
-    path: /similarity/api_docs/python/TFSimilarity/layers/Layer
+  - title: ActivationStdLoggingLayer
+    path: /similarity/api_docs/python/TFSimilarity/layers/ActivationStdLoggingLayer
+  - title: GeneralizedMeanPooling
+    path: /similarity/api_docs/python/TFSimilarity/layers/GeneralizedMeanPooling
+  - title: GeneralizedMeanPooling1D
+    path: /similarity/api_docs/python/TFSimilarity/layers/GeneralizedMeanPooling1D
+  - title: GeneralizedMeanPooling2D
+    path: /similarity/api_docs/python/TFSimilarity/layers/GeneralizedMeanPooling2D
   - title: MetricEmbedding
     path: /similarity/api_docs/python/TFSimilarity/layers/MetricEmbedding
 - title: TFSimilarity.losses
   section:
   - title: Overview
     path: /similarity/api_docs/python/TFSimilarity/losses
+  - title: Barlow
+    path: /similarity/api_docs/python/TFSimilarity/losses/Barlow
   - title: CircleLoss
     path: /similarity/api_docs/python/TFSimilarity/losses/CircleLoss
   - title: MetricLoss
@@ -135,6 +169,12 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/losses/MultiSimilarityLoss
   - title: PNLoss
     path: /similarity/api_docs/python/TFSimilarity/losses/PNLoss
+  - title: SimCLRLoss
+    path: /similarity/api_docs/python/TFSimilarity/losses/SimCLRLoss
+  - title: SimSiamLoss
+    path: /similarity/api_docs/python/TFSimilarity/losses/SimSiamLoss
+  - title: SoftNearestNeighborLoss
+    path: /similarity/api_docs/python/TFSimilarity/losses/SoftNearestNeighborLoss
   - title: TripletLoss
     path: /similarity/api_docs/python/TFSimilarity/losses/TripletLoss
 - title: TFSimilarity.matchers
@@ -145,12 +185,12 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/matchers/MatchMajorityVote
   - title: MatchNearest
     path: /similarity/api_docs/python/TFSimilarity/matchers/MatchNearest
-  - title: make_classification_matcher
-    path: /similarity/api_docs/python/TFSimilarity/matchers/make_classification_matcher
 - title: TFSimilarity.models
   section:
   - title: Overview
     path: /similarity/api_docs/python/TFSimilarity/models
+  - title: ContrastiveModel
+    path: /similarity/api_docs/python/TFSimilarity/models/ContrastiveModel
 - title: TFSimilarity.retrieval_metrics
   section:
   - title: Overview
@@ -163,8 +203,6 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/retrieval_metrics/PrecisionAtK
   - title: RecallAtK
     path: /similarity/api_docs/python/TFSimilarity/retrieval_metrics/RecallAtK
-  - title: make_retrieval_metric
-    path: /similarity/api_docs/python/TFSimilarity/retrieval_metrics/make_retrieval_metric
 - title: TFSimilarity.samplers
   section:
   - title: Overview
@@ -219,6 +257,8 @@ toc:
   section:
   - title: Overview
     path: /similarity/api_docs/python/TFSimilarity/utils
+  - title: BoolTensor
+    path: /similarity/api_docs/python/TFSimilarity/utils/BoolTensor
   - title: is_tensor_or_variable
     path: /similarity/api_docs/python/TFSimilarity/utils/is_tensor_or_variable
   - title: tf_cap_memory
@@ -231,5 +271,7 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/visualization/confusion_matrix
   - title: projector
     path: /similarity/api_docs/python/TFSimilarity/visualization/projector
+  - title: visualize_views
+    path: /similarity/api_docs/python/TFSimilarity/visualization/visualize_views
   - title: viz_neigbors_imgs
     path: /similarity/api_docs/python/TFSimilarity/visualization/viz_neigbors_imgs

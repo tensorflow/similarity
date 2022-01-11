@@ -55,3 +55,4 @@ from tensorflow_similarity import retrieval_metrics  # noqa
 from tensorflow_similarity import training_metrics  # noqa
 # from tensorflow_similarity import types  # not public
 from tensorflow_similarity import utils  # noqa
+from tensorflow_similarity import augmenters   # noqa

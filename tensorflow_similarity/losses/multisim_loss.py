@@ -124,8 +124,6 @@ def multisimilarity_loss(labels: IntTensor,
             p_loss + n_loss,
             tf.reshape(valid_anchors, (-1, 1))
     )
-    # reduce and scale loss so it isn't a function of the batch size.
-    multisim_loss = tf.math.reduce_mean(multisim_loss)
 
     return multisim_loss
 
@@ -151,7 +149,8 @@ class MultiSimilarityLoss(MetricLoss):
                  beta: float = 20,
                  epsilon: float = 0.2,
                  lmda: float = 0.5,
-                 name: str = 'MultiSimilarityLoss'):
+                 name: str = 'MultiSimilarityLoss',
+                 **kwargs):
         """Initializes the Multi Similarity Loss
 
         Args:
@@ -187,9 +186,9 @@ class MultiSimilarityLoss(MetricLoss):
 
         super().__init__(multisimilarity_loss,
                          name=name,
-                         reduction=tf.keras.losses.Reduction.NONE,
                          distance=distance,
                          alpha=alpha,
                          beta=beta,
                          epsilon=epsilon,
-                         lmda=lmda)
+                         lmda=lmda,
+                         **kwargs)

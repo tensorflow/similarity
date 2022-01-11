@@ -14,4 +14,6 @@
 """Specialized `keras.model.Model` subclasses that offers additional
 functionalities to make training and serving similarity models quick and easy.
 """
+
 from .similarity_model import SimilarityModel  # noqa
+from .contrastive_model import ContrastiveModel  # noqa
