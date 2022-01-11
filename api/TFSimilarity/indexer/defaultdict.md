@@ -23,6 +23,25 @@ A defaultdict compares equal to a dict with the same items.
 All remaining arguments are treated the same as if they were
 passed to the dict constructor, including keyword arguments.
 
+
+
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
+
+<tr>
+<td>
+<b>default_factory</b>
+</td>
+<td>
+Factory for default value called by __missing__().
+</td>
+</tr>
+</table>
+
+
+
 ## Methods
 
 <h3 id="clear">clear</h3>
@@ -106,10 +125,8 @@ popitem()
 ```
 
 
-Remove and return a (key, value) pair as a 2-tuple.
-
-Pairs are returned in LIFO (last-in, first-out) order.
-Raises KeyError if the dict is empty.
+D.popitem() -> (k, v), remove and return some (key, value) pair as a
+2-tuple; but raise KeyError if D is empty.
 
 <h3 id="setdefault">setdefault</h3>
 
@@ -261,23 +278,4 @@ Return self!=value.
 
 
 
-
-
-
-<!-- Tabular view -->
- <table class="responsive fixed orange">
-<colgroup><col width="214px"><col></colgroup>
-<tr><th colspan="2"><h2 class="add-link">Class Variables</h2></th></tr>
-
-<tr>
-<td>
-default_factory<a id="default_factory"></a>
-</td>
-<td>
-Instance of <b>member_descriptor</b>
-
-Factory for default value called by __missing__().
-</td>
-</tr>
-</table>
 

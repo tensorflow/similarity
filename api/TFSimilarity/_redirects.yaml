@@ -3,10 +3,14 @@ redirects:
   to: /similarity/api_docs/python/TFSimilarity/callbacks/ClassificationMetric
 - from: /similarity/api_docs/python/TFSimilarity/classification_metrics/make_classification_metric
   to: /similarity/api_docs/python/TFSimilarity/callbacks/make_classification_metric
+- from: /similarity/api_docs/python/TFSimilarity/distances/FloatTensor
+  to: /similarity/api_docs/python/TFSimilarity/callbacks/FloatTensor
 - from: /similarity/api_docs/python/TFSimilarity/evaluators/Evaluator
   to: /similarity/api_docs/python/TFSimilarity/callbacks/Evaluator
 - from: /similarity/api_docs/python/TFSimilarity/evaluators/MemoryEvaluator
   to: /similarity/api_docs/python/TFSimilarity/callbacks/MemoryEvaluator
+- from: /similarity/api_docs/python/TFSimilarity/indexer/ClassificationMatch
+  to: /similarity/api_docs/python/TFSimilarity/callbacks/ClassificationMatch
 - from: /similarity/api_docs/python/TFSimilarity/indexer/ClassificationMetric
   to: /similarity/api_docs/python/TFSimilarity/callbacks/ClassificationMetric
 - from: /similarity/api_docs/python/TFSimilarity/indexer/Distance
@@ -16,7 +20,7 @@ redirects:
 - from: /similarity/api_docs/python/TFSimilarity/indexer/F1Score
   to: /similarity/api_docs/python/TFSimilarity/classification_metrics/F1Score
 - from: /similarity/api_docs/python/TFSimilarity/indexer/FloatTensor
-  to: /similarity/api_docs/python/TFSimilarity/distances/FloatTensor
+  to: /similarity/api_docs/python/TFSimilarity/callbacks/FloatTensor
 - from: /similarity/api_docs/python/TFSimilarity/indexer/IntTensor
   to: /similarity/api_docs/python/TFSimilarity/callbacks/IntTensor
 - from: /similarity/api_docs/python/TFSimilarity/indexer/MemoryEvaluator
@@ -34,9 +38,13 @@ redirects:
 - from: /similarity/api_docs/python/TFSimilarity/indexer/unpack_lookup_labels
   to: /similarity/api_docs/python/TFSimilarity/callbacks/unpack_lookup_labels
 - from: /similarity/api_docs/python/TFSimilarity/layers/FloatTensor
-  to: /similarity/api_docs/python/TFSimilarity/distances/FloatTensor
+  to: /similarity/api_docs/python/TFSimilarity/callbacks/FloatTensor
+- from: /similarity/api_docs/python/TFSimilarity/layers/IntTensor
+  to: /similarity/api_docs/python/TFSimilarity/callbacks/IntTensor
 - from: /similarity/api_docs/python/TFSimilarity/matchers/ClassificationMatch
-  to: /similarity/api_docs/python/TFSimilarity/indexer/ClassificationMatch
+  to: /similarity/api_docs/python/TFSimilarity/callbacks/ClassificationMatch
+- from: /similarity/api_docs/python/TFSimilarity/matchers/make_classification_matcher
+  to: /similarity/api_docs/python/TFSimilarity/indexer/make_classification_matcher
 - from: /similarity/api_docs/python/TFSimilarity/models/SimilarityModel
   to: /similarity/api_docs/python/TFSimilarity/callbacks/SimilarityModel
 - from: /similarity/api_docs/python/TFSimilarity/retrieval_metrics/RetrievalMetric
@@ -50,7 +58,7 @@ redirects:
 - from: /similarity/api_docs/python/TFSimilarity/stores/Store
   to: /similarity/api_docs/python/TFSimilarity/indexer/Store
 - from: /similarity/api_docs/python/TFSimilarity/utils/FloatTensor
-  to: /similarity/api_docs/python/TFSimilarity/distances/FloatTensor
+  to: /similarity/api_docs/python/TFSimilarity/callbacks/FloatTensor
 - from: /similarity/api_docs/python/TFSimilarity/utils/IntTensor
   to: /similarity/api_docs/python/TFSimilarity/callbacks/IntTensor
 - from: /similarity/api_docs/python/TFSimilarity/utils/Lookup

@@ -12,7 +12,7 @@ sub-linear search
 
 - [`class CalibrationResults`](../TFSimilarity/indexer/CalibrationResults.md): Cutpoints and thresholds associated with a calibration.
 
-- [`class ClassificationMatch`](../TFSimilarity/indexer/ClassificationMatch.md): Abstract base class for computing calibration metrics.
+- [`class ClassificationMatch`](../TFSimilarity/callbacks/ClassificationMatch.md): Abstract base class for defining the classification matching strategy.
 
 - [`class ClassificationMetric`](../TFSimilarity/callbacks/ClassificationMetric.md): Abstract base class for computing classification metrics.
 
@@ -22,7 +22,7 @@ sub-linear search
 
 - [`class F1Score`](../TFSimilarity/classification_metrics/F1Score.md): Calculates the harmonic mean of precision and recall.
 
-- [`class FloatTensor`](../TFSimilarity/distances/FloatTensor.md): Float tensor 
+- [`class FloatTensor`](../TFSimilarity/callbacks/FloatTensor.md): Float tensor 
 
 - [`class Indexer`](../TFSimilarity/indexer/Indexer.md): Indexing system that allows to efficiently find nearest embeddings
 
@@ -46,7 +46,7 @@ sub-linear search
 
 - [`class Store`](../TFSimilarity/indexer/Store.md): Helper class that provides a standard way to create an ABC using
 
-- [`class Tensor`](../TFSimilarity/callbacks/Tensor.md): A tensor is a multidimensional array of elements represented by a
+- [`class Tensor`](../TFSimilarity/callbacks/Tensor.md): A `tf.Tensor` represents a multidimensional array of elements.
 
 - [`class defaultdict`](../TFSimilarity/indexer/defaultdict.md): defaultdict(default_factory[, ...]) --> dict with default factory
 
@@ -57,6 +57,8 @@ sub-linear search
 ## Functions
 
 - [`distance_canonicalizer(...)`](../TFSimilarity/distances/distance_canonicalizer.md): Normalize user requested distance to its matching Distance object.
+
+- [`make_classification_matcher(...)`](../TFSimilarity/indexer/make_classification_matcher.md): Convert classification matcher from str name to object if needed.
 
 - [`make_classification_metric(...)`](../TFSimilarity/callbacks/make_classification_metric.md): Convert classification metric from str name to object if needed.
 

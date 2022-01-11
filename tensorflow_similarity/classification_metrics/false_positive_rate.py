@@ -40,15 +40,20 @@ class FalsePositiveRate(ClassificationMetric):
                     calibration_metric='fpr')
     ```
     """
-    def __init__(self, name: str = 'fpr') -> None:
-        super().__init__(name=name, canonical_name='false_positive_rate')
 
-    def compute(self,
-                tp: FloatTensor,
-                fp: FloatTensor,
-                tn: FloatTensor,
-                fn: FloatTensor,
-                count: int) -> FloatTensor:
+    def __init__(self, name: str = "fpr") -> None:
+        super().__init__(name=name,
+                         canonical_name="false_positive_rate",
+                         direction="min")
+
+    def compute(
+        self,
+        tp: FloatTensor,
+        fp: FloatTensor,
+        tn: FloatTensor,
+        fn: FloatTensor,
+        count: int,
+    ) -> FloatTensor:
         """Compute the classification metric.
 
         The `compute()` method supports computing the metric for a set of

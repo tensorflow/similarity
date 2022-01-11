@@ -18,23 +18,6 @@ TFSimilarity.indexer.tqdm(
 <!-- Placeholder for "Used in" -->
 
 
-<!-- Tabular view -->
- <table class="responsive fixed orange">
-<colgroup><col width="214px"><col></colgroup>
-<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
-
-<tr>
-<td>
-<b>format_dict</b>
-</td>
-<td>
-Public API for read-only member access.
-</td>
-</tr>
-</table>
-
-
-
 
 
 <!-- Tabular view -->
@@ -75,7 +58,7 @@ Wrapper for <b>asyncio.as_completed</b>.
 
 ```python
 clear(
-    nolock=(False)
+    nolock=False
 )
 ```
 
@@ -120,7 +103,7 @@ pos  : int, optional. Position to <b>moveto</b>
 
 ```python
 external_write_mode(
-    file=None, nolock=(False)
+    file=None, nolock=False
 )
 ```
 
@@ -159,9 +142,9 @@ out  : str
 
 ```python
 format_meter(
-    n, total, elapsed, ncols=None, prefix=, ascii=(False),
-    unit=it, unit_scale=(False), rate=None, bar_format=None,
-    postfix=None, unit_divisor=1000, initial=0, colour=None, **extra_kwargs
+    n, total, elapsed, ncols=None, prefix=, ascii=False,
+    unit=it, unit_scale=False, rate=None, bar_format=None, postfix=None,
+    unit_divisor=1000, initial=0, colour=None, **extra_kwargs
 )
 ```
 
@@ -272,7 +255,7 @@ References
 
 ```python
 refresh(
-    nolock=(False), lock_args=None
+    nolock=False, lock_args=None
 )
 ```
 
@@ -321,7 +304,7 @@ send(
 
 ```python
 set_description(
-    desc=None, refresh=(True)
+    desc=None, refresh=True
 )
 ```
 
@@ -338,7 +321,7 @@ refresh  : bool, optional
 
 ```python
 set_description_str(
-    desc=None, refresh=(True)
+    desc=None, refresh=True
 )
 ```
 
@@ -365,7 +348,7 @@ Set the global lock.
 
 ```python
 set_postfix(
-    ordered_dict=None, refresh=(True), **kwargs
+    ordered_dict=None, refresh=True, **kwargs
 )
 ```
 
@@ -413,7 +396,7 @@ out  : bool or None
 
 ```python
 wrapattr(
-    stream, method, total=None, bytes=(True), **tqdm_kwargs
+    stream, method, total=None, bytes=True, **tqdm_kwargs
 )
 ```
 
@@ -437,7 +420,7 @@ method  : str, "read" or "write". The result of <b>read()</b> and
 
 ```python
 write(
-    s, file=None, end=\n, nolock=(False)
+    s, file=None, end=\n, nolock=False
 )
 ```
 

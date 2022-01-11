@@ -14,3 +14,5 @@
 """Deep-learning model architectures tweaked to work well for similarity
 training"""
 from .efficientnet import EfficientNetSim  # noqa
+from .resnet50 import ResNet50Sim  # noqa
+from .resnet18 import ResNet18Sim  # noqa

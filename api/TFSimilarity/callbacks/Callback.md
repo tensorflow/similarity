@@ -67,32 +67,6 @@ The <b>logs</b> dictionary that callback methods
 take as argument will contain keys for quantities relevant to
 the current batch or epoch (see method-specific docstrings).
 
-<!-- Tabular view -->
- <table class="responsive fixed orange">
-<colgroup><col width="214px"><col></colgroup>
-<tr><th colspan="2"><h2 class="add-link">Attributes</h2></th></tr>
-
-<tr>
-<td>
-<b>params</b>
-</td>
-<td>
-Dict. Training parameters
-(eg. verbosity, batch size, number of epochs...).
-</td>
-</tr><tr>
-<td>
-<b>model</b>
-</td>
-<td>
-Instance of <b>keras.models.Model</b>.
-Reference of the model being trained.
-</td>
-</tr>
-</table>
-
-
-
 
 
 <!-- Tabular view -->

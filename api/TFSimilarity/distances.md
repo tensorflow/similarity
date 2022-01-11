@@ -18,11 +18,13 @@ Vectorized embedding pairwise distances computation functions
 
 - [`class EuclideanDistance`](../TFSimilarity/distances/EuclideanDistance.md): Compute pairwise euclidean distances between embeddings.
 
-- [`class FloatTensor`](../TFSimilarity/distances/FloatTensor.md): Float tensor 
+- [`class FloatTensor`](../TFSimilarity/callbacks/FloatTensor.md): Float tensor 
 
 - [`class InnerProductSimilarity`](../TFSimilarity/distances/InnerProductSimilarity.md): Compute the pairwise inner product between embeddings.
 
 - [`class ManhattanDistance`](../TFSimilarity/distances/ManhattanDistance.md): Compute pairwise Manhattan distances between embeddings.
+
+- [`class SNRDistance`](../TFSimilarity/distances/SNRDistance.md): Computes pairwise SNR distances between embeddings.
 
 - [`class SquaredEuclideanDistance`](../TFSimilarity/distances/SquaredEuclideanDistance.md): Compute pairwise squared Euclidean distance.
 

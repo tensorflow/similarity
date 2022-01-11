@@ -43,7 +43,7 @@ class MetricLoss(tf.keras.losses.Loss):
         self.fn = fn
         self._fn_kwargs = kwargs
 
-    def call(self, y_true: FloatTensor, y_pred: FloatTensor) -> float:
+    def call(self, y_true: FloatTensor, y_pred: FloatTensor) -> FloatTensor:
         """Invokes the `LossFunctionWrapper` instance.
         Args:
           y_true: Ground truth values.
@@ -51,7 +51,7 @@ class MetricLoss(tf.keras.losses.Loss):
         Returns:
           Loss values per sample.
         """
-        loss: float = self.fn(y_true, y_pred, **self._fn_kwargs)
+        loss: FloatTensor = self.fn(y_true, y_pred, **self._fn_kwargs)
         return loss
 
     def get_config(self) -> Dict[str, Any]:
@@ -66,10 +66,6 @@ class MetricLoss(tf.keras.losses.Loss):
                 config[k] = tf.keras.backend.eval(v)
             else:
                 config[k] = v
-        config['name'] = self.name
 
-        # FIXME: seems we can't pass reduction why? its not
-        # technically needed for now but some other loss might need it
-        # config['reduction'] = self.reduction
-
-        return config
+        base_config = super().get_config()
+        return {**base_config, **config}

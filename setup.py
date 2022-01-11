@@ -80,6 +80,7 @@ setup(
             "pytest",
             "pytype",
             "setuptools",
+            "types-termcolor",
             "twine",
             "types-tabulate",
             "wheel",

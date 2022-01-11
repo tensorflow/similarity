@@ -40,11 +40,9 @@ def positive_distances(positive_mining_strategy: str,
       and the index for each example.
     """
     if positive_mining_strategy == 'hard':
-        positive_distances, pos_idxs = (
-                masked_max(distances, positive_mask))
+        positive_distances, pos_idxs = (masked_max(distances, positive_mask))
     elif positive_mining_strategy == 'easy':
-        positive_distances, pos_idxs = (
-                masked_min(distances, positive_mask))
+        positive_distances, pos_idxs = (masked_min(distances, positive_mask))
     else:
         raise ValueError('Invalid positive mining strategy')
 
@@ -82,8 +80,7 @@ def negative_distances(negative_mining_strategy: str,
     """
     if negative_mining_strategy == 'hard':
         # find the *non-zero* minimal distance between negative labels
-        negative_distances, neg_idxs = (
-                masked_min(distances, negative_mask))
+        negative_distances, neg_idxs = (masked_min(distances, negative_mask))
     elif negative_mining_strategy == 'semi-hard':
         # find the minimal distance between negative label gt than max distance
         # between positive labels
@@ -99,13 +96,11 @@ def negative_distances(negative_mining_strategy: str,
         semi_hard_mask = tf.where(greater_distances, negative_mask, empty)
 
         # find the  minimal distance between negative labels above threshold
-        negative_distances, neg_idxs = (
-                masked_min(distances, semi_hard_mask))
+        negative_distances, neg_idxs = (masked_min(distances, semi_hard_mask))
 
     elif negative_mining_strategy == 'easy':
         # find the maximal distance between negative labels
-        negative_distances, neg_idxs = (
-                masked_max(distances, negative_mask))
+        negative_distances, neg_idxs = (masked_max(distances, negative_mask))
     else:
         raise ValueError('Invalid negative mining strategy')
 
