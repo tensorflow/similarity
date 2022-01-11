@@ -26,9 +26,12 @@ from .utils import logsumexp
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
-def multisimilarity_loss(labels: IntTensor,
-                         embeddings: FloatTensor,
+def multisimilarity_loss(query_labels: IntTensor,
+                         query_embeddings: FloatTensor,
+                         key_labels: IntTensor,
+                         key_embeddings: FloatTensor,
                          distance: Callable,
+                         remove_diagonal: bool = True,
                          alpha: float = 2.0,
                          beta: float = 40,
                          epsilon: float = 0.2,
@@ -36,11 +39,17 @@ def multisimilarity_loss(labels: IntTensor,
     """Multi Similarity loss computations
 
     Args:
-        labels: labels associated with the embed.
+        query_labels: labels associated with the query embed.
 
-        embeddings: Embedded examples.
+        query_embeddings: Embedded query examples.
+
+        key_labels: labels associated with the key embed.
+
+        key_embeddings: Embedded key examples.
 
         distance: Which distance function to use to compute the pairwise.
+
+        remove_diagonal: Bool. If True, will set diagonal to False in positive pair mask
 
         alpha: The exponential weight for the positive pairs. Increasing alpha
         makes the logsumexp softmax closer to the max positive pair distance,
@@ -68,13 +77,18 @@ def multisimilarity_loss(labels: IntTensor,
     # do not remove this code. It is actually needed for specific situation
     # Reshape label tensor to [batch_size, 1] if not already in that format.
     # labels = tf.reshape(labels, (labels.shape[0], 1))
-    batch_size = tf.size(labels)
+    batch_size = tf.size(query_labels)
 
     # [distances]
-    pairwise_distances = distance(embeddings)
+    pairwise_distances = distance(query_embeddings, key_embeddings)
 
     # [masks]
-    positive_mask, negative_mask = build_masks(labels, batch_size)
+    positive_mask, negative_mask = build_masks(
+        query_labels,
+        key_labels,
+        batch_size=batch_size,
+        remove_diagonal=remove_diagonal,
+    )
 
     # [pair mining using Similarity-P]
     # This is essentially hard mining the negative and positive pairs.
