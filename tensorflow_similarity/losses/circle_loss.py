@@ -29,9 +29,12 @@ from .utils import logsumexp
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
-def circle_loss(labels: IntTensor,
-                embeddings: FloatTensor,
+def circle_loss(query_labels: IntTensor,
+                query_embeddings: FloatTensor,
+                key_labels: IntTensor,
+                key_embeddings: FloatTensor,
                 distance: Callable,
+                remove_diagonal: bool = True,
                 gamma: float = 80,
                 margin: float = 0.4) -> Any:
     """Circle loss computations
@@ -40,13 +43,19 @@ def circle_loss(labels: IntTensor,
     to work with cosine distance.
 
     Args:
-        labels: Labels associated with the embeddings
+        query_labels: labels associated with the query embed.
 
-        embeddings: Embeddings as infered by the model.
+        query_embeddings: Embedded query examples.
+
+        key_labels: labels associated with the key embed.
+
+        key_embeddings: Embedded key examples.
 
         distance: Which distance function to use to compute the pairwise
         distances between embeddings. The distance is expected to be
         between [0, 2]. Defaults to 'cosine'.
+
+        remove_diagonal: Bool. If True, will set diagonal to False in positive pair mask
 
         gamma: Scaling term. Defaults to 80. Note: Large values cause the
         LogSumExp to return the Max pair and reduces the weighted mixing of all
@@ -69,13 +78,18 @@ def circle_loss(labels: IntTensor,
     delta_neg = 1 - margin
 
     # label
-    batch_size = tf.size(labels)
+    batch_size = tf.size(query_labels)
 
     # [distances]
-    pairwise_distances = distance(embeddings)
+    pairwise_distances = distance(query_embeddings, key_embeddings)
 
     # [masks] -> filter to keep only the relevant value - zero the rest
-    positive_mask, negative_mask = build_masks(labels, batch_size)
+    positive_mask, negative_mask = build_masks(
+        query_labels,
+        key_labels,
+        batch_size=batch_size,
+        remove_diagonal=remove_diagonal,
+    )
     valid_anchors = tf.math.logical_and(
             tf.math.reduce_any(positive_mask, axis=1),
             tf.math.reduce_any(negative_mask, axis=1)

@@ -28,26 +28,33 @@ from tensorflow_similarity.types import FloatTensor, IntTensor
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
-def soft_nn_loss(labels: IntTensor,
-                 embeddings: FloatTensor,
+def soft_nn_loss(query_labels: IntTensor,
+                 query_embeddings: FloatTensor,
+                 key_labels: IntTensor,
+                 key_embeddings: FloatTensor,
                  distance: Callable,
-                 temperature: float) -> Any:
+                 temperature: float,
+                 remove_diagonal: bool = True) -> Any:
     """Computes the soft nearest neighbors loss.
 
     Args:
-        labels: Labels associated with embeddings.
-        embeddings: Embedded examples.
+        query_labels: labels associated with the query embed.
+        query_embeddings: Embedded query examples.
+        key_labels: labels associated with the key embed.
+        key_embeddings: Embedded key examples.
+        distance: Which distance function to use to compute the pairwise.
         temperature: Controls relative importance given
                         to the pair of points.
+        remove_diagonal: Bool. If True, will set diagonal to False in positive pair mask
 
     Returns:
         loss: loss value for the current batch.
     """
 
-    batch_size = tf.size(labels)
+    batch_size = tf.size(query_labels)
     eps = 1e-9
 
-    pairwise_dist = distance(embeddings)
+    pairwise_dist = distance(query_embeddings, key_embeddings)
     pairwise_dist = pairwise_dist / temperature
     negexpd = tf.math.exp(-pairwise_dist)
 
@@ -57,7 +64,12 @@ def soft_nn_loss(labels: IntTensor,
     negexpd = tf.math.multiply(negexpd, diag_mask)
 
     # creating mask to sample same class neighboorhood
-    pos_mask, _ = build_masks(labels, batch_size)
+    pos_mask, _ = build_masks(
+        query_labels,
+        key_labels,
+        batch_size=batch_size,
+        remove_diagonal=remove_diagonal,
+    )
     pos_mask = tf.cast(pos_mask, dtype=tf.float32)
 
     # all class neighborhood
