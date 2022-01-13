@@ -60,11 +60,11 @@ class DistanceMetric(Metric):
     def update_state(self, labels, embeddings, sample_weight):
 
         # [distances]
-        pairwise_distances = self.distance(embeddings)
+        pairwise_distances = self.distance(embeddings, embeddings)
 
         # [mask]
         batch_size = tf.size(labels)
-        positive_mask, negative_mask = build_masks(labels, batch_size)
+        positive_mask, negative_mask = build_masks(labels, labels, batch_size)
 
         if self.anchor == "positive":
             if self.positive_mining_strategy == "hard":
