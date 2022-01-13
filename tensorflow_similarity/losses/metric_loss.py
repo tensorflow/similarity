@@ -51,7 +51,7 @@ class MetricLoss(tf.keras.losses.Loss):
         Returns:
           Loss values per sample.
         """
-        loss: FloatTensor = self.fn(y_true, y_pred, **self._fn_kwargs)
+        loss: FloatTensor = self.fn(y_true, y_pred, y_true, y_pred, **self._fn_kwargs)
         return loss
 
     def get_config(self) -> Dict[str, Any]:

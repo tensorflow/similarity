@@ -54,8 +54,7 @@ def positive_distances(positive_mining_strategy: str,
 def negative_distances(negative_mining_strategy: str,
                        distances: FloatTensor,
                        negative_mask: BoolTensor,
-                       positive_mask: BoolTensor,
-                       batch_size: int) -> Tuple[FloatTensor, FloatTensor]:
+                       positive_mask: BoolTensor) -> Tuple[FloatTensor, FloatTensor]:
     """Negative distance computation.
 
     Args:
@@ -92,7 +91,7 @@ def negative_distances(negative_mining_strategy: str,
 
         # combine with negative mask: keep negative value if greater,
         # zero otherwise
-        empty = tf.zeros((batch_size, batch_size), dtype=tf.bool)
+        empty = tf.zeros_like(greater_distances, dtype=tf.bool)
         semi_hard_mask = tf.where(greater_distances, negative_mask, empty)
 
         # find the  minimal distance between negative labels above threshold

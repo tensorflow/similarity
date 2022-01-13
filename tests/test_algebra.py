@@ -6,7 +6,7 @@ from tensorflow_similarity.algebra import build_masks
 def test_mask():
     batch_size = 16
     labels = tf.random.uniform((batch_size, 1), 0, 10, dtype=tf.int32)
-    positive_mask, negative_mask = build_masks(labels, batch_size)
+    positive_mask, negative_mask = build_masks(labels, labels, batch_size)
     assert positive_mask[0][0] == False
     assert positive_mask[5][5] == False
 
@@ -15,6 +15,51 @@ def test_mask():
     for i in range(1, batch_size):
         assert combined[0][i] == True
         assert combined[i][0] == True
+
+
+def test_mask_non_square():
+    query_labels = tf.constant(
+        [
+            [1],
+            [2],
+            [0],
+        ],
+        dtype=tf.int32,
+    )
+
+    key_labels = tf.constant(
+        [
+            [1],
+            [2],
+            [3],
+            [0],
+        ],
+        dtype=tf.int32,
+    )
+
+    batch_size = tf.shape(query_labels)[0]
+    positive_mask_nodiag, negative_mask_nodiag = build_masks(query_labels, key_labels, batch_size)
+    positive_mask_wdiag, negative_mask_wdiag = build_masks(query_labels, key_labels, batch_size, remove_diagonal=False)
+
+    target_positive_mask_nodiag = tf.constant(
+        [
+            [False, False, False, False],
+            [False, False, False, False],
+            [False, False, False, True],
+        ]
+    )
+    tf.assert_equal(positive_mask_nodiag, target_positive_mask_nodiag)
+
+    target_positive_mask_wdiag = tf.constant(
+        [
+            [True, False, False, False],
+            [False, True, False, False],
+            [False, False, False, True],
+        ]
+    )
+    tf.assert_equal(positive_mask_wdiag, target_positive_mask_wdiag)
+
+    tf.assert_equal(negative_mask_wdiag, negative_mask_nodiag)
 
 
 def test_masked_max():
