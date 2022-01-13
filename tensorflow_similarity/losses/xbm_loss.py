@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, Union, Dict, Any
 
 import tensorflow as tf
 
@@ -87,6 +87,12 @@ class XBM(MetricLoss):
 
         loss: FloatTensor = self.fn(y_true, y_pred, y_true_mem, y_pred_mem, **self._fn_kwargs)
         return loss
+
+    def get_config(self) -> Dict[str, Any]:
+        base_config = super().get_config()
+        # TODO: Update with fn config if fn is MetricLoss
+
+        return base_config
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
