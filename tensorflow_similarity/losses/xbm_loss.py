@@ -1,8 +1,8 @@
-from typing import Callable, Optional, Union, Dict, Any
+from typing import Callable, Optional, Dict, Any, Union
 
 import tensorflow as tf
 
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
+from tensorflow_similarity.distances import distance_canonicalizer, Distance
 from tensorflow_similarity.losses import MetricLoss
 from tensorflow_similarity.losses.multisim_loss import multisimilarity_loss
 from tensorflow_similarity.types import FloatTensor
@@ -30,18 +30,23 @@ class XBM(MetricLoss):
         warmup_steps: int = 0,
         reduction: Callable = tf.keras.losses.Reduction.AUTO,
         name: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(fn, reduction, name, **kwargs)
+
+        self._loss_obj = fn
 
         if isinstance(fn, MetricLoss):
             self.distance = fn.distance
             self.fn = fn.fn
             self._fn_kwargs.update(fn._fn_kwargs)
-        elif "distance" in kwargs:
-            self.distance = kwargs["distance"]
+        elif "distance" in self._fn_kwargs:
+            self.distance = distance_canonicalizer(self._fn_kwargs["distance"])
+            self._fn_kwargs["distance"] = self.distance
 
-        self._fn_kwargs["remove_diagonal"] = False
+        # Diagonal is removed from positive pair mask because the batch is
+        # always contained in the beginning of the memory.
+        self._fn_kwargs["remove_diagonal"] = True
 
         self.memory_size = memory_size
         self.warmup_steps = warmup_steps
@@ -85,14 +90,37 @@ class XBM(MetricLoss):
             false_fn=_warmup_step,
         )
 
-        loss: FloatTensor = self.fn(y_true, y_pred, y_true_mem, y_pred_mem, **self._fn_kwargs)
+        loss: FloatTensor = self.fn(
+            y_true, y_pred, y_true_mem, y_pred_mem, **self._fn_kwargs
+        )
         return loss
 
     def get_config(self) -> Dict[str, Any]:
-        base_config = super().get_config()
-        # TODO: Update with fn config if fn is MetricLoss
+        config = {
+            "memory_size": self.memory_size,
+            "warmup_steps": self.warmup_steps,
+        }
+        loss_serialized = tf.keras.utils.serialize_keras_object(self._loss_obj)
+        config["fn"] = loss_serialized
 
-        return base_config
+        base_config = super().get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        # TODO: This method does not work for classes that inherit from XBM
+
+        custom_objects = tf.keras.utils.get_custom_objects()
+        identifier = config["fn"]
+
+        if isinstance(identifier, str) and "Similarity>" + identifier in custom_objects:
+            identifier = "Similarity>" + identifier
+
+        config["fn"] = tf.keras.utils.deserialize_keras_object(
+            identifier=identifier,
+            module_objects=globals(),
+        )
+        return cls(**config)
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -165,6 +193,5 @@ class XBMMultiSimilarityLoss(XBM):
             lmda=lmda,
             memory_size=memory_size,
             warmup_steps=warmup_steps,
-            remove_diagonal=False,
-            **kwargs
+            **kwargs,
         )
