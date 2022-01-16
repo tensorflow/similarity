@@ -97,8 +97,6 @@ class XBM(MetricLoss):
 
         def _xbm_step():
             # Update memory with new values
-            # FIXME: WARNING:tensorflow:5 out of the last 5 calls to <function multisimilarity_loss at 0x7fbca3889550> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has experimental_relax_shapes=True option that relaxes argument shapes that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
-            #   Because shape is changing, we get multiple retracings ONLY in EagerMode
             self._y_true_memory.assign(y_true_mem)
             self._y_pred_memory.assign(y_pred_mem)
             return y_true_mem, y_pred_mem
