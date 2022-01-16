@@ -1,10 +1,8 @@
-from typing import Callable, Optional, Dict, Any, Union
+from typing import Callable, Optional, Dict, Any
 
 import tensorflow as tf
 
-from tensorflow_similarity.distances import distance_canonicalizer, Distance
 from tensorflow_similarity.losses import MetricLoss
-from tensorflow_similarity.losses.multisim_loss import multisimilarity_loss
 from tensorflow_similarity.types import FloatTensor
 
 
@@ -25,24 +23,18 @@ def _add_memory_variable(tensor):
 class XBM(MetricLoss):
     def __init__(
         self,
-        fn: Callable,
+        loss: MetricLoss,
         memory_size: int,
         warmup_steps: int = 0,
         reduction: Callable = tf.keras.losses.Reduction.AUTO,
         name: Optional[str] = None,
         **kwargs,
     ):
-        super().__init__(fn, reduction, name, **kwargs)
+        super().__init__(loss.fn, reduction, name, **kwargs)
 
-        self._loss_obj = fn
-
-        if isinstance(fn, MetricLoss):
-            self.distance = fn.distance
-            self.fn = fn.fn
-            self._fn_kwargs.update(fn._fn_kwargs)
-        elif "distance" in self._fn_kwargs:
-            self.distance = distance_canonicalizer(self._fn_kwargs["distance"])
-            self._fn_kwargs["distance"] = self.distance
+        self.loss = loss
+        self.distance = loss.distance
+        self._fn_kwargs.update(loss._fn_kwargs)
 
         # Diagonal is removed from positive pair mask because the batch is
         # always contained in the beginning of the memory.
@@ -97,101 +89,15 @@ class XBM(MetricLoss):
 
     def get_config(self) -> Dict[str, Any]:
         config = {
+            "loss": tf.keras.utils.serialize_keras_object(self.loss),
             "memory_size": self.memory_size,
             "warmup_steps": self.warmup_steps,
         }
-        loss_serialized = tf.keras.utils.serialize_keras_object(self._loss_obj)
-        config["fn"] = loss_serialized
 
         base_config = super().get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
     @classmethod
-    def from_config(cls, config):
-        # TODO: This method does not work for classes that inherit from XBM
-
-        custom_objects = tf.keras.utils.get_custom_objects()
-        identifier = config["fn"]
-
-        if isinstance(identifier, str) and "Similarity>" + identifier in custom_objects:
-            identifier = "Similarity>" + identifier
-
-        config["fn"] = tf.keras.utils.deserialize_keras_object(
-            identifier=identifier,
-            module_objects=globals(),
-        )
+    def from_config(cls, config: Dict[str, Any]) -> MetricLoss:
+        config["loss"] = tf.keras.utils.deserialize_keras_object(config["loss"])
         return cls(**config)
-
-
-@tf.keras.utils.register_keras_serializable(package="Similarity")
-class XBMMultiSimilarityLoss(XBM):
-    """Computes the multi similarity loss in an online fashion.
-
-
-    `y_true` must be  a 1-D integer `Tensor` of shape (batch_size,).
-    It's values represent the classes associated with the examples as
-    **integer  values**.
-
-    `y_pred` must be 2-D float `Tensor`  of L2 normalized embedding vectors.
-    you can use the layer `tensorflow_similarity.layers.L2Embedding()` as the
-    last layer of your model to ensure your model output is properly
-    normalized.
-    """
-
-    def __init__(
-        self,
-        memory_size: int,
-        distance: Union[Distance, str] = "cosine",
-        alpha: float = 1.0,
-        beta: float = 20,
-        epsilon: float = 0.2,
-        lmda: float = 0.5,
-        warmup_steps: int = 0,
-        name: str = "XBMMultiSimilarityLoss",
-        **kwargs,
-    ):
-        """Initializes the Multi Similarity Loss
-
-        Args:
-            distance: Which distance function to use to compute the pairwise
-            distances between embeddings. Defaults to 'cosine'.
-
-            alpha: The exponential weight for the positive pairs. Increasing
-            alpha makes the logsumexp softmax closer to the max positive pair
-            distance, while decreasing it makes it closer to
-            max(P) + log(batch_size).
-
-            beta: The exponential weight for the negative pairs. Increasing
-            beta makes the logsumexp softmax closer to the max negative pair
-            distance, while decreasing it makes the softmax closer to
-            max(N) + log(batch_size).
-
-            epsilon: Used to remove easy positive and negative pairs. We only
-            keep positives that we greater than the (smallest negative pair -
-            epsilon) and we only keep negatives that are less than the
-            (largest positive pair + epsilon).
-
-            lmda: Used to weight the distance. Below this distance, negatives
-            are up weighted and positives are down weighted. Similarly, above
-            this distance negatives are down weighted and positive are up
-            weighted.
-
-            name: Loss name. Defaults to MultiSimilarityLoss.
-        """
-
-        # distance canonicalization
-        distance = distance_canonicalizer(distance)
-        self.distance = distance
-
-        super().__init__(
-            multisimilarity_loss,
-            name=name,
-            distance=distance,
-            alpha=alpha,
-            beta=beta,
-            epsilon=epsilon,
-            lmda=lmda,
-            memory_size=memory_size,
-            warmup_steps=warmup_steps,
-            **kwargs,
-        )
