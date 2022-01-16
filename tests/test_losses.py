@@ -1,11 +1,14 @@
 import tensorflow as tf
 import numpy as np
-from tensorflow_similarity.losses import TripletLoss
+from tensorflow_similarity.losses import TripletLoss, MultiSimilarityLoss
 from tensorflow_similarity.losses import PNLoss
 from tensorflow_similarity.losses import SoftNearestNeighborLoss
 
 
 # [triplet loss]
+from tensorflow_similarity.losses.xbm_loss import XBM
+
+
 def test_triplet_loss_serialization():
     loss = TripletLoss()
     config = loss.get_config()
@@ -178,3 +181,63 @@ def test_softnn_loss():
     loss_check = softnn_util(y_true, x, temperature)
     loss_diff = loss.numpy() - loss_check
     assert np.abs(loss_diff) < 1e-3
+
+
+def test_xbm_loss():
+    batch_size = 6
+    embed_dim = 16
+
+    embeddings1 = tf.random.uniform(shape=[batch_size, embed_dim])
+    labels1 = tf.constant(
+        [
+            [1],
+            [1],
+            [2],
+            [2],
+            [3],
+            [3],
+        ],
+        dtype=tf.int32
+    )
+
+    embeddings2 = tf.random.uniform(shape=[batch_size, embed_dim])
+    labels2 = tf.constant(
+        [
+            [4],
+            [4],
+            [5],
+            [5],
+            [6],
+            [6],
+        ],
+        dtype=tf.int32
+    )
+
+    distance = "cosine"  # @param ["cosine", "L2", "L1"]{allow-input: false}
+    loss = MultiSimilarityLoss(distance=distance)
+    loss_nowarm = XBM(loss, memory_size=12, warmup_steps=0)
+
+    # test enqueue
+    loss_nowarm(labels1, embeddings1)
+    assert loss_nowarm._y_pred_memory.numpy().shape == (batch_size, embed_dim)
+    tf.assert_equal(loss_nowarm._y_true_memory, labels1)
+
+    loss_nowarm(labels2, embeddings2)
+    assert loss_nowarm._y_pred_memory.numpy().shape == (2*batch_size, embed_dim)
+    tf.assert_equal(loss_nowarm._y_true_memory, tf.concat([labels2, labels1], axis=0))
+
+    # test dequeue
+    loss_nowarm(labels2, embeddings2)
+    assert loss_nowarm._y_pred_memory.numpy().shape == (2 * batch_size, embed_dim)
+    tf.assert_equal(loss_nowarm._y_true_memory, tf.concat([labels2, labels2], axis=0))
+
+    # test warmup
+    loss_warm = XBM(loss, memory_size=12, warmup_steps=1)
+
+    loss_warm(labels1, embeddings1)
+    assert loss_warm._y_pred_memory.numpy().shape == (0, embed_dim)
+    tf.assert_equal(loss_warm._y_true_memory, tf.constant([[]], dtype=tf.int32))
+
+    loss_warm(labels2, embeddings2)
+    assert loss_warm._y_pred_memory.numpy().shape == (batch_size, embed_dim)
+    tf.assert_equal(loss_warm._y_true_memory, labels2)
