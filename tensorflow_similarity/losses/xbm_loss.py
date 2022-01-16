@@ -21,6 +21,39 @@ def _add_memory_variable(tensor):
 
 
 class XBM(MetricLoss):
+    """Cross-batch memory wrapper for MetricLoss instances.
+
+    Maintains a memory queue of past embedding batches. Batch embeddings are
+    paired with all embeddings in the memory queue, a loss is calculated from
+    these pairs.
+
+    Reference
+
+    Wang, Xun, et al. "Cross-batch memory for embedding learning."
+    https://arxiv.org/pdf/1912.06798.pdf
+
+    Examples:
+
+    >>> loss = tensorflow_similarity.losses.MultiSimilarityLoss()
+    >>> loss = XBM(loss, memory_size=1000, warmup_steps=100)
+    >>> loss(y_true, y_pred)
+
+    Args:
+      loss: MetricLoss instance to use for computing loss.
+      memory_size: Integer specifying the number of past embeddings to
+        maintain in the memory queue.
+      warmup_steps: Integer specifying the number of warmup steps where
+        loss is calculated without using the memory queue.
+
+    Returns:
+      Loss value for cross-batched pairs
+
+    NOTE:
+    This will trigger multiple tf.function retracings if called multiple
+    times in Eager mode, because of the dynamic size of the memory queue.
+
+    """
+
     def __init__(
         self,
         loss: MetricLoss,
