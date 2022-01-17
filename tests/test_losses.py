@@ -213,7 +213,7 @@ def test_xbm_loss():
         dtype=tf.int32
     )
 
-    distance = "cosine"  # @param ["cosine", "L2", "L1"]{allow-input: false}
+    distance = "cosine"
     loss = MultiSimilarityLoss(distance=distance)
     loss_nowarm = XBM(loss, memory_size=12, warmup_steps=0)
 
