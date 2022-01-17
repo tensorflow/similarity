@@ -24,7 +24,7 @@ class XBM(MetricLoss):
     """Cross-batch memory wrapper for MetricLoss instances.
 
     Maintains a memory queue of past embedding batches. Batch embeddings are
-    paired with all embeddings in the memory queue, a loss is calculated from
+    paired with all embeddings in the memory queue, and loss is calculated from
     these pairs.
 
     Reference
@@ -36,7 +36,10 @@ class XBM(MetricLoss):
 
     >>> loss = tensorflow_similarity.losses.MultiSimilarityLoss()
     >>> loss = XBM(loss, memory_size=1000, warmup_steps=100)
+    >>> y_pred = tf.random.uniform(shape=[4, 16])
+    >>> y_true = tf.constant([[1], [2], [2], [3]])
     >>> loss(y_true, y_pred)
+    <tf.Tensor: shape=(), dtype=float32, numpy=0.3740389>
 
     Args:
       loss: MetricLoss instance to use for computing loss.
