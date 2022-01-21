@@ -51,7 +51,7 @@ def test_batch_vs_single(tmp_path):
     vect_dim = 16
 
     # gen
-    idxs = [i for i in range(index_size)]
+    idxs = list(range(index_size))
 
     targets = np.random.random((num_targets, vect_dim)).astype('float32')
     embs = np.random.random((index_size, vect_dim)).astype('float32')

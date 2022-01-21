@@ -116,7 +116,7 @@ def projector(embeddings: FloatTensor,
     cords = reducer.fit_transform(embeddings)
 
     # sample id
-    _idxs = [i for i in range(len(embeddings))]
+    _idxs = list(range(len(embeddings)))
 
     # labels?
     if labels is not None:
