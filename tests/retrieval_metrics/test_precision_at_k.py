@@ -31,4 +31,4 @@ def test_compute(avg, expected):
     rm = PrecisionAtK(k=3, average=avg)
 
     precision = rm.compute(query_labels=query_labels, match_mask=match_mask)
-    np.testing.assert_allclose(precision, expected)
+    np.testing.assert_allclose(precision, expected, atol=1e-05)
