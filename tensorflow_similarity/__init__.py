@@ -15,7 +15,7 @@ __version__ = '0.16.0.dev11'
 
 
 from . import algebra  # noqa
-from . import augmenters # noqa
+from . import augmenters  # noqa
 from . import architectures  # noqa
 from . import callbacks  # noqa
 from . import classification_metrics  # noqa
@@ -34,4 +34,4 @@ from . import training_metrics  # noqa
 from . import types  # noqa
 from . import utils  # noqa
 from . import visualization  # noqa
-from . import schedules # noqa
+from . import schedules  # noqa
