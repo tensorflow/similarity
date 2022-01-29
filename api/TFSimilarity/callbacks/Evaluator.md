@@ -19,7 +19,7 @@ a remote database.
 
 <h3 id="calibrate">calibrate</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/evaluator.py#L108-L153">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/evaluators/evaluator.py#L108-L153">View source</a>
 
 ```python
 calibrate(
@@ -141,7 +141,7 @@ CalibrationResults containing the thresholds and cutpoints Dicts.
 
 <h3 id="evaluate_classification">evaluate_classification</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/evaluator.py#L62-L106">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/evaluators/evaluator.py#L62-L106">View source</a>
 
 ```python
 evaluate_classification(
@@ -259,7 +259,7 @@ distance threshold.
 
 <h3 id="evaluate_retrieval">evaluate_retrieval</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/evaluator.py#L36-L60">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/evaluators/evaluator.py#L36-L60">View source</a>
 
 ```python
 evaluate_retrieval(
