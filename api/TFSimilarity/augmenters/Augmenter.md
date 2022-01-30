@@ -14,7 +14,7 @@ inheritance.
 
 <h3 id="augment">augment</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/augmenter.py#L23-L26">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/augmenter.py#L23-L26">View source</a>
 
 ``<b>python
 @abc.abstractmethod</b>``
@@ -37,7 +37,7 @@ augment(
 
 <h3 id="__call__">__call__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/augmenter.py#L28-L31">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/augmenter.py#L28-L31">View source</a>
 
 ```python
 __call__(

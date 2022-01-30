@@ -55,7 +55,7 @@ num_classes (int, optional): Number of classes. Defaults to 1001.
 
 <h3 id="distort">distort</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/img_augments.py#L1576-L1610">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/img_augments.py#L1576-L1610">View source</a>
 
 ```python
 distort(
@@ -106,7 +106,7 @@ Tuple[tf.Tensor, tf.Tensor]: The augmented version of <b>image</b> and
 
 <h3 id="__call__">__call__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/img_augments.py#L1571-L1574">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/img_augments.py#L1571-L1574">View source</a>
 
 ```python
 __call__(
