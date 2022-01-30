@@ -93,7 +93,7 @@ exclude selected operations.
 
 <h3 id="distort">distort</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/img_augments.py#L1321-L1386">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/img_augments.py#L1321-L1386">View source</a>
 
 ```python
 distort(

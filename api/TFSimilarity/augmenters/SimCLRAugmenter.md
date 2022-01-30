@@ -34,7 +34,7 @@ code adapted from [orignal github](https://github.com/google-research/simclr/tre
 
 <h3 id="augment">augment</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/simclr.py#L648-L664">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/simclr.py#L648-L664">View source</a>
 
 ``<b>python
 @tf.function</b>``
@@ -57,7 +57,7 @@ augment(
 
 <h3 id="__call__">__call__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/augmenter.py#L28-L31">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/augmenter.py#L28-L31">View source</a>
 
 ```python
 __call__(
