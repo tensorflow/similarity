@@ -68,6 +68,7 @@ setup(
         "tqdm",
         "bokeh",
         "umap-learn",
+        "tensorflow-addons"
     ],
     extras_require={
         "dev": [
