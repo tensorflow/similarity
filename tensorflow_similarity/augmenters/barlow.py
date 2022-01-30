@@ -128,7 +128,7 @@ class BarlowAugmenter(Augmenter):
           views = []
           augmenter = BarlowTransformator()
           
-          for _ in range(num_views):
+          for _ in range(num_augmentations_per_example):
               view = (
                   tf.data.Dataset.from_tensor_slices(x)
                   .shuffle(1000, seed=self.seed)
