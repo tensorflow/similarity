@@ -111,23 +111,36 @@ class BarlowTransformator(keras.Model):
         return x
 
 class BarlowAugmenter(Augmenter):
-  def __init__(self, batch_size):
+  def __init__(self, num_cpu: Optional[int] = os.cpu_count(), seed: Optional[int] = 128):
     super(Augmenter, self).__init__()
-    self.batch_size = batch_size 
+    self.num_cpu = num_cpu
+    self.seed = seed
 
-  def augment(self, ds: list) -> tf.data.Dataset:
-    augmenter = BarlowTransformator()
-    return (
-        tf.data.Dataset.from_tensor_slices(ds)
-        .shuffle(1000, seed=128)
-        .map(augmenter, num_parallel_calls=tf.data.AUTOTUNE)
-        .batch(self.batch_size, drop_remainder=True)
-        .prefetch(tf.data.AUTOTUNE)
-        # .with_options(self.options)
-    )
+  def augment(
+      self, x: tf.Tensor, y: tf.Tensor = tf.constant([0]), is_warmup: bool = True, num_views: int = 2,
+  ) -> List[tf.Tensor]:
 
-  def __call__(self, ds: list) -> tf.data.Dataset:
-      a1 = self.augment(ds)
-      a2 = self.augment(ds)
+      with tf.device("/cpu:0"):
+          inputs = tf.stack(x)
+          inputs = tf.cast(inputs, dtype="float32") / 255.0
+          views = []
+          augmenter = BarlowTransformator()
+          
+          for _ in range(num_views):
+              view = (
+                  tf.data.Dataset.from_tensor_slices(x)
+                  .shuffle(1000, seed=self.seed)
+                  .map(augmenter, num_parallel_calls=tf.data.AUTOTUNE)
+                  .prefetch(tf.data.AUTOTUNE)
+              )
+              tolist = []
+              for item in view:
+                tolist.append(item)
+              views.append(tolist)
+      return views
 
-      return tf.data.Dataset.zip((a1, a2))
+  def __call__(
+      self, x: tf.Tensor, y: tf.Tensor = tf.constant([0]), is_warmup: bool = True, num_views: int = 2,
+  ) -> List[tf.Tensor]:
+      return self.augment(x)
+
