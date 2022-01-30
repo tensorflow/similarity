@@ -41,7 +41,7 @@ model.calibrate(x=query_examples,
 
 <h3 id="compute">compute</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/classification_metrics/precision.py#L46-L90">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/classification_metrics/precision.py#L46-L90">View source</a>
 
 ```python
 compute(
@@ -130,7 +130,7 @@ A 1D FloatTensor containing the metric at each distance threshold.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/classification_metrics/classification_metric.py#L58-L63">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/classification_metrics/classification_metric.py#L58-L63">View source</a>
 
 ```python
 get_config()

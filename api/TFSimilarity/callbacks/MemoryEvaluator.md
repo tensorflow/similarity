@@ -15,7 +15,7 @@ Inherits From: [`Evaluator`](../../TFSimilarity/callbacks/Evaluator.md), [`ABC`]
 
 <h3 id="calibrate">calibrate</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/memory_evaluator.py#L176-L366">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/evaluators/memory_evaluator.py#L176-L366">View source</a>
 
 ```python
 calibrate(
@@ -154,7 +154,7 @@ lookupds must not be empty.
 
 <h3 id="evaluate_classification">evaluate_classification</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/memory_evaluator.py#L98-L174">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/evaluators/memory_evaluator.py#L98-L174">View source</a>
 
 ```python
 evaluate_classification(
@@ -272,7 +272,7 @@ distance threshold.
 
 <h3 id="evaluate_retrieval">evaluate_retrieval</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/evaluators/memory_evaluator.py#L39-L96">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/evaluators/memory_evaluator.py#L39-L96">View source</a>
 
 ```python
 evaluate_retrieval(
