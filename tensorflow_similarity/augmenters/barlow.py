@@ -3,7 +3,7 @@ from tensorflow import keras
 import tensorflow_addons as tfa
 import numpy as np
 from tensorflow_similarity.augmenters.augmenter import Augmenter 
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple, Any
 import os
 
 class Augmentation(keras.layers.Layer):
