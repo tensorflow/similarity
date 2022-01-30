@@ -12,7 +12,7 @@ class Augmentation(keras.layers.Layer):
 
     @tf.function
     def random_execute(self, prob: float) -> bool:
-        return tf.random.uniform([], minval=0, maxval=1) < prob
+        return bool(tf.random.uniform([], minval=0, maxval=1) < prob)
 
 
 class RandomToGrayscale(Augmentation):
