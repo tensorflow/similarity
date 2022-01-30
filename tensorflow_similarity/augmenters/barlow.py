@@ -119,7 +119,7 @@ class BarlowAugmenter(Augmenter):
     self.seed = seed
 
   def augment(
-      self, x: tf.Tensor, y: tf.Tensor = tf.constant([0]), is_warmup: bool = True, num_views: int = 2,
+      self, x: tf.Tensor, y: tf.Tensor = tf.constant([0]), is_warmup: bool = True, num_augmentations_per_example: int = 2,
   ) -> List[tf.Tensor]:
 
       with tf.device("/cpu:0"):
@@ -142,7 +142,7 @@ class BarlowAugmenter(Augmenter):
       return views
 
   def __call__(
-      self, x: tf.Tensor, y: tf.Tensor = tf.constant([0]), is_warmup: bool = True, num_views: int = 2,
+      self, x: tf.Tensor, y: tf.Tensor = tf.constant([0]), is_warmup: bool = True, num_augmentations_per_example: int = 2,
   ) -> List[tf.Tensor]:
       return self.augment(x)
 
