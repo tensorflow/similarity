@@ -183,7 +183,7 @@ def random_brightness(
     return image
 
 def random_color_jitter(
-    image: Tensor, p_execute = 1.0, p_jitter: float = 0.8, p_grey: int = 0.2, strength: float = 1.0, impl: str = "simclrv2"
+    image: Tensor, p_execute = 1.0, p_jitter: float = 0.8, p_grey: float = 0.2, strength: float = 1.0, impl: str = "simclrv2"
 ) -> Tensor:
     def _transform(image: Tensor) -> Tensor:
         color_jitter_t = functools.partial(
