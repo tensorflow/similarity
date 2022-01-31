@@ -97,7 +97,7 @@ ValueError if <b>augmentation_name</b> is unsupported.
 
 <h3 id="distort">distort</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/img_augments.py#L997-L1058">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/img_augments.py#L997-L1058">View source</a>
 
 ```python
 distort(
@@ -146,7 +146,7 @@ based on the <b>policies</b> pass into the function.
 
 <h3 id="policy_reduced_cifar10">policy_reduced_cifar10</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/img_augments.py#L1101-L1141">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/img_augments.py#L1101-L1141">View source</a>
 
 ``<b>python
 @staticmethod</b>``
@@ -180,7 +180,7 @@ the policy.
 
 <h3 id="policy_reduced_imagenet">policy_reduced_imagenet</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/img_augments.py#L1185-L1225">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/img_augments.py#L1185-L1225">View source</a>
 
 ``<b>python
 @staticmethod</b>``
@@ -214,7 +214,7 @@ the policy.
 
 <h3 id="policy_simple">policy_simple</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/img_augments.py#L1227-L1246">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/img_augments.py#L1227-L1246">View source</a>
 
 ``<b>python
 @staticmethod</b>``
@@ -229,7 +229,7 @@ Same as <b>policy_v0</b>, except with custom ops removed.
 
 <h3 id="policy_svhn">policy_svhn</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/img_augments.py#L1143-L1183">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/img_augments.py#L1143-L1183">View source</a>
 
 ``<b>python
 @staticmethod</b>``
@@ -263,7 +263,7 @@ the policy.
 
 <h3 id="policy_test">policy_test</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/img_augments.py#L1248-L1254">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/img_augments.py#L1248-L1254">View source</a>
 
 ``<b>python
 @staticmethod</b>``
@@ -278,7 +278,7 @@ Autoaugment test policy for debugging.
 
 <h3 id="policy_v0">policy_v0</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/img_augments.py#L1060-L1099">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/img_augments.py#L1060-L1099">View source</a>
 
 ``<b>python
 @staticmethod</b>``

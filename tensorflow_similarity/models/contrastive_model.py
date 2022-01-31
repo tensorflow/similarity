@@ -168,17 +168,17 @@ class ContrastiveModel(tf.keras.Model):
             loss: String (name of objective function), objective function, any
               `tensorflow_similarity.loss.*` instance or a `tf.keras.losses.Loss`
               instance. See the [Losses documentation](../losses.md) for a list of
-              metric learning specific losses offered by TensorFlow Similairy and
+              metric learning specific losses offered by TensorFlow Similarity and
               [tf.keras.losses](https://www.tensorflow.org/api_docs/python/tf/keras/losses)
               for the losses available directly in TensorFlow.
 
             metrics: List of metrics to be evaluated by the model during
               training and testing. Each of those can be a string, a function or a
-              [tensorflow_similairty.metrics.*](../metrics.md) instance. Note that
-              the metrics used for some type of metric-learning such as distance
+              [tensorflow_similarity.metrics.*](../metrics.md) instance. Note that
+              the metrics used for some types of metric-learning such as distance
               learning (e.g via triplet loss) have a different prototype than the
               metrics used in standard models and you can't use the
-              `tf.keras.metrics` for those type of learning.
+              `tf.keras.metrics` for those types of learning.
 
               Additionally many distance metrics are computed based of the
               [Indexer()](../indexer.md) performance. E.g Matching Top 1 accuracy.
