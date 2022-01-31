@@ -1,16 +1,16 @@
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
-from augmenter import Augmenter
+from tensorflow_similarity.augmenters.augmenter import Augmenter
 from typing import Callable, List, Optional, Tuple, Any
 import os
 
 
-from augmentation_utils.cropping import random_crop_with_resize
-from augmentation_utils.flip import random_random_flip_left_right
-from augmentation_utils.color_jitter import random_color_jitter
-from augmentation_utils.blur import random_blur
-from augmentation_utils.solarize import random_solarize
+from tensorflow_similarity.augmenters.augmentation_utils.cropping import random_crop_with_resize
+from tensorflow_similarity.augmenters.augmentation_utils.flip import random_random_flip_left_right
+from tensorflow_similarity.augmenters.augmentation_utils.color_jitter import random_color_jitter
+from tensorflow_similarity.augmenters.augmentation_utils.blur import random_blur
+from tensorflow_similarity.augmenters.augmentation_utils.solarize import random_solarize
 
 
 def augment_barlow(image: tf.Tensor, height: int, width: int):
