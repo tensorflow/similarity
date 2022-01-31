@@ -33,7 +33,8 @@ class BarlowAugmenter(Augmenter):
         super(Augmenter, self).__init__()
         self.num_cpu = num_cpu
         self.seed = seed
-
+    
+    @tf.function
     def augment(
         self,
         x: Any,
