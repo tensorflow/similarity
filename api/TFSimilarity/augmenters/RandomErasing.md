@@ -60,7 +60,7 @@ trials (int, optional): Maximum number of trials to randomly sample a
 
 <h3 id="distort">distort</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/augmenters/img_augments.py#L1437-L1449">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/augmenters/img_augments.py#L1437-L1449">View source</a>
 
 ```python
 distort(

@@ -26,7 +26,7 @@ core features.
 
 <h3 id="calibrate">calibrate</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L440-L509">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L440-L509">View source</a>
 
 ```python
 calibrate(
@@ -152,7 +152,7 @@ CalibrationResults containing the thresholds and cutpoints Dicts.
 
 <h3 id="create_index">create_index</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L244-L314">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L244-L314">View source</a>
 
 ```python
 create_index(
@@ -258,7 +258,7 @@ Invalid search framework or key value store.
 
 <h3 id="evaluate_classification">evaluate_classification</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L631-L735">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L631-L735">View source</a>
 
 ```python
 evaluate_classification(
@@ -373,7 +373,7 @@ Uncalibrated model: run model.calibration()")
 
 <h3 id="evaluate_retrieval">evaluate_retrieval</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L577-L629">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L577-L629">View source</a>
 
 ```python
 evaluate_retrieval(
@@ -460,7 +460,7 @@ Index must contain embeddings but is currently empty.
 
 <h3 id="index">index</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L316-L358">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L316-L358">View source</a>
 
 ```python
 index(
@@ -530,7 +530,7 @@ Output indexing progress info. Defaults to 1.
 
 <h3 id="index_single">index_single</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L360-L397">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L360-L397">View source</a>
 
 ```python
 index_single(
@@ -600,7 +600,7 @@ Output indexing progress info. Defaults to 1.
 
 <h3 id="index_size">index_size</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L741-L743">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L741-L743">View source</a>
 
 ```python
 index_size() -> int
@@ -612,7 +612,7 @@ Return the index size
 
 <h3 id="index_summary">index_summary</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L436-L438">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L436-L438">View source</a>
 
 ```python
 index_summary()
@@ -624,7 +624,7 @@ Display index info summary.
 
 <h3 id="load_index">load_index</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L745-L755">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L745-L755">View source</a>
 
 ```python
 load_index(
@@ -662,7 +662,7 @@ Be verbose. Defaults to 1.
 
 <h3 id="lookup">lookup</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L399-L418">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L399-L418">View source</a>
 
 ```python
 lookup(
@@ -713,7 +713,7 @@ Returns
 
 <h3 id="match">match</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L511-L575">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L511-L575">View source</a>
 
 ```python
 match(
@@ -812,7 +812,7 @@ evaluation in a single go.
 
 <h3 id="reset_index">reset_index</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L737-L739">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L737-L739">View source</a>
 
 ```python
 reset_index()
@@ -824,7 +824,7 @@ Reinitialize the index
 
 <h3 id="save_index">save_index</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L757-L765">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L757-L765">View source</a>
 
 ```python
 save_index(
@@ -862,7 +862,7 @@ Store index data compressed. Defaults to True.
 
 <h3 id="single_lookup">single_lookup</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L420-L434">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L420-L434">View source</a>
 
 ```python
 single_lookup(
@@ -906,7 +906,7 @@ Returns
 
 <h3 id="to_data_frame">to_data_frame</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/similarity_model.py#L825-L835">View source</a>
+<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/models/similarity_model.py#L825-L835">View source</a>
 
 ```python
 to_data_frame(
