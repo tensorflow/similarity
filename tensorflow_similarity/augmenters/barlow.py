@@ -59,5 +59,5 @@ class BarlowAugmenter(Augmenter):
     def __call__(
         self, x: Any, y: Any = tf.constant([0]), num_augmentations_per_example: int = 2, is_warmup: bool = True,
     ) -> List[Any]:
-        return self.augment(x)
+        return list(self.augment(x))
 
