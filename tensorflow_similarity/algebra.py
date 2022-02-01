@@ -70,27 +70,36 @@ def masked_min(distances: FloatTensor,
     return tf.cast(masked_min, dtype=tf.float32), arg_min
 
 
-def build_masks(labels: IntTensor,
-                batch_size: int) -> Tuple[BoolTensor, BoolTensor]:
+def build_masks(query_labels: IntTensor,
+                key_labels: IntTensor,
+                batch_size: int,
+                remove_diagonal: bool = True) -> Tuple[BoolTensor, BoolTensor]:
     """Build masks that allows to select only the positive or negatives
     embeddings.
     Args:
-        labels: 1D int `Tensor` that contains the class ids.
+        query_labels: 1D int `Tensor` that contains the query class ids.
+        key_labels: 1D int `Tensor` that contains the key class ids.
         batch_size: size of the batch.
+        remove_diagonal: Bool. If True, will set diagonal to False in positive pair mask
 
     Returns:
         Tuple of Tensors containing the positive_mask and negative_mask
     """
-    if tf.rank(labels) == 1:
-        labels = tf.reshape(labels, (-1, 1))
+    if tf.rank(query_labels) == 1:
+        query_labels = tf.reshape(query_labels, (-1, 1))
+
+    if tf.rank(key_labels) == 1:
+        key_labels = tf.reshape(key_labels, (-1, 1))
 
     # same class mask
-    positive_mask = tf.math.equal(labels, tf.transpose(labels))
+    positive_mask = tf.math.equal(query_labels, tf.transpose(key_labels))
+
     # not the same class
     negative_mask = tf.math.logical_not(positive_mask)
 
-    # we need to remove the diagonal from positive mask
-    diag = tf.logical_not(tf.linalg.diag(tf.ones(batch_size, dtype=tf.bool)))
-    positive_mask = tf.math.logical_and(positive_mask, diag)
+    if remove_diagonal:
+        # It is optional to remove diagonal from positive mask.
+        # Diagonal is often removed if queries and keys are identical.
+        positive_mask = tf.linalg.set_diag(positive_mask, tf.zeros(batch_size, dtype=tf.bool))
 
     return positive_mask, negative_mask

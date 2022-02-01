@@ -30,9 +30,12 @@ from .metric_loss import MetricLoss
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
-def pn_loss(labels: IntTensor,
-            embeddings: FloatTensor,
+def pn_loss(query_labels: IntTensor,
+            query_embeddings: FloatTensor,
+            key_labels: IntTensor,
+            key_embeddings: FloatTensor,
             distance: Callable,
+            remove_diagonal: bool = True,
             positive_mining_strategy: str = 'hard',
             negative_mining_strategy: str = 'semi-hard',
             soft_margin: bool = False,
@@ -43,12 +46,18 @@ def pn_loss(labels: IntTensor,
 
 
     Args:
-        labels: labels associated with the embed
+        query_labels: labels associated with the query embed.
 
-        embeddings: Embedded examples.
+        query_embeddings: Embedded query examples.
+
+        key_labels: labels associated with the key embed.
+
+        key_embeddings: Embedded key examples.
 
         distance: Which distance function to use to compute the pairwise
         distances between embeddings. Defaults to 'cosine'.
+
+        remove_diagonal: Bool. If True, will set diagonal to False in positive pair mask
 
         positive_mining_strategy: What mining strategy to use to select
         embedding from the same class. Defaults to 'hard'.
@@ -72,13 +81,18 @@ def pn_loss(labels: IntTensor,
     # do not remove this code. It is actually needed for specific situation
     # Reshape label tensor to [batch_size, 1] if not already in that format.
     # labels = tf.reshape(labels, (labels.shape[0], 1))
-    batch_size = tf.size(labels)
+    batch_size = tf.size(query_labels)
 
     # [distances]
-    pairwise_distances = distance(embeddings)
+    pairwise_distances = distance(query_embeddings, key_embeddings)
 
     # [masks]
-    positive_mask, negative_mask = build_masks(labels, batch_size)
+    positive_mask, negative_mask = build_masks(
+        query_labels,
+        key_labels,
+        batch_size=batch_size,
+        remove_diagonal=remove_diagonal,
+    )
 
     # [Positive distance computation]
     pos_distances, pos_idxs = positive_distances(
@@ -93,7 +107,6 @@ def pn_loss(labels: IntTensor,
             pairwise_distances,
             negative_mask,
             positive_mask,
-            batch_size,
     )
 
     # Compute the distance between the pairs of positive and negative examples.

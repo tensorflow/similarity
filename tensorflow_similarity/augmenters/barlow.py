@@ -12,6 +12,7 @@ from tensorflow_similarity.augmenters.augmentation_utils.color_jitter import ran
 from tensorflow_similarity.augmenters.augmentation_utils.blur import random_blur
 from tensorflow_similarity.augmenters.augmentation_utils.solarize import random_solarize
 
+
 @tf.function
 def augment_barlow(image: tf.Tensor, height: int, width: int):
     image = random_crop_with_resize(image, height, width)
@@ -31,8 +32,7 @@ class BarlowAugmenter(Augmenter):
                  height: int,
                  num_cpu: Optional[int] = os.cpu_count(),
                  seed: Optional[int] = 128,
-                 
-                 ):
+         ):
         super(Augmenter, self).__init__()
         self.num_cpu = num_cpu
         self.seed = seed
@@ -54,6 +54,7 @@ class BarlowAugmenter(Augmenter):
             views = []
 
             for _ in range(num_augmentations_per_example):
+
                 view = tf.map_fn(lambda img: augment_barlow(img, self.width, self.height),
                                  inputs,
                                  parallel_iterations=self.num_cpu)
