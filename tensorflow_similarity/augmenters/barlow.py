@@ -31,11 +31,9 @@ class BarlowAugmenter(Augmenter):
                  width: int,
                  height: int,
                  num_cpu: Optional[int] = os.cpu_count(),
-                 seed: Optional[int] = 128,
          ):
         super(Augmenter, self).__init__()
         self.num_cpu = num_cpu
-        self.seed = seed
         self.width = width
         self.height = height
     
