@@ -1,4 +1,3 @@
-
 import pytest
 from tensorflow_similarity.augmenters.augmentation_utils import color_jitter
 import tensorflow as tf 
