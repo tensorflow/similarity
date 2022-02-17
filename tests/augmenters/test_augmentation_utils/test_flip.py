@@ -30,6 +30,6 @@ def test_flip_top_bottom():
   assert (tf.shape(random_flip_always) == tf.shape(img)).numpy().all()
   assert (tf.shape(random_flip_never) == tf.shape(img)).numpy().all()
 
-  # check if flip works
+  # check if flip works 
   assert not (random_flip_always == img).numpy().all()
   assert (random_flip_never == img).numpy().all()
