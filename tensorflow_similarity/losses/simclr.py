@@ -45,9 +45,9 @@ class SimCLRLoss(Loss):
         batch_size = tf.shape(za)[0]
         diag = tf.one_hot(tf.range(batch_size), batch_size)
 
-        if self.use_hidden_norm:
-            za = tf.math.l2_normalize(za)
-            zb = tf.math.l2_normalize(zb)
+        # We expect za and zb to be rank 2 tensors.
+        za = tf.math.l2_normalize(za, axis=1)
+        zb = tf.math.l2_normalize(zb, axis=1)
 
         # compute pairwise
         ab = tf.matmul(za, zb, transpose_b=True)

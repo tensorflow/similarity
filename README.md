@@ -12,7 +12,7 @@ With Tensorflow Similarity you can train two main types of models:
 
 1. **Self-supervised models**: Used to learn general data representations on unlabeled data to boost the accuracy of downstream tasks where you have few labels. For example, you can pre-train a model on a large number of unlabled images using one of the supported contrastive methods supported by TensorFlow Similarity, and then fine-tune it on a small labeled dataset to achieve higher accuracy. To get started training your own self-supervised model see this [notebook](examples/unsupervised_hello_world.ipynb).
 
-2. **Similarity models**: Output embeddings that allow you to find and cluster similar examples such as images representing the same object within a large corpus of examples. For instance, as visible above, you can train a similarity model to find and cluster similar looking, unseen cat and dog images from the [Oxford IIIT Pet Dataset](https://www.tensorflow.org/datasets/catalog/oxford_iiit_pet) while only training on a few of the dataset classes. To get started training your own similarity model see this [notebook](examples/supervised_visualization.ipynb).
+2. **Similarity models**: Output embeddings that allow you to find and cluster similar examples such as images representing the same object within a large corpus of examples. For instance, as visible above, you can train a similarity model to find and cluster similar looking, unseen cat and dog images from the [Oxford IIIT Pet Dataset](https://www.tensorflow.org/datasets/catalog/oxford_iiit_pet) while only training on a few of the dataset classes. To get started training your own similarity model see this [notebook](examples/supervised/visualization.ipynb).
 
 ## What's new
 
