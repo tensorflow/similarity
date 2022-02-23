@@ -34,11 +34,11 @@ class Barlow(Loss):
         # compute the diagonal
         batch_size = tf.shape(za)[0]
 
-        za_norm = self.normalize_columns(za)
-        zb_norm = self.normalize_columns(zb)
+        za = self.standardize_columns(za)
+        zb = self.standardize_columns(zb)
 
         # compute pairwise
-        c = tf.matmul(za_norm, zb_norm, transpose_a=True)
+        c = tf.matmul(za, zb, transpose_a=True)
         c = c / tf.cast(batch_size, dtype="float32")
 
         on_diag = 1.0 - tf.linalg.diag_part(c)
@@ -69,7 +69,7 @@ class Barlow(Loss):
         off_diag: FloatTensor = tf.reshape(off_diagonals, [-1])
         return off_diag
 
-    def normalize_columns(self, x: FloatTensor) -> FloatTensor:
+    def standardize_columns(self, x: FloatTensor) -> FloatTensor:
         col_mean = tf.math.reduce_mean(x, axis=0)
         col_std = tf.math.reduce_std(x, axis=0)
 
