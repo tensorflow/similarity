@@ -19,7 +19,6 @@ class SimCLRLoss(Loss):
     def __init__(
         self,
         temperature: float = 0.05,
-        use_hidden_norm: bool = True,
         margin: float = 0.001,
         reduction: Callable = tf.keras.losses.Reduction.AUTO,
         name: Optional[str] = None,
@@ -27,7 +26,6 @@ class SimCLRLoss(Loss):
     ):
         super().__init__(reduction=reduction, name=name, **kwargs)
         self.temperature = tf.constant(temperature, dtype="float32")
-        self.use_hidden_norm = use_hidden_norm
         self.margin = margin
 
     @tf.function
@@ -77,7 +75,6 @@ class SimCLRLoss(Loss):
     def get_config(self) -> Dict[str, Any]:
         config = {
             "temperature": self.temperature,
-            "use_hidden_norm": self.use_hidden_norm,
             "margin": self.margin,
         }
         base_config = super().get_config()
