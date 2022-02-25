@@ -51,7 +51,7 @@ def batch_random_blur(
 
     def generate_selector(p: float, bsz: int) -> FloatTensor:
         shape = [bsz, 1, 1, 1]
-        cond = tf.less(tf.random.uniform(shape, 0, 1, dtype=tf.float32), p)
+        cond = tf.less(tf.random.uniform([], 0, 1, dtype=tf.float32), p)
         selector: FloatTensor = tf.cast(cond, tf.float32)
         return selector
 
