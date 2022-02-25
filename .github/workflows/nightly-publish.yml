@@ -7,16 +7,54 @@ on:
     - cron: '7 3 * * *'
 
 jobs:
-  publish:
+  check:
+    name: Check files
+      
     # Prevent Publish from running on forks.
     if: github.repository == 'tensorflow/similarity'
+
+    outputs:
+      run_job: ${{ steps.check_files.outputs.run_job }}
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
       with:
+        fetch-depth: 2
         ref: 'development'
+
+    - name: check modified files
+      id: check_files
+      run: |
+        echo "=============== list modified files ==============="
+        git diff --name-only HEAD^ HEAD
+        
+        echo "========== check paths of modified files =========="
+        git diff --name-only HEAD^ HEAD > files.txt
+        while IFS= read -r file
+        do
+          echo $file
+          if [[ $file = tensorflow_similarity/* ]]; then
+            echo "This modified file is under the 'tensorflow_similarity' folder."
+            echo "::set-output name=run_job::true"
+            break
+          else
+            echo "::set-output name=run_job::false"
+          fi
+        done < files.txt
+
+  publish:
+    name: Publish nightly
+
+    needs: check
+
+    # Prevent Publish from running on forks.
+    if: github.repository == 'tensorflow/similarity'
+
+    if: needs.check.outputs.run_job == 'true'
+
+    runs-on: ubuntu-latest
 
     - name: Set up Python
       uses: actions/setup-python@v2
