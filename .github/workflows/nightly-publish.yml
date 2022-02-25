@@ -33,7 +33,7 @@ jobs:
         while IFS= read -r file
         do
           echo $file
-          if [[ $file = tensorflow_similarity/* ]]; then
+          if [[ $file = tensorflow_similarity/* && $file != tensorflow_similarity/__init__.py ]]; then
             echo "This modified file is under the 'tensorflow_similarity' folder."
             echo "::set-output name=run_job::true"
             break
