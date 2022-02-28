@@ -25,7 +25,7 @@ class SimCLRLoss(Loss):
         **kwargs
     ):
         super().__init__(reduction=reduction, name=name, **kwargs)
-        self.temperature = tf.constant(temperature, dtype="float32")
+        self.temperature = temperature
         self.margin = margin
 
     @tf.function
