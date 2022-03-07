@@ -10,6 +10,7 @@ release.sh
 .DS_Store
 benchmark/supervised/datasets/
 benchmark/supervised/models/
+datasets/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

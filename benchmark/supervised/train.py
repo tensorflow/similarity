@@ -8,7 +8,8 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow_similarity.architectures import EfficientNetSim
 from tensorflow_similarity.losses import TripletLoss, CircleLoss, PNLoss
-from benchmark import load_dataset, clean_dir
+import tensorflow as tf
+from benchmark import load_dataset, clean_dir, load_tfrecord_dataset
 
 
 def make_loss(distance, params):
@@ -41,9 +42,18 @@ def run(config):
         distance = dconf['distance']
 
         cprint("|-loading dataset", 'blue')
-        x_train, y_train = load_dataset(version, dataset_name, 'train')
-        x_test, y_test = load_dataset(version, dataset_name, 'test')
-        print("shapes x:", x_train.shape, 'y:', y_train.shape)
+
+        USING_TFRECORD = True
+        if not USING_TFRECORD:
+            x_train, y_train = load_dataset(version, dataset_name, 'train')
+            x_test, y_test = load_dataset(version, dataset_name, 'test')
+            print("shapes x:", x_train.shape, 'y:', y_train.shape)
+        else:
+            train_ds = load_tfrecord_dataset(version, dataset_name, 'train', batch_size)
+            test_ds = load_tfrecord_dataset(version, dataset_name, 'test', batch_size)
+
+            for x, y in train_ds.take(1):
+                print("shapes x:", tf.shape(x), 'y:', tf.shape(y))
 
         for lparams in dconf['losses']:
             cprint("Training %s" % lparams['name'], 'green')
@@ -64,14 +74,25 @@ def run(config):
                                     trainable=trainable)
 
             model.compile(optimizer=optim, loss=loss)
-            history = model.fit(x_train,
-                                y_train,
-                                batch_size=batch_size,
-                                steps_per_epoch=train_steps,
-                                epochs=epochs,
-                                validation_data=(x_test, y_test),
-                                callbacks=callbacks,
-                                validation_steps=val_steps)
+
+            if not USING_TFRECORD:
+                history = model.fit(x_train,
+                                    y_train,
+                                    batch_size=batch_size,
+                                    steps_per_epoch=train_steps,
+                                    epochs=epochs,
+                                    validation_data=(x_test, y_test),
+                                    callbacks=callbacks,
+                                    validation_steps=val_steps)
+            else:
+                model.fit(train_ds,
+                            # batch_size=batch_size,
+                            steps_per_epoch=train_steps,
+                            epochs=epochs,
+                            validation_data=test_ds,
+                            callbacks=callbacks,
+                            validation_steps=val_steps)
+
             # save history
             with open("%shistory.json" % stub, 'w') as o:
                 o.write(json.dumps(history.history))

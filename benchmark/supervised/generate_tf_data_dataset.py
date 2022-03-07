@@ -39,27 +39,17 @@ def run(config):
         index_shots = dconf['index_shots']
         query_shots = dconf['query_shots']
 
-        # download and merge splits
-        x = []
-        y = []
-        for split in splits:
-            ds, ds_info = tfds.load(dataset_name, split=split, with_info=True)
+        ds, ds_info = tfds.load(dataset_name, split="all", with_info=True, )
 
-            if x_key not in ds_info.features:
-                raise ValueError("x_key not found - available features are:",
-                                 str(ds_info.features.keys()))
-            if y_key not in ds_info.features:
-                raise ValueError("y_key not found - available features are:",
-                                 str(ds_info.features.keys()))
 
-            pb = tqdm(total=ds_info.splits[split].num_examples,
-                      desc="Merging %s" % split)
+        ds = ds.map(
+            lambda item: {x_key: item[x_key], y_key: item[y_key]}
+        )
 
-            for e in ds:
-                x.append(e[x_key])
-                y.append(int(e[y_key]))
-                pb.update()
-            pb.close()
+        for item in ds.take(5):
+            print(item)
+
+        print(ds)
 
     cprint("|-Resize", 'blue')
     x_resized = []

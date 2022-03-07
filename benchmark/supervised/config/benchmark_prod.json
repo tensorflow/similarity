@@ -21,12 +21,7 @@
             "shots":[1, 5, 10],
             "epochs": 10,
             "losses": [
-                        {
-                            "name": "pn_loss_semi",
-                            "loss": "pn_loss",
-                            "negative_mining": "semi-hard",
-                            "lr": 0.001
-                        },
+
                         {
                             "name": "circle_loss",
                             "loss": "circle_loss",

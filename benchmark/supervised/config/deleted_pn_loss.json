@@ -1,0 +1,6 @@
+{
+    "name": "pn_loss_semi",
+    "loss": "pn_loss",
+    "negative_mining": "semi-hard",
+    "lr": 0.001
+}
