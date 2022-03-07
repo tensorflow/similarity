@@ -108,3 +108,4 @@ if __name__ == '__main__':
         quit()
     config = json.loads(open(args.config).read())
     run(config)
+    # should run
