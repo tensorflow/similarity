@@ -53,6 +53,7 @@ class EvalCallback(Callback):
         k: int = 1,
         matcher: Union[str, ClassificationMatch] = "match_nearest",
         distance_thresholds: Optional[FloatTensor] = None,
+        known_classes: Optional[IntTensor] = None,
     ):
         """Evaluate model matching quality against a validation dataset at
         epoch end.
@@ -80,19 +81,25 @@ class EvalCallback(Callback):
 
             matcher: {'match_nearest', 'match_majority_vote'} or
             ClassificationMatch object. Defines the classification matching,
-            e.g., match_nearest will count a True Positive if the query_label is
-            equal to the label of the nearest neighbor and the distance is less
-            than or equal to the distance threshold.
+            e.g., match_nearest will count a True Positive if the query_label
+            is equal to the label of the nearest neighbor and the distance is
+            less than or equal to the distance threshold.
 
             distance_thresholds: A 1D tensor denoting the distances points at
-            which we compute the metrics. If None, distance_thresholds is set to
-            tf.constant([math.inf])
+            which we compute the metrics. If None, distance_thresholds is set
+            to tf.constant([math.inf])
+
+            known_classes: Optional. If specified the validation set will be
+            split into two subsets based on whether a class was seen or not
+            during training. This should be a list of classes seen during
+            training.
+
         """
         super().__init__()
-        self.queries = queries
+        # self.queries = queries # breaking change
         if not tf.is_tensor(query_labels):
             query_labels = tf.convert_to_tensor(np.array(query_labels))
-        self.query_labels: IntTensor = tf.cast(query_labels, dtype='int32')
+        # self.query_labels = ... # breaking change
         self.targets = targets
         self.target_labels = target_labels
         self.distance = distance
@@ -103,10 +110,15 @@ class EvalCallback(Callback):
         ]
         self.k = k
         self.matcher = matcher
+
         if distance_thresholds is not None:
             self.distance_thresholds = distance_thresholds
         else:
             self.distance_thresholds = tf.constant([math.inf])
+        if known_classes is not None:
+            self.split_validation = True
+        else:
+            self.split_validation = False
 
         if tb_logdir:
             tb_logdir = str(Path(tb_logdir) / "index/")
@@ -114,6 +126,55 @@ class EvalCallback(Callback):
             print("TensorBoard logging enable in %s" % tb_logdir)
         else:
             self.tb_writer = None
+
+        # Use broadcasting to do a y X known_classes equality check. By adding
+        # a dim to the start of known_classes and a dim to the end of y, this
+        # essentially checks `for ck in known_classes: for cy in y: ck == cy`.
+        # We then reduce_any to find all rows in y that match at least one
+        # class in known_classes.
+        # See https://numpy.org/doc/stable/user/basics.broadcasting.html
+        if self.split_validation:
+            known_classes = tf.cast(known_classes, dtype="int32")
+            known_classes = tf.reshape(known_classes, (-1))
+            broadcast_classes = tf.expand_dims(known_classes, axis=0)
+            broadcast_labels = tf.expand_dims(query_labels, axis=-1)
+            known_mask = tf.math.reduce_any(
+                broadcast_classes == broadcast_labels, axis=1
+            )
+            known_idxs = tf.squeeze(tf.where(known_mask))
+            unknown_idxs = tf.squeeze(tf.where(~known_mask))
+
+        with tf.device("/cpu:0"):
+            if self.split_validation:
+                self.queries_known = tf.gather(queries, indices=known_idxs)
+                self.query_labels_known = tf.gather(
+                    query_labels, indices=known_idxs
+                )
+                # Expand to 2D if we only have a single example
+                if tf.rank(self.queries_known) == 1:
+                    self.queries_known = tf.expand_dims(self.queries_known,
+                                                        axis=0)
+                    self.query_labels_known = tf.expand_dims(
+                        self.query_labels_known, axis=0
+                    )
+
+                self.queries_unknown = tf.gather(queries, indices=unknown_idxs)
+                self.query_labels_unknown = tf.gather(
+                    query_labels, indices=unknown_idxs
+                )
+                # Expand to 2D if we only have a single example
+                if tf.rank(self.queries_unknown) == 1:
+                    self.queries_unknown = tf.expand_dims(
+                        self.queries_unknown, axis=0
+                    )
+                    self.query_labels_unknown = tf.expand_dims(
+                        self.query_labels_unknown, axis=0
+                    )
+            else:
+                self.queries_known = queries
+                self.query_labels_known = query_labels
+                self.queries_unknown = None
+                self.query_labels_unknown = None
 
     def on_epoch_end(self, epoch: int, logs: dict = None):
         """Computes the eval metrics at the end of each epoch.
@@ -131,9 +192,9 @@ class EvalCallback(Callback):
         # rebuild the index
         self.model.index(self.targets, self.target_labels, verbose=0)
 
-        results = _compute_classification_metrics(
-            queries=self.queries,
-            query_labels=self.query_labels,
+        known_results = _compute_classification_metrics(
+            queries=self.queries_known,
+            query_labels=self.query_labels_known,
             model=self.model,
             evaluator=self.evaluator,
             metrics=self.metrics,
@@ -142,14 +203,48 @@ class EvalCallback(Callback):
             distance_thresholds=self.distance_thresholds,
         )
 
+        if self.split_validation:
+            unknown_results = _compute_classification_metrics(
+                queries=self.queries_unknown,
+                query_labels=self.query_labels_unknown,
+                model=self.model,
+                evaluator=self.evaluator,
+                metrics=self.metrics,
+                k=self.k,
+                matcher=self.matcher,
+                distance_thresholds=self.distance_thresholds,
+            )
+
         mstr = []
-        for metric_name, vals in results.items():
-            float_val = vals[0]
-            logs[metric_name] = float_val
-            mstr.append(f"{metric_name}: {float_val:.4f}")
-            if self.tb_writer:
-                with self.tb_writer.as_default():
-                    tf.summary.scalar(metric_name, float_val, step=epoch)
+        if self.split_validation:
+            for metric_name, vals in known_results.items():
+                float_val = vals[0]
+                full_metric_name = f"{metric_name}_known_classes"
+                logs[full_metric_name] = float_val
+                mstr.append(f"{full_metric_name}: {float_val:0.4f}")
+                if self.tb_writer:
+                    with self.tb_writer.as_default():
+                        tf.summary.scalar(full_metric_name, float_val,
+                                          step=epoch)
+
+            for metric_name, vals in unknown_results.items():
+                float_val = vals[0]
+                full_metric_name = f"{metric_name}_unknown_classes"
+                logs[full_metric_name] = float_val
+                mstr.append(f"{full_metric_name}: {float_val:0.4f}")
+                if self.tb_writer:
+                    with self.tb_writer.as_default():
+                        tf.summary.scalar(full_metric_name, float_val,
+                                          step=epoch)
+
+        else:
+            for metric_name, vals in known_results.items():
+                float_val = vals[0]
+                logs[metric_name] = float_val
+                mstr.append(f"{metric_name}: {float_val:.4f}")
+                if self.tb_writer:
+                    with self.tb_writer.as_default():
+                        tf.summary.scalar(metric_name, float_val, step=epoch)
 
         # reset the index to prevent users from accidently using this after the
         # callback
@@ -213,9 +308,9 @@ class SplitValidationLoss(Callback):
 
             tb_logdir: Where to write TensorBoard logs. Defaults to None.
 
-            k: The number of nearest neighbors to return for each query. The
-            lookups are consumed by the Matching Strategy and used to derive the
-            matching label and distance.
+            k: The number of nearest neighbors to return for each query.
+            The lookups are consumed by the Matching Strategy and used to
+            derive the matching label and distance.
 
             matcher: {'match_nearest', 'match_majority_vote'} or
             ClassificationMatch object. Defines the classification matching,
@@ -224,8 +319,8 @@ class SplitValidationLoss(Callback):
             less than or equal to the distance threshold.
 
             distance_thresholds: A 1D tensor denoting the distances points at
-            which we compute the metrics. If None, distance_thresholds is set to
-            tf.constant([math.inf])
+            which we compute the metrics. If None, distance_thresholds is set
+            to tf.constant([math.inf])
         """
         super().__init__()
         self.targets = targets
