@@ -27,6 +27,7 @@ from .evaluators import Evaluator, MemoryEvaluator
 from .models import SimilarityModel
 from .types import Tensor, FloatTensor, IntTensor
 from .utils import unpack_lookup_distances, unpack_lookup_labels
+from .utils import unpack_results
 
 
 class EvalCallback(Callback):
@@ -215,41 +216,17 @@ class EvalCallback(Callback):
                 distance_thresholds=self.distance_thresholds,
             )
 
-        mstr = []
-        if self.split_validation:
-            for metric_name, vals in known_results.items():
-                float_val = vals[0]
-                full_metric_name = f"{metric_name}_known_classes"
-                logs[full_metric_name] = float_val
-                mstr.append(f"{full_metric_name}: {float_val:0.4f}")
-                if self.tb_writer:
-                    with self.tb_writer.as_default():
-                        tf.summary.scalar(full_metric_name, float_val,
-                                          step=epoch)
-
-            for metric_name, vals in unknown_results.items():
-                float_val = vals[0]
-                full_metric_name = f"{metric_name}_unknown_classes"
-                logs[full_metric_name] = float_val
-                mstr.append(f"{full_metric_name}: {float_val:0.4f}")
-                if self.tb_writer:
-                    with self.tb_writer.as_default():
-                        tf.summary.scalar(full_metric_name, float_val,
-                                          step=epoch)
-
+            mstr = unpack_results(known_results, epoch=epoch, logs=logs,
+                                  tb_writer=self.tb_writer,
+                                  name_suffix="_known_classes")
+            mstr.extend(unpack_results(unknown_results, epoch=epoch,
+                        logs=logs, tb_writer=self.tb_writer,
+                        name_suffix="_unknown_classes"))
         else:
-            for metric_name, vals in known_results.items():
-                float_val = vals[0]
-                logs[metric_name] = float_val
-                mstr.append(f"{metric_name}: {float_val:.4f}")
-                if self.tb_writer:
-                    with self.tb_writer.as_default():
-                        tf.summary.scalar(metric_name, float_val, step=epoch)
+            mstr = unpack_results(known_results, epoch=epoch, logs=logs,
+                                  tb_writer=self.tb_writer)
 
-        # reset the index to prevent users from accidently using this after the
-        # callback
         self.model.reset_index()
-
         print(" - ".join(mstr))
 
 

@@ -248,16 +248,16 @@ def test_split_val_eval_init(tmp_path):
         log_dir.mkdir(parents=True)
 
     callback = EvalCallback(queries=queries,
-                                   query_labels=query_labels,
-                                   targets=targets,
-                                   target_labels=target_labels,
-                                   known_classes=known_classes,
-                                   distance=distance,
-                                   metrics=metrics,
-                                   k=k,
-                                   matcher=matcher,
-                                   distance_thresholds=distance_thresholds,
-                                   tb_logdir=log_dir)
+                            query_labels=query_labels,
+                            targets=targets,
+                            target_labels=target_labels,
+                            known_classes=known_classes,
+                            distance=distance,
+                            metrics=metrics,
+                            k=k,
+                            matcher=matcher,
+                            distance_thresholds=distance_thresholds,
+                            tb_logdir=log_dir)
 
     assert tf.math.reduce_all(callback.targets == targets)
     assert tf.math.reduce_all(callback.target_labels == target_labels)
@@ -288,11 +288,11 @@ def test_split_val_eval_callback(tmp_path):
         log_dir.mkdir(parents=True)
 
     callback = EvalCallback(queries=queries,
-                                   query_labels=query_labels,
-                                   targets=targets,
-                                   target_labels=target_labels,
-                                   known_classes=known_classes,
-                                   tb_logdir=str(log_dir))
+                            query_labels=query_labels,
+                            targets=targets,
+                            target_labels=target_labels,
+                            known_classes=known_classes,
+                            tb_logdir=str(log_dir))
 
     # manually set model ^^
     tf.keras.backend.clear_session()
