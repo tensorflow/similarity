@@ -11,7 +11,7 @@ class VicReg(Loss):
     """VicReg Loss"""
 
     def __init__(self,
-                 const_std: float = 1e-4
+                 const_std: float = 1e-4,
                  lambda_: float = 25,
                  mu: float = 25,
                  nu: float = 1,
