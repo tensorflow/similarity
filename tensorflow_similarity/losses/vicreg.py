@@ -75,7 +75,7 @@ class VicReg(Loss):
 
     def get_config(self) -> Dict[str, Any]:
         config = {
-            "std_const": self.std_const
+            "std_const": self.std_const,
             "lambda_": self.lambda_,
             "mu": self.mu,
             "nu": self.nu
