@@ -14,7 +14,7 @@ class VicReg(Loss):
                  const_std: float = 1e-4
                  lambda_: float = 25,
                  mu: float = 25,
-                 nu: float = 25,
+                 nu: float = 1,
                  reduction: Callable = tf.keras.losses.Reduction.AUTO,
                  name: Optional[str] = None,
                  **kwargs):
