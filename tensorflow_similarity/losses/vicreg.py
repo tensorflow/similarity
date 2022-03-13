@@ -70,9 +70,9 @@ class VicReg(Loss):
         off_diag_cb = tf.math.reduce_sum(off_diag_cb) / num_features
 
         # covariance loss(1d tensor) for redundancy reduction
-        cov_loss: FloatTensor = off_diag_ca + off_diag_cb
+        cov_loss = off_diag_ca + off_diag_cb
         
-        loss = self.lambda_ * sim_loss + self.mu * std_loss + self.nu * cov_loss
+        loss: FloatTensor = self.lambda_ * sim_loss + self.mu * std_loss + self.nu * cov_loss
         
         return loss
 
