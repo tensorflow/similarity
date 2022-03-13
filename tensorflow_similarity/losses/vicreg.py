@@ -36,7 +36,7 @@ class VicReg(Loss):
         batch_size = tf.shape(za)[0]
          
         # distance loss to measure similarity between representations
-        sim_loss = tf.keras.losses.MeanSquaredError()(z_a, z_b)
+        sim_loss = tf.keras.losses.MeanSquaredError()(za, zb)
         
         za = self.standardize_columns(za)
         zb = self.standardize_columns(zb)
@@ -46,7 +46,7 @@ class VicReg(Loss):
         std_zb = tf.sqrt(tf.math.reduce_variance(zb, 0) + self.std_const)
         std_loss_za = tf.reduce_mean(tf.max(0, 1 - std_za))
         std_loss_zb = tf.reduce_mean(tf.max(0, 1 - std_zb))
-        std_loss = std_loss_za + std_loss_zb
+        std_loss = std_loss_za / 2 + std_loss_zb / 2
         
 
         # cross-correlation matrix axa
@@ -58,14 +58,16 @@ class VicReg(Loss):
         cb = cb / tf.cast(batch_size-1, dtype="float32")
 
     
-        off_diag_ca = self.off_diagonal(c)
+        num_features = tf.shape(ca)[0]
+        
+        off_diag_ca = self.off_diagonal(ca)
         off_diag_ca = tf.math.pow(off_diag_ca, 2)
-        off_diag_ca = tf.math.reduce_sum(off_diag_ca)
+        off_diag_ca = tf.math.reduce_sum(off_diag_ca) / num_features
         
         
-        off_diag_cb = self.off_diagonal(c)
+        off_diag_cb = self.off_diagonal(cb)
         off_diag_cb = tf.math.pow(off_diag_cb, 2)
-        off_diag_cb = tf.math.reduce_sum(off_diag_cb)
+        off_diag_cb = tf.math.reduce_sum(off_diag_cb) / num_features
 
         # covariance loss(1d tensor) for redundancy reduction
         cov_loss: FloatTensor = off_diag_ca + off_diag_cb
