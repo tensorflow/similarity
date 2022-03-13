@@ -38,6 +38,9 @@ class VicReg(Loss):
         # distance loss to measure similarity between representations
         sim_loss = tf.keras.losses.MeanSquaredError()(z_a, z_b)
         
+        za = self.standardize_columns(za)
+        zb = self.standardize_columns(zb)
+        
         # std loss to maximize variance(information)
         std_za = tf.sqrt(tf.math.reduce_variance(za, 0) + self.std_const)
         std_zb = tf.sqrt(tf.math.reduce_variance(zb, 0) + self.std_const)
@@ -45,8 +48,6 @@ class VicReg(Loss):
         std_loss_zb = tf.reduce_mean(tf.max(0, 1 - std_zb))
         std_loss = std_loss_za + std_loss_zb
         
-        za = self.standardize_columns(za)
-        zb = self.standardize_columns(zb)
 
         # cross-correlation matrix axa
         ca = tf.matmul(za, za, transpose_a=True)
