@@ -328,7 +328,7 @@ class SimilarityModel(tf.keras.Model):
 
             y: class ids associated with the data if any. Defaults to None.
 
-            store_data: store the data associated with the samples in the key
+            data: store the data associated with the samples in the key
             value store. Defaults to True.
 
             build: Rebuild the index after indexing. This is needed to make the

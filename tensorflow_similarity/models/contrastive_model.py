@@ -299,7 +299,6 @@ class ContrastiveModel(tf.keras.Model):
         loss_trackers = self.loss_trackers.values()
         return itertools.chain(loss_trackers, base_metrics)
 
-    @tf.function
     def train_step(self, data):
         view1, view2 = self._parse_views(data)
 
@@ -353,7 +352,6 @@ class ContrastiveModel(tf.keras.Model):
                 return_metrics[metric.name] = result
         return return_metrics
 
-    @tf.function
     def test_step(self, data):
         view1, view2 = self._parse_views(data)
 
