@@ -1,3 +1,6 @@
+import os
+print(os.listdir())
+
 "Supervised loss benchmark"
 import json
 import numpy as np
@@ -11,7 +14,7 @@ from tensorflow_similarity.losses import TripletLoss, CircleLoss, PNLoss
 from tensorflow_similarity.retrieval_metrics import RecallAtK
 import tensorflow as tf
 from benchmark import load_dataset, clean_dir, load_tfrecord_dataset
-import os
+
 
 def make_loss(distance, params):
     if params['loss'] == "triplet_loss":
@@ -109,7 +112,8 @@ def run(config):
 
 
 if __name__ == '__main__':
-    os.chdir("./similarity/")
+    #UNCOMMENT IF RUNNING IN VSCODE
+    # os.chdir("./similarity/")
     print(os.listdir())
     parser = argparse.ArgumentParser(description='Train model')
     parser.add_argument('--config', '-c', help='config path')

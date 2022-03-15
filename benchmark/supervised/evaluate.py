@@ -25,7 +25,8 @@ def load_model(version, dataset_name, model_loss):
         return sim_model
 
 #%%
-os.chdir('../../')
+#UNCOMMENT IF RUNNING IN VSCODE
+# os.chdir('../../')
 #%%
 # def ds_get_cardinality(ds):
 #     i = 0
@@ -66,7 +67,7 @@ model.index(ds_index_x, ds_index_y, data=ds_index_x)
 num_neighbors = 5
 nns = model.single_lookup(ds_seen_queries_x[61], k=num_neighbors)
 # %%
-viz_neigbors_imgs(ds_seen_queries_x[61], ds_seen_queries_y[60], nns)
+viz_neigbors_imgs(ds_seen_queries_x[61], ds_seen_queries_y[61], nns)
 
 #%%
 calibration = model.calibrate(
