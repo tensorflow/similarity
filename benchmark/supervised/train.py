@@ -6,11 +6,12 @@ from termcolor import cprint
 import tensorflow_datasets as tfds
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import ModelCheckpoint
-from tensorflow_similarity.architectures import EfficientNetSim
+from tensorflow_similarity.architectures import EfficientNetSim, ResNet18Sim
 from tensorflow_similarity.losses import TripletLoss, CircleLoss, PNLoss
+from tensorflow_similarity.retrieval_metrics import RecallAtK
 import tensorflow as tf
 from benchmark import load_dataset, clean_dir, load_tfrecord_dataset
-
+import os
 
 def make_loss(distance, params):
     if params['loss'] == "triplet_loss":
@@ -49,9 +50,11 @@ def run(config):
             x_test, y_test = load_dataset(version, dataset_name, 'test')
             print("shapes x:", x_train.shape, 'y:', y_train.shape)
         else:
-            train_ds = load_tfrecord_dataset(version, dataset_name, 'train', batch_size)
-            test_ds = load_tfrecord_dataset(version, dataset_name, 'test', batch_size)
+            #NOTE: Remove repeat
+            train_ds = load_tfrecord_dataset(version, dataset_name, 'train', batch_size)#.repeat(60)
+            test_ds = load_tfrecord_dataset(version, dataset_name, 'test', batch_size)#.repeat(60)
 
+            print("Dataset Length", len(train_ds))
             for x, y in train_ds.take(1):
                 print("shapes x:", tf.shape(x), 'y:', tf.shape(y))
 
@@ -71,11 +74,16 @@ def run(config):
             model = EfficientNetSim(shape,
                                     embedding_size,
                                     variant=architecture,
-                                    trainable=trainable)
+                                    trainable=trainable,
+                                )
+
+            # model = ResNet18Sim(shape, embedding_size)
 
             model.compile(optimizer=optim, loss=loss)
 
             if not USING_TFRECORD:
+                # NOTE: Numpy ds may not work because not enough samples for 
+                # train steps and batch size. Soved by using .repeat() for tfrecords
                 history = model.fit(x_train,
                                     y_train,
                                     batch_size=batch_size,
@@ -85,9 +93,10 @@ def run(config):
                                     callbacks=callbacks,
                                     validation_steps=val_steps)
             else:
-                model.fit(train_ds,
+                #NOTE: epochs has been changed to 20
+                history = model.fit(train_ds,
                             # batch_size=batch_size,
-                            steps_per_epoch=train_steps,
+                            # steps_per_epoch=train_steps,
                             epochs=epochs,
                             validation_data=test_ds,
                             callbacks=callbacks,
@@ -98,7 +107,10 @@ def run(config):
                 o.write(json.dumps(history.history))
 
 
+
 if __name__ == '__main__':
+    os.chdir("./similarity/")
+    print(os.listdir())
     parser = argparse.ArgumentParser(description='Train model')
     parser.add_argument('--config', '-c', help='config path')
     args = parser.parse_args()

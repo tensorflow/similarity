@@ -83,11 +83,11 @@ class DatasetBuilder:
             with tf.device("/cpu:0"):
                 return tf.image.resize_with_pad(img, size, size)
 
-        x_resized = []
-        for e in tqdm(x, desc="resizing"):
-            x_resized.append(resize(e, self.conf.img_size))
+        # x_resized = []
+        for index, e in enumerate(tqdm(x, desc="resizing")):
+            x[index] = resize(e, self.conf.img_size)
 
-        return x_resized
+        return x
 
     def partition_dataset(self, x_resized, y):
         ds_index, ds_query = defaultdict(list), defaultdict(list)
@@ -322,14 +322,14 @@ class DatasetBuilder:
         x, y = self.merge_dataset_splits()
 
         cprint("|-Resize", 'blue')
-        x_resized = self.resize_x(x)
+        x = self.resize_x(x)
 
         cprint("|-Partition", 'green')
 
         [
             ds_index, ds_query, x_train, y_train, x_test, y_test, train_cls,
             test_cls
-        ] = self.partition_dataset(x_resized, y)
+        ] = self.partition_dataset(x, y)
 
         [
             x_index, y_index, x_unseen_queries, y_unseen_queries,

@@ -11,24 +11,24 @@
             "shape": [360, 360, 3],
             "embedding_size": 256,
             "architecture": "B0",
-            "trainable": "frozen",
+            "trainable": "partial",
             "distance": "cosine",
-            "batch_size": 128,
+            "batch_size": 64,
             "train_steps": 100,
             "val_steps": 10,
             "index_shots": 10,
             "query_shots": 10,
             "shots":[1, 5, 10],
-            "epochs": 10,
+            "epochs": 10, 
             "losses": [
-
                         {
                             "name": "circle_loss",
                             "loss": "circle_loss",
-                            "gamma": 256,
+                            "gamma": 64,
                             "margin": 0.25,
-                            "lr": 0.001
+                            "lr": 0.001 
                         }
+
             ]
         }
     }

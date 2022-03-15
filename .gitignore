@@ -11,6 +11,7 @@ release.sh
 benchmark/supervised/datasets/
 benchmark/supervised/models/
 datasets/
+models/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

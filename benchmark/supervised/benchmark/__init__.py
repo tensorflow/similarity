@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 from pathlib import Path
 import shutil
-
+import os
 
 def _parse_image_function(example_proto):
     image_feature_description = {
@@ -18,13 +18,20 @@ def _parse_image_function(example_proto):
     parsed_image = tf.io.parse_tensor(example["x"], tf.float32)
     parsed_label = tf.cast(example['y'], tf.int32)
 
-    return parsed_image, parsed_label
+    return parsed_image / 255, parsed_label
 
+
+def ds_get_cardinality(ds):
+    i = 0
+    for _ in ds:
+        i += 1
+    return ds.apply(tf.data.experimental.assert_cardinality(i))
 
 def load_tfrecord_unbatched_dataset(version, dataset_name, shard):
+    print(os.listdir())
     path = "datasets/%s/%s/%s.tfrecords" % (version, dataset_name, shard)
     raw_dataset = tf.data.TFRecordDataset(path)
-    return raw_dataset.map(_parse_image_function)
+    return ds_get_cardinality(raw_dataset.map(_parse_image_function))
 
 def load_tfrecord_dataset(version, dataset_name, shard, BATCH_SIZE):
     dataset = load_tfrecord_unbatched_dataset(version, dataset_name, shard)
