@@ -77,7 +77,7 @@ def run(config):
                                     trainable=trainable,
                                 )
 
-            # model = ResNet18Sim(shape, embedding_size)
+            # model = ResNet18Sim(shape, embedding_size) Try training on colab bc of ram issue
 
             model.compile(optimizer=optim, loss=loss)
 

@@ -356,6 +356,7 @@ class SimilarityModel(tf.keras.Model):
             build=build,
             verbose=verbose,
         )
+        
 
     def index_single(self,
                      x: Tensor,
