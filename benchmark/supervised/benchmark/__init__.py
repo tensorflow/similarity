@@ -28,9 +28,12 @@ def ds_get_cardinality(ds):
     return ds.apply(tf.data.experimental.assert_cardinality(i))
 
 def load_tfrecord_unbatched_dataset(version, dataset_name, shard):
-    print(os.listdir())
-    path = "datasets/%s/%s/%s.tfrecords" % (version, dataset_name, shard)
-    raw_dataset = tf.data.TFRecordDataset(path)
+    # print(os.listdir())
+    
+    path = f"../../../datasets/{version}/{dataset_name}/{shard}.tfrecords"
+    full_path = os.path.join(os.path.dirname(__file__), path)
+
+    raw_dataset = tf.data.TFRecordDataset(full_path)
     return ds_get_cardinality(raw_dataset.map(_parse_image_function))
 
 def load_tfrecord_dataset(version, dataset_name, shard, BATCH_SIZE):
@@ -46,6 +49,8 @@ def load_dataset(version, dataset_name, shard):
     d = np.load(path)
     return d['x'], d['y']
 
+def get_gpu_availability():
+    print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
 def clean_dir(fpath):
     "delete previous content and recreate dir"
