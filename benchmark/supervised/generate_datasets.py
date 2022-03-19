@@ -176,7 +176,7 @@ class DatasetBuilder:
 
         for f in files:
             cprint("|-saving %s" % f[0], 'magenta')
-            record_file = f'{fpath}{f[0]}.tfrecords'
+            record_file = f'{fpath}/{f[0]}/{f[0]}.tfrecords'
             with tf.io.TFRecordWriter(record_file) as writer:
                 for x, y in zip(f[1], f[2]):
                     tf_example = serialize_example(x, y)

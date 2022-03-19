@@ -30,7 +30,7 @@ def ds_get_cardinality(ds):
 def load_tfrecord_unbatched_dataset(version, dataset_name, shard):
     # print(os.listdir())
     
-    path = f"../../../datasets/{version}/{dataset_name}/{shard}.tfrecords"
+    path = f"../../../datasets/{version}/{dataset_name}/{shard}/{shard}.tfrecords"
     full_path = os.path.join(os.path.dirname(__file__), path)
 
     raw_dataset = tf.data.TFRecordDataset(full_path)

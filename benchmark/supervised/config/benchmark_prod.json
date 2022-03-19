@@ -20,31 +20,39 @@
             "query_shots": 10,
             "shots":[1, 5, 10],
             "epochs": 10,
+            "__comment__": [
+                {
+                    "name": "pn_loss_semi",
+                    "loss": "pn_loss",
+                    "negative_mining": "semi-hard",
+                    "lr": 0.001
+                },
+                {
+                    "name": "circle_loss",
+                    "loss": "circle_loss",
+                    "gamma": 256,
+                    "margin": 0.25,
+                    "lr": 0.001
+                },
+                {
+                    "name": "multi_similarity",
+                    "loss": "multi_similarity",
+                    "alpha": 2,
+                    "beta": 50,
+                    "epsilon": 0.1,
+                    "lambda": 1,
+                    "lr": 0.002,
+                    "__comment__": "parameters from multi sim paper, not the tf sim defaults"
+                }
+            ],
             "losses": [
-
-                        {
-                            "name": "multi_similarity",
-                            "loss": "multi_similarity",
-                            "alpha": 2,
-                            "beta": 50,
-                            "epsilon": 0.1,
-                            "lambda": 1,
-                            "lr": 0.0001,
-                            "__comment__": "parameters from multi sim paper, not the tf sim defaults"
-                        },
-                        {
-                            "name": "pn_loss_semi",
-                            "loss": "pn_loss",
-                            "negative_mining": "semi-hard",
-                            "lr": 0.001
-                        },
                         {
                             "name": "circle_loss",
                             "loss": "circle_loss",
                             "gamma": 256,
                             "margin": 0.25,
                             "lr": 0.001
-                        }
+                        }   
             ]
         }
     }
