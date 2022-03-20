@@ -77,7 +77,7 @@ class VicReg(Loss):
         off_diag: FloatTensor = tf.reshape(off_diagonals, [-1])
         return off_diag
     
-    def cov_loss_each(z, batch_size):
+    def cov_loss_each(self, z, batch_size):
         # cross-correlation matrix axa
         c = tf.matmul(z, z, transpose_a=True)
         c = c / tf.cast(batch_size-1, dtype="float32")
