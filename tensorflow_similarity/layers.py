@@ -110,7 +110,7 @@ class MetricEmbedding(layers.Layer):
 class GeneralizedMeanPooling(layers.Layer):
     def __init__(
         self,
-        p: float = 1.0,
+        p: float = 3.0,
         data_format: Optional[str] = None,
         keepdims: bool = False,
         **kwargs
@@ -220,7 +220,7 @@ class GeneralizedMeanPooling1D(GeneralizedMeanPooling):
 
     def __init__(
         self,
-        p: float = 1.0,
+        p: float = 3.0,
         data_format: Optional[str] = None,
         keepdims: bool = False,
         **kwargs
@@ -316,7 +316,7 @@ class GeneralizedMeanPooling2D(GeneralizedMeanPooling):
 
     def __init__(
         self,
-        p: float = 1.0,
+        p: float = 3.0,
         data_format: Optional[str] = None,
         keepdims: bool = False,
         **kwargs
