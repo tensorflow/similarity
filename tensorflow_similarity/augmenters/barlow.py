@@ -17,9 +17,23 @@ from tensorflow_similarity.augmenters.augmentation_utils.solarize import random_
 def augment_barlow(image: tf.Tensor, height: int, width: int):
     image = random_crop_with_resize(image, height, width)
     image = random_random_flip_left_right(image)
-    image = random_color_jitter(image,
-                                impl="barlow")
-    image = random_blur(image, height, width, 0.2)
+    image = random_color_jitter(
+      image,
+      strength=1.0,
+      brightness_multiplier=0.8,
+      contrast_multiplier = 0.6,
+      saturation_multiplier = 0.6,
+      hue_multiplier=0.2,
+      impl="additive"
+    )
+    image = random_blur(
+      image=image, 
+      height=height, 
+      width=width, 
+      p=0.2,
+      min_sigma=0,
+      max_sigma=1
+    )
     image = random_solarize(image)
     image = tf.clip_by_value(image, 0, 1)
 
@@ -32,6 +46,7 @@ class BarlowAugmenter(Augmenter):
                  height: int,
                  num_cpu: Optional[int] = os.cpu_count(),
          ):
+        print("HI")
         super(Augmenter, self).__init__()
         self.num_cpu = num_cpu
         self.width = width
