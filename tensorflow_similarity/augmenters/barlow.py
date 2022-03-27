@@ -4,7 +4,7 @@ import numpy as np
 from tensorflow_similarity.augmenters.augmenter import Augmenter
 from typing import Callable, List, Optional, Tuple, Any
 import os
-
+from functools import partial
 
 from tensorflow_similarity.augmenters.augmentation_utils.cropping import random_crop_with_resize
 from tensorflow_similarity.augmenters.augmentation_utils.flip import random_random_flip_left_right
@@ -19,7 +19,8 @@ def augment_barlow(
     image: tf.Tensor, 
     height: int, 
     width: int,
-    brighness_multiplier=0.8,
+    flip_probability=0.5,
+    brightness_multiplier=0.8,
     contrast_multiplier=0.6,
     saturation_multiplier=0.6,
     hue_multiplier=0.2,
@@ -33,7 +34,7 @@ def augment_barlow(
 ):
     image = tf.cast(image, dtype="float32") / 255.0
     image = random_crop_with_resize(image, height, width)
-    image = random_random_flip_left_right(image)
+    image = random_random_flip_left_right(image, p=flip_probability)
     image = random_color_jitter(
       image,
       p_jitter=jitter_probability,
@@ -65,13 +66,37 @@ class BarlowAugmenter(Augmenter):
     def __init__(self,
                  width: int,
                  height: int,
+                 flip_probability=0.5,
+                 brightness_multiplier=0.8,
+                 contrast_multiplier=0.6,
+                 saturation_multiplier=0.6,
+                 hue_multiplier=0.2,
+                 jitter_probability=0.8,
+                 greyscale_probability=0.2,
+                 blur_probability=0.2,
+                 blur_min_sigma=0,
+                 blur_max_sigma=1,
+                 solarize_probability=0.2,
+                 solarize_thresh=10,
                  num_cpu: Optional[int] = os.cpu_count(),
          ):
-        print("HI")
+        # print("HI")
         super(Augmenter, self).__init__()
         self.num_cpu = num_cpu
         self.width = width
         self.height = height
+        self.flip_probability = flip_probability
+        self.brightness_multiplier = brightness_multiplier
+        self.contrast_multiplier = contrast_multiplier
+        self.saturation_multiplier = saturation_multiplier
+        self.hue_multiplier = hue_multiplier
+        self.jitter_probability = jitter_probability
+        self.greyscale_probability = greyscale_probability
+        self.blur_probability = blur_probability
+        self.blur_min_sigma =blur_min_sigma
+        self.blur_max_sigma = blur_max_sigma
+        self.solarize_probability = solarize_probability
+        self.solarize_thresh = solarize_thresh
     
     @tf.function
     def augment(
@@ -84,12 +109,31 @@ class BarlowAugmenter(Augmenter):
 
         with tf.device("/cpu:0"):
             inputs = tf.stack(x)
-#             inputs = tf.cast(inputs, dtype="float32") / 255.0
+            inputs = tf.cast(inputs, dtype="float32")
             views = []
 
+            augment_fn = partial(
+              augment_barlow,
+              # image=img, 
+              height=self.height, 
+              width=self.width,
+              flip_probability=self.flip_probability,
+              brightness_multiplier=self.brightness_multiplier,
+              contrast_multiplier=self.contrast_multiplier,
+              saturation_multiplier=self.saturation_multiplier,
+              hue_multiplier=self.hue_multiplier,
+              jitter_probability=self.jitter_probability,
+              greyscale_probability=self.greyscale_probability,
+              blur_probability=self.blur_probability,
+              blur_min_sigma=self.blur_min_sigma,
+              blur_max_sigma=self.blur_max_sigma,
+              solarize_probability=self.solarize_probability,
+              solarize_thresh=self.solarize_thresh,
+
+            )
             for _ in range(num_augmentations_per_example):
 
-                view = tf.map_fn(lambda img: augment_barlow(img, self.width, self.height),
+                view = tf.map_fn(lambda img: augment_fn(image=img),
                                  inputs,
                                  parallel_iterations=self.num_cpu)
                 views.append(view)
