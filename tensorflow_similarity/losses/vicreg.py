@@ -45,8 +45,8 @@ class VicReg(Loss):
         # std loss to maximize variance(information)
         std_za = tf.sqrt(tf.math.reduce_variance(za, 0) + self.std_const)
         std_zb = tf.sqrt(tf.math.reduce_variance(zb, 0) + self.std_const)
-        std_loss_za = tf.reduce_mean(tf.math.maximum(0, 1 - std_za))
-        std_loss_zb = tf.reduce_mean(tf.math.maximum(0, 1 - std_zb))
+        std_loss_za = tf.reduce_mean(tf.math.maximum(0.0, 1 - std_za))
+        std_loss_zb = tf.reduce_mean(tf.math.maximum(0.0, 1 - std_zb))
         std_loss = std_loss_za / 2 + std_loss_zb / 2
         
 
