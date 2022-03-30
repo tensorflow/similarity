@@ -86,7 +86,7 @@ class VicReg(Loss):
         
         off_diag_c = self.off_diagonal(c)
         off_diag_c = tf.math.pow(off_diag_c, 2)
-        off_diag_c = tf.math.reduce_sum(off_diag_c) / num_features
+        off_diag_c = tf.math.reduce_sum(off_diag_c) / tf.cast(num_features, tf.float32)
         
         return off_diag_c
 
