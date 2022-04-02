@@ -17,6 +17,7 @@ from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 
 from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 from .store import Store
@@ -163,12 +164,12 @@ class MemoryStore(Store):
 
     def _make_fname(self, path: str, check_file_exit: bool = False) -> str:
         p = Path(path)
-        if not p.exists():
+        if not tf.io.gfile.exists(p):
             raise ValueError("Index path doesn't exist")
         fname = p / 'index.npz'
 
         # only for loading
-        if check_file_exit and not fname.exists():
+        if check_file_exit and not tf.io.gfile.exists(fname):
             raise ValueError("Index file not found")
         return str(fname)
 
