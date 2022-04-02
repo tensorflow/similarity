@@ -31,7 +31,7 @@ def ResNet50Sim(
     l2_norm: bool = True,
     include_top: bool = True,
     pooling: str = "gem",
-    gem_p=1.0,
+    gem_p=3.0,
 ) -> SimilarityModel:
     """Build an ResNet50 Model backbone for similarity learning
 
@@ -85,19 +85,19 @@ def ResNet50Sim(
 
     x = build_resnet(x, weights, trainable)
 
-    if include_top:
+    if pooling == "gem":
         x = GeneralizedMeanPooling2D(p=gem_p, name="gem_pool")(x)
+    elif pooling == "avg":
+        x = layers.GlobalAveragePooling2D(name="avg_pool")(x)
+    elif pooling == "max":
+        x = layers.GlobalMaxPooling2D(name="max_pool")(x)
+
+    if include_top and pooling is not None:
         if l2_norm:
             outputs = MetricEmbedding(embedding_size)(x)
         else:
             outputs = layers.Dense(embedding_size)(x)
     else:
-        if pooling == "gem":
-            x = GeneralizedMeanPooling2D(p=gem_p, name="gem_pool")(x)
-        elif pooling == "avg":
-            x = layers.GlobalAveragePooling2D(name="avg_pool")(x)
-        elif pooling == "max":
-            x = layers.GlobalMaxPooling2D(name="max_pool")(x)
         outputs = x
 
     return SimilarityModel(inputs, outputs)
