@@ -16,7 +16,6 @@
 from typing import Tuple
 import tensorflow as tf
 from tensorflow.keras import layers
-from tensorflow.keras.applications import imagenet_utils
 from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.layers import GeneralizedMeanPooling2D
 from tensorflow_similarity.models import SimilarityModel
@@ -29,9 +28,7 @@ def ResNet18Sim(
     l2_norm: bool = True,
     include_top: bool = True,
     pooling: str = "gem",
-    gem_p=1.0,
-    preproc_mode: str = "torch",
-    similarity_model: bool = True,
+    gem_p=3.0,
 ) -> SimilarityModel:
     """Build an ResNet18 Model backbone for similarity learning
 
@@ -39,7 +36,7 @@ def ResNet18Sim(
 
     Args:
         input_shape: Expected to be betweeen 32 and 224 and in the (H, W, C)
-        data_format augmentation function.
+        data_format.
 
         embedding_size: Size of the output embedding. Usually between 64
         and 512. Defaults to 128.
@@ -67,22 +64,13 @@ def ResNet18Sim(
         of 1.0 is equivelent to GlobalMeanPooling2D, while larger values
         will increase the contrast between activations within each feature
         map, and a value of math.inf will be equivelent to MaxPool2d.
-
-        preproc_mode: One of "caffe", "tf" or "torch".
-        - caffe: will convert the images from RGB to BGR, then will zero-center
-          each color channel with respect to the ImageNet dataset, without
-          scaling.
-        - tf: will scale pixels between -1 and 1, sample-wise.
-        - torch: will scale pixels between 0 and 1 and then will normalize each
-          channel with respect to the ImageNet dataset.
     """
 
     # input
     inputs = layers.Input(shape=input_shape)
     x = inputs
 
-    resnet = build_resnet(x, "channels_last", preproc_mode)
-    x = resnet(x)
+    x = build_resnet(x, input_shape)
 
     if pooling == "gem":
         x = GeneralizedMeanPooling2D(p=gem_p, name="gem_pool")(x)
@@ -102,46 +90,44 @@ def ResNet18Sim(
     return SimilarityModel(inputs, outputs, name="resnet18sim")
 
 
-def build_resnet(x: layers.Layer, data_format, preproc_mode) -> layers.Layer:
+def build_resnet(
+    x: layers.Layer, input_shape: Tuple[int, int, int]
+) -> layers.Layer:
     """Build the requested ResNet.
 
     Args:
         x: The input layer to the ResNet.
 
-        data_format: Data format of the image tensor.
-
-        preproc_mode: One of "caffe", "tf" or "torch".
+        input_shape: Expected to be betweeen 32 and 224 and in the (H, W, C)
+        data_format.
 
     Returns:
         The ouptut layer of the ResNet model
     """
-    # Handle the case where x.shape includes the placeholder for the batch dim.
-    if x.shape[0] is None:
-        inputs = layers.Input(shape=x.shape[1:])
-    else:
-        inputs = layers.Input(shape=x.shape)
+    inputs = layers.Input(shape=input_shape)
 
-    x = imagenet_utils.preprocess_input(
-        x, data_format=data_format, mode=preproc_mode
-    )
-    x = tf.keras.layers.ZeroPadding2D(
+    layer = tf.keras.layers.ZeroPadding2D(
         padding=((1, 1), (1, 1)), name="conv1_pad"
     )(inputs)
-    x = tf.keras.layers.Conv2D(
+    layer = tf.keras.layers.Conv2D(
         64,
         kernel_size=3,
         strides=1,
         use_bias=False,
         kernel_initializer=tf.keras.initializers.LecunUniform(),
         name="conv1_conv",
-    )(x)
-    x = tf.keras.layers.BatchNormalization(epsilon=1.001e-5, name="conv1_bn")(x)
-    x = tf.keras.layers.Activation("relu", name="conv1_relu")(x)
+    )(layer)
+    layer = tf.keras.layers.BatchNormalization(
+        epsilon=1.001e-5, name="conv1_bn"
+    )(layer)
+    layer = tf.keras.layers.Activation("relu", name="conv1_relu")(layer)
 
-    outputs = stack_fn(x)
+    outputs = stack_fn(layer)
 
-    model = tf.keras.Model(inputs, outputs, name="resnet18")
-    return model
+    # wire
+    x = tf.keras.Model(inputs, outputs, name="resnet18")(x)
+
+    return x
 
 
 def block0(

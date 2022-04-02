@@ -3,16 +3,15 @@ import re
 import pytest
 import tensorflow as tf
 
-from tensorflow_similarity.architectures import efficientnet
+from tensorflow_similarity.architectures import resnet50
 
 
-def test_build_effnet_b0_full():
+def test_build_full():
     input_layer = tf.keras.layers.Input((224, 224, 3))
-    output = efficientnet.build_effnet(input_layer, "b0", "imagenet", "full")
+    output = resnet50.build_resnet(input_layer, "imagenet", "full")
 
     effnet = output._keras_history.layer
 
-    assert effnet.name == "efficientnetb0"
     assert effnet.trainable
 
     total_layer_count = 0
@@ -22,17 +21,16 @@ def test_build_effnet_b0_full():
         if layer.trainable:
             trainable_layer_count += 1
 
-    assert total_layer_count == 237
-    assert trainable_layer_count == 237
+    assert total_layer_count == 175
+    assert trainable_layer_count == 175
 
 
-def test_build_effnet_b1_frozen():
+def test_build_frozen():
     input_layer = tf.keras.layers.Input((240, 240, 3))
-    output = efficientnet.build_effnet(input_layer, "b1", "imagenet", "frozen")
+    output = resnet50.build_resnet(input_layer, "imagenet", "frozen")
 
     effnet = output._keras_history.layer
 
-    assert effnet.name == "efficientnetb1"
     assert not effnet.trainable
 
     total_layer_count = 0
@@ -42,17 +40,16 @@ def test_build_effnet_b1_frozen():
         if layer.trainable:
             trainable_layer_count += 1
 
-    assert total_layer_count == 339
+    assert total_layer_count == 175
     assert trainable_layer_count == 0
 
 
-def test_build_effnet_b0_partial():
+def test_build_partial():
     input_layer = tf.keras.layers.Input((224, 224, 3))
-    output = efficientnet.build_effnet(input_layer, "b0", "imagenet", "partial")
+    output = resnet50.build_resnet(input_layer, "imagenet", "partial")
 
     effnet = output._keras_history.layer
 
-    assert effnet.name == "efficientnetb0"
     assert effnet.trainable
 
     total_layer_count = 0
@@ -63,54 +60,47 @@ def test_build_effnet_b0_partial():
         if layer.trainable:
             trainable_layer_count += 1
             # Check if any of the excluded layers are trainable
-            if not re.search("^block[5,6,7]|^top", layer.name):
+            if not re.search("^conv5|^top", layer.name):
                 excluded_layers += 1
             if isinstance(layer, tf.keras.layers.BatchNormalization):
                 excluded_layers += 1
 
-    assert total_layer_count == 237
-    assert trainable_layer_count == 93
+    assert total_layer_count == 175
+    assert trainable_layer_count == 22
     assert excluded_layers == 0
 
 
-def test_build_effnet_unsupported_trainable():
+def test_build_unsupported_trainable():
     input_layer = tf.keras.layers.Input((224, 224, 3))
     msg = "foo is not a supported option for 'trainable'."
     with pytest.raises(ValueError, match=msg):
-        _ = efficientnet.build_effnet(input_layer, "b0", "imagenet", "foo")
-
-
-def test_unsuported_varient():
-    input_shape = (224, 224, 3)
-    msg = "Unknown efficientnet variant. Valid B0...B7"
-    with pytest.raises(ValueError, match=msg):
-        _ = efficientnet.EfficientNetSim(input_shape, 128, "bad_varient")
+        _ = resnet50.build_resnet(input_layer, "imagenet", "foo")
 
 
 def test_include_top():
     input_shape = (224, 224, 3)
-    effnet = efficientnet.EfficientNetSim(input_shape, include_top=True)
+    resnet = resnet50.ResNet50Sim(input_shape, include_top=True)
 
     # The second to last layer should use gem pooling when include_top is True
-    assert effnet.layers[-2].name == 'gem_pool'
-    assert effnet.layers[-2].p == 3.0
+    assert resnet.layers[-2].name == 'gem_pool'
+    assert resnet.layers[-2].p == 3.0
     # The default is l2_norm True, so we expect the last layer to be
     # MetricEmbedding.
-    assert re.match('metric_embedding', effnet.layers[-1].name) is not None
+    assert re.match('metric_embedding', resnet.layers[-1].name) is not None
 
 
 def test_l2_norm_false():
     input_shape = (224, 224, 3)
-    effnet = efficientnet.EfficientNetSim(
+    resnet = resnet50.ResNet50Sim(
             input_shape,
             include_top=True,
             l2_norm=False)
 
     # The second to last layer should use gem pooling when include_top is True
-    assert effnet.layers[-2].name == 'gem_pool'
-    assert effnet.layers[-2].p == 3.0
+    assert resnet.layers[-2].name == 'gem_pool'
+    assert resnet.layers[-2].p == 3.0
     # If l2_norm is False, we should return a dense layer as the last layer.
-    assert re.match('dense', effnet.layers[-1].name) is not None
+    assert re.match('dense', resnet.layers[-1].name) is not None
 
 
 @pytest.mark.parametrize(
@@ -120,10 +110,10 @@ def test_l2_norm_false():
 )
 def test_include_top_false(pooling, name):
     input_shape = (224, 224, 3)
-    effnet = efficientnet.EfficientNetSim(
+    resnet = resnet50.ResNet50Sim(
             input_shape,
             include_top=False,
             pooling=pooling)
 
     # The second to last layer should use gem pooling when include_top is True
-    assert effnet.layers[-1].name == name
+    assert resnet.layers[-1].name == name
