@@ -165,9 +165,9 @@ class MemoryStore(Store):
         Returns:
            Number of records reloaded.
         """
-
         fname = self._make_fname(path, check_file_exit=True)
-        data = np.load(fname, allow_pickle=True)
+        with tf.io.gfile.GFile(fname, "rb") as gfp:
+            data = np.load(gfp, allow_pickle=True)
         self.embeddings = list(data["embeddings"])
         self.labels = list(data["labels"])
         self.data = list(data["data"])
