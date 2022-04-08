@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from pathlib import Path
+import tempfile
 from typing import List, Sequence, Tuple, Union
 
 import nmslib
+import tensorflow as tf
 
 from .search import Search
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
@@ -29,38 +32,42 @@ class NMSLibSearch(Search):
     search library [NMSLIB](https://github.com/nmslib/nmslib).
     """
 
-    def __init__(self,
-                 distance: Union[Distance, str],
-                 dims: int,
-                 algorithm: str = 'nmslib_hnsw',
-                 **kwargs):
+    def __init__(
+        self,
+        distance: Union[Distance, str],
+        dims: int,
+        algorithm: str = "nmslib_hnsw",
+        **kwargs
+    ):
 
         distance_obj: Distance = distance_canonicalizer(distance)
 
         # convert to nmslib word
-        if distance_obj.name == 'cosine':
-            space = 'cosinesimil'
-        elif distance_obj.name == 'euclidean':
-            space = 'l2'
-        elif distance_obj.name == 'manhattan':
-            space = 'l1'
+        if distance_obj.name == "cosine":
+            space = "cosinesimil"
+        elif distance_obj.name == "euclidean":
+            space = "l2"
+        elif distance_obj.name == "manhattan":
+            space = "l1"
         else:
-            raise ValueError('Unsupported metric space')
+            raise ValueError("Unsupported metric space")
 
-        if algorithm == 'nmslib_hnsw':
-            method = 'hnsw'
+        if algorithm == "nmslib_hnsw":
+            method = "hnsw"
         else:
-            raise ValueError('Unsupported algorithm')
+            raise ValueError("Unsupported algorithm")
 
         self._search_index = nmslib.init(method=method, space=space)
         self._search_index.createIndex()
 
-    def add(self,
-            embedding: FloatTensor,
-            idx: int,
-            verbose: int = 1,
-            build: bool = True,
-            **kwargs):
+    def add(
+        self,
+        embedding: FloatTensor,
+        idx: int,
+        verbose: int = 1,
+        build: bool = True,
+        **kwargs
+    ):
         """Add an embedding to the index
 
         Args:
@@ -83,12 +90,14 @@ class NMSLibSearch(Search):
         if build:
             self._build(verbose=verbose)
 
-    def batch_add(self,
-                  embeddings: FloatTensor,
-                  idxs: Sequence[int],
-                  verbose: int = 1,
-                  build: bool = True,
-                  **kwargs):
+    def batch_add(
+        self,
+        embeddings: FloatTensor,
+        idxs: Sequence[int],
+        verbose: int = 1,
+        build: bool = True,
+        **kwargs
+    ):
         """Add a batch of embeddings to the search index.
 
         Args:
@@ -106,17 +115,17 @@ class NMSLibSearch(Search):
         """
         # !addDataPoint and addDataPointBAtch have inverted parameters
         if verbose:
-            print('|-Adding embeddings to index.')
+            print("|-Adding embeddings to index.")
         self._search_index.addDataPointBatch(embeddings, idxs)
 
         if build:
             if verbose:
-                print('|-Building index.')
+                print("|-Building index.")
             self._build(verbose=verbose)
 
-    def lookup(self,
-               embedding: FloatTensor,
-               k: int = 5) -> Tuple[List[int], List[float]]:
+    def lookup(
+        self, embedding: FloatTensor, k: int = 5
+    ) -> Tuple[List[int], List[float]]:
         """Find embedding K nearest neighboors embeddings.
 
         Args:
@@ -128,9 +137,9 @@ class NMSLibSearch(Search):
         idxs, distances = self._search_index.knnQuery(embedding, k=k)
         return idxs, distances
 
-    def batch_lookup(self,
-                     embeddings: FloatTensor,
-                     k: int = 5) -> Tuple[List[List[int]], List[List[float]]]:
+    def batch_lookup(
+        self, embeddings: FloatTensor, k: int = 5
+    ) -> Tuple[List[List[int]], List[List[float]]]:
         """Find embeddings K nearest neighboors embeddings.
 
         Args:
@@ -152,8 +161,23 @@ class NMSLibSearch(Search):
         Args:
             path: where to store the data
         """
-        fname = self.__make_fname(path)
-        self._search_index.saveIndex(fname, save_data=True)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            fname = self.__make_fname(path)
+            tmpidx = os.path.join(tmpdirname, os.path.basename(path))
+            self._search_index.saveIndex(tmpidx, save_data=True)
+
+            # read search_index.bin tmp file and write to fname
+            with tf.io.gfile.GFile(fname, "w+b") as gfp:
+                with open(tmpidx, "rb") as fp:
+                    gfp.write(fp.read())
+
+            # read search_index.bin.dat tmp file and write to fname + .dat
+            with tf.io.gfile.GFile(fname + ".dat", "w+b") as gfp:
+                tmpdat = os.path.join(
+                    tmpdirname, os.path.basename(path) + ".dat"
+                )
+                with open(tmpdat, "rb") as fp:
+                    gfp.write(fp.read())
 
     def load(self, path: str):
         """load index on disk
@@ -161,14 +185,29 @@ class NMSLibSearch(Search):
         Args:
             path: where to store the data
         """
-        fname = self.__make_fname(path)
-        self._search_index.loadIndex(fname, load_data=True)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            fname = self.__make_fname(path)
+            tmpidx = os.path.join(tmpdirname, os.path.basename(path))
+
+            # read fname and write to tmpidx
+            with tf.io.gfile.GFile(fname, "rb") as gfp:
+                with open(tmpidx, "w+b") as fp:
+                    fp.write(gfp.read())
+
+            # read fname + .dat and write to tmpdat
+            with tf.io.gfile.GFile(fname + ".dat", "rb") as gfp:
+                tmpdat = os.path.join(
+                    tmpdirname, os.path.basename(path) + ".dat"
+                )
+                with open(tmpdat, "w+b") as fp:
+                    fp.write(gfp.read())
+
+            self._search_index.loadIndex(tmpidx, load_data=True)
 
     def _build(self, verbose=0):
-        """Build the index this is need to take into account the new points
-        """
+        """Build the index this is need to take into account the new points"""
         show = True if verbose else False
         self._search_index.createIndex(print_progress=show)
 
     def __make_fname(self, path):
-        return str(Path(path) / 'search_index.bin')
+        return str(Path(path) / "search_index.bin")
