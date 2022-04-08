@@ -33,7 +33,7 @@ def augment_barlow(
     solarize_thresh=10
 ):
     print("HI")
-    image = tf.cast(image, dtype="float32") / 255.0
+    image = tf.cast(image, dtype="float32") #/ 255.0 #TODO: figure out why normalizing in the augmenter instead of before causes massive losses in accuracy
     image = random_resized_crop(image, height, width)
     image = random_random_flip_left_right(image, p=flip_probability)
     image = random_color_jitter(
@@ -110,9 +110,10 @@ class BarlowAugmenter(Augmenter):
  
         with tf.device("/cpu:0"):
             inputs = tf.stack(x)
-            inputs = tf.cast(inputs, dtype="float32")
+            inputs = tf.cast(inputs, dtype="float32") / 255
             views = []
  
+            #NOTE: do i need to normalize here? or before
             augment_fn = partial(
               augment_barlow,
               # image=img, 
