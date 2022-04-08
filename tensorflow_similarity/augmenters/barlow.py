@@ -5,15 +5,15 @@ from tensorflow_similarity.augmenters.augmenter import Augmenter
 from typing import Callable, List, Optional, Tuple, Any
 import os
 from functools import partial
-
-from tensorflow_similarity.augmenters.augmentation_utils.cropping import random_crop_with_resize
+ 
+from tensorflow_similarity.augmenters.augmentation_utils.cropping import random_resized_crop
 from tensorflow_similarity.augmenters.augmentation_utils.flip import random_random_flip_left_right
 from tensorflow_similarity.augmenters.augmentation_utils.color_jitter import random_color_jitter
 from tensorflow_similarity.augmenters.augmentation_utils.blur import random_blur
 from tensorflow_similarity.augmenters.augmentation_utils.solarize import random_solarize
 from tensorflow_similarity.augmenters.augmentation_utils.random_apply import random_apply
-
-
+ 
+ 
 @tf.function
 def augment_barlow(
     image: tf.Tensor, 
@@ -32,8 +32,9 @@ def augment_barlow(
     solarize_probability=0.2,
     solarize_thresh=10
 ):
+    print("HI")
     image = tf.cast(image, dtype="float32") / 255.0
-    image = random_crop_with_resize(image, height, width)
+    image = random_resized_crop(image, height, width)
     image = random_random_flip_left_right(image, p=flip_probability)
     image = random_color_jitter(
       image,
@@ -58,10 +59,10 @@ def augment_barlow(
         image, thresh=solarize_thresh, p=solarize_probability
     )
     image = tf.clip_by_value(image, 0, 1)
-
+ 
     return image
-
-
+ 
+ 
 class BarlowAugmenter(Augmenter):
     def __init__(self,
                  width: int,
@@ -106,12 +107,12 @@ class BarlowAugmenter(Augmenter):
         num_augmentations_per_example: int = 2,
         is_warmup: bool = True,
     ) -> List[Any]:
-
+ 
         with tf.device("/cpu:0"):
             inputs = tf.stack(x)
             inputs = tf.cast(inputs, dtype="float32")
             views = []
-
+ 
             augment_fn = partial(
               augment_barlow,
               # image=img, 
@@ -129,17 +130,17 @@ class BarlowAugmenter(Augmenter):
               blur_max_sigma=self.blur_max_sigma,
               solarize_probability=self.solarize_probability,
               solarize_thresh=self.solarize_thresh,
-
+ 
             )
             for _ in range(num_augmentations_per_example):
-
+ 
                 view = tf.map_fn(lambda img: augment_fn(image=img),
                                  inputs,
                                  parallel_iterations=self.num_cpu)
                 views.append(view)
         return views
     
-
+ 
     def __call__(
         self, x: Any, y: Any = tf.constant([0]), num_augmentations_per_example: int = 2, is_warmup: bool = True,
     ) -> List[Any]:
