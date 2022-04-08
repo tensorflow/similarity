@@ -1,13 +1,13 @@
 import os
 import functools
 from typing import Callable, List, Optional, Tuple
-
+ 
 import tensorflow as tf
 from tensorflow import Tensor
 from tensorflow_similarity.types import FloatTensor
-
+ 
 from tensorflow_similarity.augmenters.augmentation_utils.random_apply import random_apply
-
+ 
 def _compute_crop_shape(
     image_height: int,
     image_width: int,
@@ -15,24 +15,24 @@ def _compute_crop_shape(
     crop_proportion: float,
 ) -> Tuple[int, int]:
     """Compute aspect ratio-preserving shape for central crop.
-
+ 
     The resulting shape retains `crop_proportion` along one side and a
     proportion less than or equal to `crop_proportion` along the other side.
-
+ 
     Args:
       image_height: Height of image to be cropped.
       image_width: Width of image to be cropped.
       aspect_ratio: Desired aspect ratio (width / height) of output.
       crop_proportion: Proportion of image to retain along the less-cropped
       side.
-
+ 
     Returns:
       crop_height: Height of image after cropping.
       crop_width: Width of image after cropping.
     """
     image_width_float = tf.cast(image_width, tf.float32)
     image_height_float = tf.cast(image_height, tf.float32)
-
+ 
     def _requested_aspect_ratio_wider_than_image():
         crop_height = tf.cast(
             tf.math.rint(crop_proportion / aspect_ratio * image_width_float),
@@ -42,7 +42,7 @@ def _compute_crop_shape(
             tf.math.rint(crop_proportion * image_width_float), tf.int32
         )
         return crop_height, crop_width
-
+ 
     def _image_wider_than_requested_aspect_ratio():
         crop_height = tf.cast(
             tf.math.rint(crop_proportion * image_height_float), tf.int32
@@ -52,26 +52,26 @@ def _compute_crop_shape(
             tf.int32,
         )
         return crop_height, crop_width
-
+ 
     crop_height, crop_width = tf.cond(
         aspect_ratio > image_width_float / image_height_float,
         _requested_aspect_ratio_wider_than_image,
         _image_wider_than_requested_aspect_ratio,
     )
-
+ 
     return crop_height, crop_width
-
+ 
 def center_crop(
     image: Tensor, height: int, width: int, crop_proportion: float
 ) -> Tensor:
     """Crops to center of image and rescales to desired size.
-
+ 
     Args:
       image: Image Tensor to crop.
       height: Height of image to be cropped.
       width: Width of image to be cropped.
       crop_proportion: Proportion of image to retain along the less-cropped side.
-
+ 
     Returns:
       A `height` x `width` x channels Tensor holding a central crop of `image`.
     """
@@ -86,13 +86,13 @@ def center_crop(
     image = tf.image.crop_to_bounding_box(
         image, offset_height, offset_width, crop_height, crop_width
     )
-
+ 
     image = tf.image.resize(
         [image], [height, width], method=tf.image.ResizeMethod.BICUBIC
     )[0]
-
+ 
     return image
-
+ 
 def distorted_bounding_box_crop(
     image: Tensor,
     bbox: Tensor,
@@ -103,9 +103,9 @@ def distorted_bounding_box_crop(
     scope: bool = None,
 ) -> Tensor:
     """Generates cropped_image using one of the bboxes randomly distorted.
-
+ 
     See `tf.image.sample_distorted_bounding_box` for more documentation.
-
+ 
     Args:
       image: `Tensor` of image data.
       bbox: `Tensor` of bounding boxes arranged `[1, num_boxes, coords]`
@@ -138,16 +138,16 @@ def distorted_bounding_box_crop(
             use_image_if_no_bounding_boxes=True,
         )
         bbox_begin, bbox_size, _ = sample_distorted_bounding_box
-
+ 
         # Crop the image to the specified bounding box.
         offset_y, offset_x, _ = tf.unstack(bbox_begin)
         target_height, target_width, _ = tf.unstack(bbox_size)
         image = tf.image.crop_to_bounding_box(
             image, offset_y, offset_x, target_height, target_width
         )
-
+ 
         return image
-
+ 
 def crop_and_resize(
     image: Tensor,
     height: int,
@@ -155,14 +155,14 @@ def crop_and_resize(
     area_range: Tuple[float, float] = (0.08, 1.0),
 ) -> Tensor:
     """Make a random crop and resize it to height `height` and width `width`.
-
+ 
     Args:
       image: Tensor representing the image.
       height: Desired image height.
       width: Desired image width.
       area_range: An optional list of `float`s. The cropped area of the image
           must contain a fraction of the supplied image within in this range.
-
+ 
     Returns:
       A `height` x `width` x channels Tensor holding a random crop of `image`.
     """
@@ -181,26 +181,80 @@ def crop_and_resize(
         [image], [height, width], method=tf.image.ResizeMethod.BICUBIC
     )[0]
     return img
-
+ 
+def crop_random_resized_crop(
+  image: Tensor, 
+  height: int, 
+  width: int, 
+  min_cropsize_multiplier: int = 0.75,
+  max_cropsize_multiplier: int = 1
+):
+  rand_width = tf.random.uniform(
+      shape=[],
+      minval=int(min_cropsize_multiplier * width),
+      maxval=int(max_cropsize_multiplier * width),
+      dtype=tf.int32,
+  )
+ 
+  # rand_height = tf.random.uniform(
+  #     shape=[],
+  #     minval=int(min_cropsize_multiplier * height),
+  #     maxval=int(max_cropsize_multiplier * height),
+  #     dtype=tf.int32,
+  # )
+ 
+  crop = tf.image.random_crop(image, (rand_width, rand_width, 3))
+  crop_resize = tf.image.resize(crop, (height, width))
+  return crop_resize
+ 
+def random_resized_crop(
+  # this utility function is supposed to match
+  # torchvision.transforms.RandomResizedCrop
+ 
+  # Only this will work with Barlow Twins and VicReg,
+  # everything else will cause significant performance
+  # losses
+ 
+  image: Tensor, 
+  height: int, 
+  width: int, 
+  min_cropsize_multiplier: int = 0.75,
+  max_cropsize_multiplier: int = 1,
+  p: float = 1.0
+):
+    def _transform(
+        image: Tensor,
+    ) -> Tensor:  # pylint: disable=missing-docstring
+        image = crop_random_resized_crop(
+          image, 
+          height, 
+          width,
+          min_cropsize_multiplier,
+          max_cropsize_multiplier
+        )
+        return image
+ 
+    return random_apply(_transform, p=p, x=image)
+ 
 def random_crop_with_resize(
     image: Tensor, height: int, width: int, p: float = 1.0
 ) -> Tensor:
     """Randomly crop and resize an image.
-
+ 
     Args:
       image: `Tensor` representing an image of arbitrary size.
       height: Height of output image.
       width: Width of output image.
       p: Probability of applying this transformation.
-
+ 
     Returns:
       A preprocessed image `Tensor`.
     """
-
+ 
     def _transform(
         image: Tensor,
     ) -> Tensor:  # pylint: disable=missing-docstring
         image = crop_and_resize(image, height, width)
         return image
-
+ 
     return random_apply(_transform, p=p, x=image)
