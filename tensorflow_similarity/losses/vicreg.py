@@ -15,7 +15,7 @@ class VicReg(Loss):
                  lambda_: float = 25,
                  mu: float = 25,
                  nu: float = 1,
-                 reduction: Callable = tf.keras.losses.Reduction.AUTO,
+                 reduction: Callable = tf.keras.losses.Reduction.NONE,
                  name: Optional[str] = None,
                  **kwargs):
         super().__init__(reduction=reduction, name=name, **kwargs)
@@ -23,6 +23,7 @@ class VicReg(Loss):
         self.mu = mu
         self.nu = nu
         self.std_const = std_const
+        self.reduction = reduction
 
     @tf.function
     def call(self, za: FloatTensor, zb: FloatTensor) -> FloatTensor:
@@ -37,7 +38,7 @@ class VicReg(Loss):
         batch_size = tf.shape(za)[0]
          
         # distance loss to measure similarity between representations
-        sim_loss = tf.keras.losses.MeanSquaredError(reduction="none")(za, zb)
+        sim_loss = tf.keras.losses.MeanSquaredError(reduction=self.reduction)(za, zb)
         
         za = self.mean_center_columns(za)
         zb = self.mean_center_columns(zb)
