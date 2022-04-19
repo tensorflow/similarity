@@ -35,7 +35,8 @@ def multisimilarity_loss(query_labels: IntTensor,
                          alpha: float = 2.0,
                          beta: float = 40,
                          epsilon: float = 0.2,
-                         lmda: float = 1.0) -> Any:
+                         lmda: float = 0.5,
+                         center: float = 1.0) -> Any:
     """Multi Similarity loss computations
 
     Args:
@@ -68,6 +69,15 @@ def multisimilarity_loss(query_labels: IntTensor,
         lmda: Used to weight the distance. Below this distance, negatives are
         up weighted and positives are down weighted. Similarly, above this
         distance negatives are down weighted and positive are up weighted.
+
+        center: This represents the expected distance value and will be used
+        to center the values in the pairwise distance matrix. This is used
+        when weighting the positive and negative examples, with the hardest
+        examples receiving an up weight and the easiest examples receiving a
+        down weight. This should 1 for cosine distances which we expect to
+        be between [0,2]. The value will depend on the data for L2 and L1
+        distances.
+
 
     Returns:
         Loss: The loss value for the current batch.
@@ -117,7 +127,7 @@ def multisimilarity_loss(query_labels: IntTensor,
     neg_sim_p_mask_f32 = tf.cast(neg_sim_p_mask, dtype='float32')
 
     # [Weight the remaining pairs using Similarity-S and Similarity-N]
-    shifted_distances = pairwise_distances - lmda
+    shifted_distances = pairwise_distances + lmda - center
     pos_dists = alpha * shifted_distances
     neg_dists = -1 * beta * shifted_distances
 
@@ -163,6 +173,7 @@ class MultiSimilarityLoss(MetricLoss):
                  beta: float = 20,
                  epsilon: float = 0.2,
                  lmda: float = 0.5,
+                 center: float = 1.0,
                  name: str = 'MultiSimilarityLoss',
                  **kwargs):
         """Initializes the Multi Similarity Loss
@@ -191,6 +202,14 @@ class MultiSimilarityLoss(MetricLoss):
             this distance negatives are down weighted and positive are up
             weighted.
 
+            center: This represents the expected distance value and will be used
+            to center the values in the pairwise distance matrix. This is used
+            when weighting the positive and negative examples, with the hardest
+            examples receiving an up weight and the easiest examples receiving a
+            down weight. This should 1 for cosine distances which we expect to
+            be between [0,2]. The value will depend on the data for L2 and L1
+            distances.
+
             name: Loss name. Defaults to MultiSimilarityLoss.
         """
 
@@ -205,4 +224,5 @@ class MultiSimilarityLoss(MetricLoss):
                          beta=beta,
                          epsilon=epsilon,
                          lmda=lmda,
+                         center=center,
                          **kwargs)
