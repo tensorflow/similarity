@@ -21,10 +21,11 @@ from typing import Any, Tuple
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
-def positive_distances(positive_mining_strategy: str,
-                       distances: FloatTensor,
-                       positive_mask: BoolTensor
-                       ) -> Tuple[FloatTensor, FloatTensor]:
+def positive_distances(
+    positive_mining_strategy: str,
+    distances: FloatTensor,
+    positive_mask: BoolTensor,
+) -> Tuple[FloatTensor, FloatTensor]:
     """Positive distance computation.
 
     Args:
@@ -39,22 +40,24 @@ def positive_distances(positive_mining_strategy: str,
       A Tuple of Tensors containing the positive distance values
       and the index for each example.
     """
-    if positive_mining_strategy == 'hard':
-        positive_distances, pos_idxs = (masked_max(distances, positive_mask))
-    elif positive_mining_strategy == 'easy':
-        positive_distances, pos_idxs = (masked_min(distances, positive_mask))
+    if positive_mining_strategy == "hard":
+        positive_distances, pos_idxs = masked_max(distances, positive_mask)
+    elif positive_mining_strategy == "easy":
+        positive_distances, pos_idxs = masked_min(distances, positive_mask)
     else:
-        raise ValueError('Invalid positive mining strategy')
+        raise ValueError("Invalid positive mining strategy")
 
     return positive_distances, pos_idxs
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
-def negative_distances(negative_mining_strategy: str,
-                       distances: FloatTensor,
-                       negative_mask: BoolTensor,
-                       positive_mask: BoolTensor) -> Tuple[FloatTensor, FloatTensor]:
+def negative_distances(
+    negative_mining_strategy: str,
+    distances: FloatTensor,
+    negative_mask: BoolTensor,
+    positive_mask: BoolTensor,
+) -> Tuple[FloatTensor, FloatTensor]:
     """Negative distance computation.
 
     Args:
@@ -77,10 +80,10 @@ def negative_distances(negative_mining_strategy: str,
       A Tuple of Tensors containing the negative distance values
       and the index for each example.
     """
-    if negative_mining_strategy == 'hard':
+    if negative_mining_strategy == "hard":
         # find the *non-zero* minimal distance between negative labels
-        negative_distances, neg_idxs = (masked_min(distances, negative_mask))
-    elif negative_mining_strategy == 'semi-hard':
+        negative_distances, neg_idxs = masked_min(distances, negative_mask)
+    elif negative_mining_strategy == "semi-hard":
         # find the minimal distance between negative label gt than max distance
         # between positive labels
         # find max value of positive distance
@@ -95,23 +98,25 @@ def negative_distances(negative_mining_strategy: str,
         semi_hard_mask = tf.where(greater_distances, negative_mask, empty)
 
         # find the  minimal distance between negative labels above threshold
-        negative_distances, neg_idxs = (masked_min(distances, semi_hard_mask))
+        negative_distances, neg_idxs = masked_min(distances, semi_hard_mask)
 
-    elif negative_mining_strategy == 'easy':
+    elif negative_mining_strategy == "easy":
         # find the maximal distance between negative labels
-        negative_distances, neg_idxs = (masked_max(distances, negative_mask))
+        negative_distances, neg_idxs = masked_max(distances, negative_mask)
     else:
-        raise ValueError('Invalid negative mining strategy')
+        raise ValueError("Invalid negative mining strategy")
 
     return negative_distances, neg_idxs
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
-def compute_loss(positive_distances: FloatTensor,
-                 negative_distances: FloatTensor,
-                 soft_margin: bool,
-                 margin: float) -> Any:
+def compute_loss(
+    positive_distances: FloatTensor,
+    negative_distances: FloatTensor,
+    soft_margin: bool,
+    margin: float,
+) -> Any:
     """Compute the final loss.
 
     Args:
@@ -140,8 +145,7 @@ def compute_loss(positive_distances: FloatTensor,
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
-def logsumexp(pairwise_distances: FloatTensor,
-              mask: FloatTensor) -> Any:
+def logsumexp(pairwise_distances: FloatTensor, mask: FloatTensor) -> Any:
     """Compute the LogSumExp across axis 1 of the pairwise distance matrix.
 
     This function:
@@ -159,22 +163,18 @@ def logsumexp(pairwise_distances: FloatTensor,
     returns:
         A [n, 1] FloatTensor containing the per example LogSumExp values.
     """
-    raw_max = tf.math.reduce_max(
-        pairwise_distances,
-        axis=1,
-        keepdims=True
-    )
+    raw_max = tf.math.reduce_max(pairwise_distances, axis=1, keepdims=True)
+
     my_max = tf.stop_gradient(
-        tf.where(
-            tf.math.is_finite(raw_max),
-            raw_max,
-            tf.zeros_like(raw_max)
-        )
+        tf.where(tf.math.is_finite(raw_max), raw_max, tf.zeros_like(raw_max))
     )
+
     x = tf.math.subtract(pairwise_distances, my_max)
-    x = tf.math.exp(x) * mask
+    x = tf.math.exp(x)
+    x = tf.math.multiply(x, mask)
     x = tf.math.reduce_sum(x, axis=1, keepdims=True)
-    x = tf.math.log(1 + x)
+    offset = tf.math.exp(-my_max)
+    x = tf.math.log(offset + x)
     x = tf.math.add(x, my_max)
 
     return x
