@@ -127,6 +127,10 @@ def build_resnet(x: layers.Layer, weights: str, trainable: str) -> layers.Layer:
 
     if trainable == "full":
         resnet.trainable = True
+        for layer in resnet.layers:
+            # don't change the batchnorm weights
+            if isinstance(layer, layers.BatchNormalization):
+                layer.trainable = False
     elif trainable == "partial":
         # let's mark the top part of the network as trainable
         resnet.trainable = True
