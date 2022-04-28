@@ -45,7 +45,7 @@ EFF_ARCHITECTURE = {
 
 
 def EfficientNetSim(
-    input_shape: Tuple[int],
+    input_shape: Tuple[int, int, int],
     embedding_size: int = 128,
     variant: str = "B0",
     weights: str = "imagenet",
