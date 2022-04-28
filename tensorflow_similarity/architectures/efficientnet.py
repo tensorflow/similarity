@@ -44,7 +44,6 @@ EFF_ARCHITECTURE = {
 }
 
 
-# Create an image augmentation pipeline.
 def EfficientNetSim(
     input_shape: Tuple[int],
     embedding_size: int = 128,
@@ -61,9 +60,8 @@ def EfficientNetSim(
     Architecture from [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946)
 
     Args:
-        input_shape: Size of the image input prior to augmentation,
-        must be bigger than the size of Effnet version you use. See below for
-        min input size.
+        input_shape: Size of the input image. Must match size of EfficientNet version you use.
+        See below for version input size.
 
         embedding_size: Size of the output embedding. Usually between 64
         and 512. Defaults to 128.
