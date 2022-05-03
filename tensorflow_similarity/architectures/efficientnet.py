@@ -44,9 +44,8 @@ EFF_ARCHITECTURE = {
 }
 
 
-# Create an image augmentation pipeline.
 def EfficientNetSim(
-    input_shape: Tuple[int],
+    input_shape: Tuple[int, int, int],
     embedding_size: int = 128,
     variant: str = "B0",
     weights: str = "imagenet",
@@ -56,14 +55,13 @@ def EfficientNetSim(
     pooling: str = "gem",
     gem_p=3.0,
 ) -> SimilarityModel:
-    """Build an EffecientNet Model backbone for similarity learning
+    """Build an EfficientNet Model backbone for similarity learning
 
     Architecture from [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946)
 
     Args:
-        input_shape: Size of the image input prior to augmentation,
-        must be bigger than the size of Effnet version you use. See below for
-        min input size.
+        input_shape: Size of the input image. Must match size of EfficientNet version you use.
+        See below for version input size.
 
         embedding_size: Size of the output embedding. Usually between 64
         and 512. Defaults to 128.
@@ -73,7 +71,7 @@ def EfficientNetSim(
         weights: Use pre-trained weights - the only available currently being
         imagenet. Defaults to "imagenet".
 
-        trainable: Make the EfficienNet backbone fully trainable or partially
+        trainable: Make the EfficientNet backbone fully trainable or partially
         trainable.
         - "full" to make the entire backbone trainable,
         - "partial" to only make the last 3 block trainable
@@ -99,9 +97,9 @@ def EfficientNetSim(
           The gem_p param sets the contrast amount on the pooling.
 
         gem_p: Sets the power in the GeneralizedMeanPooling2D layer. A value
-        of 1.0 is equivelent to GlobalMeanPooling2D, while larger values
+        of 1.0 is equivalent to GlobalMeanPooling2D, while larger values
         will increase the contrast between activations within each feature
-        map, and a value of math.inf will be equivelent to MaxPool2d.
+        map, and a value of math.inf will be equivalent to MaxPool2d.
 
     Note:
         EfficientNet expects images at the following size:
@@ -156,14 +154,14 @@ def build_effnet(
         weights: Use pre-trained weights - the only available currently being
         imagenet.
 
-        trainable: Make the EfficienNet backbone fully trainable or partially
+        trainable: Make the EfficientNet backbone fully trainable or partially
         trainable.
         - "full" to make the entire backbone trainable,
         - "partial" to only make the last 3 block trainable
         - "frozen" to make it not trainable.
 
     Returns:
-        The ouptut layer of the efficientnet model
+        The output layer of the efficientnet model
     """
 
     # init
