@@ -88,6 +88,7 @@ class SimilarityModel(tf.keras.Model):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._index = None
 
     def compile(
         self,

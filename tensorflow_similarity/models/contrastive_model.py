@@ -120,6 +120,8 @@ class ContrastiveModel(tf.keras.Model):
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
+        self._index = None
+        
         self.backbone = backbone
         self.projector = projector
         self.predictor = predictor
