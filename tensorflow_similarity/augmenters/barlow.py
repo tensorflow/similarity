@@ -111,7 +111,11 @@ class BarlowAugmenter(Augmenter):
  
         with tf.device("/cpu:0"):
             inputs = tf.stack(x)
-            inputs = tf.cast(inputs, dtype="float32") / 255
+            inputs = tf.cast(inputs, dtype="float32")
+            
+            if self.normalize_img:
+             inputs = inputs / 255 # Normalization is optional but set to true by default.
+         
             views = []
  
             augment_fn = partial(
