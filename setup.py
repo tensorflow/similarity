@@ -58,7 +58,7 @@ setup(
     license="Apache License 2.0",
     install_requires=[
         "distinctipy",
-        # "nmslib",
+        "nmslib",
         "matplotlib",
         "numpy",
         "pandas",
