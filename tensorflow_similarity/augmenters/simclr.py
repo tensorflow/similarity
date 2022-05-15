@@ -125,9 +125,9 @@ class SimCLRAugmenter(Augmenter):
         self.num_cpu = num_cpu
 
         if version == "v2":
-            self.impl = "simclrv2"
+            self.impl = "multiplicative"
         else:
-            self.impl = "simclrv1"
+            self.impl = "additive"
 
         if self.is_training:
             self.augment_img = self._train_augment_img
