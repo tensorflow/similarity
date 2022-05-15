@@ -37,7 +37,7 @@ def simclr_training_augmentation(
     jitter_stength: float = 1.0,
     crop: bool = True,
     flip: bool = True,
-    impl: str = "simclrv2",
+    impl: str = "multiplicative",
 ) -> Tensor:
     """SimCLR Preprocesses the given image for training.
 
@@ -48,7 +48,7 @@ def simclr_training_augmentation(
       color_distort: Whether to apply the color distortion.
       crop: Whether to crop the image.
       flip: Whether or not to flip left and right of an image.
-      impl: 'simclrv1' or 'simclrv2'.  Whether to use simclrv1 or simclrv2's
+      impl: 'additive' or 'multiplicative'.  Whether to use simclrv1 or simclrv2's
           version of random brightness.
 
     Returns:
