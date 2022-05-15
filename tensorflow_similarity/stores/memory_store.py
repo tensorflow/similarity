@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import io
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 
 from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 from .store import Store
@@ -34,10 +36,12 @@ class MemoryStore(Store):
         self.num_items: int = 0
         pass
 
-    def add(self,
-            embedding: FloatTensor,
-            label: Optional[int] = None,
-            data: Optional[Tensor] = None) -> int:
+    def add(
+        self,
+        embedding: FloatTensor,
+        label: Optional[int] = None,
+        data: Optional[Tensor] = None,
+    ) -> int:
         """Add an Embedding record to the key value store.
 
         Args:
@@ -57,10 +61,12 @@ class MemoryStore(Store):
         self.num_items += 1
         return idx
 
-    def batch_add(self,
-                  embeddings: Sequence[FloatTensor],
-                  labels: Optional[Sequence[int]] = None,
-                  data: Optional[Sequence[Tensor]] = None) -> List[int]:
+    def batch_add(
+        self,
+        embeddings: Sequence[FloatTensor],
+        labels: Optional[Sequence[int]] = None,
+        data: Optional[Sequence[Tensor]] = None,
+    ) -> List[int]:
         """Add a set of embedding records to the key value store.
 
         Args:
@@ -83,9 +89,9 @@ class MemoryStore(Store):
             idxs.append(self.add(embedding, label, rec_data))
         return idxs
 
-    def get(self, idx: int) -> Tuple[FloatTensor,
-                                     Optional[int],
-                                     Optional[Tensor]]:
+    def get(
+        self, idx: int
+    ) -> Tuple[FloatTensor, Optional[int], Optional[Tensor]]:
         """Get an embedding record from the key value store.
 
         Args:
@@ -97,10 +103,9 @@ class MemoryStore(Store):
 
         return self.embeddings[idx], self.labels[idx], self.data[idx]
 
-    def batch_get(self,
-                  idxs: Sequence[int]) -> Tuple[List[FloatTensor],
-                                                List[Optional[int]],
-                                                List[Optional[Tensor]]]:
+    def batch_get(
+        self, idxs: Sequence[int]
+    ) -> Tuple[List[FloatTensor], List[Optional[int]], List[Optional[Tensor]]]:
         """Get embedding records from the key value store.
 
         Args:
@@ -130,17 +135,26 @@ class MemoryStore(Store):
             path: where to store the data.
             compression: Compress index data. Defaults to True.
         """
-        fname = self._make_fname(path)
+        # Writing to a buffer to avoid read error in np.savez when using GFile.
+        # See: https://github.com/tensorflow/tensorflow/issues/32090
+        io_buffer = io.BytesIO()
         if compression:
-            np.savez_compressed(fname,
-                                embeddings=self.embeddings,
-                                labels=self.labels,
-                                data=self.data)
+            np.savez_compressed(
+                io_buffer,
+                embeddings=self.embeddings,
+                labels=self.labels,
+                data=self.data,
+            )
         else:
-            np.savez(fname,
-                     embeddings=self.embeddings,
-                     labels=self.labels,
-                     data=self.data)
+            np.savez(
+                io_buffer,
+                embeddings=self.embeddings,
+                labels=self.labels,
+                data=self.data,
+            )
+
+        with tf.io.gfile.GFile(self._make_fname(path), "wb+") as f:
+            f.write(io_buffer.getvalue())
 
     def load(self, path: str) -> int:
         """load index on disk
@@ -151,24 +165,24 @@ class MemoryStore(Store):
         Returns:
            Number of records reloaded.
         """
-
         fname = self._make_fname(path, check_file_exit=True)
-        data = np.load(fname, allow_pickle=True)
-        self.embeddings = list(data['embeddings'])
-        self.labels = list(data['labels'])
-        self.data = list(data['data'])
+        with tf.io.gfile.GFile(fname, "rb") as gfp:
+            data = np.load(gfp, allow_pickle=True)
+        self.embeddings = list(data["embeddings"])
+        self.labels = list(data["labels"])
+        self.data = list(data["data"])
         self.num_items = len(self.embeddings)
         print("loaded %d records from %s" % (self.size(), path))
         return self.size()
 
     def _make_fname(self, path: str, check_file_exit: bool = False) -> str:
         p = Path(path)
-        if not p.exists():
+        if not tf.io.gfile.exists(p):
             raise ValueError("Index path doesn't exist")
-        fname = p / 'index.npz'
+        fname = p / "index.npz"
 
         # only for loading
-        if check_file_exit and not fname.exists():
+        if check_file_exit and not tf.io.gfile.exists(fname):
             raise ValueError("Index file not found")
         return str(fname)
 
@@ -189,7 +203,7 @@ class MemoryStore(Store):
         data = {
             "embeddings": self.embeddings[:num_records],
             "data": self.data[:num_records],
-            "lables": self.labels[:num_records]
+            "lables": self.labels[:num_records],
         }
 
         # forcing type from Any to PandasFrame

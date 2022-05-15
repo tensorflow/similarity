@@ -78,3 +78,52 @@ def test_build_effnet_unsupported_trainable():
     msg = "foo is not a supported option for 'trainable'."
     with pytest.raises(ValueError, match=msg):
         _ = efficientnet.build_effnet(input_layer, "b0", "imagenet", "foo")
+
+
+def test_unsuported_varient():
+    input_shape = (224, 224, 3)
+    msg = "Unknown efficientnet variant. Valid B0...B7"
+    with pytest.raises(ValueError, match=msg):
+        _ = efficientnet.EfficientNetSim(input_shape, 128, "bad_varient")
+
+
+def test_include_top():
+    input_shape = (224, 224, 3)
+    effnet = efficientnet.EfficientNetSim(input_shape, include_top=True)
+
+    # The second to last layer should use gem pooling when include_top is True
+    assert effnet.layers[-2].name == 'gem_pool'
+    assert effnet.layers[-2].p == 3.0
+    # The default is l2_norm True, so we expect the last layer to be
+    # MetricEmbedding.
+    assert re.match('metric_embedding', effnet.layers[-1].name) is not None
+
+
+def test_l2_norm_false():
+    input_shape = (224, 224, 3)
+    effnet = efficientnet.EfficientNetSim(
+            input_shape,
+            include_top=True,
+            l2_norm=False)
+
+    # The second to last layer should use gem pooling when include_top is True
+    assert effnet.layers[-2].name == 'gem_pool'
+    assert effnet.layers[-2].p == 3.0
+    # If l2_norm is False, we should return a dense layer as the last layer.
+    assert re.match('dense', effnet.layers[-1].name) is not None
+
+
+@pytest.mark.parametrize(
+    "pooling, name",
+    zip(['gem', 'avg', 'max'], ['gem_pool', 'avg_pool', 'max_pool']),
+    ids=['gem', 'avg', 'max']
+)
+def test_include_top_false(pooling, name):
+    input_shape = (224, 224, 3)
+    effnet = efficientnet.EfficientNetSim(
+            input_shape,
+            include_top=False,
+            pooling=pooling)
+
+    # The second to last layer should use gem pooling when include_top is True
+    assert effnet.layers[-1].name == name

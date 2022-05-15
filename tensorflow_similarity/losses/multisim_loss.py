@@ -26,16 +26,19 @@ from .utils import logsumexp
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 @tf.function
-def multisimilarity_loss(query_labels: IntTensor,
-                         query_embeddings: FloatTensor,
-                         key_labels: IntTensor,
-                         key_embeddings: FloatTensor,
-                         distance: Callable,
-                         remove_diagonal: bool = True,
-                         alpha: float = 2.0,
-                         beta: float = 40,
-                         epsilon: float = 0.2,
-                         lmda: float = 1.0) -> Any:
+def multisimilarity_loss(
+    query_labels: IntTensor,
+    query_embeddings: FloatTensor,
+    key_labels: IntTensor,
+    key_embeddings: FloatTensor,
+    distance: Callable,
+    remove_diagonal: bool = True,
+    alpha: float = 2.0,
+    beta: float = 40,
+    epsilon: float = 0.1,
+    lmda: float = 0.5,
+    center: float = 1.0,
+) -> Any:
     """Multi Similarity loss computations
 
     Args:
@@ -68,6 +71,15 @@ def multisimilarity_loss(query_labels: IntTensor,
         lmda: Used to weight the distance. Below this distance, negatives are
         up weighted and positives are down weighted. Similarly, above this
         distance negatives are down weighted and positive are up weighted.
+
+        center: This represents the expected distance value and will be used
+        to center the values in the pairwise distance matrix. This is used
+        when weighting the positive and negative examples, with the hardest
+        examples receiving an up weight and the easiest examples receiving a
+        down weight. This should 1 for cosine distances which we expect to
+        be between [0,2]. The value will depend on the data for L2 and L1
+        distances.
+
 
     Returns:
         Loss: The loss value for the current batch.
@@ -107,17 +119,17 @@ def multisimilarity_loss(query_labels: IntTensor,
 
     # Mark all pairs where we have both valid negative and positive pairs.
     valid_anchors = tf.math.logical_and(
-            tf.math.reduce_any(pos_sim_p_mask, axis=1),
-            tf.math.reduce_any(neg_sim_p_mask, axis=1)
+        tf.math.reduce_any(pos_sim_p_mask, axis=1),
+        tf.math.reduce_any(neg_sim_p_mask, axis=1),
     )
 
     # Cast masks as floats to support multiply
-    valid_anchors = tf.cast(valid_anchors, dtype='float32')
-    pos_sim_p_mask_f32 = tf.cast(pos_sim_p_mask, dtype='float32')
-    neg_sim_p_mask_f32 = tf.cast(neg_sim_p_mask, dtype='float32')
+    valid_anchors = tf.cast(valid_anchors, dtype="float32")
+    pos_sim_p_mask_f32 = tf.cast(pos_sim_p_mask, dtype="float32")
+    neg_sim_p_mask_f32 = tf.cast(neg_sim_p_mask, dtype="float32")
 
     # [Weight the remaining pairs using Similarity-S and Similarity-N]
-    shifted_distances = pairwise_distances - lmda
+    shifted_distances = pairwise_distances + lmda - center
     pos_dists = alpha * shifted_distances
     neg_dists = -1 * beta * shifted_distances
 
@@ -125,18 +137,19 @@ def multisimilarity_loss(query_labels: IntTensor,
 
     # Positive pairs with a distance above 0 will be up weighted.
     p_loss = logsumexp(pos_dists, pos_sim_p_mask_f32)
+    # p_loss = tf.math.log1p(tf.math.reduce_sum(tf.exp(pos_dists)*pos_sim_p_mask_f32, axis=1))
     p_loss = p_loss / alpha
 
     # Negative pairs with a distance below 0 will be up weighted.
     n_loss = logsumexp(neg_dists, neg_sim_p_mask_f32)
+    # n_loss = tf.math.log1p(tf.math.reduce_sum(tf.exp(neg_dists)*neg_sim_p_mask_f32, axis=1))
     n_loss = n_loss / beta
 
     # Remove any anchors that have empty neg or pos pairs.
     # NOTE: reshape is required here because valid_anchors is [m] and
     #       p_loss + n_loss is [m, 1].
     multisim_loss = tf.math.multiply(
-            p_loss + n_loss,
-            tf.reshape(valid_anchors, (-1, 1))
+        p_loss + n_loss, tf.reshape(valid_anchors, (-1, 1))
     )
 
     return multisim_loss
@@ -157,14 +170,17 @@ class MultiSimilarityLoss(MetricLoss):
     normalized.
     """
 
-    def __init__(self,
-                 distance: Union[Distance, str] = 'cosine',
-                 alpha: float = 1.0,
-                 beta: float = 20,
-                 epsilon: float = 0.2,
-                 lmda: float = 0.5,
-                 name: str = 'MultiSimilarityLoss',
-                 **kwargs):
+    def __init__(
+        self,
+        distance: Union[Distance, str] = "cosine",
+        alpha: float = 2.0,
+        beta: float = 40.0,
+        epsilon: float = 0.1,
+        lmda: float = 0.5,
+        center: float = 1.0,
+        name: str = "MultiSimilarityLoss",
+        **kwargs
+    ):
         """Initializes the Multi Similarity Loss
 
         Args:
@@ -191,6 +207,14 @@ class MultiSimilarityLoss(MetricLoss):
             this distance negatives are down weighted and positive are up
             weighted.
 
+            center: This represents the expected distance value and will be used
+            to center the values in the pairwise distance matrix. This is used
+            when weighting the positive and negative examples, with the hardest
+            examples receiving an up weight and the easiest examples receiving a
+            down weight. This should 1 for cosine distances which we expect to
+            be between [0,2]. The value will depend on the data for L2 and L1
+            distances.
+
             name: Loss name. Defaults to MultiSimilarityLoss.
         """
 
@@ -198,11 +222,14 @@ class MultiSimilarityLoss(MetricLoss):
         distance = distance_canonicalizer(distance)
         self.distance = distance
 
-        super().__init__(multisimilarity_loss,
-                         name=name,
-                         distance=distance,
-                         alpha=alpha,
-                         beta=beta,
-                         epsilon=epsilon,
-                         lmda=lmda,
-                         **kwargs)
+        super().__init__(
+            multisimilarity_loss,
+            name=name,
+            distance=distance,
+            alpha=alpha,
+            beta=beta,
+            epsilon=epsilon,
+            lmda=lmda,
+            center=center,
+            **kwargs
+        )

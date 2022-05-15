@@ -13,8 +13,8 @@
 # limitations under the License.
 "Various utilities functions for improved quality of life."
 import math
-from typing import Optional, Sequence
-
+from typing import Optional, Sequence, Dict, List
+import numpy as np
 import tensorflow as tf
 
 from tensorflow_similarity.types import BoolTensor
@@ -81,6 +81,22 @@ def unpack_lookup_distances(
     dists: FloatTensor = ragged_dists.to_tensor(default_value=math.inf)
 
     return dists
+
+
+def unpack_results(results: Dict[str, np.ndarray], epoch: int, logs: dict,
+                   tb_writer: tf.summary.SummaryWriter,
+                   name_suffix: Optional[str] = "") -> List[str]:
+    """Updates logs, writes summary, and returns list of strings of
+    evaluation metric"""
+    mstr = []
+    for metric_name, vals in results.items():
+        float_val = vals[0]
+        logs[metric_name] = float_val
+        mstr.append(f"{metric_name}{name_suffix}: {float_val:.4f}")
+        if tb_writer:
+            with tb_writer.as_default():
+                tf.summary.scalar(metric_name, float_val, step=epoch)
+    return mstr
 
 
 def _same_length_rows(x: tf.RaggedTensor) -> BoolTensor:
