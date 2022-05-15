@@ -186,8 +186,8 @@ def crop_random_resized_crop(
   image: Tensor, 
   height: int, 
   width: int, 
-  min_cropsize_multiplier: int = 0.75,
-  max_cropsize_multiplier: int = 1
+  min_cropsize_multiplier: float = 0.75,
+  max_cropsize_multiplier: float = 1
 ):
   '''
    Crops and resizes image by getting a random square of size ranging from 75% of the width to 100% of width.
@@ -218,8 +218,8 @@ def random_resized_crop(
   image: Tensor, 
   height: int, 
   width: int, 
-  min_cropsize_multiplier: int = 0.75,
-  max_cropsize_multiplier: int = 1,
+  min_cropsize_multiplier: float = 0.75,
+  max_cropsize_multiplier: float = 1,
   p: float = 1.0
 ):
     def _transform(
