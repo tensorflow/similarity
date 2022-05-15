@@ -189,11 +189,11 @@ def crop_random_resized_crop(
   min_cropsize_multiplier: int = 0.75,
   max_cropsize_multiplier: int = 1
 ):
- '''
-  Crops and resizes image by getting a random square of size ranging from 75% of the width to 100% of width.
-  This cropped portion is then resized to the original height and width, which may cause stretching and
-  distortion for rectangular images.
- '''
+  '''
+   Crops and resizes image by getting a random square of size ranging from 75% of the width to 100% of width.
+   This cropped portion is then resized to the original height and width, which may cause stretching and
+   distortion for rectangular images.
+  '''
  
   rand_width = tf.random.uniform(
       shape=[],
