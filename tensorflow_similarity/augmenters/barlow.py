@@ -127,7 +127,6 @@ class BarlowAugmenter(Augmenter):
               # image=img, 
               height=self.height, 
               width=self.width,
-              normalize_img=self.normalize_img,
               flip_probability=self.flip_probability,
               brightness_multiplier=self.brightness_multiplier,
               contrast_multiplier=self.contrast_multiplier,
