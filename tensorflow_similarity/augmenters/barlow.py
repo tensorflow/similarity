@@ -30,6 +30,8 @@ def augment_barlow(
     blur_min_sigma=0,
     blur_max_sigma=1,
     solarize_probability=0.2,
+    solarize_pixel_min=0,
+    solarize_pixel_max=255,
     solarize_thresh=10,
 ):
     image = tf.cast(image, dtype="float32") #/ 255.0 #TODO: figure out why normalizing in the augmenter instead of before causes massive losses in accuracy
@@ -55,7 +57,11 @@ def augment_barlow(
       max_sigma=blur_max_sigma
     )
     image = random_solarize(
-        image, thresh=solarize_thresh, p=solarize_probability
+        image, 
+        thresh=solarize_thresh, 
+        p=solarize_probability, 
+        pixel_min=solarize_pixel_min, 
+        pixel_max=solarize_pixel_max
     )
     image = tf.clip_by_value(image, 0, 1)
  
@@ -77,6 +83,8 @@ class BarlowAugmenter(Augmenter):
                  blur_min_sigma=0,
                  blur_max_sigma=1,
                  solarize_probability=0.2,
+                 solarize_pixel_min=0,
+                 solarize_pixel_max=255,
                  solarize_thresh=10,
                  num_cpu: Optional[int] = os.cpu_count(),
          ):
@@ -95,6 +103,8 @@ class BarlowAugmenter(Augmenter):
         self.blur_min_sigma =blur_min_sigma
         self.blur_max_sigma = blur_max_sigma
         self.solarize_probability = solarize_probability
+        self.solarize_pixel_min = solarize_pixel_min
+        self.solarize_pixel_max = solarize_pixel_max
         self.solarize_thresh = solarize_thresh
     
     @tf.function
@@ -129,6 +139,8 @@ class BarlowAugmenter(Augmenter):
               blur_min_sigma=self.blur_min_sigma,
               blur_max_sigma=self.blur_max_sigma,
               solarize_probability=self.solarize_probability,
+              solarize_pixel_min=self.solarize_pixel_min,
+              solarize_pixel_max=self.solarize_pixel_max,
               solarize_thresh=self.solarize_thresh,
  
             )
