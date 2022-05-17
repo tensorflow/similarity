@@ -9,8 +9,8 @@ def create_img(width=32, height=32, channels=3):
 def test_solarization():
   img = create_img()
 
-  random_solarize_always = solarize.random_solarize(img, 1)
-  random_solarize_never = solarize.random_solarize(img, 0)
+  random_solarize_always = solarize.random_solarize(img, thresh=1, pixel_min=0, pixel_max=1)
+  random_solarize_never = solarize.random_solarize(img, thresh=0, pixel_min=0, pixel_max=1)
 
   # check shapes
   assert (tf.shape(random_solarize_always) == tf.shape(img)).numpy().all()
