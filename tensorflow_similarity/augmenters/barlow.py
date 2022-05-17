@@ -19,7 +19,6 @@ def augment_barlow(
     image: tf.Tensor, 
     height: int, 
     width: int,
-    normalize_img=True,
     flip_probability=0.5,
     brightness_multiplier=0.8,
     contrast_multiplier=0.6,
@@ -56,7 +55,7 @@ def augment_barlow(
       max_sigma=blur_max_sigma
     )
     image = random_solarize(
-        image, thresh=solarize_thresh, p=solarize_probability, normalize=normalize_img
+        image, thresh=solarize_thresh, p=solarize_probability
     )
     image = tf.clip_by_value(image, 0, 1)
  
@@ -67,7 +66,6 @@ class BarlowAugmenter(Augmenter):
     def __init__(self,
                  width: int,
                  height: int,
-                 normalize_img = True,
                  flip_probability=0.5,
                  brightness_multiplier=0.8,
                  contrast_multiplier=0.6,
@@ -86,7 +84,6 @@ class BarlowAugmenter(Augmenter):
         self.num_cpu = num_cpu
         self.width = width
         self.height = height
-        self.normalize_img = normalize_img
         self.flip_probability = flip_probability
         self.brightness_multiplier = brightness_multiplier
         self.contrast_multiplier = contrast_multiplier
@@ -112,9 +109,6 @@ class BarlowAugmenter(Augmenter):
         with tf.device("/cpu:0"):
             inputs = tf.stack(x)
             inputs = tf.cast(inputs, dtype="float32")
-            
-            if self.normalize_img:
-             inputs = inputs / 255 # Normalization is optional but set to true by default.
          
             views = []
  
