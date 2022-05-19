@@ -2,21 +2,21 @@ from typing import List
 
 import tensorflow as tf
 
-from tensorflow_similarity.types import FloatTensor
+from tensorflow_similarity.types import FloatTensor, Tensor
 from tensorflow_similarity.augmenters.augmentation_utils.random_apply import (
     random_apply,
 )
 
 
 def random_blur(
-    image: tf.Tensor,
+    image: Tensor,
     height: int,
     width: int,
     p: float = 1.0,
     min_sigma: float = 0.1,
     max_sigma: float = 2.0,
     kernel_size_divider: float = 10,
-) -> tf.Tensor:
+) -> Tensor:
     """Randomly blur an image.
 
     Args:
@@ -30,7 +30,7 @@ def random_blur(
     """
     del width
 
-    def _transform(image: tf.Tensor) -> tf.Tensor:
+    def _transform(image: Tensor) -> Tensor:
         sigma = tf.random.uniform([], min_sigma, max_sigma, dtype=tf.float32)
         return gaussian_blur(
             image,
@@ -43,11 +43,11 @@ def random_blur(
 
 
 def batch_random_blur(
-    images_list: List[tf.Tensor],
+    images_list: List[Tensor],
     height: int,
     width: int,
     blur_probability: float = 0.5,
-) -> List[tf.Tensor]:
+) -> List[Tensor]:
     """Apply efficient batch data transformations.
 
     Args:
@@ -78,11 +78,11 @@ def batch_random_blur(
 
 
 def gaussian_blur(
-    image: tf.Tensor,
-    kernel_size: tf.Tensor,
+    image: Tensor,
+    kernel_size: Tensor,
     sigma: float,
     padding: str = "SAME",
-) -> tf.Tensor:
+) -> Tensor:
     """Blurs the given image with separable convolution.
 
 
