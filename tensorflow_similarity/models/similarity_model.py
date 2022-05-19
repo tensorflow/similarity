@@ -247,7 +247,20 @@ class SimilarityModel(tf.keras.Model):
             **kwargs,
         )
 
-    # TODO (ovallis): Refactor the following indexing code into a MixIn.
+    @property
+    def _index(self) -> Indexer:
+        if not hasattr(self, "_ix") and self._ix:
+            raise AttributeError(
+                "The model does not currently have an index. To use indexing "
+                "you must call either model.compile() or model.create_index() "
+                "and set a valid Distance."
+            )
+
+        return self._ix
+
+    @_index.setter
+    def _index(self, index: Indexer) -> None:
+        self._ix = index
 
     def create_index(
         self,
@@ -347,11 +360,6 @@ class SimilarityModel(tf.keras.Model):
             verbose: Output indexing progress info. Defaults to 1.
         """
 
-        if not self._index:
-            raise Exception(
-                "You need to compile the model with a valid"
-                "distance to be able to use the indexing"
-            )
         if verbose:
             print("[Indexing %d points]" % len(x))
             print("|-Computing embeddings")
@@ -391,11 +399,6 @@ class SimilarityModel(tf.keras.Model):
             verbose: Output indexing progress info. Defaults to 1.
         """
 
-        if not self._index:
-            raise Exception(
-                "You need to compile the model with a valid"
-                "distance to be able to use the indexing"
-            )
         if verbose:
             print("[Indexing 1 point]")
             print("|-Computing embeddings")
@@ -691,8 +694,8 @@ class SimilarityModel(tf.keras.Model):
         # solution to keep the end-user API clean and doing inferences once.
         if self._index.size() == 0:
             raise IndexError(
-                "Index must contain embeddings but is "
-                "currently empty. Have you run model.index()?"
+                "Index must contain embeddings but is currently empty. Have "
+                "you added examples via model.index()?"
             )
 
         if not self._index.is_calibrated:
@@ -837,10 +840,20 @@ class SimilarityModel(tf.keras.Model):
             save_traces=save_traces,
         )
 
-        if hasattr(self, "_index") and self._index and save_index:
+        if hasattr(self, "_ix") and self._index and save_index:
             self.save_index(filepath, compression=compression)
         else:
-            print("Index not saved as save_index=False")
+            msg = "The index was not saved with the model."
+            if not hasattr(self, "_ix"):
+                msg = msg + (
+                    "The model does not currently have an index. To use indexing "
+                    "you must call either model.compile() or model.create_index() "
+                    "and set a valid Distance.")
+
+            if not save_index:
+                msg = msg + " The save_index param is set to False."
+
+            print(msg)
 
     def to_data_frame(self, num_items: int = 0) -> PandasDataFrame:
         """Export data as pandas dataframe
