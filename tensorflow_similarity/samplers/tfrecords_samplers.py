@@ -72,7 +72,8 @@ def TFRecordDatasetSampler(
         shards.
 
         compression: Which compression was used when creating the dataset.
-        `{None, "ZLIB", or "GZIP"}` as specified in [TFRecordDataset documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
+        `{None, "ZLIB", or "GZIP"}` as specified in
+        [TFRecordDataset documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
         Defaults to None.
 
         parallelism: How many parallel calls to do. If not set, will let

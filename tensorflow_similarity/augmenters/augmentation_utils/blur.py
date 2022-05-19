@@ -1,21 +1,22 @@
-import os
-import functools
-from typing import Callable, List, Optional, Tuple
+from typing import List
 
 import tensorflow as tf
-from tensorflow import Tensor
+
 from tensorflow_similarity.types import FloatTensor
-from tensorflow_similarity.augmenters.augmentation_utils.random_apply import random_apply
+from tensorflow_similarity.augmenters.augmentation_utils.random_apply import (
+    random_apply,
+)
+
 
 def random_blur(
-    image: Tensor, 
-    height: int, 
-    width: int, 
+    image: tf.Tensor,
+    height: int,
+    width: int,
     p: float = 1.0,
     min_sigma: float = 0.1,
     max_sigma: float = 2.0,
-    kernel_size_divider: float = 10
-) -> Tensor:
+    kernel_size_divider: float = 10,
+) -> tf.Tensor:
     """Randomly blur an image.
 
     Args:
@@ -29,20 +30,24 @@ def random_blur(
     """
     del width
 
-    def _transform(image: Tensor) -> Tensor:
+    def _transform(image: tf.Tensor) -> tf.Tensor:
         sigma = tf.random.uniform([], min_sigma, max_sigma, dtype=tf.float32)
         return gaussian_blur(
-            image, kernel_size=height // kernel_size_divider, sigma=sigma, padding="SAME"
+            image,
+            kernel_size=height // kernel_size_divider,
+            sigma=sigma,
+            padding="SAME",
         )
 
     return random_apply(_transform, p=p, x=image)
 
+
 def batch_random_blur(
-    images_list: List[Tensor],
+    images_list: List[tf.Tensor],
     height: int,
     width: int,
     blur_probability: float = 0.5,
-) -> List[Tensor]:
+) -> List[tf.Tensor]:
     """Apply efficient batch data transformations.
 
     Args:
@@ -56,8 +61,8 @@ def batch_random_blur(
     """
 
     def generate_selector(p: float, bsz: int) -> FloatTensor:
-        shape = [bsz, 1, 1, 1]
-        cond = tf.less(tf.random.uniform([], 0, 1, dtype=tf.float32), p)
+        shape = [bsz, 1]
+        cond = tf.less(tf.random.uniform(shape, 0, 1, dtype=tf.float32), p)
         selector: FloatTensor = tf.cast(cond, tf.float32)
         return selector
 
@@ -71,9 +76,13 @@ def batch_random_blur(
 
     return new_images_list
 
+
 def gaussian_blur(
-    image: Tensor, kernel_size: Tensor, sigma: float, padding: str = "SAME"
-) -> Tensor:
+    image: tf.Tensor,
+    kernel_size: tf.Tensor,
+    sigma: float,
+    padding: str = "SAME",
+) -> tf.Tensor:
     """Blurs the given image with separable convolution.
 
 

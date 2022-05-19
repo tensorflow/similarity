@@ -20,7 +20,7 @@ from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
 class BNDCG(RetrievalMetric):
-    """Binary normalized discounted cumulative gain.
+    r"""Binary normalized discounted cumulative gain.
 
     This is normalized discounted cumulative gain where the relevancy weights
     are binary, i.e., either a correct match or an incorrect match.

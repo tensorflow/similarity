@@ -165,7 +165,7 @@ class GeneralizedMeanPooling(layers.Layer):
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class GeneralizedMeanPooling1D(GeneralizedMeanPooling):
-    """Computes the Generalized Mean of each channel in a tensor.
+    r"""Computes the Generalized Mean of each channel in a tensor.
 
     $$
     \textbf{e} = \left[\left(\frac{1}{|\Omega|}\sum_{u\in{\Omega}}x^{p}_{cu}\right)^{\frac{1}{p}}\right]_{c=1,\cdots,C}
@@ -261,7 +261,7 @@ class GeneralizedMeanPooling1D(GeneralizedMeanPooling):
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class GeneralizedMeanPooling2D(GeneralizedMeanPooling):
-    """Computes the Generalized Mean of each channel in a tensor.
+    r"""Computes the Generalized Mean of each channel in a tensor.
 
     $$
     \textbf{e} = \left[\left(\frac{1}{|\Omega|}\sum_{u\in{\Omega}}x^{p}_{cu}\right)^{\frac{1}{p}}\right]_{c=1,\cdots,C}
