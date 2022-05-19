@@ -8,7 +8,13 @@ from tensorflow_similarity.types import FloatTensor
 from tensorflow_similarity.augmenters.augmentation_utils.random_apply import random_apply
 
 def random_blur(
-    image: Tensor, height: int, width: int, p: float = 1.0
+    image: Tensor, 
+    height: int, 
+    width: int, 
+    p: float = 1.0,
+    min_sigma: float = 0.1,
+    max_sigma: float = 2.0,
+    kernel_size_divider: float = 10
 ) -> Tensor:
     """Randomly blur an image.
 
@@ -24,9 +30,9 @@ def random_blur(
     del width
 
     def _transform(image: Tensor) -> Tensor:
-        sigma = tf.random.uniform([], 0.1, 2.0, dtype=tf.float32)
+        sigma = tf.random.uniform([], min_sigma, max_sigma, dtype=tf.float32)
         return gaussian_blur(
-            image, kernel_size=height // 10, sigma=sigma, padding="SAME"
+            image, kernel_size=height // kernel_size_divider, sigma=sigma, padding="SAME"
         )
 
     return random_apply(_transform, p=p, x=image)
