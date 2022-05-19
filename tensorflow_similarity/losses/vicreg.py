@@ -15,7 +15,7 @@ class VicReg(Loss):
                  lambda_: float = 25,
                  mu: float = 25,
                  nu: float = 1,
-                 reduction: Callable = tf.keras.losses.Reduction.AUTO,
+                 reduction: Callable = tf.keras.losses.Reduction.NONE,
                  name: Optional[str] = None,
                  **kwargs):
         super().__init__(reduction=reduction, name=name, **kwargs)
@@ -23,6 +23,7 @@ class VicReg(Loss):
         self.mu = mu
         self.nu = nu
         self.std_const = std_const
+        self.reduction = reduction
 
     @tf.function
     def call(self, za: FloatTensor, zb: FloatTensor) -> FloatTensor:
@@ -37,16 +38,19 @@ class VicReg(Loss):
         batch_size = tf.shape(za)[0]
          
         # distance loss to measure similarity between representations
+        sim_loss = tf.keras.losses.MeanSquaredError(reduction=self.reduction)(za, zb)
         sim_loss = tf.keras.losses.MeanSquaredError(reduction="none")(za, zb)
-        
+
         za = self.mean_center_columns(za)
         zb = self.mean_center_columns(zb)
         
         # std loss to maximize variance(information)
         std_za = tf.sqrt(tf.math.reduce_variance(za, 0) + self.std_const)
         std_zb = tf.sqrt(tf.math.reduce_variance(zb, 0) + self.std_const)
-        std_loss_za = tf.reduce_mean(tf.max(0, 1 - std_za))
-        std_loss_zb = tf.reduce_mean(tf.max(0, 1 - std_zb))
+
+        std_loss_za = tf.reduce_mean(tf.math.maximum(0.0, 1 - std_za))
+        std_loss_zb = tf.reduce_mean(tf.math.maximum(0.0, 1 - std_zb))
+
         std_loss = std_loss_za / 2 + std_loss_zb / 2
         
 
@@ -86,7 +90,8 @@ class VicReg(Loss):
         
         off_diag_c = self.off_diagonal(c)
         off_diag_c = tf.math.pow(off_diag_c, 2)
-        off_diag_c = tf.math.reduce_sum(off_diag_c) / num_features
+
+        off_diag_c = tf.math.reduce_sum(off_diag_c) / tf.cast(num_features, tf.float32)
         
         return off_diag_c
 

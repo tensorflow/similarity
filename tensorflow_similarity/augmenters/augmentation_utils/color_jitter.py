@@ -10,9 +10,13 @@ from tensorflow_similarity.augmenters.augmentation_utils.random_apply import ran
 
 def color_jitter(
     image: Tensor,
-    strength: float,
+    strength: float = 1.0,
+    brightness_multiplier = 0.8,
+    contrast_multiplier = 0.8,
+    saturation_multiplier = 0.8,
+    hue_multiplier = 0.2,
     random_order: bool = True,
-    impl: str = "simclrv2",
+    impl: str = "multiplicative",
 ) -> Tensor:
     """Distorts the color of the image.
 
@@ -26,10 +30,11 @@ def color_jitter(
     Returns:
       The distorted image tensor.
     """
-    brightness = 0.8 * strength
-    contrast = 0.8 * strength
-    saturation = 0.8 * strength
-    hue = 0.2 * strength
+    brightness = brightness_multiplier * strength
+    contrast = contrast_multiplier * strength
+    saturation = saturation_multiplier * strength
+    hue = hue_multiplier * strength
+
     if random_order:
         return color_jitter_rand(
             image, brightness, contrast, saturation, hue, impl=impl
@@ -45,7 +50,7 @@ def color_jitter_nonrand(
     contrast: float = 0,
     saturation: float = 0,
     hue: float = 0,
-    impl: str = "simclrv2",
+    impl: str = "multiplicative",
 ) -> Tensor:
     """Distorts the color of the image (jittering order is fixed).
 
@@ -99,7 +104,7 @@ def color_jitter_rand(
     contrast: float = 0,
     saturation: float = 0,
     hue: float = 0,
-    impl: str = "simclrv2",
+    impl: str = "multiplicative",
 ) -> Tensor:
     """Distorts the color of the image (jittering order is random).
 
@@ -168,26 +173,43 @@ def to_grayscale(image: Tensor, keep_channels: bool = True) -> Tensor:
     return image
 
 def random_brightness(
-    image: Tensor, max_delta: float, impl: str = "simclrv2"
+    image: Tensor, 
+    max_delta: float, 
+    impl: str = "multiplicative"
 ) -> Tensor:
     """A multiplicative vs additive change of brightness."""
-    if impl == "simclrv2":
+    if impl == "multiplicative":
         factor = tf.random.uniform(
             [], tf.maximum(1.0 - max_delta, 0), 1.0 + max_delta
         )
         image = image * factor
-    elif impl == "simclrv1" or impl == "barlow":
+    elif impl == "additive":
         image = tf.image.random_brightness(image, max_delta=max_delta)
     else:
         raise ValueError("Unknown impl {} for random brightness.".format(impl))
     return image
 
 def random_color_jitter(
-    image: Tensor, p_execute = 1.0, p_jitter: float = 0.8, p_grey: float = 0.2, strength: float = 1.0, impl: str = "simclrv2"
+    image: Tensor, 
+    p_execute = 1.0, 
+    p_jitter: float = 0.8,
+    brightness_multiplier = 0.8,
+    contrast_multiplier = 0.8,
+    saturation_multiplier = 0.8,
+    hue_multiplier = 0.2,
+    p_grey: float = 0.2, 
+    strength: float = 1.0, 
+    impl: str = "multiplicative"
 ) -> Tensor:
     def _transform(image: Tensor) -> Tensor:
         color_jitter_t = functools.partial(
-            color_jitter, strength=strength, impl=impl
+            color_jitter, 
+            strength=strength, 
+            brightness_multiplier=brightness_multiplier, 
+            contrast_multiplier=contrast_multiplier, 
+            saturation_multiplier=saturation_multiplier, 
+            hue_multiplier=hue_multiplier, 
+            impl=impl
         )
         image = random_apply(color_jitter_t, p=p_jitter, x=image)
         return random_apply(to_grayscale, p=p_grey, x=image)
