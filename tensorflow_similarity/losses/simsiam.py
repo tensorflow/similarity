@@ -29,7 +29,7 @@ def angular_distance(sim: FloatTensor) -> FloatTensor:
 class SimSiamLoss(Loss):
     """SimSiam Loss
 
-    Introduced in: [Exploring Simple Siamese Representation Learning](https://openaccess.thecvf.com/content/CVPR2021/papers/Chen_Exploring_Simple_Siamese_Representation_Learning_CVPR_2021_paper.pdf)
+    Introduced in: [Exploring Simple Siamese Representation Learning](https://bit.ly/3LxsWdj)
     """
 
     def __init__(

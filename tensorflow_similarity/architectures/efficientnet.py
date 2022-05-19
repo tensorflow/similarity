@@ -58,7 +58,7 @@ def EfficientNetSim(
 ) -> SimilarityModel:
     """Build an EffecientNet Model backbone for similarity learning
 
-    Architecture from [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946)
+    [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946)
 
     Args:
         input_shape: Size of the image input prior to augmentation,

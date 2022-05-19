@@ -16,21 +16,25 @@
 """Data preprocessing and augmentation."""
 
 import os
-import functools
-from typing import Callable, List, Optional, Tuple
+from typing import List, Optional
 
 import tensorflow as tf
-from tensorflow import Tensor
 
 from tensorflow_similarity.augmenters.augmenter import Augmenter
-from tensorflow_similarity.types import FloatTensor
 
-from tensorflow_similarity.augmenters.augmentation_utils.cropping import random_crop_with_resize
-from tensorflow_similarity.augmenters.augmentation_utils.color_jitter import random_color_jitter
-from tensorflow_similarity.augmenters.augmentation_utils.cropping import center_crop
+from tensorflow_similarity.augmenters.augmentation_utils.cropping import (
+    random_crop_with_resize,
+)
+from tensorflow_similarity.augmenters.augmentation_utils.color_jitter import (
+    random_color_jitter,
+)
+from tensorflow_similarity.augmenters.augmentation_utils.cropping import (
+    center_crop,
+)
+
 
 def simclr_training_augmentation(
-    image: Tensor,
+    image: tf.Tensor,
     height: int,
     width: int,
     color_distort: bool = True,
@@ -38,7 +42,7 @@ def simclr_training_augmentation(
     crop: bool = True,
     flip: bool = True,
     impl: str = "multiplicative",
-) -> Tensor:
+) -> tf.Tensor:
     """SimCLR Preprocesses the given image for training.
 
     Args:
@@ -66,12 +70,12 @@ def simclr_training_augmentation(
 
 
 def simclr_eval_augmentation(
-    image: Tensor,
+    image: tf.Tensor,
     height: int,
     width: int,
     crop: bool = True,
     crop_proportion: float = 0.875,
-) -> Tensor:
+) -> tf.Tensor:
     """Preprocesses the given image for evaluation.
 
     Args:
@@ -136,8 +140,8 @@ class SimCLRAugmenter(Augmenter):
 
     @tf.function
     def augment(
-        self, x: Tensor, y: Tensor, num_views: int, is_warmup: bool
-    ) -> List[Tensor]:
+        self, x: tf.Tensor, y: tf.Tensor, num_views: int, is_warmup: bool
+    ) -> List[tf.Tensor]:
 
         with tf.device("/cpu:0"):
             inputs = tf.stack(x)
@@ -152,7 +156,7 @@ class SimCLRAugmenter(Augmenter):
                 views.append(view)
         return views
 
-    def _train_augment_img(self, img: Tensor) -> Tensor:
+    def _train_augment_img(self, img: tf.Tensor) -> tf.Tensor:
         return simclr_training_augmentation(
             img,
             self.height,
@@ -164,7 +168,7 @@ class SimCLRAugmenter(Augmenter):
             self.impl,
         )
 
-    def _eval_augment_img(self, img: Tensor) -> Tensor:
+    def _eval_augment_img(self, img: tf.Tensor) -> tf.Tensor:
         return simclr_eval_augmentation(
             img, self.height, self.width, self.crop, self.eval_crop_proportion
         )

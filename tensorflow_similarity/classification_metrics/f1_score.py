@@ -19,7 +19,7 @@ from .classification_metric import ClassificationMetric
 
 
 class F1Score(ClassificationMetric):
-    """Calculates the harmonic mean of precision and recall.
+    r"""Calculates the harmonic mean of precision and recall.
 
     Computes the F-1 Score given the query classification counts. The metric is
     computed as follows:
@@ -40,17 +40,18 @@ class F1Score(ClassificationMetric):
                     calibration_metric='f1')
     ```
     """
-    def __init__(self, name: str = 'f1') -> None:
-        super().__init__(
-                name=name,
-                canonical_name='f1_score')
 
-    def compute(self,
-                tp: FloatTensor,
-                fp: FloatTensor,
-                tn: FloatTensor,
-                fn: FloatTensor,
-                count: int) -> FloatTensor:
+    def __init__(self, name: str = "f1") -> None:
+        super().__init__(name=name, canonical_name="f1_score")
+
+    def compute(
+        self,
+        tp: FloatTensor,
+        fp: FloatTensor,
+        tn: FloatTensor,
+        fn: FloatTensor,
+        count: int,
+    ) -> FloatTensor:
         """Compute the classification metric.
 
         The `compute()` method supports computing the metric for a set of
