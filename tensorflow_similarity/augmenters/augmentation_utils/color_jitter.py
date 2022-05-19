@@ -2,13 +2,14 @@ import functools
 
 import tensorflow as tf
 
+from tensorflow_similarity.types import Tensor
 from tensorflow_similarity.augmenters.augmentation_utils.random_apply import (
     random_apply,
 )
 
 
 def color_jitter(
-    image: tf.Tensor,
+    image: Tensor,
     strength: float = 1.0,
     brightness_multiplier=0.8,
     contrast_multiplier=0.8,
@@ -16,7 +17,7 @@ def color_jitter(
     hue_multiplier=0.2,
     random_order: bool = True,
     impl: str = "multiplicative",
-) -> tf.Tensor:
+) -> Tensor:
     """Distorts the color of the image.
 
     Args:
@@ -45,13 +46,13 @@ def color_jitter(
 
 
 def color_jitter_nonrand(
-    image: tf.Tensor,
+    image: Tensor,
     brightness: float = 0,
     contrast: float = 0,
     saturation: float = 0,
     hue: float = 0,
     impl: str = "multiplicative",
-) -> tf.Tensor:
+) -> Tensor:
     """Distorts the color of the image (jittering order is fixed).
 
     Args:
@@ -70,12 +71,12 @@ def color_jitter_nonrand(
 
         def apply_transform(
             i: int,
-            x: tf.Tensor,
+            x: Tensor,
             brightness: float,
             contrast: float,
             saturation: float,
             hue: float,
-        ) -> tf.Tensor:
+        ) -> Tensor:
             """Apply the i-th transformation."""
             if brightness != 0 and i == 0:
                 x = random_brightness(x, max_delta=brightness, impl=impl)
@@ -100,13 +101,13 @@ def color_jitter_nonrand(
 
 
 def color_jitter_rand(
-    image: tf.Tensor,
+    image: Tensor,
     brightness: float = 0,
     contrast: float = 0,
     saturation: float = 0,
     hue: float = 0,
     impl: str = "multiplicative",
-) -> tf.Tensor:
+) -> Tensor:
     """Distorts the color of the image (jittering order is random).
 
     Args:
@@ -169,7 +170,7 @@ def color_jitter_rand(
         return image
 
 
-def to_grayscale(image: tf.Tensor, keep_channels: bool = True) -> tf.Tensor:
+def to_grayscale(image: Tensor, keep_channels: bool = True) -> Tensor:
     image = tf.image.rgb_to_grayscale(image)
     if keep_channels:
         image = tf.tile(image, [1, 1, 3])
@@ -177,8 +178,8 @@ def to_grayscale(image: tf.Tensor, keep_channels: bool = True) -> tf.Tensor:
 
 
 def random_brightness(
-    image: tf.Tensor, max_delta: float, impl: str = "multiplicative"
-) -> tf.Tensor:
+    image: Tensor, max_delta: float, impl: str = "multiplicative"
+) -> Tensor:
     """A multiplicative vs additive change of brightness."""
     if impl == "multiplicative":
         factor = tf.random.uniform(
@@ -193,7 +194,7 @@ def random_brightness(
 
 
 def random_color_jitter(
-    image: tf.Tensor,
+    image: Tensor,
     p_execute=1.0,
     p_jitter: float = 0.8,
     brightness_multiplier=0.8,
@@ -203,8 +204,8 @@ def random_color_jitter(
     p_grey: float = 0.2,
     strength: float = 1.0,
     impl: str = "multiplicative",
-) -> tf.Tensor:
-    def _transform(image: tf.Tensor) -> tf.Tensor:
+) -> Tensor:
+    def _transform(image: Tensor) -> Tensor:
         color_jitter_t = functools.partial(
             color_jitter,
             strength=strength,

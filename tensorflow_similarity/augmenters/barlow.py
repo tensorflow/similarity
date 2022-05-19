@@ -4,6 +4,7 @@ from typing import List, Optional, Any
 from functools import partial
 import tensorflow as tf
 
+from tensorflow_similarity.types import Tensor
 from tensorflow_similarity.augmenters.augmenter import Augmenter
 from tensorflow_similarity.augmenters.augmentation_utils.cropping import (
     random_resized_crop,
@@ -22,7 +23,7 @@ from tensorflow_similarity.augmenters.augmentation_utils.solarize import (
 
 @tf.function
 def augment_barlow(
-    image: tf.Tensor,
+    image: Tensor,
     height: int,
     width: int,
     flip_probability=0.5,

@@ -2,6 +2,7 @@ from typing import Tuple
 
 import tensorflow as tf
 
+from tensorflow_similarity.types import Tensor
 from tensorflow_similarity.augmenters.augmentation_utils.random_apply import (
     random_apply,
 )
@@ -62,8 +63,8 @@ def _compute_crop_shape(
 
 
 def center_crop(
-    image: tf.Tensor, height: int, width: int, crop_proportion: float
-) -> tf.Tensor:
+    image: Tensor, height: int, width: int, crop_proportion: float
+) -> Tensor:
     """Crops to center of image and rescales to desired size.
 
     Args:
@@ -95,14 +96,14 @@ def center_crop(
 
 
 def distorted_bounding_box_crop(
-    image: tf.Tensor,
-    bbox: tf.Tensor,
+    image: Tensor,
+    bbox: Tensor,
     min_object_covered: float = 0.1,
     aspect_ratio_range: Tuple[float, float] = (0.75, 1.33),
     area_range: Tuple[float, float] = (0.05, 1.0),
     max_attempts: int = 100,
     scope: bool = None,
-) -> tf.Tensor:
+) -> Tensor:
     """Generates cropped_image using one of the bboxes randomly distorted.
 
     See `tf.image.sample_distorted_bounding_box` for more documentation.
@@ -151,11 +152,11 @@ def distorted_bounding_box_crop(
 
 
 def crop_and_resize(
-    image: tf.Tensor,
+    image: Tensor,
     height: int,
     width: int,
     area_range: Tuple[float, float] = (0.08, 1.0),
-) -> tf.Tensor:
+) -> Tensor:
     """Make a random crop and resize it to height `height` and width `width`.
 
     Args:
@@ -186,7 +187,7 @@ def crop_and_resize(
 
 
 def crop_random_resized_crop(
-    image: tf.Tensor,
+    image: Tensor,
     height: int,
     width: int,
     min_cropsize_multiplier: float = 0.75,
@@ -216,7 +217,7 @@ def random_resized_crop(
     # Only this will work with Barlow Twins and VicReg,
     # everything else will cause significant performance
     # losses
-    image: tf.Tensor,
+    image: Tensor,
     height: int,
     width: int,
     min_cropsize_multiplier: float = 0.75,
@@ -224,8 +225,8 @@ def random_resized_crop(
     p: float = 1.0,
 ):
     def _transform(
-        image: tf.Tensor,
-    ) -> tf.Tensor:  # pylint: disable=missing-docstring
+        image: Tensor,
+    ) -> Tensor:  # pylint: disable=missing-docstring
         image = crop_random_resized_crop(
             image,
             height,
@@ -239,8 +240,8 @@ def random_resized_crop(
 
 
 def random_crop_with_resize(
-    image: tf.Tensor, height: int, width: int, p: float = 1.0
-) -> tf.Tensor:
+    image: Tensor, height: int, width: int, p: float = 1.0
+) -> Tensor:
     """Randomly crop and resize an image.
 
     Args:
@@ -254,8 +255,8 @@ def random_crop_with_resize(
     """
 
     def _transform(
-        image: tf.Tensor,
-    ) -> tf.Tensor:  # pylint: disable=missing-docstring
+        image: Tensor,
+    ) -> Tensor:  # pylint: disable=missing-docstring
         image = crop_and_resize(image, height, width)
         return image
 

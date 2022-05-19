@@ -1,11 +1,13 @@
+from typing import Callable
+
 import tensorflow as tf
 
-from typing import Callable
+from tensorflow_similarity.types import Tensor
 
 
 def random_apply(
-    func: Callable[[tf.Tensor], tf.Tensor], p: float, x: tf.Tensor
-) -> tf.Tensor:
+    func: Callable[[Tensor], Tensor], p: float, x: Tensor
+) -> Tensor:
     """Randomly apply function func to x with probability p."""
     return tf.cond(
         tf.less(

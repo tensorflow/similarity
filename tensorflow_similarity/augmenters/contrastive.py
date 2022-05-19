@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import tensorflow as tf
 import os
+from typing import Callable, List, Optional
+
+import tensorflow as tf
+
 from .augmenter import Augmenter
 from tensorflow_similarity.types import Tensor
-from typing import Callable, List, Optional
 
 
 class ContrastiveAugmenter(Augmenter):

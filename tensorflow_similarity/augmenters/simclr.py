@@ -20,6 +20,7 @@ from typing import List, Optional
 
 import tensorflow as tf
 
+from tensorflow_similarity.types import Tensor
 from tensorflow_similarity.augmenters.augmenter import Augmenter
 
 from tensorflow_similarity.augmenters.augmentation_utils.cropping import (
@@ -34,7 +35,7 @@ from tensorflow_similarity.augmenters.augmentation_utils.cropping import (
 
 
 def simclr_training_augmentation(
-    image: tf.Tensor,
+    image: Tensor,
     height: int,
     width: int,
     color_distort: bool = True,
@@ -42,7 +43,7 @@ def simclr_training_augmentation(
     crop: bool = True,
     flip: bool = True,
     impl: str = "multiplicative",
-) -> tf.Tensor:
+) -> Tensor:
     """SimCLR Preprocesses the given image for training.
 
     Args:
@@ -70,12 +71,12 @@ def simclr_training_augmentation(
 
 
 def simclr_eval_augmentation(
-    image: tf.Tensor,
+    image: Tensor,
     height: int,
     width: int,
     crop: bool = True,
     crop_proportion: float = 0.875,
-) -> tf.Tensor:
+) -> Tensor:
     """Preprocesses the given image for evaluation.
 
     Args:
@@ -140,8 +141,8 @@ class SimCLRAugmenter(Augmenter):
 
     @tf.function
     def augment(
-        self, x: tf.Tensor, y: tf.Tensor, num_views: int, is_warmup: bool
-    ) -> List[tf.Tensor]:
+        self, x: Tensor, y: Tensor, num_views: int, is_warmup: bool
+    ) -> List[Tensor]:
 
         with tf.device("/cpu:0"):
             inputs = tf.stack(x)
@@ -156,7 +157,7 @@ class SimCLRAugmenter(Augmenter):
                 views.append(view)
         return views
 
-    def _train_augment_img(self, img: tf.Tensor) -> tf.Tensor:
+    def _train_augment_img(self, img: Tensor) -> Tensor:
         return simclr_training_augmentation(
             img,
             self.height,
@@ -168,7 +169,7 @@ class SimCLRAugmenter(Augmenter):
             self.impl,
         )
 
-    def _eval_augment_img(self, img: tf.Tensor) -> tf.Tensor:
+    def _eval_augment_img(self, img: Tensor) -> Tensor:
         return simclr_eval_augmentation(
             img, self.height, self.width, self.crop, self.eval_crop_proportion
         )
