@@ -11,9 +11,9 @@ from tensorflow_similarity.classification_metrics import Recall
 
 
 def test_eval_init_defaults():
-    queries = tf.constant([[1, 2], [3, 4]])
+    queries = tf.constant([[1., 2.], [3., 4.]])
     query_labels = tf.constant([1, 2])
-    targets = tf.constant([[1, 2], [3, 4]])
+    targets = tf.constant([[1., 2.], [3., 4.]])
     target_labels = tf.constant([1, 2])
 
     callback = EvalCallback(
@@ -38,9 +38,9 @@ def test_eval_init_defaults():
 
 
 def test_eval_init(tmp_path):
-    queries = tf.constant([[1, 2], [3, 4]])
+    queries = tf.constant([[1., 2.], [3., 4.]])
     query_labels = tf.constant([1, 2])
-    targets = tf.constant([[1, 2], [3, 4]])
+    targets = tf.constant([[1., 2.], [3., 4.]])
     target_labels = tf.constant([1, 2])
     distance = 'l2'
     metrics = [Recall()]
@@ -78,9 +78,9 @@ def test_eval_init(tmp_path):
 
 
 def test_eval_callback(tmp_path):
-    queries = tf.constant([[1, 2], [1, 2]])
+    queries = tf.constant([[1., 2.], [1., 2.]])
     query_labels = tf.constant([1, 2])
-    targets = tf.constant([[1, 2], [1, 2]])
+    targets = tf.constant([[1., 2.], [1., 2.]])
     target_labels = tf.constant([1, 2])
 
     log_dir = tmp_path / 'sec/'
@@ -114,14 +114,14 @@ def test_eval_callback(tmp_path):
 
 
 def test_split_val_init_defaults():
-    queries = tf.constant([[1, 2], [3, 4]])
+    queries = tf.constant([[1., 2.], [3., 4.]])
     query_labels = tf.constant([1, 2])
-    targets = tf.constant([[1, 2], [3, 4]])
+    targets = tf.constant([[1., 2.], [3., 4.]])
     target_labels = tf.constant([1, 2])
     known_classes = tf.constant([1])
-    q_known = tf.constant([[1, 2]])
+    q_known = tf.constant([[1., 2.]])
     q_label_known = tf.constant([1], dtype='int32')
-    q_unknown = tf.constant([[3, 4]])
+    q_unknown = tf.constant([[3., 4.]])
     q_label_unknown = tf.constant([2], dtype='int32')
 
     callback = SplitValidationLoss(
@@ -150,9 +150,9 @@ def test_split_val_init_defaults():
 
 
 def test_split_val_init(tmp_path):
-    queries = tf.constant([[1, 2], [3, 4]])
+    queries = tf.constant([[1., 2.], [3., 4.]])
     query_labels = tf.constant([1, 2])
-    targets = tf.constant([[1, 2], [3, 4]])
+    targets = tf.constant([[1., 2.], [3., 4.]])
     target_labels = tf.constant([1, 2])
     known_classes = tf.constant([1])
     distance = 'l2'
@@ -160,9 +160,9 @@ def test_split_val_init(tmp_path):
     k = 11
     matcher = 'majority_vote'
     distance_thresholds = tf.constant([0.1, 0.2, 0.3])
-    q_known = tf.constant([[1, 2]])
+    q_known = tf.constant([[1., 2.]])
     q_label_known = tf.constant([1], dtype='int32')
-    q_unknown = tf.constant([[3, 4]])
+    q_unknown = tf.constant([[3., 4.]])
     q_label_unknown = tf.constant([2], dtype='int32')
 
     log_dir = tmp_path / 'sec/'
@@ -199,9 +199,9 @@ def test_split_val_init(tmp_path):
 
 
 def test_split_val_loss_callback(tmp_path):
-    queries = tf.constant([[1, 2], [1, 2]])
+    queries = tf.constant([[1., 2.], [1., 2.]])
     query_labels = tf.constant([1, 2])
-    targets = tf.constant([[1, 2], [1, 2]])
+    targets = tf.constant([[1., 2.], [1., 2.]])
     target_labels = tf.constant([1, 2])
     known_classes = tf.constant([1])
 
@@ -228,9 +228,9 @@ def test_split_val_loss_callback(tmp_path):
     callback.on_epoch_end(0, {})
 
 def test_split_val_eval_init(tmp_path):
-    queries = tf.constant([[1, 2], [3, 4]])
+    queries = tf.constant([[1., 2.], [3., 4.]])
     query_labels = tf.constant([1, 2])
-    targets = tf.constant([[1, 2], [3, 4]])
+    targets = tf.constant([[1., 2.], [3., 4.]])
     target_labels = tf.constant([1, 2])
     known_classes = tf.constant([1])
     distance = 'l2'
@@ -238,9 +238,9 @@ def test_split_val_eval_init(tmp_path):
     k = 11
     matcher = 'majority_vote'
     distance_thresholds = tf.constant([0.1, 0.2, 0.3])
-    q_known = tf.constant([[1, 2]])
+    q_known = tf.constant([[1., 2.]])
     q_label_known = tf.constant([1], dtype='int32')
-    q_unknown = tf.constant([[3, 4]])
+    q_unknown = tf.constant([[3., 4.]])
     q_label_unknown = tf.constant([2], dtype='int32')
 
     log_dir = tmp_path / 'sec/'
@@ -277,9 +277,9 @@ def test_split_val_eval_init(tmp_path):
 
 
 def test_split_val_eval_callback(tmp_path):
-    queries = tf.constant([[1, 2], [1, 2]])
+    queries = tf.constant([[1., 2.], [1., 2.]])
     query_labels = tf.constant([1, 2])
-    targets = tf.constant([[1, 2], [1, 2]])
+    targets = tf.constant([[1., 2.], [1., 2.]])
     target_labels = tf.constant([1, 2])
     known_classes = tf.constant([1])
 

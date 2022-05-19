@@ -13,7 +13,8 @@
 # limitations under the License.
 "Various utilities functions for improved quality of life."
 import math
-from typing import Optional, Sequence, Dict, List
+from typing import Dict, List, Optional, Sequence, Union
+
 import numpy as np
 import tensorflow as tf
 
@@ -41,13 +42,14 @@ def tf_cap_memory():
                 print(e)
 
 
-def unpack_lookup_labels(lookups: Sequence[Sequence[Lookup]]) -> IntTensor:
+def unpack_lookup_labels(lookups: Sequence[Sequence[Lookup]], dtype: Union[str, tf.DType]) -> IntTensor:
     # Using list comprehension as it is faster
     all_values = [[n.label for n in lu] for lu in lookups]
     # Lookup sets are not guaranteed to all be the same size. Therefore we load
-    # the list of lists as a ragged tensor and convert to an int32 tensor with a
-    # default class label value set to the max value for int32.
-    ragged_labels = tf.ragged.constant(all_values, dtype="int32")
+    # the list of lists as a ragged tensor and convert to an int tensor with a
+    # default class label value set to the max value for int.
+    base_type = tf.dtypes.as_dtype(dtype).base_dtype
+    ragged_labels = tf.ragged.constant(all_values, dtype=base_type)
 
     if not _same_length_rows(ragged_labels):
         print(f"WARNING: {_count_of_small_lookup_sets(ragged_labels)} lookup "
@@ -61,13 +63,15 @@ def unpack_lookup_labels(lookups: Sequence[Sequence[Lookup]]) -> IntTensor:
 
 def unpack_lookup_distances(
         lookups: Sequence[Sequence[Lookup]],
+        dtype: Union[str, tf.DType],
         distance_rounding: Optional[int] = None) -> FloatTensor:
     # using list comprehension as it is faster
     all_values = [[n.distance for n in lu] for lu in lookups]
     # Lookup sets are not guaranteed to all be the same size. Therefore we load
     # the list of lists as a ragged tensor and convert to an flat32 tensor with a
     # default dist value set to math.inf.
-    ragged_dists = tf.ragged.constant(all_values, dtype="float32")
+    base_type = tf.dtypes.as_dtype(dtype).base_dtype
+    ragged_dists = tf.ragged.constant(all_values, dtype=base_type)
 
     if distance_rounding is not None:
         multiplier = tf.constant([10.0**distance_rounding])
@@ -91,11 +95,12 @@ def unpack_results(results: Dict[str, np.ndarray], epoch: int, logs: dict,
     mstr = []
     for metric_name, vals in results.items():
         float_val = vals[0]
-        logs[metric_name] = float_val
-        mstr.append(f"{metric_name}{name_suffix}: {float_val:.4f}")
+        full_metric_name = f"{metric_name}{name_suffix}"
+        logs[full_metric_name] = float_val
+        mstr.append(f"{full_metric_name}: {float_val:.4f}")
         if tb_writer:
             with tb_writer.as_default():
-                tf.summary.scalar(metric_name, float_val, step=epoch)
+                tf.summary.scalar(full_metric_name, float_val, step=epoch)
     return mstr
 
 

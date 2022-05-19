@@ -35,7 +35,7 @@ def test_is_not_tensor_or_variable():
 
 
 def test_unpack_lookup_labels(capsys, lookups):
-    unpacked = utils.unpack_lookup_labels(lookups)
+    unpacked = utils.unpack_lookup_labels(lookups, dtype="int32")
     expected = tf.constant([[0, 1], [2, 3]], dtype="int32")
 
     assert tf.reduce_all(tf.math.equal(unpacked, expected))
@@ -48,7 +48,7 @@ def test_unpack_lookup_labels_uneven_lookup_sets(capsys, lookups):
     # Add an extra label to the second lookup set
     lookups[1].append(types.Lookup(rank=3, distance=math.inf, label=4))
 
-    unpacked = utils.unpack_lookup_labels(lookups)
+    unpacked = utils.unpack_lookup_labels(lookups, dtype="int32")
     expected = tf.constant([[0, 1, 0x7FFFFFFF], [2, 3, 4]], dtype="int32")
 
     assert tf.reduce_all(tf.math.equal(unpacked, expected))
@@ -61,7 +61,7 @@ def test_unpack_lookup_labels_uneven_lookup_sets(capsys, lookups):
 
 
 def test_unpack_lookup_distances(capsys, lookups):
-    unpacked = utils.unpack_lookup_distances(lookups)
+    unpacked = utils.unpack_lookup_distances(lookups, dtype="float32")
     expected = tf.constant([[0.0, 1.0], [0.0, 1.0]], dtype="float32")
 
     assert tf.reduce_all(tf.math.equal(unpacked, expected))
@@ -74,7 +74,7 @@ def test_unpack_lookup_distances_uneven_lookup_sets(capsys, lookups):
     # Add an extra label to the second lookup set
     lookups[1].append(types.Lookup(rank=3, distance=2.0, label=4))
 
-    unpacked = utils.unpack_lookup_distances(lookups)
+    unpacked = utils.unpack_lookup_distances(lookups, dtype="float32")
     expected = tf.constant([[0.0, 1.0, math.inf], [0.0, 1.0, 2.0]],
                            dtype="float32")
 
