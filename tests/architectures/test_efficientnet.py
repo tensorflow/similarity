@@ -35,10 +35,10 @@ def test_build_effnet_b0_full():
 
     if tf_version_check(2, 9):
         expected_total_layer_count = 237
-        expected_trainable_layer_count = 237
+        expected_trainable_layer_count = 188
     else:
         expected_total_layer_count = 238
-        expected_trainable_layer_count = 238
+        expected_trainable_layer_count = 189
 
     assert total_layer_count == expected_total_layer_count
     assert trainable_layer_count == expected_trainable_layer_count
