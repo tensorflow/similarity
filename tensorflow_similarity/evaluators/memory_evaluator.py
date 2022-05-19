@@ -28,7 +28,11 @@ from tensorflow_similarity.matchers import make_classification_matcher
 from tensorflow_similarity.retrieval_metrics import RetrievalMetric
 from tensorflow_similarity.retrieval_metrics.utils import compute_match_mask
 from tensorflow_similarity.types import (
-        Lookup, CalibrationResults, IntTensor, FloatTensor)
+    Lookup,
+    CalibrationResults,
+    IntTensor,
+    FloatTensor,
+)
 from tensorflow_similarity.utils import unpack_lookup_distances
 from tensorflow_similarity.utils import unpack_lookup_labels
 
@@ -37,11 +41,12 @@ class MemoryEvaluator(Evaluator):
     """In memory index performance evaluation and classification."""
 
     def evaluate_retrieval(
-            self,
-            target_labels: Sequence[int],
-            lookups: Sequence[Sequence[Lookup]],
-            retrieval_metrics: Sequence[RetrievalMetric],
-            distance_rounding: int = 8) -> Dict[str, np.ndarray]:
+        self,
+        target_labels: Sequence[int],
+        lookups: Sequence[Sequence[Lookup]],
+        retrieval_metrics: Sequence[RetrievalMetric],
+        distance_rounding: int = 8,
+    ) -> Dict[str, np.ndarray]:
         """Evaluates lookup performances against a supplied set of metrics
 
         Args:
@@ -60,26 +65,28 @@ class MemoryEvaluator(Evaluator):
             Dictionary of metric results where keys are the metric names and
             values are the metrics values.
         """
+        # we also convert to np.ndarray first to avoid a slow down if
+        # convert_to_tensor is called on a List.
+        query_labels = tf.convert_to_tensor(np.array(target_labels))
+
         # data preparation: flatten and rounding
         # lookups will be shape(num_queries, num_neighbors)
         # distances will be len(num_queries x num_neighbors)
-        nn_labels = unpack_lookup_labels(lookups)
-        distances = unpack_lookup_distances(lookups, distance_rounding)
+        nn_labels = unpack_lookup_labels(lookups, dtype=query_labels.dtype)
+        # TODO(ovallis): The float type should be derived from the model.
+        distances = unpack_lookup_distances(
+            lookups, dtype="float32", distance_rounding=distance_rounding
+        )
 
         lookup_set_size = tf.shape(nn_labels)[1]
         for m in retrieval_metrics:
             if lookup_set_size < m.k:
                 raise ValueError(
-                        f'Each query example returned {lookup_set_size} '
-                        f'neighbors, but retrieval metric {m.name} '
-                        f'requires the K >= {m.k}.')
+                    f"Each query example returned {lookup_set_size} "
+                    f"neighbors, but retrieval metric {m.name} "
+                    f"requires the K >= {m.k}."
+                )
 
-        # ensure the target labels are an int32 tensor
-        # we also convert to np.ndarray first to avoid a slow down if
-        # convert_to_tensor is called on a List.
-        if not tf.is_tensor(target_labels):
-            target_labels = tf.convert_to_tensor(np.array(target_labels))
-        query_labels: IntTensor = tf.cast(target_labels, dtype='int32')
         match_mask = compute_match_mask(query_labels, nn_labels)
 
         # compute metrics
@@ -89,7 +96,7 @@ class MemoryEvaluator(Evaluator):
                 query_labels=query_labels,
                 lookup_labels=nn_labels,
                 lookup_distances=distances,
-                match_mask=match_mask
+                match_mask=match_mask,
             )
             evaluation[m.name] = res.numpy()
 
@@ -104,7 +111,7 @@ class MemoryEvaluator(Evaluator):
         metrics: Sequence[ClassificationMetric],
         matcher: Union[str, ClassificationMatch],
         distance_rounding: int = 8,
-        verbose: int = 1
+        verbose: int = 1,
     ) -> Dict[str, np.ndarray]:
         """Evaluate the classification performance.
 
@@ -145,24 +152,27 @@ class MemoryEvaluator(Evaluator):
 
         # compute the tp, fp, tn, fn counts
         matcher.compute_count(
-                query_labels=query_labels,
-                lookup_labels=lookup_labels,
-                lookup_distances=lookup_distances)
+            query_labels=query_labels,
+            lookup_labels=lookup_labels,
+            lookup_distances=lookup_distances,
+        )
 
         # evaluating performance as distance value increase
         if verbose:
-            pb = tqdm(total=len(metrics), desc='Evaluating')
+            pb = tqdm(total=len(metrics), desc="Evaluating")
 
         # evaluating performance as distance value increase
-        results: Dict[str, np.ndarray] = (
-                {'distance': distance_thresholds.numpy()})
+        results: Dict[str, np.ndarray] = {
+            "distance": distance_thresholds.numpy()
+        }
         for m in metrics:
             res = m.compute(
-                    tp=matcher.tp,
-                    fp=matcher.fp,
-                    tn=matcher.tn,
-                    fn=matcher.fn,
-                    count=matcher.count)
+                tp=matcher.tp,
+                fp=matcher.fp,
+                tn=matcher.tn,
+                fn=matcher.fn,
+                count=matcher.count,
+            )
             results[m.name] = res.numpy()
 
             if verbose:
@@ -183,7 +193,7 @@ class MemoryEvaluator(Evaluator):
         extra_metrics: Sequence[ClassificationMetric] = [],
         distance_rounding: int = 8,
         metric_rounding: int = 6,
-        verbose: int = 1
+        verbose: int = 1,
     ) -> CalibrationResults:
         """Computes the distances thresholds that the classification must match to
         meet a fixed target.
@@ -223,30 +233,33 @@ class MemoryEvaluator(Evaluator):
         """
         # TODO (ovallis): Assert if index is empty, or if the lookup is empty.
         if len(lookups) == 0:
-            raise ValueError("lookups must not be empty. Is there no data in "
-                             "the index?")
+            raise ValueError(
+                "lookups must not be empty. Is there no data in " "the index?"
+            )
 
         # making a single list of metrics
         # Need expl covariance problem
         combined_metrics = list(extra_metrics)
         combined_metrics.append(calibration_metric)
 
+        # we also convert to np.ndarray first to avoid a slow down if
+        # convert_to_tensor is called on a List.
+        query_labels = tf.convert_to_tensor(np.array(target_labels))
+
         # data preparation: flatten and rounding
         # lookups will be shape(num_queries, num_neighbors)
         # distances will be len(num_queries x num_neighbors)
-        lookup_distances = unpack_lookup_distances(lookups, distance_rounding)
-        lookup_labels = unpack_lookup_labels(lookups)
-        # ensure the target labels are an int32 tensor
-        query_labels: IntTensor = tf.cast(
-                tf.convert_to_tensor(target_labels),
-                dtype='int32'
+        # TODO(ovallis): The float type should be derived from the model.
+        lookup_distances = unpack_lookup_distances(
+            lookups, dtype="float32", distance_rounding=distance_rounding
         )
+        lookup_labels = unpack_lookup_labels(lookups, dtype=query_labels.dtype)
 
         # the unique set of distance values sorted ascending
         distance_thresholds = tf.sort(
-                tf.unique(
-                    tf.reshape(lookup_distances, (-1))
-                )[0]  # we only use the y output from tf.unique
+            tf.unique(tf.reshape(lookup_distances, (-1)))[
+                0
+            ]  # we only use the y output from tf.unique
         )
 
         results = self.evaluate_classification(
@@ -257,7 +270,8 @@ class MemoryEvaluator(Evaluator):
             metrics=combined_metrics,
             matcher=matcher,
             distance_rounding=distance_rounding,
-            verbose=verbose)
+            verbose=verbose,
+        )
 
         # pack results into one dict per dist_threshold
         # TODO(ovallis): we can likey refactor the rest of this method to
@@ -265,7 +279,7 @@ class MemoryEvaluator(Evaluator):
         # to ensure the code is working as expected.
         evaluations = []
         for i, dist in enumerate(distance_thresholds.numpy()):
-            ev = {'distance': results['distance'][i]}
+            ev = {"distance": results["distance"][i]}
             for m in combined_metrics:
                 ev[m.name] = results[m.name][i]
 
@@ -280,7 +294,7 @@ class MemoryEvaluator(Evaluator):
 
         # which direction metric improvement is?
         # !loop is right to left so max is decreasing and min is increasing
-        if calibration_metric.direction == 'max':
+        if calibration_metric.direction == "max":
             # we want the lowest value at the largest distance possible
             cmp = self._is_lower
             prev_value = math.inf  # python 3.x only
@@ -291,12 +305,18 @@ class MemoryEvaluator(Evaluator):
 
         # we need a collection of list to apply vectorize operations and make
         # the analysis / viz of the classification data signifcantly easier
-        thresholds: DefaultDict[str, List[Union[float, int]]] = defaultdict(list)  # noqa
-        cutpoints: DefaultDict[str, Dict[str, Union[str, float, int]]] = defaultdict(dict)  # noqa
+        thresholds: DefaultDict[str, List[Union[float, int]]] = defaultdict(
+            list
+        )  # noqa
+        cutpoints: DefaultDict[
+            str, Dict[str, Union[str, float, int]]
+        ] = defaultdict(
+            dict
+        )  # noqa
         num_distances = len(distance_thresholds)
 
         if verbose:
-            pb = tqdm(total=num_distances, desc='computing thresholds')
+            pb = tqdm(total=num_distances, desc="computing thresholds")
 
         # looping from right to left as we want the max distance for a given
         # metric value
@@ -316,7 +336,7 @@ class MemoryEvaluator(Evaluator):
                 # add a new distance threshold
                 # cast numpy float32 to python float to make it json
                 # serializable
-                thresholds['value'].append(float(curr_value))
+                thresholds["value"].append(float(curr_value))
 
                 # ! the correct distance is already in the eval data
                 # record the value for all the metrics requested by the user
@@ -332,7 +352,7 @@ class MemoryEvaluator(Evaluator):
                 to_delete = []  # can't delete in an iteration loop
                 for name, value in thresholds_targets.items():
                     if cmp(curr_value, value, equal=True):
-                        cutpoints[name] = {'name': name}  # useful for display
+                        cutpoints[name] = {"name": name}  # useful for display
                         for k in thresholds.keys():
                             cutpoints[name][k] = thresholds[k][-1]
                         to_delete.append(name)
@@ -349,15 +369,15 @@ class MemoryEvaluator(Evaluator):
             pb.close()
 
         # find the optimal cutpoint
-        if calibration_metric.direction == 'min':
+        if calibration_metric.direction == "min":
             best_idx = tf.math.argmin(thresholds[calibration_metric.name])
         else:
             best_idx = tf.math.argmax(thresholds[calibration_metric.name])
 
         # record its value
-        cutpoints['optimal'] = {'name': 'optimal'}  # useful for display
+        cutpoints["optimal"] = {"name": "optimal"}  # useful for display
         for k in thresholds.keys():
-            cutpoints['optimal'][k] = thresholds[k][best_idx]
+            cutpoints["optimal"][k] = thresholds[k][best_idx]
 
         # reverse the threshold so they go from left to right as user expect
         for k in thresholds.keys():  # this syntax is need for mypy ...
