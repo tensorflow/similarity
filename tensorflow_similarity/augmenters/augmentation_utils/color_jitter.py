@@ -24,7 +24,7 @@ def color_jitter(
       image: The input image tensor.
       strength: the floating number for the strength of the color augmentation.
       random_order: A bool, specifying whether to randomize the jittering order.
-      impl: 'simclrv1' or 'simclrv2'.  Whether to use simclrv1 or simclrv2's
+      impl: 'additive' or 'multiplicative'.  Whether to use simclrv1 or simclrv2's
           version of random brightness.
 
     Returns:
@@ -61,7 +61,7 @@ def color_jitter_nonrand(
       contrast: A float, specifying the contrast for color jitter.
       saturation: A float, specifying the saturation for color jitter.
       hue: A float, specifying the hue for color jitter.
-      impl: 'simclrv1' or 'simclrv2'.  Whether to use simclrv1 or simclrv2's
+      impl: 'additive' or 'multiplicative'.  Whether to use simclrv1 or simclrv2's
           version of random brightness.
 
     Returns:
@@ -116,7 +116,7 @@ def color_jitter_rand(
       contrast: A float, specifying the contrast for color jitter.
       saturation: A float, specifying the saturation for color jitter.
       hue: A float, specifying the hue for color jitter.
-      impl: 'simclrv1' or 'simclrv2'.  Whether to use simclrv1 or simclrv2's
+      impl: 'additive' or 'multiplicative'.  Whether to use simclrv1 or simclrv2's
           version of random brightness.
 
     Returns:
@@ -180,7 +180,17 @@ def to_grayscale(image: Tensor, keep_channels: bool = True) -> Tensor:
 def random_brightness(
     image: Tensor, max_delta: float, impl: str = "multiplicative"
 ) -> Tensor:
-    """A multiplicative vs additive change of brightness."""
+    """A multiplicative vs additive change of brightness.
+
+    Args:
+      image: The input image tensor.
+      max_delta: Will randomly apply a brightness between [-max_delta, max_delta).
+      impl: 'additive' or 'multiplicative'.  Whether to use simclrv1 or simclrv2's
+          version of random brightness.
+
+    Returns:
+      The brightned image tensor.
+    """
     if impl == "multiplicative":
         factor = tf.random.uniform(
             [], tf.maximum(1.0 - max_delta, 0), 1.0 + max_delta
