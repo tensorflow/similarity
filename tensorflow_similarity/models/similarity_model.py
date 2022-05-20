@@ -251,9 +251,9 @@ class SimilarityModel(tf.keras.Model):
     def _index(self) -> Indexer:
         if not hasattr(self, "_ix") and self._ix:
             raise AttributeError(
-                "The model does not currently have an index. To use indexing "
-                "you must call either model.compile() or model.create_index() "
-                "and set a valid Distance."
+                "The model does not currently have an index. To create an "
+                "index you must call either model.compile() or "
+                "model.create_index() and set a valid Distance."
             )
 
         return self._ix
