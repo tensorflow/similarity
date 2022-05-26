@@ -1,7 +1,5 @@
 import os
-import random
 
-import numpy as np
 import tensorflow as tf
 
 from tensorflow_similarity.samplers import TFRecordDatasetSampler
@@ -36,10 +34,6 @@ class TFRecordSamplerTest(tf.test.TestCase):
 
     def setUp(self):
         super().setUp()
-
-        random.seed(303)
-        np.random.seed(303)
-        tf.random.set_seed(303)
 
         for sid in range(100):
             shard_path = os.path.join(self.get_temp_dir(), f"tfr_{sid}.tfrec")
