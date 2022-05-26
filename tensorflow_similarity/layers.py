@@ -23,50 +23,11 @@ from .types import FloatTensor, IntTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class MetricEmbedding(layers.Layer):
-    def __init__(
-        self, units: int, name: Optional[str] = None, **kwargs
-    ) -> None:
-        """L2 Normalized `Dense` layer.
-
-        This layer is usually used as output layer, especially when using cosine
-        distance as the similarity metric.
-
-        Args:
-          units: Positive integer, dimensionality of the output space.
-          name: String name of the layer.
-          activation: Activation function to use. If you don't specify anything,
-            no activation is applied (ie. "linear" activation: `a(x) = x`).
-          use_bias: Boolean, whether the layer uses a bias vector.
-            Default is True.
-          kernel_initializer: Initializer for the `kernel` weights matrix.
-            Default is 'golrot_uniform'.
-          bias_initializer: Initializer for the bias vector. Default is 'zeros'.
-          kernel_regularizer: Regularizer function applied to the `kernel`
-            weights matrix. Default is None.
-          bias_regularizer: Regularizer function applied to the bias vector.
-            Default is None.
-          activity_regularizer: Regularizer function applied to the output of
-            the layer (its "activation"). Default is None.
-          kernel_constraint: Constraint function applied to the `kernel` weights
-            matrix. Default is None.
-          bias_constraint: Constraint function applied to the bias vector.
-            Default is None.
-        """
-        super().__init__(name=name)
-
-        self.input_spec = layers.InputSpec(min_ndim=2)
-        self.dense = layers.Dense(units, **kwargs)
-
+class MetricEmbedding(layers.Dense):
     def call(self, inputs: FloatTensor) -> FloatTensor:
-        x = self.dense(inputs)
+        x = super().call(inputs)
         normed_x: FloatTensor = tf.math.l2_normalize(x, axis=1)
         return normed_x
-
-    def get_config(self) -> Dict[str, Any]:
-        base_config = super().get_config()
-        dense_config = self.dense.get_config()
-        return {**base_config, **dense_config}
 
 
 class GeneralizedMeanPooling(layers.Layer):
