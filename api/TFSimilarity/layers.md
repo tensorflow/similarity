@@ -22,5 +22,5 @@ Specialized Similarity `keras.layers`
 
 - [`class IntTensor`](../TFSimilarity/callbacks/IntTensor.md): Integer tensor
 
-- [`class MetricEmbedding`](../TFSimilarity/layers/MetricEmbedding.md): This is the class from which all layers inherit.
+- [`class MetricEmbedding`](../TFSimilarity/layers/MetricEmbedding.md): Just your regular densely-connected NN layer.
 

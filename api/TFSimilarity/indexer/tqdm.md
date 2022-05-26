@@ -142,9 +142,21 @@ out  : str
 
 ```python
 format_meter(
-    n, total, elapsed, ncols=None, prefix=, ascii=False,
-    unit=it, unit_scale=False, rate=None, bar_format=None, postfix=None,
-    unit_divisor=1000, initial=0, colour=None, **extra_kwargs
+    n,
+    total,
+    elapsed,
+    ncols=None,
+    prefix=,
+    ascii=False,
+    unit=it,
+    unit_scale=False,
+    rate=None,
+    bar_format=None,
+    postfix=None,
+    unit_divisor=1000,
+    initial=0,
+    colour=None,
+    **extra_kwargs
 )
 ```
 
@@ -432,6 +444,18 @@ Print a message via tqdm (without overlap with bars).
 
 ```python
 __bool__()
+```
+
+
+
+
+
+<h3 id="__contains__">__contains__</h3>
+
+```python
+__contains__(
+    item
+)
 ```
 
 

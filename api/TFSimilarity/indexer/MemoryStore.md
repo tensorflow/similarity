@@ -22,7 +22,7 @@ TFSimilarity.indexer.MemoryStore() -> None
 
 <h3 id="add">add</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L37-L58">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L39-L62">View source</a>
 
 ```python
 add(
@@ -85,7 +85,7 @@ Associated record id.
 
 <h3 id="batch_add">batch_add</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L60-L84">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L64-L90">View source</a>
 
 ```python
 batch_add(
@@ -153,7 +153,7 @@ List of associated record id.
 
 <h3 id="batch_get">batch_get</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L100-L120">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L106-L125">View source</a>
 
 ```python
 batch_get(
@@ -198,7 +198,7 @@ List of records associated with the requested ids.
 
 <h3 id="get">get</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L86-L98">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L92-L104">View source</a>
 
 ```python
 get(
@@ -243,7 +243,7 @@ record associated with the requested id.
 
 <h3 id="load">load</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L145-L162">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L159-L176">View source</a>
 
 ```python
 load(
@@ -288,12 +288,11 @@ Number of records reloaded.
 
 <h3 id="save">save</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L126-L143">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L131-L157">View source</a>
 
 ```python
 save(
-    path: str,
-    compression: bool = True
+    path: str, compression: bool = True
 ) -> None
 ```
 
@@ -327,7 +326,7 @@ Compress index data. Defaults to True.
 
 <h3 id="size">size</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L122-L124">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L127-L129">View source</a>
 
 ```python
 size() -> int
@@ -339,7 +338,7 @@ Number of record in the key value store.
 
 <h3 id="to_data_frame">to_data_frame</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L175-L197">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/memory_store.py#L189-L211">View source</a>
 
 ```python
 to_data_frame(

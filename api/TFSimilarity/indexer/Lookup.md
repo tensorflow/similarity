@@ -11,8 +11,8 @@ Metadata associated with a query match.
 TFSimilarity.indexer.Lookup(
     rank: int,
     distance: float,
-    label: Optional[int] = None,
-    embedding: Optional[np.ndarray] = None,
+    label: Optional[int] = dataclasses.field(default=None),
+    embedding: Optional[np.ndarray] = dataclasses.field(default=None),
 )
 ```
 
@@ -73,7 +73,7 @@ Default None.
 
 <h3 id="__eq__">__eq__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/types.py#L114-L128">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/types.py#L114-L128">View source</a>
 
 ```python
 __eq__(

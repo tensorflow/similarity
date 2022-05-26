@@ -11,7 +11,8 @@ TFSimilarity.visualization.visualize_views(
     num_imgs: int = None,
     views_per_col: int = 4,
     fig_size: Tuple[int, int] = (24, 4),
-    max_pixel_value: float = 1.0
+    max_pixel_value: float = 1.0,
+    min_pixel_value: float = 0.0
 )
 ```
 
@@ -66,6 +67,14 @@ Int, number of images in one row. Defaults to 3.
 </td>
 <td>
 Max expected value for a pixel. Used to scale the image
+between [0,1].
+</td>
+</tr><tr>
+<td>
+<b>min_pixel_value</b>
+</td>
+<td>
+Min expected value for a pixel. Used to scale the image
 between [0,1].
 </td>
 </tr>

@@ -20,7 +20,7 @@ TFSimilarity.losses.SimSiamLoss(
 
 <!-- Placeholder for "Used in" -->
 
-Introduced in: [Exploring Simple Siamese Representation Learning](https://openaccess.thecvf.com/content/CVPR2021/papers/Chen_Exploring_Simple_Siamese_Representation_Learning_CVPR_2021_paper.pdf)
+Introduced in: [Exploring Simple Siamese Representation Learning](https://bit.ly/3LxsWdj)
 
 <!-- Tabular view -->
  <table class="responsive fixed orange">
@@ -122,7 +122,7 @@ A <b>Loss</b> instance.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/simsiam.py#L99-L105">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/simsiam.py#L114-L120">View source</a>
 
 ```python
 get_config() -> Dict[str, Any]

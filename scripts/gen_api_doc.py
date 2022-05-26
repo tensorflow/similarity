@@ -32,7 +32,7 @@ from tensorflow_docs.api_generator import public_api
 
 from tensorflow_similarity import api as TFSimilarity
 
-tf.config.set_visible_devices([], "GPU")
+# tf.config.set_visible_devices([], "GPU")
 
 OUTDIR = "../api/"
 

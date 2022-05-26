@@ -23,8 +23,7 @@ TFSimilarity.retrieval_metrics.MapAtK(
 <!-- Placeholder for "Used in" -->
 
 $$
-mAP_i@K = 
-rac<i>\sum_{j = 1}^{K} {rel_i_j}   imes{P_i@j}}{R</i>
+mAP_i@K = \frac<i>\sum_{j = 1}^{K} {rel_i_j}\times{P_i@j}}{R</i>
 $$
 
 Where: K is the number of neighbors in the i_th query result set.
@@ -130,7 +129,7 @@ queries.
 
 <h3 id="compute">compute</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/map_at_k.py#L98-L149">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/map_at_k.py#L98-L149">View source</a>
 
 ```python
 compute(
@@ -197,7 +196,7 @@ A rank 0 tensor containing the metric.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/map_at_k.py#L91-L96">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/map_at_k.py#L91-L96">View source</a>
 
 ```python
 get_config()
