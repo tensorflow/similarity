@@ -12,20 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Multi Similarity Loss"""
-
-import tensorflow as tf
+"""Multi Similarity Loss
+    Multi-Similarity Loss with General Pair Weighting for Deep Metric Learning
+    https://arxiv.org/abs/1904.06627
+"""
 from typing import Any, Callable, Union
 
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
+import tensorflow as tf
+
 from tensorflow_similarity.algebra import build_masks, masked_max, masked_min
+from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor, IntTensor
+
 from .metric_loss import MetricLoss
 from .utils import logsumexp
 
 
-@tf.keras.utils.register_keras_serializable(package="Similarity")
-@tf.function
 def multisimilarity_loss(
     query_labels: IntTensor,
     query_embeddings: FloatTensor,
@@ -158,7 +160,6 @@ def multisimilarity_loss(
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class MultiSimilarityLoss(MetricLoss):
     """Computes the multi similarity loss in an online fashion.
-
 
     `y_true` must be  a 1-D integer `Tensor` of shape (batch_size,).
     It's values represent the classes associated with the examples as

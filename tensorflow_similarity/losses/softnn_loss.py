@@ -13,28 +13,29 @@
 # limitations under the License.
 # ==============================================================================
 """Soft Nearest Neighbors Loss
-    FaceNet: A Unified Embedding for Face Recognition and Clustering:
+    FaceNet: A Unified Embedding for Face Recognition and Clustering
     https://arxiv.org/abs/1902.01889
 """
+from typing import Any, Callable, Union
 
 import tensorflow as tf
-from typing import Any, Union, Callable
 
-from .metric_loss import MetricLoss
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.algebra import build_masks
+from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor, IntTensor
 
+from .metric_loss import MetricLoss
 
-@tf.keras.utils.register_keras_serializable(package="Similarity")
-@tf.function
-def soft_nn_loss(query_labels: IntTensor,
-                 query_embeddings: FloatTensor,
-                 key_labels: IntTensor,
-                 key_embeddings: FloatTensor,
-                 distance: Callable,
-                 temperature: float,
-                 remove_diagonal: bool = True) -> Any:
+
+def soft_nn_loss(
+    query_labels: IntTensor,
+    query_embeddings: FloatTensor,
+    key_labels: IntTensor,
+    key_embeddings: FloatTensor,
+    distance: Callable,
+    temperature: float,
+    remove_diagonal: bool = True,
+) -> Any:
     """Computes the soft nearest neighbors loss.
 
     Args:
@@ -79,12 +80,13 @@ def soft_nn_loss(query_labels: IntTensor,
     sacn = tf.reduce_sum(tf.math.multiply(negexpd, pos_mask), axis=1)
 
     # exclude examples with unique class from loss calculation
-    excl = tf.math.not_equal(tf.reduce_sum(pos_mask, axis=1),
-                             tf.zeros(batch_size))
+    excl = tf.math.not_equal(
+        tf.reduce_sum(pos_mask, axis=1), tf.zeros(batch_size)
+    )
     excl = tf.cast(excl, tf.float32)
 
     loss = tf.math.divide(sacn, alcn)
-    loss = -tf.multiply(tf.math.log(eps+loss), excl)
+    loss = -tf.multiply(tf.math.log(eps + loss), excl)
 
     return loss
 
@@ -105,11 +107,13 @@ class SoftNearestNeighborLoss(MetricLoss):
     `embeddings` must be 2-D float `Tensor` of embedding vectors.
     """
 
-    def __init__(self,
-                 distance: Union[Distance, str] = 'sql2',
-                 temperature: float = 1,
-                 name: str = "SoftNearestNeighborLoss",
-                 **kwargs):
+    def __init__(
+        self,
+        distance: Union[Distance, str] = "sql2",
+        temperature: float = 1,
+        name: str = "SoftNearestNeighborLoss",
+        **kwargs
+    ):
         """Initializes the SoftNearestNeighborLoss Loss
 
         Args:
@@ -127,8 +131,10 @@ class SoftNearestNeighborLoss(MetricLoss):
         self.distance = distance
         self.temperature = temperature
 
-        super().__init__(fn=soft_nn_loss,
-                         name=name,
-                         distance=distance,
-                         temperature=temperature,
-                         **kwargs)
+        super().__init__(
+            fn=soft_nn_loss,
+            name=name,
+            distance=distance,
+            temperature=temperature,
+            **kwargs
+        )
