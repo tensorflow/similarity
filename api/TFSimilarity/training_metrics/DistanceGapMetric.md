@@ -85,8 +85,8 @@ To be implemented by subclasses:
   calling <b>self.add_weight()</b> like: <b>self.var = self.add_weight(...)</b>
 * <b>update_state()</b>: Has all updates to the state variables like:
   self.var.assign_add(...).
-* <b>result()</b>: Computes and returns a value for the metric
-  from the state variables.
+* <b>result()</b>: Computes and returns a scalar value or a dict of scalar values
+  for the metric from the state variables.
 
 Example subclass implementation:
 
@@ -199,21 +199,35 @@ when a metric is evaluated during training.
 
 <h3 id="result">result</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/training_metrics/distance_metrics.py#L130-L131">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/training_metrics/distance_metrics.py#L130-L131">View source</a>
 
 ```python
 result()
 ```
 
 
-Computes and returns the metric value tensor.
+Computes and returns the scalar metric value tensor or a dict of scalars.
 
 Result computation is an idempotent operation that simply calculates the
 metric value using the state variables.
 
+<!-- Tabular view -->
+ <table class="responsive fixed orange">
+<colgroup><col width="214px"><col></colgroup>
+<tr><th colspan="2">Returns</th></tr>
+<tr class="alt">
+<td colspan="2">
+A scalar tensor, or a dictionary of scalar tensors.
+</td>
+</tr>
+
+</table>
+
+
+
 <h3 id="update_state">update_state</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/training_metrics/distance_metrics.py#L125-L128">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/training_metrics/distance_metrics.py#L125-L128">View source</a>
 
 ```python
 update_state(

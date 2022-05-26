@@ -30,15 +30,17 @@ Specialized callbacks that track similarity metrics during training
 
 - [`class SimilarityModel`](../TFSimilarity/callbacks/SimilarityModel.md): Specialized Keras.Model which implement the core features needed for
 
-- [`class SplitValidationLoss`](../TFSimilarity/callbacks/SplitValidationLoss.md): A split validation callback.
-
 - [`class Tensor`](../TFSimilarity/callbacks/Tensor.md): A `tf.Tensor` represents a multidimensional array of elements.
 
 ## Functions
+
+- [`SplitValidationLoss(...)`](../TFSimilarity/callbacks/SplitValidationLoss.md): Creates the validation callbacks.
 
 - [`make_classification_metric(...)`](../TFSimilarity/callbacks/make_classification_metric.md): Convert classification metric from str name to object if needed.
 
 - [`unpack_lookup_distances(...)`](../TFSimilarity/callbacks/unpack_lookup_distances.md)
 
 - [`unpack_lookup_labels(...)`](../TFSimilarity/callbacks/unpack_lookup_labels.md)
+
+- [`unpack_results(...)`](../TFSimilarity/callbacks/unpack_results.md): Updates logs, writes summary, and returns list of strings of
 

@@ -23,8 +23,7 @@ Computes the F-1 Score given the query classification counts. The metric is
 computed as follows:
 
 $$
-F_1 = 2 \cdot 
-rac<i> extrm{precision} \cdot  extrm{recall}}{ extrm{precision} +      extrm{recall}</i>
+F_1 = 2 \cdot \frac<i>\textrm{precision} \cdot \textrm{recall}}{\textrm{precision} + \textrm{recall}</i>
 $$
 
 args:
@@ -43,7 +42,7 @@ model.calibrate(x=query_examples,
 
 <h3 id="compute">compute</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/classification_metrics/f1_score.py#L48-L83">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/classification_metrics/f1_score.py#L47-L84">View source</a>
 
 ```python
 compute(
@@ -132,7 +131,7 @@ A 1D FloatTensor containing the metric at each distance threshold.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/classification_metrics/classification_metric.py#L58-L63">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/classification_metrics/classification_metric.py#L58-L63">View source</a>
 
 ```python
 get_config()

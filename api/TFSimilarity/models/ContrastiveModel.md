@@ -152,7 +152,7 @@ to do prediction with <b>model.predict()</b>.
 
 <h3 id="calibrate">calibrate</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L804-L874">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L802-L872">View source</a>
 
 ```python
 calibrate(
@@ -278,7 +278,7 @@ CalibrationResults containing the thresholds and cutpoints Dicts.
 
 <h3 id="create_index">create_index</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L602-L672">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L600-L670">View source</a>
 
 ```python
 create_index(
@@ -384,7 +384,7 @@ Invalid search framework or key value store.
 
 <h3 id="evaluate_classification">evaluate_classification</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L998-L1105">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L996-L1103">View source</a>
 
 ```python
 evaluate_classification(
@@ -499,7 +499,7 @@ Uncalibrated model: run model.calibration()")
 
 <h3 id="evaluate_retrieval">evaluate_retrieval</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L942-L996">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L940-L994">View source</a>
 
 ```python
 evaluate_retrieval(
@@ -586,7 +586,7 @@ Index must contain embeddings but is currently empty.
 
 <h3 id="index">index</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L674-L716">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L672-L714">View source</a>
 
 ```python
 index(
@@ -656,7 +656,7 @@ Output indexing progress info. Defaults to 1.
 
 <h3 id="index_single">index_single</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L718-L761">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L716-L759">View source</a>
 
 ```python
 index_single(
@@ -726,7 +726,7 @@ Output indexing progress info. Defaults to 1.
 
 <h3 id="index_size">index_size</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L1111-L1113">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L1109-L1111">View source</a>
 
 ```python
 index_size() -> int
@@ -738,7 +738,7 @@ Return the index size
 
 <h3 id="index_summary">index_summary</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L800-L802">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L798-L800">View source</a>
 
 ```python
 index_summary()
@@ -750,7 +750,7 @@ Display index info summary.
 
 <h3 id="load_index">load_index</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L1115-L1125">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L1113-L1123">View source</a>
 
 ```python
 load_index(
@@ -788,7 +788,7 @@ Be verbose. Defaults to 1.
 
 <h3 id="lookup">lookup</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L763-L782">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L761-L780">View source</a>
 
 ```python
 lookup(
@@ -839,7 +839,7 @@ Returns
 
 <h3 id="match">match</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L876-L940">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L874-L938">View source</a>
 
 ```python
 match(
@@ -938,7 +938,7 @@ evaluation in a single go.
 
 <h3 id="reset_index">reset_index</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L1107-L1109">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L1105-L1107">View source</a>
 
 ```python
 reset_index()
@@ -950,7 +950,7 @@ Reinitialize the index
 
 <h3 id="save_index">save_index</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L1127-L1135">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L1125-L1133">View source</a>
 
 ```python
 save_index(
@@ -988,7 +988,7 @@ Store index data compressed. Defaults to True.
 
 <h3 id="single_lookup">single_lookup</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L784-L798">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L782-L796">View source</a>
 
 ```python
 single_lookup(
@@ -1032,7 +1032,7 @@ Returns
 
 <h3 id="to_data_frame">to_data_frame</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L1137-L1147">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/models/contrastive_model.py#L1135-L1145">View source</a>
 
 ```python
 to_data_frame(

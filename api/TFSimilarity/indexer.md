@@ -26,8 +26,6 @@ sub-linear search
 
 - [`class Indexer`](../TFSimilarity/indexer/Indexer.md): Indexing system that allows to efficiently find nearest embeddings
 
-- [`class IntTensor`](../TFSimilarity/callbacks/IntTensor.md): Integer tensor
-
 - [`class Lookup`](../TFSimilarity/indexer/Lookup.md): Metadata associated with a query match.
 
 - [`class MemoryEvaluator`](../TFSimilarity/callbacks/MemoryEvaluator.md): In memory index performance evaluation and classification.

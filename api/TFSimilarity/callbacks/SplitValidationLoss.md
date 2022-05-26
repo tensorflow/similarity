@@ -4,9 +4,7 @@
 
 
 
-A split validation callback.
-
-Inherits From: [`Callback`](../../TFSimilarity/callbacks/Callback.md)
+Creates the validation callbacks.
 
 ```python
 TFSimilarity.callbacks.SplitValidationLoss(
@@ -23,16 +21,6 @@ TFSimilarity.callbacks.SplitValidationLoss(
 
 <!-- Placeholder for "Used in" -->
 
-This callback will split the validation data into two sets.
-
-    1) The set of classes seen during training.
-    2) The set of classes not seen during training.
-
-The callback will then compute a separate validation for each split.
-
-This is useful for separately tracking the validation loss on the seen and
-unseen classes and may provide insight into how well the embedding will
-generalize to new classes.
 
 <!-- Tabular view -->
  <table class="responsive fixed orange">
@@ -104,9 +92,9 @@ Where to write TensorBoard logs. Defaults to None.
 <b>k</b>
 </td>
 <td>
-The number of nearest neighbors to return for each query. The
-lookups are consumed by the Matching Strategy and used to derive the
-matching label and distance.
+The number of nearest neighbors to return for each query.
+The lookups are consumed by the Matching Strategy and used to
+derive the matching label and distance.
 </td>
 </tr><tr>
 <td>
@@ -125,39 +113,9 @@ less than or equal to the distance threshold.
 </td>
 <td>
 A 1D tensor denoting the distances points at
-which we compute the metrics. If None, distance_thresholds is set to
-tf.constant([math.inf])
+which we compute the metrics. If None, distance_thresholds is set
+to tf.constant([math.inf])
 </td>
 </tr>
 </table>
-
-
-
-## Methods
-
-<h3 id="set_model">set_model</h3>
-
-```python
-set_model(
-    model
-)
-```
-
-
-
-
-
-<h3 id="set_params">set_params</h3>
-
-```python
-set_params(
-    params
-)
-```
-
-
-
-
-
-
 

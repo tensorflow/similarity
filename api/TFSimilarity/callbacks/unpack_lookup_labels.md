@@ -9,7 +9,7 @@
 
 ```python
 TFSimilarity.callbacks.unpack_lookup_labels(
-    lookups: Sequence[Sequence[Lookup]]
+    lookups: Sequence[Sequence[Lookup]], dtype: Union[str, tf.DType]
 ```
 
 

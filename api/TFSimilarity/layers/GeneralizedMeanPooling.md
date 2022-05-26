@@ -8,7 +8,7 @@ This is the class from which all layers inherit.
 
 ```python
 TFSimilarity.layers.GeneralizedMeanPooling(
-    p: float = 1.0,
+    p: float = 3.0,
     data_format: Optional[str] = None,
     keepdims: bool = False,
     **kwargs
@@ -21,8 +21,15 @@ TFSimilarity.layers.GeneralizedMeanPooling(
 
 A layer is a callable object that takes as input one or more tensors and
 that outputs one or more tensors. It involves *computation*, defined
-in the <b>call()</b> method, and a *state* (weight variables), defined
-either in the constructor <b>__init__()</b> or in the <b>build()</b> method.
+in the <b>call()</b> method, and a *state* (weight variables). State can be
+created in various places, at the convenience of the subclass implementer:
+
+* in <b>__init__()</b>;
+* in the optional <b>build()</b> method, which is invoked by the first
+  <b>__call__()</b> to the layer, and supplies the shape(s) of the input(s),
+  which may not have been known at initialization time;
+* in the first invocation of <b>call()</b>, with some caveats discussed
+  below.
 
 Users will just instantiate a layer and then treat it as a callable.
 
@@ -74,15 +81,17 @@ safely be used to generate a static computation graph.
 
 We recommend that descendants of <b>Layer</b> implement the following methods:
 
-* <b>__init__()</b>: Defines custom layer attributes, and creates layer state
-  variables that do not depend on input shapes, using <b>add_weight()</b>.
+* <b>__init__()</b>: Defines custom layer attributes, and creates layer weights
+  that do not depend on input shapes, using <b>add_weight()</b>, or other state.
 * <b>build(self, input_shape)</b>: This method can be used to create weights that
-  depend on the shape(s) of the input(s), using <b>add_weight()</b>. <b>__call__()</b>
-  will automatically build the layer (if it has not been built yet) by
-  calling <b>build()</b>.
+  depend on the shape(s) of the input(s), using <b>add_weight()</b>, or other
+  state. <b>__call__()</b> will automatically build the layer (if it has not been
+  built yet) by calling <b>build()</b>.
 * <b>call(self, inputs, *args, **kwargs)</b>: Called in <b>__call__</b> after making
   sure <b>build()</b> has been called. <b>call()</b> performs the logic of applying the
-  layer to the input tensors (which should be passed in as argument).
+  layer to the <b>inputs</b>. The first invocation may additionally create state
+  that could not be conveniently created in <b>build()</b>; see its docstring
+  for details.
   Two reserved keyword arguments you can optionally use in <b>call()</b> are:
     - <b>training</b> (boolean, whether the call is in inference mode or training
       mode). See more details in [the layer/model subclassing guide](

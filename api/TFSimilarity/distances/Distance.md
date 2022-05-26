@@ -11,8 +11,7 @@ Inherits From: [`ABC`](../../TFSimilarity/distances/ABC.md)
 
 ```python
 TFSimilarity.distances.Distance(
-    name: str,
-    aliases: List[str] = []
+    name: str, aliases: List[str] = []
 )
 ```
 
@@ -25,11 +24,13 @@ and add alias names in it.
 
 <h3 id="call">call</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distances.py#L33-L42">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distances.py#L33-L43">View source</a>
 
 ```python
 call(
-    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+    query_embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
+    key_embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
 ) -> <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
@@ -46,7 +47,14 @@ Compute pairwise distances for a given batch.
 
 <tr>
 <td>
-<b>embeddings</b>
+<b>query_embeddings</b>
+</td>
+<td>
+Embeddings to compute the pairwise one.
+</td>
+</tr><tr>
+<td>
+<b>key_embeddings</b>
 </td>
 <td>
 Embeddings to compute the pairwise one.
@@ -75,7 +83,7 @@ Pairwise distance tensor.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distances.py#L50-L51">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distances.py#L51-L52">View source</a>
 
 ```python
 get_config()
@@ -87,11 +95,13 @@ get_config()
 
 <h3 id="__call__">__call__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distances.py#L44-L45">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distances.py#L45-L46">View source</a>
 
 ```python
 __call__(
-    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+    query_embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
+    key_embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
 )
 ```

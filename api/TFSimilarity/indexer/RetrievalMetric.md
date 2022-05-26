@@ -101,7 +101,7 @@ labels from the set of lookup results.
 
 <h3 id="compute">compute</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/retrieval_metric.py#L87-L112">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/retrieval_metric.py#L87-L112">View source</a>
 
 ```python
 compute(
@@ -179,7 +179,7 @@ A rank 0 tensor containing the metric.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/retrieval_metric.py#L79-L85">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/retrieval_metric.py#L79-L85">View source</a>
 
 ```python
 get_config()
