@@ -1,7 +1,24 @@
+# Copyright 2020 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+"""SimCLR Loss
+    A Simple Framework for Contrastive Learning of Visual Representations
+    https://arxiv.org/abs/2002.05709
+"""
 from typing import Any, Callable, Dict, Optional
 
 import tensorflow as tf
-from tensorflow.keras.losses import Loss
 
 from tensorflow_similarity.types import FloatTensor
 
@@ -9,10 +26,9 @@ LARGE_NUM = 1e9
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class SimCLRLoss(Loss):
+class SimCLRLoss(tf.keras.losses.Loss):
     """SimCLR Loss
-    # FIXME original reference
-    used in [Big Self-Supervised Models are Strong Semi-Supervised Learners](https://arxiv.org/abs/2006.10029)
+    [A Simple Framework for Contrastive Learning of Visual Representations](https://arxiv.org/abs/2002.05709)
     code adapted from [orignal github](https://github.com/google-research/simclr/tree/master/tf2)
     """
 
@@ -28,7 +44,6 @@ class SimCLRLoss(Loss):
         self.temperature = temperature
         self.margin = margin
 
-    @tf.function
     def call(self, za: FloatTensor, zb: FloatTensor) -> FloatTensor:
         """Compute the lost.
 

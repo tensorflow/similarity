@@ -17,33 +17,33 @@
     Structure-preserving visualisation of high dimensional single-cell dataset
     Sci Rep 9, 8914 (2019). https://doi.org/10.1038/s41598-019-45301-0
 """
-
-import tensorflow as tf
 from typing import Any, Callable, Union
 
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
+import tensorflow as tf
+
 from tensorflow_similarity.algebra import build_masks
+from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor, IntTensor
-from .utils import negative_distances, positive_distances, compute_loss
+
 from .metric_loss import MetricLoss
+from .utils import compute_loss, negative_distances, positive_distances
 
 
-@tf.keras.utils.register_keras_serializable(package="Similarity")
-@tf.function
-def pn_loss(query_labels: IntTensor,
-            query_embeddings: FloatTensor,
-            key_labels: IntTensor,
-            key_embeddings: FloatTensor,
-            distance: Callable,
-            remove_diagonal: bool = True,
-            positive_mining_strategy: str = 'hard',
-            negative_mining_strategy: str = 'semi-hard',
-            soft_margin: bool = False,
-            margin: float = 1.0) -> Any:
+def pn_loss(
+    query_labels: IntTensor,
+    query_embeddings: FloatTensor,
+    key_labels: IntTensor,
+    key_embeddings: FloatTensor,
+    distance: Callable,
+    remove_diagonal: bool = True,
+    positive_mining_strategy: str = "hard",
+    negative_mining_strategy: str = "semi-hard",
+    soft_margin: bool = False,
+    margin: float = 1.0,
+) -> Any:
     """Positive Negative loss computations
 
     Based on the pn loss used in IVIS.
-
 
     Args:
         query_labels: labels associated with the query embed.
@@ -96,17 +96,17 @@ def pn_loss(query_labels: IntTensor,
 
     # [Positive distance computation]
     pos_distances, pos_idxs = positive_distances(
-            positive_mining_strategy,
-            pairwise_distances,
-            positive_mask,
+        positive_mining_strategy,
+        pairwise_distances,
+        positive_mask,
     )
 
     # [Negative distances computation]
     neg_distances, neg_idxs = negative_distances(
-            negative_mining_strategy,
-            pairwise_distances,
-            negative_mask,
-            positive_mask,
+        negative_mining_strategy,
+        pairwise_distances,
+        negative_mask,
+        positive_mask,
     )
 
     # Compute the distance between the pairs of positive and negative examples.
@@ -151,14 +151,16 @@ class PNLoss(MetricLoss):
     normalized.
     """
 
-    def __init__(self,
-                 distance: Union[Distance, str] = 'cosine',
-                 positive_mining_strategy: str = 'hard',
-                 negative_mining_strategy: str = 'semi-hard',
-                 soft_margin: bool = False,
-                 margin: float = 1.0,
-                 name: str = 'PNLoss',
-                 **kwargs):
+    def __init__(
+        self,
+        distance: Union[Distance, str] = "cosine",
+        positive_mining_strategy: str = "hard",
+        negative_mining_strategy: str = "semi-hard",
+        soft_margin: bool = False,
+        margin: float = 1.0,
+        name: str = "PNLoss",
+        **kwargs
+    ):
         """Initializes the PN Loss
 
         Args:
@@ -193,22 +195,26 @@ class PNLoss(MetricLoss):
         self.distance = distance
         # sanity checks
 
-        if positive_mining_strategy not in ['easy', 'hard']:
-            raise ValueError('Invalid positive mining strategy.')
+        if positive_mining_strategy not in ["easy", "hard"]:
+            raise ValueError("Invalid positive mining strategy.")
 
-        if negative_mining_strategy not in ['easy', 'hard', 'semi-hard']:
-            raise ValueError('Invalid negative mining strategy.')
+        if negative_mining_strategy not in ["easy", "hard", "semi-hard"]:
+            raise ValueError("Invalid negative mining strategy.")
 
         # Ensure users knows its one or the other
         if margin != 1.0 and soft_margin:
-            raise ValueError('Margin value is not used when soft_margin is\
-                              set to True')
+            raise ValueError(
+                "Margin value is not used when soft_margin is\
+                              set to True"
+            )
 
-        super().__init__(pn_loss,
-                         name=name,
-                         distance=distance,
-                         positive_mining_strategy=positive_mining_strategy,
-                         negative_mining_strategy=negative_mining_strategy,
-                         soft_margin=soft_margin,
-                         margin=margin,
-                         **kwargs)
+        super().__init__(
+            pn_loss,
+            name=name,
+            distance=distance,
+            positive_mining_strategy=positive_mining_strategy,
+            negative_mining_strategy=negative_mining_strategy,
+            soft_margin=soft_margin,
+            margin=margin,
+            **kwargs
+        )

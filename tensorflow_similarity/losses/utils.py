@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Utility functions for computing the metric loss."""
-
-import tensorflow as tf
-from tensorflow_similarity.algebra import masked_max, masked_min
-from tensorflow_similarity.types import FloatTensor, BoolTensor
 from typing import Any, Tuple
 
+import tensorflow as tf
 
-@tf.keras.utils.register_keras_serializable(package="Similarity")
-@tf.function
+from tensorflow_similarity.algebra import masked_max, masked_min
+from tensorflow_similarity.types import BoolTensor, FloatTensor
+
+
 def positive_distances(
     positive_mining_strategy: str,
     distances: FloatTensor,
@@ -50,8 +49,6 @@ def positive_distances(
     return positive_distances, pos_idxs
 
 
-@tf.keras.utils.register_keras_serializable(package="Similarity")
-@tf.function
 def negative_distances(
     negative_mining_strategy: str,
     distances: FloatTensor,
@@ -109,8 +106,6 @@ def negative_distances(
     return negative_distances, neg_idxs
 
 
-@tf.keras.utils.register_keras_serializable(package="Similarity")
-@tf.function
 def compute_loss(
     positive_distances: FloatTensor,
     negative_distances: FloatTensor,
@@ -143,8 +138,6 @@ def compute_loss(
     return loss
 
 
-@tf.keras.utils.register_keras_serializable(package="Similarity")
-@tf.function
 def logsumexp(pairwise_distances: FloatTensor, mask: FloatTensor) -> Any:
     """Compute the LogSumExp across axis 1 of the pairwise distance matrix.
 

@@ -1,14 +1,33 @@
+# Copyright 2021 The TensorFlow Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""VicReg Loss
+    VICReg: Variance-Invariance-Covariance Regularization for Self-Supervised Learning
+    https://arxiv.org/abs/2105.04906
+"""
 from typing import Any, Callable, Dict, Optional
 
 import tensorflow as tf
-from tensorflow.keras.losses import Loss
 
 from tensorflow_similarity.types import FloatTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class VicReg(Loss):
-    """VicReg Loss"""
+class VicReg(tf.keras.losses.Loss):
+    """VicReg Loss
+
+    [VICReg: Variance-Invariance-Covariance Regularization for Self-Supervised Learning](https://arxiv.org/abs/2105.04906)
+    """  # noqa
 
     def __init__(
         self,
@@ -27,7 +46,6 @@ class VicReg(Loss):
         self.std_const = std_const
         self.reduction = reduction
 
-    @tf.function
     def call(self, za: FloatTensor, zb: FloatTensor) -> FloatTensor:
         """Compute the lost.
         Args:

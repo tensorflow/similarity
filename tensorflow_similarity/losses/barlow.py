@@ -1,26 +1,64 @@
+# Copyright 2020 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+"""Barlow Loss
+    Barlow Twins: Self-Supervised Learning via Redundancy Reduction
+    https://arxiv.org/abs/2103.03230
+"""
 from typing import Any, Callable, Dict, Optional
 
 import tensorflow as tf
-from tensorflow.keras.losses import Loss
 
 from tensorflow_similarity.types import FloatTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class Barlow(Loss):
-    """Barlow Loss"""
+class Barlow(tf.keras.losses.Loss):
+    """Computes the Barlow Loss between two batches of embeddings.
 
-    def __init__(self,
-                 lambda_: float = 5e-3,
-                 margin: float = 1e-12,
-                 reduction: Callable = tf.keras.losses.Reduction.AUTO,
-                 name: Optional[str] = None,
-                 **kwargs):
+    Reference
+
+    Zbontar, Jure, et al.
+    "Barlow Twins: Self-Supervised Learning via Redundancy Reduction."
+    https://arxiv.org/abs/2103.03230
+
+    Standalone usage:
+
+    >>> loss = tensorflow_similarity.losses.Barlow()
+    >>> za = tf.random.uniform(shape=[4, 16])
+    >>> zb = tf.random.uniform(shape=[4, 16])
+    >>> loss(za, zb)
+    <tf.Tensor: shape=(), dtype=float32, numpy=22.144062>
+
+    Usage with the `compile()` API:
+    ```python
+    model.compile(optimizer='sgd', loss=tensorflow_similarity.losses.Barlow())
+    ```
+    """
+
+    def __init__(
+        self,
+        lambda_: float = 5e-3,
+        margin: float = 1e-12,
+        reduction: Callable = tf.keras.losses.Reduction.AUTO,
+        name: Optional[str] = None,
+        **kwargs
+    ):
         super().__init__(reduction=reduction, name=name, **kwargs)
         self.lambda_ = lambda_
         self.margin = margin
 
-    @tf.function
     def call(self, za: FloatTensor, zb: FloatTensor) -> FloatTensor:
         """Compute the lost.
 
