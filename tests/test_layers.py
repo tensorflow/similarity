@@ -5,9 +5,9 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from tensorflow_similarity.layers import MetricEmbedding
-from tensorflow_similarity.layers import GeneralizedMeanPooling1D
-from tensorflow_similarity.layers import GeneralizedMeanPooling2D
+from tensorflow_similarity.layers import (GeneralizedMeanPooling1D,
+                                          GeneralizedMeanPooling2D,
+                                          MetricEmbedding)
 
 
 @pytest.fixture
@@ -218,18 +218,21 @@ def test_metric_embedding_get_config():
     me_layer = MetricEmbedding(32)
     config = me_layer.get_config()
     expected_config = {
-        "activation": None,
-        "activity_regularizer": None,
-        "bias_constraint": None,
-        "bias_initializer": "zeros",
-        "bias_regularizer": None,
-        "dtype": "float32",
-        "kernel_constraint": None,
-        "kernel_initializer": "glorot_uniform",
-        "kernel_regularizer": None,
         "name": "metric_embedding_1",
         "trainable": True,
+        "dtype": "float32",
         "units": 32,
+        "activation": "linear",
         "use_bias": True,
+        "kernel_initializer": {
+            "class_name": "GlorotUniform",
+            "config": {"seed": None},
+        },
+        "bias_initializer": {"class_name": "Zeros", "config": {}},
+        "kernel_regularizer": None,
+        "bias_regularizer": None,
+        "activity_regularizer": None,
+        "kernel_constraint": None,
+        "bias_constraint": None,
     }
     TestCase().assertDictEqual(expected_config, config)
