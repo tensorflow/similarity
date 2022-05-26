@@ -22,5 +22,5 @@ Specialized Similarity `keras.layers`
 
 - [`class IntTensor`](../TFSimilarity/callbacks/IntTensor.md): Integer tensor
 
-- [`class MetricEmbedding`](../TFSimilarity/layers/MetricEmbedding.md): Just your regular densely-connected NN layer.
+- [`class MetricEmbedding`](../TFSimilarity/layers/MetricEmbedding.md): L2 Normalized `Dense` layer.
 
