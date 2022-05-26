@@ -18,24 +18,14 @@ from typing import Any, Dict, Optional
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.python.keras.utils import conv_utils
+
 from .types import FloatTensor, IntTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class MetricEmbedding(layers.Layer):
     def __init__(
-        self,
-        units: int,
-        activation: Optional[Any] = None,
-        use_bias: bool = True,
-        kernel_initializer: Optional[Any] = "glorot_uniform",
-        bias_initializer: Optional[Any] = "zeros",
-        kernel_regularizer: Optional[Any] = None,
-        bias_regularizer: Optional[Any] = None,
-        activity_regularizer: Optional[Any] = None,
-        kernel_constraint: Optional[Any] = None,
-        bias_constraint: Optional[Any] = None,
-        **kwargs
+        self, units: int, name: Optional[str] = None, **kwargs
     ) -> None:
         """L2 Normalized `Dense` layer.
 
@@ -44,46 +34,29 @@ class MetricEmbedding(layers.Layer):
 
         Args:
           units: Positive integer, dimensionality of the output space.
-          activation: Activation function to use.
-            If you don't specify anything, no activation is applied
-            (ie. "linear" activation: `a(x) = x`).
+          name: String name of the layer.
+          activation: Activation function to use. If you don't specify anything,
+            no activation is applied (ie. "linear" activation: `a(x) = x`).
           use_bias: Boolean, whether the layer uses a bias vector.
+            Default is True.
           kernel_initializer: Initializer for the `kernel` weights matrix.
-          bias_initializer: Initializer for the bias vector.
-          kernel_regularizer: Regularizer function applied to
-            the `kernel` weights matrix.
+            Default is 'golrot_uniform'.
+          bias_initializer: Initializer for the bias vector. Default is 'zeros'.
+          kernel_regularizer: Regularizer function applied to the `kernel`
+            weights matrix. Default is None.
           bias_regularizer: Regularizer function applied to the bias vector.
-          activity_regularizer: Regularizer function applied to
-            the output of the layer (its "activation").
-          kernel_constraint: Constraint function applied to
-            the `kernel` weights matrix.
+            Default is None.
+          activity_regularizer: Regularizer function applied to the output of
+            the layer (its "activation"). Default is None.
+          kernel_constraint: Constraint function applied to the `kernel` weights
+            matrix. Default is None.
           bias_constraint: Constraint function applied to the bias vector.
+            Default is None.
         """
-        super().__init__(**kwargs)
+        super().__init__(name=name)
 
-        self.units = units
-        self.activation = activation
-        self.use_bias = use_bias
-        self.kernel_initializer = kernel_initializer
-        self.bias_initializer = bias_initializer
-        self.kernel_regularizer = kernel_regularizer
-        self.bias_regularizer = bias_regularizer
-        self.activity_regularizer = activity_regularizer
-        self.kernel_constraint = kernel_constraint
-        self.bias_constraint = bias_constraint
-        self.dense = layers.Dense(
-            units,
-            activation=activation,
-            use_bias=use_bias,
-            kernel_initializer=kernel_initializer,
-            bias_initializer=bias_initializer,
-            kernel_regularizer=kernel_regularizer,
-            bias_regularizer=bias_regularizer,
-            activity_regularizer=activity_regularizer,
-            kernel_constraint=kernel_constraint,
-            bias_constraint=bias_constraint,
-        )
         self.input_spec = layers.InputSpec(min_ndim=2)
+        self.dense = layers.Dense(units, **kwargs)
 
     def call(self, inputs: FloatTensor) -> FloatTensor:
         x = self.dense(inputs)
@@ -91,20 +64,9 @@ class MetricEmbedding(layers.Layer):
         return normed_x
 
     def get_config(self) -> Dict[str, Any]:
-        config = {
-            "units": self.units,
-            "activation": self.activation,
-            "use_bias": self.use_bias,
-            "kernel_initializer": self.kernel_initializer,
-            "bias_initializer": self.bias_initializer,
-            "kernel_regularizer": self.kernel_regularizer,
-            "bias_regularizer": self.bias_regularizer,
-            "activity_regularizer": self.activity_regularizer,
-            "kernel_constraint": self.kernel_constraint,
-            "bias_constraint": self.bias_constraint,
-        }
         base_config = super().get_config()
-        return {**base_config, **config}
+        dense_config = self.dense.get_config()
+        return {**base_config, **dense_config}
 
 
 class GeneralizedMeanPooling(layers.Layer):
