@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.16.x] - Additional Loss Functions, Refactors, and Bug Fixes 
+
+### Added
+
+- Cross-batch memory (XBM). Thanks @chjort 
+- VicReg Loss - Improvement of Barlow Twins. Thanks @dewball345 
+- Add augmenter function for Barlow Twins. Thanks @dewball345
+
+### Changed
+
+- Simplified MetricEmbedding layer. Function tracing and serialization are better supported now.
+- Refactor image augmentation modules into separate utils modules to help make them more composable. Thanks @dewball345
+- GeneralizedMeanPooling layers default value for P is now 3.0. This better aligns with the value in the paper.
+- EvalCallback now supports split validation callback. Thanks @abhisharsinha 
+- Distance and losses refactor. Refactor distances call signature to now accept query and key inputs instead of a single set of embeddings or labels. Thanks @chjort
+
+
+### Fixed
+
+- Removed unneeded tf.function and registar_keras_serializable decorators.
+- Refactored the model index attribute to raise a more informative AttributeError if the index does not exist.
+- Freeze all BatchNormalization layers in architectures when loading weights.
+- Fix bug in losses.utils.LogSumExp(). tf.math.log(1 + x) should be tf.math.log(tf.math.exp(-my_max) + x). This is needed to properly account for removing the row wise max before computing the logsumexp. 
+- Fix multisim loss offsets. The tfsim version of multisim uses distances instead of the inner product. However, multisim requires that we "center" the pairwise distances around 0. Here we add a new center param, which we set to 1.0 for cosine distance. Additionally, we also flip the lambda (lmda) param to add the threshold to the values instead of subtracting it. These changes will help improve the pos and neg weighting in the log1psumexp.
+- Fix nmslib save and load. nmslib requires a string path and will only read and write to local files. In order to support writing to a remote file path, we first write to a local tmp dir and then write that to the user provided path using tf.io.gfile.GFile.
+- Fix serialization of Simclr params in get_config()
+- Other fixes and improvements...
+
 ## [0.15.x] - Initial support of self supervised algorithms
 
 ### Added
