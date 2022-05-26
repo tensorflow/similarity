@@ -24,6 +24,11 @@ from .types import FloatTensor, IntTensor
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class MetricEmbedding(layers.Dense):
+    """L2 Normalized `Dense` layer.
+
+    This layer is usually used as output layer, especially when using cosine
+    distance as the similarity metric.
+    """
     def call(self, inputs: FloatTensor) -> FloatTensor:
         x = super().call(inputs)
         normed_x: FloatTensor = tf.math.l2_normalize(x, axis=1)
