@@ -142,15 +142,15 @@ class MemoryStore(Store):
             np.savez_compressed(
                 io_buffer,
                 embeddings=self.embeddings,
-                labels=self.labels,
-                data=self.data,
+                labels=np.array(self.labels),
+                data=np.array(self.data),
             )
         else:
             np.savez(
                 io_buffer,
                 embeddings=self.embeddings,
-                labels=self.labels,
-                data=self.data,
+                labels=np.array(self.labels),
+                data=np.array(self.data),
             )
 
         with tf.io.gfile.GFile(self._make_fname(path), "wb+") as f:
