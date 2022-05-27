@@ -91,12 +91,12 @@ def test_build_effnet_b0_partial():
             if isinstance(layer, tf.keras.layers.BatchNormalization):
                 excluded_layers += 1
 
+    expected_trainable_layer_count = 93
+
     if tf_version_check(2, 9):
         expected_total_layer_count = 237
-        expected_trainable_layer_count = 93
     else:
         expected_total_layer_count = 238
-        expected_trainable_layer_count = 94
 
     assert total_layer_count == expected_total_layer_count
     assert trainable_layer_count == expected_trainable_layer_count
