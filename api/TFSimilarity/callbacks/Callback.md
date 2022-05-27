@@ -44,7 +44,7 @@ If you want to use <b>Callback</b> objects in a custom training loop:
 
 1. You should pack all your callbacks into a single <b>callbacks.CallbackList</b>
    so they can all be called together.
-2. You will need to manually call all the <b>on_*</b> methods at the apropriate
+2. You will need to manually call all the <b>on_*</b> methods at the appropriate
    locations in your loop. Like this:
 
    ```

@@ -10,10 +10,11 @@ Inherits From: [`MetricLoss`](../../TFSimilarity/losses/MetricLoss.md)
 
 ```python
 TFSimilarity.losses.MultiSimilarityLoss(
-    alpha: float = 1.0,
-    beta: float = 20,
-    epsilon: float = 0.2,
+    alpha: float = 2.0,
+    beta: float = 40.0,
+    epsilon: float = 0.1,
     lmda: float = 0.5,
+    center: float = 1.0,
     name: str = MultiSimilarityLoss,
     **kwargs
 )
@@ -22,7 +23,6 @@ TFSimilarity.losses.MultiSimilarityLoss(
 
 
 <!-- Placeholder for "Used in" -->
-
 
 <b>y_true</b> must be  a 1-D integer <b>Tensor</b> of shape (batch_size,).
 It's values represent the classes associated with the examples as
@@ -88,6 +88,19 @@ weighted.
 </td>
 </tr><tr>
 <td>
+<b>center</b>
+</td>
+<td>
+This represents the expected distance value and will be used
+to center the values in the pairwise distance matrix. This is used
+when weighting the positive and negative examples, with the hardest
+examples receiving an up weight and the easiest examples receiving a
+down weight. This should 1 for cosine distances which we expect to
+be between [0,2]. The value will depend on the data for L2 and L1
+distances.
+</td>
+</tr><tr>
+<td>
 <b>name</b>
 </td>
 <td>
@@ -148,7 +161,7 @@ A <b>Loss</b> instance.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/metric_loss.py#L57-L71">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/metric_loss.py#L61-L75">View source</a>
 
 ```python
 get_config() -> Dict[str, Any]

@@ -102,7 +102,7 @@ A <b>Loss</b> instance.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/metric_loss.py#L57-L71">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/metric_loss.py#L61-L75">View source</a>
 
 ```python
 get_config() -> Dict[str, Any]

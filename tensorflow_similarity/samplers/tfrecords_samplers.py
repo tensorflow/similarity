@@ -37,21 +37,21 @@ def TFRecordDatasetSampler(
     This sampler should be used when using a TFDataset or have a large
     dataset that needs to be stored on file.
 
-    **WARNING**: This samplers assume that classes examples are contigious,
-    at least enough that you can get `example_per_class` numbers
-    of them consecutively. This requirements is needed to make the
-    sampling efficient and makes dataset constuctionn oftentime easier as
-    there is no need to worry about shuffling. Somewhat contigious means
-    its fine to have the same class in multiples shards as long as the
-    examples for the same classes are contigious in that shard.
+    **WARNING**: This sampler requires that each TF Record file contain
+    contiguous blocks of classes where the size of each block is a multiple
+    of example_per_class.
+
+    For example, if example_per_class is 2, and we have two TF Record files, then we
+    would expect the classes to grouped something like the following.
+
+    01.tf_rec: [0, 0, 0, 0, 1, 1, 1, 1]
+    02.tf_rec: [2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
 
     Overall the way we make the sampling process is by using the
     [tf.dataset.interleaves](https://www.tensorflow.org/api_docs/python/tf/data/Dataset#interleave)
     in a non orthodox way: we use its `block_length` to control the
-    number of example per class and rely on the parallelize &
-    non_deterministic version of the API to do the sampling efficiently
-    for us. Relying on pure tf.data ops also ensure good compatibility with
-    distribution strategy.
+    number of example per class. Relying on pure tf.data ops also
+    ensure good compatibility with distribution strategy.
 
 
     Args:
@@ -72,7 +72,8 @@ def TFRecordDatasetSampler(
         shards.
 
         compression: Which compression was used when creating the dataset.
-        `{None, "ZLIB", or "GZIP"}` as specified in [TFRecordDataset documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
+        `{None, "ZLIB", or "GZIP"}` as specified in
+        [TFRecordDataset documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
         Defaults to None.
 
         parallelism: How many parallel calls to do. If not set, will let
@@ -112,32 +113,26 @@ def TFRecordDatasetSampler(
     # how many threads to use when fetching inputs from the cycle shards
     num_parallel_calls = cycle_length if async_cycle else 1
 
-    with tf.device("/cpu:0"):
-        # shuffle the shard order
-        ds = tf.data.Dataset.from_tensor_slices(shards_list)
+    # shuffle the shard order
+    ds = tf.data.Dataset.from_tensor_slices(shards_list)
 
-        # shuffle shard order
-        ds = ds.shuffle(total_shards)
+    # shuffle shard order
+    ds = ds.shuffle(total_shards)
 
-        # This is the tricky part, we are using the interleave function to
-        # do the sampling as requested by the user. This is not the
-        # standard use of the function or an obvious way to do it but
-        # its by far the faster and more compatible way to do so
-        # we are favoring for once those factors over readability
-        # deterministic=False is not an error, it is what allows us to
-        # create random batch
-        ds = ds.interleave(
-            lambda x: tf.data.TFRecordDataset(
-                x,
-                compression_type=compression,
-            ),  # noqa
-            cycle_length=cycle_length,
-            block_length=example_per_class,
-            num_parallel_calls=num_parallel_calls,
-            deterministic=False,
-        )
-        ds = ds.map(deserialization_fn, num_parallel_calls=parallelism)
-        ds = ds.repeat(count=num_repeat)
-        ds = ds.batch(batch_size)
-        ds = ds.prefetch(prefetch_size)
-        return ds
+    # deterministic must be True here to ensure that we get the correct
+    # number of examples per class per batch.
+    ds = ds.interleave(
+        lambda x: tf.data.TFRecordDataset(
+            x,
+            compression_type=compression,
+        ),  # noqa
+        cycle_length=cycle_length,
+        block_length=example_per_class,
+        num_parallel_calls=num_parallel_calls,
+        deterministic=True,
+    )
+    ds = ds.map(deserialization_fn, num_parallel_calls=parallelism)
+    ds = ds.repeat(count=num_repeat)
+    ds = ds.batch(batch_size)
+    ds = ds.prefetch(prefetch_size)
+    return ds

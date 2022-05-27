@@ -25,7 +25,7 @@ Circle Loss: A Unified Perspective of Pair Similarity Optimization
 https://arxiv.org/abs/2002.10857
 
 The original paper used cosine similarity while this loss has been
-modified to work with cosine distance.
+modified to work with a distance such as cosine or euclidean.
 
 <b>y_true</b> must be  a 1-D integer <b>Tensor</b> of shape (batch_size,).
 It's values represent the classes associated with the examples as
@@ -131,7 +131,7 @@ A <b>Loss</b> instance.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/metric_loss.py#L57-L71">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/metric_loss.py#L61-L75">View source</a>
 
 ```python
 get_config() -> Dict[str, Any]

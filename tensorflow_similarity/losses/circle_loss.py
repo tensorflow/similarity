@@ -13,40 +13,49 @@
 # limitations under the License.
 # ==============================================================================
 """Circle Loss
-    Circle Loss: A Unified Perspective of Pair Similarity Optimization
-    https://arxiv.org/abs/2002.10857
+    [Circle Loss: A Unified Perspective of Pair Similarity Optimization](https://arxiv.org/abs/2002.10857)
 """
-
-import tensorflow as tf
 from typing import Any, Callable, Union
 
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
+import tensorflow as tf
+
 from tensorflow_similarity.algebra import build_masks
+from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor, IntTensor
+
 from .metric_loss import MetricLoss
 from .utils import logsumexp
 
 
-@tf.keras.utils.register_keras_serializable(package="Similarity")
-@tf.function
-def circle_loss(labels: IntTensor,
-                embeddings: FloatTensor,
-                distance: Callable,
-                gamma: float = 80,
-                margin: float = 0.4) -> Any:
+def circle_loss(
+    query_labels: IntTensor,
+    query_embeddings: FloatTensor,
+    key_labels: IntTensor,
+    key_embeddings: FloatTensor,
+    distance: Callable,
+    remove_diagonal: bool = True,
+    gamma: float = 80,
+    margin: float = 0.4,
+) -> Any:
     """Circle loss computations
 
     The original paper used cosine similarity while this loss has been modified
     to work with cosine distance.
 
     Args:
-        labels: Labels associated with the embeddings
+        query_labels: labels associated with the query embed.
 
-        embeddings: Embeddings as infered by the model.
+        query_embeddings: Embedded query examples.
+
+        key_labels: labels associated with the key embed.
+
+        key_embeddings: Embedded key examples.
 
         distance: Which distance function to use to compute the pairwise
         distances between embeddings. The distance is expected to be
         between [0, 2]. Defaults to 'cosine'.
+
+        remove_diagonal: Bool. If True, will set diagonal to False in positive pair mask
 
         gamma: Scaling term. Defaults to 80. Note: Large values cause the
         LogSumExp to return the Max pair and reduces the weighted mixing of all
@@ -69,22 +78,28 @@ def circle_loss(labels: IntTensor,
     delta_neg = 1 - margin
 
     # label
-    batch_size = tf.size(labels)
+    batch_size = tf.size(query_labels)
 
     # [distances]
-    pairwise_distances = distance(embeddings)
+    pairwise_distances = distance(query_embeddings, key_embeddings)
 
     # [masks] -> filter to keep only the relevant value - zero the rest
-    positive_mask, negative_mask = build_masks(labels, batch_size)
+    positive_mask, negative_mask = build_masks(
+        query_labels,
+        key_labels,
+        batch_size=batch_size,
+        remove_diagonal=remove_diagonal,
+    )
+
     valid_anchors = tf.math.logical_and(
-            tf.math.reduce_any(positive_mask, axis=1),
-            tf.math.reduce_any(negative_mask, axis=1)
+        tf.math.reduce_any(positive_mask, axis=1),
+        tf.math.reduce_any(negative_mask, axis=1),
     )
 
     # Cast masks as floats to support multiply
-    valid_anchors = tf.cast(valid_anchors, dtype='float32')
-    positive_mask = tf.cast(positive_mask, dtype='float32')
-    negative_mask = tf.cast(negative_mask, dtype='float32')
+    valid_anchors = tf.cast(valid_anchors, dtype=pairwise_distances.dtype)
+    positive_mask = tf.cast(positive_mask, dtype=pairwise_distances.dtype)
+    negative_mask = tf.cast(negative_mask, dtype=pairwise_distances.dtype)
 
     # [weights] from  (5) in 3.1 using optim values of 3.2
     # Implementation note: we do all the computation on the full pairwise and
@@ -105,10 +120,9 @@ def circle_loss(labels: IntTensor,
     neg_dists = delta_neg - pairwise_distances
 
     # distances filtering
-    # /2 because we have a pairwise so each distance is counted twice
     # applying weights as in (4) in 3.1
-    pos_wdists = (-1 * gamma * pos_weights * pos_dists)  # / 2
-    neg_wdists = (gamma * neg_weights * neg_dists)  # / 2
+    pos_wdists = -1 * gamma * pos_weights * pos_dists
+    neg_wdists = gamma * neg_weights * neg_dists
 
     p_loss = logsumexp(pos_wdists, positive_mask)
     n_loss = logsumexp(neg_wdists, negative_mask)
@@ -117,8 +131,7 @@ def circle_loss(labels: IntTensor,
     # NOTE: reshape is required here because valid_anchors is [m] and
     #       p_loss + n_loss is [m, 1].
     circle_loss = tf.math.multiply(
-            p_loss + n_loss,
-            tf.reshape(valid_anchors, (-1, 1))
+        p_loss + n_loss, tf.reshape(valid_anchors, (-1, 1))
     )
 
     return circle_loss
@@ -132,7 +145,7 @@ class CircleLoss(MetricLoss):
     https://arxiv.org/abs/2002.10857
 
     The original paper used cosine similarity while this loss has been
-    modified to work with cosine distance.
+    modified to work with a distance such as cosine or euclidean.
 
     `y_true` must be  a 1-D integer `Tensor` of shape (batch_size,).
     It's values represent the classes associated with the examples as
@@ -143,12 +156,15 @@ class CircleLoss(MetricLoss):
     last layer of your model to ensure your model output is properly
     normalized.
     """
-    def __init__(self,
-                 distance: Union[Distance, str] = 'cosine',
-                 gamma: float = 80.0,
-                 margin: float = 0.40,
-                 name: str = 'CircleLoss',
-                 **kwargs):
+
+    def __init__(
+        self,
+        distance: Union[Distance, str] = "cosine",
+        gamma: float = 80.0,
+        margin: float = 0.40,
+        name: str = "CircleLoss",
+        **kwargs
+    ):
         """Initializes a CircleLoss
 
         Args:
@@ -172,9 +188,11 @@ class CircleLoss(MetricLoss):
         distance = distance_canonicalizer(distance)
         self.distance = distance
 
-        super().__init__(circle_loss,
-                         name=name,
-                         distance=distance,
-                         gamma=gamma,
-                         margin=margin,
-                         **kwargs)
+        super().__init__(
+            circle_loss,
+            name=name,
+            distance=distance,
+            gamma=gamma,
+            margin=margin,
+            **kwargs
+        )

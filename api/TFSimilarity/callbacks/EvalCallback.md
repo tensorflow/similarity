@@ -99,9 +99,9 @@ The number of nearest neighbors to return for each query.
 <td>
 <i>'match_nearest', 'match_majority_vote'</i> or
 ClassificationMatch object. Defines the classification matching,
-e.g., match_nearest will count a True Positive if the query_label is
-equal to the label of the nearest neighbor and the distance is less
-than or equal to the distance threshold.
+e.g., match_nearest will count a True Positive if the query_label
+is equal to the label of the nearest neighbor and the distance is
+less than or equal to the distance threshold.
 </td>
 </tr><tr>
 <td>
@@ -109,8 +109,18 @@ than or equal to the distance threshold.
 </td>
 <td>
 A 1D tensor denoting the distances points at
-which we compute the metrics. If None, distance_thresholds is set to
-tf.constant([math.inf])
+which we compute the metrics. If None, distance_thresholds is set
+to tf.constant([math.inf])
+</td>
+</tr><tr>
+<td>
+<b>known_classes</b>
+</td>
+<td>
+Optional. If specified the validation set will be
+split into two subsets based on whether a class was seen or not
+during training. This should be a list of classes seen during
+training.
 </td>
 </tr>
 </table>

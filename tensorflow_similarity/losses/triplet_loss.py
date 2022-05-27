@@ -13,38 +13,48 @@
 # limitations under the License.
 # ==============================================================================
 """Triplet Loss
-    FaceNet: A Unified Embedding for Face Recognition and Clustering:
+    FaceNet: A Unified Embedding for Face Recognition and Clustering
     https://arxiv.org/abs/1503.03832
 """
-
-import tensorflow as tf
 from typing import Any, Callable, Union
 
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
+import tensorflow as tf
+
 from tensorflow_similarity.algebra import build_masks
+from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor, IntTensor
-from .utils import negative_distances, positive_distances, compute_loss
+
 from .metric_loss import MetricLoss
+from .utils import compute_loss, negative_distances, positive_distances
 
 
-@tf.keras.utils.register_keras_serializable(package="Similarity")
-@tf.function
-def triplet_loss(labels: IntTensor,
-                 embeddings: FloatTensor,
-                 distance: Callable,
-                 positive_mining_strategy: str = 'hard',
-                 negative_mining_strategy: str = 'semi-hard',
-                 soft_margin: bool = False,
-                 margin: float = 1.0) -> Any:
+def triplet_loss(
+    query_labels: IntTensor,
+    query_embeddings: FloatTensor,
+    key_labels: IntTensor,
+    key_embeddings: FloatTensor,
+    distance: Callable,
+    remove_diagonal: bool = True,
+    positive_mining_strategy: str = "hard",
+    negative_mining_strategy: str = "semi-hard",
+    soft_margin: bool = False,
+    margin: float = 1.0,
+) -> Any:
     """Triplet loss computations
 
     Args:
-        labels: labels associated with the embed
+        query_labels: labels associated with the query embed.
 
-        embeddings: Embedded examples.
+        query_embeddings: Embedded query examples.
+
+        key_labels: labels associated with the key embed.
+
+        key_embeddings: Embedded key examples.
 
         distance: Which distance function to use to compute the pairwise
         distances between embeddings. Defaults to 'cosine'.
+
+        remove_diagonal: Bool. If True, will set diagonal to False in positive pair mask
 
         positive_mining_strategy: What mining strategy to use to select
         embedding from the same class. Defaults to 'hard'.
@@ -68,33 +78,38 @@ def triplet_loss(labels: IntTensor,
     # do not remove this code. It is actually needed for specific situation
     # Reshape label tensor to [batch_size, 1] if not already in that format.
     # labels = tf.reshape(labels, (labels.shape[0], 1))
-    batch_size = tf.size(labels)
+    batch_size = tf.size(query_labels)
 
     # [distances]
-    pairwise_distances = distance(embeddings)
+    pairwise_distances = distance(query_embeddings, key_embeddings)
 
     # [masks]
-    positive_mask, negative_mask = build_masks(labels, batch_size)
+    positive_mask, negative_mask = build_masks(
+        query_labels,
+        key_labels,
+        batch_size=batch_size,
+        remove_diagonal=remove_diagonal,
+    )
 
     # [Positive distance computation]
     pos_distances, pos_idxs = positive_distances(
-            positive_mining_strategy,
-            pairwise_distances,
-            positive_mask,
+        positive_mining_strategy,
+        pairwise_distances,
+        positive_mask,
     )
 
     # [Negative distances computation]
     neg_distances, neg_idxs = negative_distances(
-            negative_mining_strategy,
-            pairwise_distances,
-            negative_mask,
-            positive_mask,
-            batch_size,
+        negative_mining_strategy,
+        pairwise_distances,
+        negative_mask,
+        positive_mask,
     )
 
     # [Triplet loss computation]
-    triplet_loss = compute_loss(pos_distances, neg_distances,
-                                soft_margin, margin)
+    triplet_loss = compute_loss(
+        pos_distances, neg_distances, soft_margin, margin
+    )
 
     return triplet_loss
 
@@ -119,14 +134,16 @@ class TripletLoss(MetricLoss):
     normalized.
     """
 
-    def __init__(self,
-                 distance: Union[Distance, str] = 'cosine',
-                 positive_mining_strategy: str = 'hard',
-                 negative_mining_strategy: str = 'semi-hard',
-                 soft_margin: bool = False,
-                 margin: float = 1.0,
-                 name: str = 'TripletLoss',
-                 **kwargs):
+    def __init__(
+        self,
+        distance: Union[Distance, str] = "cosine",
+        positive_mining_strategy: str = "hard",
+        negative_mining_strategy: str = "semi-hard",
+        soft_margin: bool = False,
+        margin: float = 1.0,
+        name: str = "TripletLoss",
+        **kwargs
+    ):
         """Initializes the TripletLoss
 
         Args:
@@ -161,22 +178,26 @@ class TripletLoss(MetricLoss):
         self.distance = distance
         # sanity checks
 
-        if positive_mining_strategy not in ['easy', 'hard']:
-            raise ValueError('Invalid positive mining strategy')
+        if positive_mining_strategy not in ["easy", "hard"]:
+            raise ValueError("Invalid positive mining strategy")
 
-        if negative_mining_strategy not in ['easy', 'hard', 'semi-hard']:
-            raise ValueError('Invalid negative mining strategy')
+        if negative_mining_strategy not in ["easy", "hard", "semi-hard"]:
+            raise ValueError("Invalid negative mining strategy")
 
         # Ensure users knows its one or the other
         if margin != 1.0 and soft_margin:
-            raise ValueError('Margin value is not used when soft_margin is\
-                              set to True')
+            raise ValueError(
+                "Margin value is not used when soft_margin is\
+                              set to True"
+            )
 
-        super().__init__(triplet_loss,
-                         name=name,
-                         distance=distance,
-                         positive_mining_strategy=positive_mining_strategy,
-                         negative_mining_strategy=negative_mining_strategy,
-                         soft_margin=soft_margin,
-                         margin=margin,
-                         **kwargs)
+        super().__init__(
+            triplet_loss,
+            name=name,
+            distance=distance,
+            positive_mining_strategy=positive_mining_strategy,
+            negative_mining_strategy=negative_mining_strategy,
+            soft_margin=soft_margin,
+            margin=margin,
+            **kwargs
+        )

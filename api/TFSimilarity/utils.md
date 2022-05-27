@@ -28,3 +28,5 @@ Various utilities functions for improved quality of life.
 
 - [`unpack_lookup_labels(...)`](../TFSimilarity/callbacks/unpack_lookup_labels.md)
 
+- [`unpack_results(...)`](../TFSimilarity/callbacks/unpack_results.md): Updates logs, writes summary, and returns list of strings of
+

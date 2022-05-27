@@ -12,29 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import tensorflow as tf
 import os
+from typing import Callable, List, Optional
+
+import tensorflow as tf
+
 from .augmenter import Augmenter
 from tensorflow_similarity.types import Tensor
-from typing import Callable, List, Optional
 
 
 class ContrastiveAugmenter(Augmenter):
-
-    def __init__(self,
-                 process: Callable,
-                 num_cpu: Optional[int] = os.cpu_count()):
+    def __init__(
+        self, process: Callable, num_cpu: Optional[int] = os.cpu_count()
+    ):
         self.process = process
         self.num_cpu = num_cpu
 
-    def augment(self, x: Tensor, y: Tensor, num_views: int, is_warmup: bool) -> List[Tensor]:
+    def augment(
+        self, x: Tensor, y: Tensor, num_views: int, is_warmup: bool
+    ) -> List[Tensor]:
         with tf.device("/cpu:0"):
             inputs = tf.stack(x)
 
             views = []
             for _ in range(num_views):
                 # multi-cor augementations
-                view = tf.map_fn(self.process, inputs,
-                                 parallel_iterations=self.num_cpu)
+                view = tf.map_fn(
+                    self.process, inputs, parallel_iterations=self.num_cpu
+                )
                 views.append(view)
             return views

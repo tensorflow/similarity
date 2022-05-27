@@ -13,9 +13,7 @@ TFSimilarity.architectures.ResNet18Sim(
     l2_norm: bool = True,
     include_top: bool = True,
     pooling: str = gem,
-    gem_p=1.0,
-    preproc_mode: str = torch,
-    similarity_model: bool = True
+    gem_p=3.0
 ```
 
 
@@ -35,7 +33,7 @@ Architecture from [Deep Residual Learning for Image Recognition](https://arxiv.o
 </td>
 <td>
 Expected to be betweeen 32 and 224 and in the (H, W, C)
-data_format augmentation function.
+data_format.
 </td>
 </tr><tr>
 <td>
@@ -88,19 +86,6 @@ Sets the power in the GeneralizedMeanPooling2D layer. A value
 of 1.0 is equivelent to GlobalMeanPooling2D, while larger values
 will increase the contrast between activations within each feature
 map, and a value of math.inf will be equivelent to MaxPool2d.
-</td>
-</tr><tr>
-<td>
-<b>preproc_mode</b>
-</td>
-<td>
-One of "caffe", "tf" or "torch".
-- caffe: will convert the images from RGB to BGR, then will zero-center
-  each color channel with respect to the ImageNet dataset, without
-  scaling.
-- tf: will scale pixels between -1 and 1, sample-wise.
-- torch: will scale pixels between 0 and 1 and then will normalize each
-  channel with respect to the ImageNet dataset.
 </td>
 </tr>
 </table>

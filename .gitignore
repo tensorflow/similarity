@@ -10,6 +10,8 @@ release.sh
 .DS_Store
 benchmark/supervised/datasets/
 benchmark/supervised/models/
+datasets/
+models/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -142,3 +144,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Pipfile
+Pipfile
+Pipfile.lock

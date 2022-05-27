@@ -10,7 +10,7 @@ training
 
 ## Functions
 
-- [`EfficientNetSim(...)`](../TFSimilarity/architectures/EfficientNetSim.md): Build an EffecientNet Model backbone for similarity learning
+- [`EfficientNetSim(...)`](../TFSimilarity/architectures/EfficientNetSim.md): Build an EfficientNet Model backbone for similarity learning
 
 - [`ResNet18Sim(...)`](../TFSimilarity/architectures/ResNet18Sim.md): Build an ResNet18 Model backbone for similarity learning
 

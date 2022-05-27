@@ -5,6 +5,17 @@ import tensorflow as tf
 
 from tensorflow_similarity.architectures import efficientnet
 
+# TODO(ovallis): rewrite these tests so they aren't so brittle.
+TF_MAJOR_VERSION = int(tf.__version__.split(".")[0])
+TF_MINOR_VERSION = int(tf.__version__.split(".")[1])
+
+
+def tf_version_check(major_version, minor_version):
+    if TF_MAJOR_VERSION <= major_version and TF_MINOR_VERSION < minor_version:
+        return True
+
+    return False
+
 
 def test_build_effnet_b0_full():
     input_layer = tf.keras.layers.Input((224, 224, 3))
@@ -22,8 +33,15 @@ def test_build_effnet_b0_full():
         if layer.trainable:
             trainable_layer_count += 1
 
-    assert total_layer_count == 237
-    assert trainable_layer_count == 237
+    if tf_version_check(2, 9):
+        expected_total_layer_count = 237
+        expected_trainable_layer_count = 188
+    else:
+        expected_total_layer_count = 238
+        expected_trainable_layer_count = 189
+
+    assert total_layer_count == expected_total_layer_count
+    assert trainable_layer_count == expected_trainable_layer_count
 
 
 def test_build_effnet_b1_frozen():
@@ -42,7 +60,12 @@ def test_build_effnet_b1_frozen():
         if layer.trainable:
             trainable_layer_count += 1
 
-    assert total_layer_count == 339
+    if tf_version_check(2, 9):
+        expected_total_layer_count = 339
+    else:
+        expected_total_layer_count = 340
+
+    assert total_layer_count == expected_total_layer_count
     assert trainable_layer_count == 0
 
 
@@ -68,8 +91,15 @@ def test_build_effnet_b0_partial():
             if isinstance(layer, tf.keras.layers.BatchNormalization):
                 excluded_layers += 1
 
-    assert total_layer_count == 237
-    assert trainable_layer_count == 93
+    expected_trainable_layer_count = 93
+
+    if tf_version_check(2, 9):
+        expected_total_layer_count = 237
+    else:
+        expected_total_layer_count = 238
+
+    assert total_layer_count == expected_total_layer_count
+    assert trainable_layer_count == expected_trainable_layer_count
     assert excluded_layers == 0
 
 
@@ -92,38 +122,36 @@ def test_include_top():
     effnet = efficientnet.EfficientNetSim(input_shape, include_top=True)
 
     # The second to last layer should use gem pooling when include_top is True
-    assert effnet.layers[-2].name == 'gem_pool'
+    assert effnet.layers[-2].name == "gem_pool"
     assert effnet.layers[-2].p == 3.0
     # The default is l2_norm True, so we expect the last layer to be
     # MetricEmbedding.
-    assert re.match('metric_embedding', effnet.layers[-1].name) is not None
+    assert re.match("metric_embedding", effnet.layers[-1].name) is not None
 
 
 def test_l2_norm_false():
     input_shape = (224, 224, 3)
     effnet = efficientnet.EfficientNetSim(
-            input_shape,
-            include_top=True,
-            l2_norm=False)
+        input_shape, include_top=True, l2_norm=False
+    )
 
     # The second to last layer should use gem pooling when include_top is True
-    assert effnet.layers[-2].name == 'gem_pool'
+    assert effnet.layers[-2].name == "gem_pool"
     assert effnet.layers[-2].p == 3.0
     # If l2_norm is False, we should return a dense layer as the last layer.
-    assert re.match('dense', effnet.layers[-1].name) is not None
+    assert re.match("dense", effnet.layers[-1].name) is not None
 
 
 @pytest.mark.parametrize(
     "pooling, name",
-    zip(['gem', 'avg', 'max'], ['gem_pool', 'avg_pool', 'max_pool']),
-    ids=['gem', 'avg', 'max']
+    zip(["gem", "avg", "max"], ["gem_pool", "avg_pool", "max_pool"]),
+    ids=["gem", "avg", "max"],
 )
 def test_include_top_false(pooling, name):
     input_shape = (224, 224, 3)
     effnet = efficientnet.EfficientNetSim(
-            input_shape,
-            include_top=False,
-            pooling=pooling)
+        input_shape, include_top=False, pooling=pooling
+    )
 
     # The second to last layer should use gem pooling when include_top is True
     assert effnet.layers[-1].name == name

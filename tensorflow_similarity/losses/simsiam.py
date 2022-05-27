@@ -1,35 +1,49 @@
+# Copyright 2020 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+"""SimSiam Loss
+    Exploring Simple Siamese Representation Learning
+    https://bit.ly/3LxsWdj
+"""
 import math
 from typing import Any, Callable, Dict, Optional
 
 import tensorflow as tf
-from tensorflow.keras.losses import Loss
 
 from tensorflow_similarity.types import FloatTensor
 
 
-@tf.keras.utils.register_keras_serializable(package="Similarity")
 def negative_cosine_sim(sim: FloatTensor) -> FloatTensor:
     loss: FloatTensor = tf.constant([-1.0]) * sim
     return loss
 
 
-@tf.keras.utils.register_keras_serializable(package="Similarity")
 def cosine_distance(sim: FloatTensor) -> FloatTensor:
     loss: FloatTensor = tf.constant([1.0]) - sim
     return loss
 
 
-@tf.keras.utils.register_keras_serializable(package="Similarity")
 def angular_distance(sim: FloatTensor) -> FloatTensor:
     loss: FloatTensor = tf.math.acos(sim) / tf.constant(math.pi)
     return loss
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class SimSiamLoss(Loss):
+class SimSiamLoss(tf.keras.losses.Loss):
     """SimSiam Loss
 
-    Introduced in: [Exploring Simple Siamese Representation Learning](https://openaccess.thecvf.com/content/CVPR2021/papers/Chen_Exploring_Simple_Siamese_Representation_Learning_CVPR_2021_paper.pdf)
+    Introduced in: [Exploring Simple Siamese Representation Learning](https://bit.ly/3LxsWdj)
     """
 
     def __init__(
@@ -56,7 +70,7 @@ class SimSiamLoss(Loss):
         """
         super().__init__(reduction=reduction, name=name, **kwargs)
         self.projection_type = projection_type
-        self.margin = margin
+        self.margin = tf.constant([margin])
 
         if self.projection_type == "negative_cosine_sim":
             self._projection = negative_cosine_sim
@@ -67,8 +81,9 @@ class SimSiamLoss(Loss):
         else:
             raise ValueError(f"{self.projection_type} is not supported.")
 
-    @tf.function
-    def call(self, projector: FloatTensor, predictor: FloatTensor) -> FloatTensor:
+    def call(
+        self, projector: FloatTensor, predictor: FloatTensor
+    ) -> FloatTensor:
         """Compute the loss
         Notes:
         - Stopping the gradient is critical according to the paper for convergence.
@@ -92,7 +107,7 @@ class SimSiamLoss(Loss):
         per_example_projection = self._projection(cosine_simlarity)
 
         # 1D tensor
-        loss: FloatTensor = per_example_projection * 0.5 + self.margin
+        loss: FloatTensor = per_example_projection * tf.constant([0.5]) + self.margin
 
         return loss
 

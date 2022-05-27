@@ -10,9 +10,7 @@ Inherits From: [`RetrievalMetric`](../../TFSimilarity/indexer/RetrievalMetric.md
 
 ```python
 TFSimilarity.retrieval_metrics.PrecisionAtK(
-    name: str = precision,
-    k: int = 5,
-    **kwargs
+    name: str = precision, k: int = 5, **kwargs
 ) -> None
 ```
 
@@ -21,9 +19,7 @@ TFSimilarity.retrieval_metrics.PrecisionAtK(
 <!-- Placeholder for "Used in" -->
 
 $$
-P_i@k = 
-rac<i>TP_i}{TP_i+FP_i</i> = 
-rac<i>\sum_{j = 1}^{k} {rel_i_j}}{K</i>
+P_i@k = \frac<i>TP_i}{TP_i+FP_i} = \frac{\sum_{j = 1}^{k} {rel_i_j}}{K</i>
 $$
 
 Where: K is the number of neighbors in the i_th query result set.
@@ -112,7 +108,7 @@ on the data.
 
 <h3 id="compute">compute</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/precision_at_k.py#L64-L106">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/precision_at_k.py#L64-L106">View source</a>
 
 ```python
 compute(
@@ -179,7 +175,7 @@ A rank 0 tensor containing the metric.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/retrieval_metric.py#L79-L85">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/retrieval_metric.py#L79-L85">View source</a>
 
 ```python
 get_config()

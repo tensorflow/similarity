@@ -21,42 +21,55 @@ import os
 import re
 from pathlib import Path
 import shutil
+
 from absl import app
 from absl import flags
-
 import tensorflow as tf
 from termcolor import cprint
 from tensorflow_docs.api_generator import doc_controls
 from tensorflow_docs.api_generator import generate_lib
 from tensorflow_docs.api_generator import public_api
+
 from tensorflow_similarity import api as TFSimilarity
 
-tf.config.set_visible_devices([], 'GPU')
+# tf.config.set_visible_devices([], "GPU")
 
-OUTDIR = '../api/'
+OUTDIR = "../api/"
 
-flags.DEFINE_string('output_dir', OUTDIR, 'Where to output the docs.')
+flags.DEFINE_string("output_dir", OUTDIR, "Where to output the docs.")
 flags.DEFINE_string(
-    'code_url_prefix',
-    'https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity',
-    'The url prefix for links to code.')
-flags.DEFINE_string('site_path', 'similarity/api_docs/python/',
-                    'The location of the doc setin the site.')
-flags.DEFINE_bool('search_hints', True,
-                  'Include metadata search hints in the generated files.')
-flags.DEFINE_bool('gen_report', False,
-                  ('Generate an API report containing the health of the'
-                   'docstrings of the public API.'))
+    "code_url_prefix",
+    "https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity",
+    "The url prefix for links to code.",
+)
+flags.DEFINE_string(
+    "site_path",
+    "similarity/api_docs/python/",
+    "The location of the doc setin the site.",
+)
+flags.DEFINE_bool(
+    "search_hints",
+    True,
+    "Include metadata search hints in the generated files.",
+)
+flags.DEFINE_bool(
+    "gen_report",
+    False,
+    (
+        "Generate an API report containing the health of the"
+        "docstrings of the public API."
+    ),
+)
 
 FLAGS = flags.FLAGS
 
-PROJECT_SHORT_NAME = 'TFSimilarity'
-PROJECT_FULL_NAME = 'TensorFlow Similarity'
+PROJECT_SHORT_NAME = "TFSimilarity"
+PROJECT_FULL_NAME = "TensorFlow Similarity"
 
 
 def replace_in_file(fname, replacements):
     "replace content in file"
-    cprint('|-Patching %s' % fname, 'cyan')
+    cprint("|-Patching %s" % fname, "cyan")
     content = open(fname).read()
     os.unlink(fname)
 
@@ -67,44 +80,42 @@ def replace_in_file(fname, replacements):
     head = []
     body = []
     is_head = True
-    for l in content.split('\n'):
+    for line in content.split("\n"):
 
         # fix h3 first
-        l = l.replace("><code>", '>')
-        l = l.replace("</code></h3>", '</h3>')
+        line = line.replace("><code>", ">")
+        line = line.replace("</code></h3>", "</h3>")
 
         # stop when getting subsection
-        if len(l) and l[0] == "##" or "<!-- Placeholder" in l:
+        if len(line) and line[0] == "##" or "<!-- Placeholder" in line:
             is_head = False
 
-        l = l.replace("<code>", "```python\n")
-        l = l.replace('</code>', "```\n")
-        l = l.replace('</pre>', '')
-        l = l.replace("&#x27;", '')
+        line = line.replace("<code>", "```python\n")
+        line = line.replace("</code>", "```\n")
+        line = line.replace("</pre>", "")
+        line = line.replace("&#x27;", "")
 
         if is_head:
 
             # remove remaining html
-            if "on GitHub" in l:
+            if "on GitHub" in line:
                 continue
 
-            if "<" in l:
+            if "<" in line:
                 continue
-            head.append(l)
+            head.append(line)
         else:
-            if '<pre' in l:
+            if "<pre" in line:
                 continue
-            l = re.sub('`([^`]+)`', '<b>\g<1></b>', l)
-            l = re.sub('{([^`]+)}', '<i>\g<1></i>', l)
+            line = re.sub("`([^`]+)`", r"<b>\g<1></b>", line)
+            line = re.sub("{([^`]+)}", r"<i>\g<1></i>", line)
 
-            body.append(l)
-
-    #print(head)
+            body.append(line)
 
     content = "\n".join(head)
     content += "\n".join(body)
 
-    with open(fname, 'w+') as f:
+    with open(fname, "w+") as f:
         f.write(content)
 
 
@@ -119,9 +130,11 @@ def _hide_layer_and_module_methods():
     module_contents = list(tf.Module.__dict__.items())
     optimizer_contents = list(tf.compat.v1.train.Optimizer.__dict__.items())
 
-    for name, obj in model_contents + layer_contents + module_contents + optimizer_contents:
+    for name, obj in (
+        model_contents + layer_contents + module_contents + optimizer_contents
+    ):
 
-        if name == '__init__':
+        if name == "__init__":
             continue
 
         if isinstance(obj, property):
@@ -151,7 +164,8 @@ def gen_api_docs():
         # This filter ensures that only objects in init files are only
         # documented if they are explicitly imported. (implicit imports are
         # skipped)
-        callbacks=[public_api.explicit_package_contents_filter])
+        callbacks=[public_api.explicit_package_contents_filter],
+    )
 
     doc_generator.build(output_dir)
 
@@ -162,44 +176,41 @@ def main(_):
     if outpath.exists():
         shutil.rmtree(OUTDIR)
     outpath.mkdir(parents=True)
-    cprint('output dir: %s' % OUTDIR, 'green')
+    cprint("output dir: %s" % OUTDIR, "green")
 
     # generate
     gen_api_docs()
 
     # fixing
-    cprint('Fixing documentation', 'magenta')
+    cprint("Fixing documentation", "magenta")
 
     cprint("rename main file to md")
-    mfname = OUTDIR + 'README.md'
-    shutil.move(OUTDIR + 'TFSimilarity.md', mfname)
+    mfname = OUTDIR + "README.md"
+    shutil.move(OUTDIR + "TFSimilarity.md", mfname)
 
     reps = [
         [
             "<!-- Insert buttons and diff -->",
-            """TensorFlow Similarity is a TensorFlow library focused on making metric learning easy"""
+            """TensorFlow Similarity is a TensorFlow library focused on making metric learning easy""",
         ],
-        [
-            "# Module: TFSimilarity",
-            "# TensorFlow Similarity API Documentation"
-        ],
+        ["# Module: TFSimilarity", "# TensorFlow Similarity API Documentation"],
     ]
 
     replace_in_file(mfname, reps)
 
-    cprint("[Bulk patching]", 'yellow')
+    cprint("[Bulk patching]", "yellow")
     # pattern, replacement
     reps = [
         ["description: .+", ""],  # remove "pseudo frontmatter"
-        ["^\[", '- ['],  # make list valid again
-        ["[^#]+\# ", '# '],
-        [" module", ''],
+        [r"^\[", "- ["],  # make list valid again
+        [r"[^#]+\# ", "# "],
+        [" module", ""],
     ]
 
-    for fname in Path(OUTDIR).glob('**/*md'):
+    for fname in Path(OUTDIR).glob("**/*md"):
         fname = str(fname)
         replace_in_file(fname, reps)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(main)

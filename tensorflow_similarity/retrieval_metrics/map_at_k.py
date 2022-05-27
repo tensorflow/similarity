@@ -21,7 +21,7 @@ from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
 class MapAtK(RetrievalMetric):
-    """Mean Average precision - mAP@K is computed as.
+    r"""Mean Average precision - mAP@K is computed as.
 
     $$
     mAP_i@K = \frac{\sum_{j = 1}^{K} {rel_i_j}\times{P_i@j}}{R}

@@ -98,7 +98,8 @@ shards.
 </td>
 <td>
 Which compression was used when creating the dataset.
-<b><i>None, "ZLIB", or "GZIP"</i></b> as specified in [TFRecordDataset documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
+<b><i>None, "ZLIB", or "GZIP"</i></b> as specified in
+- [TFRecordDataset documentation](https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset)
 Defaults to None.
 </td>
 </tr><tr>

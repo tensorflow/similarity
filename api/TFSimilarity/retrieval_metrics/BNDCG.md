@@ -34,15 +34,13 @@ the position.
 The normalized DCG is computed as:
 
 $$
-nDCG_<i>p</i> = 
-rac<i>DCG_{p}}{IDCG_{p}</i>
+nDCG_<i>p} = \frac{DCG_{p}}{IDCG_{p}</i>
 $$
 
 The DCG is computed for each query using the match_mask as:
 
 $$
-DCG_<i>p} = \sum_{i=1}^{p</i> 
-rac<i>match_mask_{i}}{\log_{2}(i+1)</i>
+DCG_<i>p} = \sum_{i=1}^{p} \frac{match_mask_{i}}{\log_{2}(i+1)</i>
 $$
 
 The IDCG uses the same equation but sorts the match_mask descending
@@ -127,7 +125,7 @@ on the data.
 
 <h3 id="compute">compute</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/bndcg.py#L87-L160">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/bndcg.py#L87-L160">View source</a>
 
 ```python
 compute(
@@ -199,7 +197,7 @@ A rank 0 tensor containing the metric.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/retrieval_metric.py#L79-L85">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/retrieval_metrics/retrieval_metric.py#L79-L85">View source</a>
 
 ```python
 get_config()

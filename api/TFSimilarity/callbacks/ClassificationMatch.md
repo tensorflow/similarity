@@ -11,8 +11,7 @@ Inherits From: [`ABC`](../../TFSimilarity/distances/ABC.md)
 
 ```python
 TFSimilarity.callbacks.ClassificationMatch(
-    name: str = ,
-    canonical_name: str = 
+    name: str = , canonical_name: str = 
 ) -> None
 ```
 
@@ -113,7 +112,7 @@ threshold.
 
 <h3 id="compile">compile</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/matchers/classification_match.py#L60-L73">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/matchers/classification_match.py#L60-L73">View source</a>
 
 ```python
 compile(
@@ -147,7 +146,7 @@ is passed.
 
 <h3 id="compute_count">compute_count</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/matchers/classification_match.py#L162-L201">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/matchers/classification_match.py#L162-L201">View source</a>
 
 ```python
 compute_count(
@@ -216,7 +215,7 @@ between the jth query and the set of k neighbors.
 
 <h3 id="derive_match">derive_match</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/matchers/classification_match.py#L75-L101">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/matchers/classification_match.py#L75-L101">View source</a>
 
 ```python
 derive_match(
@@ -284,7 +283,7 @@ associated with the jth derived label.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/master/tensorflow_similarity/matchers/classification_match.py#L53-L58">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/matchers/classification_match.py#L53-L58">View source</a>
 
 ```python
 get_config()

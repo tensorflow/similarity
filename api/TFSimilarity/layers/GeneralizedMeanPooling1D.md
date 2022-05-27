@@ -10,7 +10,7 @@ Inherits From: [`GeneralizedMeanPooling`](../../TFSimilarity/layers/GeneralizedM
 
 ```python
 TFSimilarity.layers.GeneralizedMeanPooling1D(
-    p: float = 1.0,
+    p: float = 3.0,
     data_format: Optional[str] = None,
     keepdims: bool = False,
     **kwargs
@@ -22,11 +22,7 @@ TFSimilarity.layers.GeneralizedMeanPooling1D(
 <!-- Placeholder for "Used in" -->
 
 $$
-    extbf<i>e</i> = \left[\left(
-rac<i>1}{|\Omega|}\sum_{u\in{\Omega}}x^{p}_{cu</i>
-ight)^{
-rac<i>1}{p}</i>
-ight]_<i>c=1,\cdots,C</i>
+\textbf<i>e} = \left[\left(\frac{1}{|\Omega|}\sum_{u\in{\Omega}}x^{p}_{cu}\right)^{\frac{1}{p}}\right]_{c=1,\cdots,C</i>
 $$
 
 The Generalized Mean (GeM) provides a parameter <b>p</b> that sets an exponent

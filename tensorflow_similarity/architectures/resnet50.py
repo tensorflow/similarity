@@ -134,15 +134,18 @@ def build_resnet(x: layers.Layer, weights: str, trainable: str) -> layers.Layer:
             # Freeze all the layers before the the last 3 blocks
             if not re.search("^conv5|^top", layer.name):
                 layer.trainable = False
-            # don't change the batchnorm weights
-            if isinstance(layer, layers.BatchNormalization):
-                layer.trainable = False
     elif trainable == "frozen":
         resnet.trainable = False
     else:
         raise ValueError(
             f"{trainable} is not a supported option for 'trainable'."
         )
+
+    # Don't train the BN layers if we are loading pre-trained weights.
+    if weights:
+        for layer in resnet.layers:
+            if isinstance(layer, layers.BatchNormalization):
+                layer.trainable = False
 
     # wire
     x = resnet(x)
