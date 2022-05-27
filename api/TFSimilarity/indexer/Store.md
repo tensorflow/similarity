@@ -15,7 +15,7 @@ inheritance.
 
 <h3 id="add">add</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L24-L40">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L24-L40">View source</a>
 
 ```python
 add(
@@ -78,7 +78,7 @@ Associated record id.
 
 <h3 id="batch_add">batch_add</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L41-L60">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L41-L60">View source</a>
 
 ```python
 batch_add(
@@ -146,7 +146,7 @@ List of associated record id.
 
 <h3 id="batch_get">batch_get</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L75-L87">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L75-L87">View source</a>
 
 ```python
 batch_get(
@@ -191,7 +191,7 @@ List of records associated with the requested ids.
 
 <h3 id="get">get</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L62-L73">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L62-L73">View source</a>
 
 ```python
 get(
@@ -236,7 +236,7 @@ record associated with the requested id.
 
 <h3 id="load">load</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L102-L111">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L102-L111">View source</a>
 
 ```python
 load(
@@ -281,12 +281,11 @@ Number of records reloaded.
 
 <h3 id="save">save</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L93-L100">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L93-L100">View source</a>
 
 ```python
 save(
-    path: str,
-    compression: bool = True
+    path: str, compression: bool = True
 ) -> None
 ```
 
@@ -320,7 +319,7 @@ Compress index data. Defaults to True.
 
 <h3 id="size">size</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L89-L91">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L89-L91">View source</a>
 
 ```python
 size() -> int
@@ -332,7 +331,7 @@ Number of record in the key value store.
 
 <h3 id="to_data_frame">to_data_frame</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L113-L123">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/stores/store.py#L113-L123">View source</a>
 
 ```python
 to_data_frame(

@@ -15,7 +15,7 @@ TFSimilarity.architectures.ResNet50Sim(
     l2_norm: bool = True,
     include_top: bool = True,
     pooling: str = gem,
-    gem_p=1.0
+    gem_p=3.0
 ```
 
 

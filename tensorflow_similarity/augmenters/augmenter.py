@@ -15,17 +15,27 @@
 
 import abc
 from tensorflow_similarity.types import Tensor
+
+# from tensorflow import Tensor
 from typing import List
 
 
 class Augmenter(abc.ABC):
-
     @abc.abstractmethod
-    def augment(self, x: Tensor, y: Tensor, num_augmentations_per_example: int,
-                is_warmup: bool) -> List[Tensor]:
+    def augment(
+        self,
+        x: Tensor,
+        y: Tensor,
+        num_augmentations_per_example: int,
+        is_warmup: bool,
+    ) -> List[Tensor]:
         pass
 
-    def __call__(self, x: Tensor, y: Tensor,
-                 num_augmentations_per_example: int,
-                 is_warmup: bool) -> List[Tensor]:
+    def __call__(
+        self,
+        x: Tensor,
+        y: Tensor,
+        num_augmentations_per_example: int,
+        is_warmup: bool,
+    ) -> List[Tensor]:
         return self.augment(x, y, num_augmentations_per_example, is_warmup)

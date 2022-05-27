@@ -37,7 +37,7 @@ from .retrieval_metrics import RetrievalMetric
 from .search import Search, NMSLibSearch
 from .stores import Store, MemoryStore
 from .utils import unpack_lookup_distances, unpack_lookup_labels
-from .types import IntTensor, FloatTensor, Lookup, PandasDataFrame
+from .types import FloatTensor, Lookup, PandasDataFrame
 from .types import Tensor, CalibrationResults
 
 
@@ -425,7 +425,7 @@ class Indexer():
     def evaluate_classification(
             self,
             predictions: FloatTensor,
-            target_labels: Union[Sequence[int], IntTensor],
+            target_labels: Sequence[int],
             distance_thresholds: Union[Sequence[float], FloatTensor],
             metrics: Sequence[Union[str, ClassificationMetric]] = ['f1'],
             matcher: Union[str, ClassificationMatch] = 'match_nearest',
@@ -466,15 +466,16 @@ class Indexer():
 
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
-        lookup_distances = unpack_lookup_distances(lookups)
-        lookup_labels = unpack_lookup_labels(lookups)
-        query_labels: IntTensor = tf.cast(
-                tf.convert_to_tensor(target_labels),
-                dtype='int32'
-        )
+        # we also convert to np.ndarray first to avoid a slow down if
+        # convert_to_tensor is called on a List.
+        query_labels = tf.convert_to_tensor(np.array(target_labels))
+
+        # TODO(ovallis): The float type should be derived from the model.
+        lookup_distances = unpack_lookup_distances(lookups, dtype="float32")
+        lookup_labels = unpack_lookup_labels(lookups, dtype=query_labels.dtype)
         thresholds: FloatTensor = tf.cast(
                 tf.convert_to_tensor(distance_thresholds),
-                dtype='float32'
+                dtype=lookup_distances.dtype
         )
 
         results = self.evaluator.evaluate_classification(
@@ -626,8 +627,9 @@ class Indexer():
 
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
-        lookup_distances = unpack_lookup_distances(lookups)
-        lookup_labels = unpack_lookup_labels(lookups)
+        lookup_distances = unpack_lookup_distances(lookups, dtype=predictions.dtype)
+        # TODO(ovallis): The int type should be derived from the model.
+        lookup_labels = unpack_lookup_labels(lookups, dtype="int32")
 
         if verbose:
             pb = tqdm(total=len(lookup_distances) * len(self.cutpoints),

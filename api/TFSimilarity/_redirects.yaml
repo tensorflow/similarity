@@ -21,8 +21,6 @@ redirects:
   to: /similarity/api_docs/python/TFSimilarity/classification_metrics/F1Score
 - from: /similarity/api_docs/python/TFSimilarity/indexer/FloatTensor
   to: /similarity/api_docs/python/TFSimilarity/callbacks/FloatTensor
-- from: /similarity/api_docs/python/TFSimilarity/indexer/IntTensor
-  to: /similarity/api_docs/python/TFSimilarity/callbacks/IntTensor
 - from: /similarity/api_docs/python/TFSimilarity/indexer/MemoryEvaluator
   to: /similarity/api_docs/python/TFSimilarity/callbacks/MemoryEvaluator
 - from: /similarity/api_docs/python/TFSimilarity/indexer/Path
@@ -67,3 +65,5 @@ redirects:
   to: /similarity/api_docs/python/TFSimilarity/callbacks/unpack_lookup_distances
 - from: /similarity/api_docs/python/TFSimilarity/utils/unpack_lookup_labels
   to: /similarity/api_docs/python/TFSimilarity/callbacks/unpack_lookup_labels
+- from: /similarity/api_docs/python/TFSimilarity/utils/unpack_results
+  to: /similarity/api_docs/python/TFSimilarity/callbacks/unpack_results

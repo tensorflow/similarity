@@ -56,6 +56,6 @@ if __name__ == "__main__":
     # Assumes we are in the scripts/ dir
     new_version = update_version(version_path)
 
-    os.system(f"git add -u")
+    os.system("git add -u")
     os.system(f"git commit -m '[nightly] Increase version to {new_version}'")
     os.system("git push")

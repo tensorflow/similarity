@@ -1,4 +1,5 @@
-import numpy as np
+import os
+
 import tensorflow as tf
 
 from tensorflow_similarity.samplers import TFRecordDatasetSampler
@@ -19,46 +20,50 @@ def to_tfrecord(sid, value):
     return example.SerializeToString()
 
 
-def create_data(tmpdir):
-    for sid in range(100):
-        shard_path = tmpdir / f"tfr_{sid}.tfrec"
-
-        with tf.io.TFRecordWriter(str(shard_path)) as w:
-            for value in range(1_000):
-                example = to_tfrecord(sid, sid*1_000+value)
-                w.write(example)
-
-
 def deserialization_fn(serialized_example):
     fd = {
-       'sid': tf.io.FixedLenFeature([], dtype=tf.int64),
-       'value': tf.io.FixedLenFeature([], dtype=tf.int64),
+        "sid": tf.io.FixedLenFeature([], dtype=tf.int64),
+        "value": tf.io.FixedLenFeature([], dtype=tf.int64),
     }
     sample = tf.io.parse_single_example(serialized_example, fd)
 
-    return (sample['sid'], sample['value'])
+    return (sample["sid"], sample["value"])
 
 
-def test_basic(tmpdir):
-    create_data(tmpdir)
+class TFRecordSamplerTest(tf.test.TestCase):
+    def setUp(self):
+        super().setUp()
 
-    sampler = TFRecordDatasetSampler(
-        tmpdir,
-        deserialization_fn=deserialization_fn,
-        batch_size=10,
-        example_per_class=2)
+        for sid in range(100):
+            shard_path = os.path.join(self.get_temp_dir(), f"tfr_{sid}.tfrec")
 
-    si = iter(sampler)
-    [next(si) for _ in range(10_000)]
-    examples = next(si)
+            with tf.io.TFRecordWriter(str(shard_path)) as w:
+                for value in range(1000):
+                    example = to_tfrecord(sid, sid * 1000 + value)
+                    w.write(example)
 
-    # We should get 3 pairs of shard IDs
-    sids = examples[0].numpy()
-    values = examples[1].numpy()
-    first_sid = sids[::2]
-    second_sid = sids[1::2]
+    def test_basic(self):
+        sampler = TFRecordDatasetSampler(
+            self.get_temp_dir(),
+            deserialization_fn=deserialization_fn,
+            batch_size=10,
+            example_per_class=2,
+        )
 
-    assert len(sids) == 10
-    np.testing.assert_array_equal(first_sid, second_sid)
-    for sid, val in zip(sids, values):
-        assert 0 <= val - sid*1_000 < 1_000
+        si = iter(sampler)
+        [next(si) for _ in range(10_000)]
+        examples = next(si)
+
+        # We should get 3 pairs of shard IDs
+        sids = examples[0]
+        values = examples[1]
+        first_sid = sids[::2]
+        second_sid = sids[1::2]
+
+        self.assertLen(sids, 10)
+        self.assertAllEqual(first_sid, second_sid)
+
+        for sid, val in zip(sids, values):
+            diff = val - sid * 1_000
+            self.assertGreaterEqual(diff, 0)
+            self.assertLess(diff, 1000)

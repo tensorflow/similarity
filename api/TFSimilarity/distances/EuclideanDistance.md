@@ -27,14 +27,16 @@ the embeddings are.
 
 <h3 id="call">call</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distances.py#L129-L154">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distances.py#L133-L162">View source</a>
 
 ``<b>python
 @tf.function</b>``
 
 ```python
 call(
-    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+    query_embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
+    key_embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
 ) -> <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
@@ -51,7 +53,14 @@ Compute pairwise distances for a given batch of embeddings.
 
 <tr>
 <td>
-<b>embeddings</b>
+<b>query_embeddings</b>
+</td>
+<td>
+Embeddings to compute the pairwise one.
+</td>
+</tr><tr>
+<td>
+<b>key_embeddings</b>
 </td>
 <td>
 Embeddings to compute the pairwise one.
@@ -80,7 +89,7 @@ Pairwise distance tensor.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distances.py#L50-L51">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distances.py#L51-L52">View source</a>
 
 ```python
 get_config()
@@ -92,11 +101,13 @@ get_config()
 
 <h3 id="__call__">__call__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distances.py#L44-L45">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/distances.py#L45-L46">View source</a>
 
 ```python
 __call__(
-    embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+    query_embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
+</a>,
+    key_embeddings: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
 )
 ```

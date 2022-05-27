@@ -58,7 +58,7 @@ be verbose.
 
 <h3 id="add">add</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/search/search.py#L42-L58">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/search/search.py#L42-L58">View source</a>
 
 ```python
 add(
@@ -103,7 +103,7 @@ the data associated with a given embedding.
 
 <h3 id="batch_add">batch_add</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/search/search.py#L60-L76">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/search/search.py#L60-L76">View source</a>
 
 ```python
 batch_add(
@@ -149,7 +149,7 @@ Be verbose. Defaults to 1.
 
 <h3 id="batch_lookup">batch_lookup</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/search/search.py#L89-L98">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/search/search.py#L89-L98">View source</a>
 
 ```python
 batch_lookup(
@@ -189,7 +189,7 @@ Number of nearest neighboors embedding to lookup. Defaults to 5.
 
 <h3 id="load">load</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/search/search.py#L108-L114">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/search/search.py#L108-L114">View source</a>
 
 ```python
 load(
@@ -220,7 +220,7 @@ where to store the data
 
 <h3 id="lookup">lookup</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/search/search.py#L78-L87">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/search/search.py#L78-L87">View source</a>
 
 ```python
 lookup(
@@ -260,7 +260,7 @@ Number of nearest neighboors embedding to lookup. Defaults to 5.
 
 <h3 id="save">save</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/search/search.py#L100-L106">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/search/search.py#L100-L106">View source</a>
 
 ```python
 save(

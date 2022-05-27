@@ -4,7 +4,7 @@
 
 
 
-Barlow Loss
+Computes the Barlow Loss between two batches of embeddings.
 
 ```python
 TFSimilarity.losses.Barlow(
@@ -20,6 +20,28 @@ TFSimilarity.losses.Barlow(
 
 <!-- Placeholder for "Used in" -->
 
+Reference
+
+Zbontar, Jure, et al.
+"Barlow Twins: Self-Supervised Learning via Redundancy Reduction."
+https://arxiv.org/abs/2103.03230
+
+#### Standalone usage:
+
+
+
+```
+>>> loss = tensorflow_similarity.losses.Barlow()
+>>> za = tf.random.uniform(shape=[4, 16])
+>>> zb = tf.random.uniform(shape=[4, 16])
+>>> loss(za, zb)
+<tf.Tensor: shape=(), dtype=float32, numpy=22.144062>
+```
+
+Usage with the <b>compile()</b> API:
+```python
+model.compile(optimizer='sgd', loss=tensorflow_similarity.losses.Barlow())
+```
 
 <!-- Tabular view -->
  <table class="responsive fixed orange">
@@ -103,7 +125,7 @@ A <b>Loss</b> instance.
 
 <h3 id="get_config">get_config</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/barlow.py#L57-L63">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/barlow.py#L95-L101">View source</a>
 
 ```python
 get_config() -> Dict[str, Any]
@@ -113,12 +135,12 @@ get_config() -> Dict[str, Any]
 Returns the config dictionary for a <b>Loss</b> instance.
 
 
-<h3 id="normalize_columns">normalize_columns</h3>
+<h3 id="off_diagonal">off_diagonal</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/barlow.py#L72-L77">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/barlow.py#L103-L108">View source</a>
 
 ```python
-normalize_columns(
+off_diagonal(
     x: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
 ) -> <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
@@ -129,12 +151,12 @@ normalize_columns(
 
 
 
-<h3 id="off_diagonal">off_diagonal</h3>
+<h3 id="standardize_columns">standardize_columns</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/barlow.py#L65-L70">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/losses/barlow.py#L110-L115">View source</a>
 
 ```python
-off_diagonal(
+standardize_columns(
     x: <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```
 </a>
 ) -> <a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor```

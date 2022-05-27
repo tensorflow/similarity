@@ -19,16 +19,10 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/augmenters
   - title: Augmenter
     path: /similarity/api_docs/python/TFSimilarity/augmenters/Augmenter
-  - title: AutoAugment
-    path: /similarity/api_docs/python/TFSimilarity/augmenters/AutoAugment
+  - title: BarlowAugmenter
+    path: /similarity/api_docs/python/TFSimilarity/augmenters/BarlowAugmenter
   - title: ContrastiveAugmenter
     path: /similarity/api_docs/python/TFSimilarity/augmenters/ContrastiveAugmenter
-  - title: MixupAndCutmix
-    path: /similarity/api_docs/python/TFSimilarity/augmenters/MixupAndCutmix
-  - title: RandAugment
-    path: /similarity/api_docs/python/TFSimilarity/augmenters/RandAugment
-  - title: RandomErasing
-    path: /similarity/api_docs/python/TFSimilarity/augmenters/RandomErasing
   - title: SimCLRAugmenter
     path: /similarity/api_docs/python/TFSimilarity/augmenters/SimCLRAugmenter
 - title: TFSimilarity.callbacks
@@ -65,6 +59,8 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/callbacks/unpack_lookup_distances
   - title: unpack_lookup_labels
     path: /similarity/api_docs/python/TFSimilarity/callbacks/unpack_lookup_labels
+  - title: unpack_results
+    path: /similarity/api_docs/python/TFSimilarity/callbacks/unpack_results
 - title: TFSimilarity.classification_metrics
   section:
   - title: Overview
@@ -177,6 +173,8 @@ toc:
     path: /similarity/api_docs/python/TFSimilarity/losses/SoftNearestNeighborLoss
   - title: TripletLoss
     path: /similarity/api_docs/python/TFSimilarity/losses/TripletLoss
+  - title: VicReg
+    path: /similarity/api_docs/python/TFSimilarity/losses/VicReg
 - title: TFSimilarity.matchers
   section:
   - title: Overview

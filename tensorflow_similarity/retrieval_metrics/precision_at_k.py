@@ -19,7 +19,7 @@ from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
 class PrecisionAtK(RetrievalMetric):
-    """Precision@K is computed as.
+    r"""Precision@K is computed as.
 
     $$
     P_i@k = \frac{TP_i}{TP_i+FP_i} = \frac{\sum_{j = 1}^{k} {rel_i_j}}{K}

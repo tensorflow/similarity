@@ -57,7 +57,7 @@ def EfficientNetSim(
 ) -> SimilarityModel:
     """Build an EfficientNet Model backbone for similarity learning
 
-    Architecture from [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946)
+    [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946)
 
     Args:
         input_shape: Size of the input image. Must match size of EfficientNet version you use.
@@ -177,15 +177,18 @@ def build_effnet(
             # Freeze all the layers before the the last 3 blocks
             if not re.search("^block[5,6,7]|^top", layer.name):
                 layer.trainable = False
-            # don't change the batchnorm weights
-            if isinstance(layer, layers.BatchNormalization):
-                layer.trainable = False
     elif trainable == "frozen":
         effnet.trainable = False
     else:
         raise ValueError(
             f"{trainable} is not a supported option for 'trainable'."
         )
+
+    # Don't train the BN layers if we are loading pre-trained weights.
+    if weights:
+        for layer in effnet.layers:
+            if isinstance(layer, layers.BatchNormalization):
+                layer.trainable = False
 
     # wire
     x = effnet(x)

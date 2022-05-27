@@ -14,8 +14,10 @@
 # ==============================================================================
 """Metric losses  base class"""
 
-import tensorflow as tf
 from typing import Any, Callable, Dict, Optional
+
+import tensorflow as tf
+
 from tensorflow_similarity.types import FloatTensor
 from tensorflow_similarity.utils import is_tensor_or_variable
 
@@ -51,7 +53,9 @@ class MetricLoss(tf.keras.losses.Loss):
         Returns:
           Loss values per sample.
         """
-        loss: FloatTensor = self.fn(y_true, y_pred, **self._fn_kwargs)
+        loss: FloatTensor = self.fn(
+            y_true, y_pred, y_true, y_pred, **self._fn_kwargs
+        )
         return loss
 
     def get_config(self) -> Dict[str, Any]:

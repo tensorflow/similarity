@@ -22,7 +22,7 @@ def test_build_full():
             trainable_layer_count += 1
 
     assert total_layer_count == 175
-    assert trainable_layer_count == 175
+    assert trainable_layer_count == 122
 
 
 def test_build_frozen():

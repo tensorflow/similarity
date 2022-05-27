@@ -198,7 +198,7 @@ boolean <b>is_warmup</b>. See <b>self._get_examples()</b> Defaults to 0.
 
 <h3 id="generate_batch">generate_batch</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L137-L154">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L137-L154">View source</a>
 
 ```python
 generate_batch(
@@ -240,12 +240,11 @@ x, y: Batch
 
 <h3 id="get_slice">get_slice</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/memory_samplers.py#L198-L219">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/memory_samplers.py#L198-L219">View source</a>
 
 ```python
 get_slice(
-    begin: int = 0,
-    size: int = -1
+    begin: int = 0, size: int = -1
 ) -> Tuple[<a href="../../TFSimilarity/callbacks/FloatTensor.md">TFSimilarity.callbacks.FloatTensor``<b>
 </a>, <a href="../../TFSimilarity/callbacks/IntTensor.md">TFSimilarity.callbacks.IntTensor</b>``
 </a>]
@@ -299,7 +298,7 @@ A Tuple of FloatTensor and IntTensor
 
 <h3 id="on_epoch_end">on_epoch_end</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L122-L132">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L122-L132">View source</a>
 
 ```python
 on_epoch_end() -> None
@@ -311,7 +310,7 @@ Keep track of warmup epochs
 
 <h3 id="__getitem__">__getitem__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L134-L135">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L134-L135">View source</a>
 
 ```python
 __getitem__(
@@ -366,7 +365,7 @@ Create a generator that iterate over the Sequence.
 
 <h3 id="__len__">__len__</h3>
 
-<a target="_blank" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L118-L120">View source</a>
+<a target="_blank" class="external" href="https://github.com/tensorflow/similarity/blob/main/tensorflow_similarity/samplers/samplers.py#L118-L120">View source</a>
 
 ```python
 __len__() -> int

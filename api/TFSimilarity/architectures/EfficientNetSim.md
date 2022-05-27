@@ -4,11 +4,11 @@
 
 
 
-Build an EffecientNet Model backbone for similarity learning
+Build an EfficientNet Model backbone for similarity learning
 
 ```python
 TFSimilarity.architectures.EfficientNetSim(
-    input_shape: Tuple[int],
+    input_shape: Tuple[int, int, int],
     embedding_size: int = 128,
     variant: str = B0,
     weights: str = imagenet,
@@ -16,14 +16,14 @@ TFSimilarity.architectures.EfficientNetSim(
     l2_norm: bool = True,
     include_top: bool = True,
     pooling: str = gem,
-    gem_p=1.0
+    gem_p=3.0
 ```
 
 
 
 <!-- Placeholder for "Used in" -->
 
-Architecture from [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946)
+- [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946)
 
 <!-- Tabular view -->
  <table class="responsive fixed orange">
@@ -35,9 +35,8 @@ Architecture from [EfficientNet: Rethinking Model Scaling for Convolutional Neur
 <b>input_shape</b>
 </td>
 <td>
-Size of the image input prior to augmentation,
-must be bigger than the size of Effnet version you use. See below for
-min input size.
+Size of the input image. Must match size of EfficientNet version you use.
+See below for version input size.
 </td>
 </tr><tr>
 <td>
@@ -67,7 +66,7 @@ imagenet. Defaults to "imagenet".
 <b>trainable</b>
 </td>
 <td>
-Make the EfficienNet backbone fully trainable or partially
+Make the EfficientNet backbone fully trainable or partially
 trainable.
 - "full" to make the entire backbone trainable,
 - "partial" to only make the last 3 block trainable
@@ -113,9 +112,9 @@ include_top is False. Defaults to gem.
 </td>
 <td>
 Sets the power in the GeneralizedMeanPooling2D layer. A value
-of 1.0 is equivelent to GlobalMeanPooling2D, while larger values
+of 1.0 is equivalent to GlobalMeanPooling2D, while larger values
 will increase the contrast between activations within each feature
-map, and a value of math.inf will be equivelent to MaxPool2d.
+map, and a value of math.inf will be equivalent to MaxPool2d.
 </td>
 </tr>
 </table>

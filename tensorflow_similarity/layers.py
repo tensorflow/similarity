@@ -18,93 +18,21 @@ from typing import Any, Dict, Optional
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.python.keras.utils import conv_utils
+
 from .types import FloatTensor, IntTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class MetricEmbedding(layers.Layer):
-    def __init__(
-        self,
-        units: int,
-        activation: Optional[Any] = None,
-        use_bias: bool = True,
-        kernel_initializer: Optional[Any] = "glorot_uniform",
-        bias_initializer: Optional[Any] = "zeros",
-        kernel_regularizer: Optional[Any] = None,
-        bias_regularizer: Optional[Any] = None,
-        activity_regularizer: Optional[Any] = None,
-        kernel_constraint: Optional[Any] = None,
-        bias_constraint: Optional[Any] = None,
-        **kwargs
-    ) -> None:
-        """L2 Normalized `Dense` layer.
+class MetricEmbedding(layers.Dense):
+    """L2 Normalized `Dense` layer.
 
-        This layer is usually used as output layer, especially when using cosine
-        distance as the similarity metric.
-
-        Args:
-          units: Positive integer, dimensionality of the output space.
-          activation: Activation function to use.
-            If you don't specify anything, no activation is applied
-            (ie. "linear" activation: `a(x) = x`).
-          use_bias: Boolean, whether the layer uses a bias vector.
-          kernel_initializer: Initializer for the `kernel` weights matrix.
-          bias_initializer: Initializer for the bias vector.
-          kernel_regularizer: Regularizer function applied to
-            the `kernel` weights matrix.
-          bias_regularizer: Regularizer function applied to the bias vector.
-          activity_regularizer: Regularizer function applied to
-            the output of the layer (its "activation").
-          kernel_constraint: Constraint function applied to
-            the `kernel` weights matrix.
-          bias_constraint: Constraint function applied to the bias vector.
-        """
-        super().__init__(**kwargs)
-
-        self.units = units
-        self.activation = activation
-        self.use_bias = use_bias
-        self.kernel_initializer = kernel_initializer
-        self.bias_initializer = bias_initializer
-        self.kernel_regularizer = kernel_regularizer
-        self.bias_regularizer = bias_regularizer
-        self.activity_regularizer = activity_regularizer
-        self.kernel_constraint = kernel_constraint
-        self.bias_constraint = bias_constraint
-        self.dense = layers.Dense(
-            units,
-            activation=activation,
-            use_bias=use_bias,
-            kernel_initializer=kernel_initializer,
-            bias_initializer=bias_initializer,
-            kernel_regularizer=kernel_regularizer,
-            bias_regularizer=bias_regularizer,
-            activity_regularizer=activity_regularizer,
-            kernel_constraint=kernel_constraint,
-            bias_constraint=bias_constraint,
-        )
-        self.input_spec = layers.InputSpec(min_ndim=2)
-
+    This layer is usually used as output layer, especially when using cosine
+    distance as the similarity metric.
+    """
     def call(self, inputs: FloatTensor) -> FloatTensor:
-        x = self.dense(inputs)
+        x = super().call(inputs)
         normed_x: FloatTensor = tf.math.l2_normalize(x, axis=1)
         return normed_x
-
-    def get_config(self) -> Dict[str, Any]:
-        config = {
-            "units": self.units,
-            "activation": self.activation,
-            "use_bias": self.use_bias,
-            "kernel_initializer": self.kernel_initializer,
-            "bias_initializer": self.bias_initializer,
-            "kernel_regularizer": self.kernel_regularizer,
-            "bias_regularizer": self.bias_regularizer,
-            "activity_regularizer": self.activity_regularizer,
-            "kernel_constraint": self.kernel_constraint,
-            "bias_constraint": self.bias_constraint,
-        }
-        base_config = super().get_config()
-        return {**base_config, **config}
 
 
 class GeneralizedMeanPooling(layers.Layer):
@@ -165,7 +93,7 @@ class GeneralizedMeanPooling(layers.Layer):
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class GeneralizedMeanPooling1D(GeneralizedMeanPooling):
-    """Computes the Generalized Mean of each channel in a tensor.
+    r"""Computes the Generalized Mean of each channel in a tensor.
 
     $$
     \textbf{e} = \left[\left(\frac{1}{|\Omega|}\sum_{u\in{\Omega}}x^{p}_{cu}\right)^{\frac{1}{p}}\right]_{c=1,\cdots,C}
@@ -261,7 +189,7 @@ class GeneralizedMeanPooling1D(GeneralizedMeanPooling):
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class GeneralizedMeanPooling2D(GeneralizedMeanPooling):
-    """Computes the Generalized Mean of each channel in a tensor.
+    r"""Computes the Generalized Mean of each channel in a tensor.
 
     $$
     \textbf{e} = \left[\left(\frac{1}{|\Omega|}\sum_{u\in{\Omega}}x^{p}_{cu}\right)^{\frac{1}{p}}\right]_{c=1,\cdots,C}
