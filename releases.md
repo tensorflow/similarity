@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fix TFRecordDatasetSampler to ensure the correct number of examples per class per batch. Deterministic is now set to True and we have updated the docstring to call out the requirements for the tf record files.
 - Removed unneeded tf.function and registar_keras_serializable decorators.
 - Refactored the model index attribute to raise a more informative AttributeError if the index does not exist.
 - Freeze all BatchNormalization layers in architectures when loading weights.

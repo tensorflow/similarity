@@ -22,16 +22,15 @@ def to_tfrecord(sid, value):
 
 def deserialization_fn(serialized_example):
     fd = {
-       'sid': tf.io.FixedLenFeature([], dtype=tf.int64),
-       'value': tf.io.FixedLenFeature([], dtype=tf.int64),
+        "sid": tf.io.FixedLenFeature([], dtype=tf.int64),
+        "value": tf.io.FixedLenFeature([], dtype=tf.int64),
     }
     sample = tf.io.parse_single_example(serialized_example, fd)
 
-    return (sample['sid'], sample['value'])
+    return (sample["sid"], sample["value"])
 
 
 class TFRecordSamplerTest(tf.test.TestCase):
-
     def setUp(self):
         super().setUp()
 
@@ -40,16 +39,16 @@ class TFRecordSamplerTest(tf.test.TestCase):
 
             with tf.io.TFRecordWriter(str(shard_path)) as w:
                 for value in range(1000):
-                    example = to_tfrecord(sid, sid*1000+value)
+                    example = to_tfrecord(sid, sid * 1000 + value)
                     w.write(example)
-
 
     def test_basic(self):
         sampler = TFRecordDatasetSampler(
             self.get_temp_dir(),
             deserialization_fn=deserialization_fn,
             batch_size=10,
-            example_per_class=2)
+            example_per_class=2,
+        )
 
         si = iter(sampler)
         [next(si) for _ in range(10_000)]
@@ -65,6 +64,6 @@ class TFRecordSamplerTest(tf.test.TestCase):
         self.assertAllEqual(first_sid, second_sid)
 
         for sid, val in zip(sids, values):
-            diff = val - sid*1_000
+            diff = val - sid * 1_000
             self.assertGreaterEqual(diff, 0)
             self.assertLess(diff, 1000)
