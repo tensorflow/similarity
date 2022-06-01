@@ -17,7 +17,7 @@ from typing import Callable, List, Optional
 
 import tensorflow as tf
 
-from .augmenter import Augmenter
+from tensorflow_similarity.augmenters import Augmenter
 from tensorflow_similarity.types import Tensor
 
 

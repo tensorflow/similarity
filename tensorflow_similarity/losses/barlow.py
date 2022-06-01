@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Barlow Loss
+"""Barlow Loss.
     Barlow Twins: Self-Supervised Learning via Redundancy Reduction
     https://arxiv.org/abs/2103.03230
 """
