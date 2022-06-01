@@ -16,17 +16,17 @@ With Tensorflow Similarity you can train two main types of models:
 
 ## What's new
 
+- [May 2022]: 0.16 major optimization release
+    * Cross-batch memory (XBM) loss added thank to @chjort
+    * Many self-supervised related improvement thanks to @dewball345
+    * Major layers and callback refactoring to make them faster and more flexible. E.g `EvalCallback()` now support splited validation.
+     For full changes see [the changelog](./releases.md)
+
 - [Jan 2022]: 0.15 self-supervised release
     * Added support for self-supervised contrastive learning. Including SimCLR, SimSiam, and Barlow Twins. Checkout the in-depth [hello world notebook](examples/unsupervised_hello_world.ipynb) to get started.
     * Soft Nearest Neighbor Loss added thanks to [Abhishar Sinha](https://github.com/abhisharsinha)
     * Added GenerlizedMeanPooling2D support that improves similarity matching accuracy over GlobalMeanPooling2D.
     * Numerous speed optimizations and general bug fixes.
-- [Dec 2021]: 
-    * Sampler speed optimizations and general bug fixes.
-- [Oct 2021]: 0.14 similarity release
-    * 0.14 is out which includes various speed improvements and post initial release bug fixes.
-    * Added `Samplers.*` IO [notebook](examples/sampler_io_cookbook.ipynb) detailing how to efficiently sample your data for successful training.
-    
 
 For previous changes and more details - see [the changelog](./releases.md)
 

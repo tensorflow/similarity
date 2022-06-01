@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Multi Similarity Loss
+"""Multi Similarity Loss.
     Multi-Similarity Loss with General Pair Weighting for Deep Metric Learning
     https://arxiv.org/abs/1904.06627
 """
@@ -41,7 +41,7 @@ def multisimilarity_loss(
     lmda: float = 0.5,
     center: float = 1.0,
 ) -> Any:
-    """Multi Similarity loss computations
+    """Multi Similarity loss computations.
 
     Args:
         query_labels: labels associated with the query embed.
@@ -182,7 +182,7 @@ class MultiSimilarityLoss(MetricLoss):
         name: str = "MultiSimilarityLoss",
         **kwargs
     ):
-        """Initializes the Multi Similarity Loss
+        """Initializes the Multi Similarity Loss.
 
         Args:
             distance: Which distance function to use to compute the pairwise
