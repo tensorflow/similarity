@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Triplet Loss
+"""Triplet Loss.
     FaceNet: A Unified Embedding for Face Recognition and Clustering
     https://arxiv.org/abs/1503.03832
 """
@@ -40,7 +40,7 @@ def triplet_loss(
     soft_margin: bool = False,
     margin: float = 1.0,
 ) -> Any:
-    """Triplet loss computations
+    """Triplet loss computations.
 
     Args:
         query_labels: labels associated with the query embed.
@@ -144,7 +144,7 @@ class TripletLoss(MetricLoss):
         name: str = "TripletLoss",
         **kwargs
     ):
-        """Initializes the TripletLoss
+        """Initializes the TripletLoss.
 
         Args:
             distance: Which distance function to use to compute

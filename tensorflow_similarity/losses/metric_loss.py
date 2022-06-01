@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Metric losses  base class"""
+"""Metric losses  base class."""
 
 from typing import Any, Callable, Dict, Optional
 

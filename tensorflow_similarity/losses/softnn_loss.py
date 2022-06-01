@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Soft Nearest Neighbors Loss
+"""Soft Nearest Neighbors Loss.
     FaceNet: A Unified Embedding for Face Recognition and Clustering
     https://arxiv.org/abs/1902.01889
 """

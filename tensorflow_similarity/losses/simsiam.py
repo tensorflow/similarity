@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""SimSiam Loss
+"""SimSiam Loss.
     Exploring Simple Siamese Representation Learning
     https://bit.ly/3LxsWdj
 """
@@ -41,7 +41,7 @@ def angular_distance(sim: FloatTensor) -> FloatTensor:
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class SimSiamLoss(tf.keras.losses.Loss):
-    """SimSiam Loss
+    """SimSiam Loss.
 
     Introduced in: [Exploring Simple Siamese Representation Learning](https://bit.ly/3LxsWdj)
     """
@@ -84,7 +84,8 @@ class SimSiamLoss(tf.keras.losses.Loss):
     def call(
         self, projector: FloatTensor, predictor: FloatTensor
     ) -> FloatTensor:
-        """Compute the loss
+        """Compute the loss.
+
         Notes:
         - Stopping the gradient is critical according to the paper for convergence.
 
