@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""VicReg Loss
+"""VicReg Loss.
     VICReg: Variance-Invariance-Covariance Regularization for Self-Supervised Learning
     https://arxiv.org/abs/2105.04906
 """
@@ -24,7 +24,7 @@ from tensorflow_similarity.types import FloatTensor
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class VicReg(tf.keras.losses.Loss):
-    """VicReg Loss
+    """VicReg Loss.
 
     [VICReg: Variance-Invariance-Covariance Regularization for Self-Supervised Learning](https://arxiv.org/abs/2105.04906)
     """  # noqa

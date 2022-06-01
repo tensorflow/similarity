@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""SimCLR Loss
+"""SimCLR Loss.
     A Simple Framework for Contrastive Learning of Visual Representations
     https://arxiv.org/abs/2002.05709
 """
@@ -27,7 +27,7 @@ LARGE_NUM = 1e9
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class SimCLRLoss(tf.keras.losses.Loss):
-    """SimCLR Loss
+    """SimCLR Loss.
     [A Simple Framework for Contrastive Learning of Visual Representations](https://arxiv.org/abs/2002.05709)
     code adapted from [orignal github](https://github.com/google-research/simclr/tree/master/tf2)
     """

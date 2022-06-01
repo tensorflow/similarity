@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Circle Loss
+"""Circle Loss.
     [Circle Loss: A Unified Perspective of Pair Similarity Optimization](https://arxiv.org/abs/2002.10857)
 """
 from typing import Any, Callable, Union
@@ -37,7 +37,7 @@ def circle_loss(
     gamma: float = 80,
     margin: float = 0.4,
 ) -> Any:
-    """Circle loss computations
+    """Circle loss computations.
 
     The original paper used cosine similarity while this loss has been modified
     to work with cosine distance.
@@ -139,7 +139,7 @@ def circle_loss(
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class CircleLoss(MetricLoss):
-    """Computes the CircleLoss
+    """Computes the CircleLoss.
 
     Circle Loss: A Unified Perspective of Pair Similarity Optimization
     https://arxiv.org/abs/2002.10857
