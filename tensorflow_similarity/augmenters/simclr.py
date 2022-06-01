@@ -20,18 +20,11 @@ from typing import List, Optional
 
 import tensorflow as tf
 
+from tensorflow_similarity.augmenters import Augmenter
 from tensorflow_similarity.types import Tensor
-from tensorflow_similarity.augmenters.augmenter import Augmenter
 
-from tensorflow_similarity.augmenters.augmentation_utils.cropping import (
-    random_crop_with_resize,
-)
-from tensorflow_similarity.augmenters.augmentation_utils.color_jitter import (
-    random_color_jitter,
-)
-from tensorflow_similarity.augmenters.augmentation_utils.cropping import (
-    center_crop,
-)
+from .augmentation_utils.color_jitter import random_color_jitter
+from .augmentation_utils.cropping import center_crop, random_crop_with_resize
 
 
 def simclr_training_augmentation(

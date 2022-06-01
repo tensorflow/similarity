@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""PN Loss foudn in Ivis
+"""PN Loss foudn in Ivis.
     Szubert, B., Cole, J.E., Monaco, C. et al.
     Structure-preserving visualisation of high dimensional single-cell dataset
     Sci Rep 9, 8914 (2019). https://doi.org/10.1038/s41598-019-45301-0
@@ -41,7 +41,7 @@ def pn_loss(
     soft_margin: bool = False,
     margin: float = 1.0,
 ) -> Any:
-    """Positive Negative loss computations
+    """Positive Negative loss computations.
 
     Based on the pn loss used in IVIS.
 
@@ -161,7 +161,7 @@ class PNLoss(MetricLoss):
         name: str = "PNLoss",
         **kwargs
     ):
-        """Initializes the PN Loss
+        """Initializes the PN Loss.
 
         Args:
             distance: Which distance function to use to compute
