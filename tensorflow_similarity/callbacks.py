@@ -356,7 +356,7 @@ def _compute_classification_metrics(
         A Python dict mapping the metric name to the copmuted value.
     """
     lookups = model.lookup(queries, k=k, verbose=0)
-    lookup_distances = unpack_lookup_distances(lookups, queries.dtype)
+    lookup_distances = unpack_lookup_distances(lookups, model.dtype)
     lookup_labels = unpack_lookup_labels(lookups, query_labels.dtype)
 
     # TODO(ovallis): Support passing other matchers. Currently we are using
