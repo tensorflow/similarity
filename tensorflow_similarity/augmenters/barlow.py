@@ -111,12 +111,14 @@ class BarlowAugmenter(Augmenter):
     def augment(
         self,
         x: Any,
-        y: Any = tf.constant([0]),
+        y: Any = None,
         num_augmentations_per_example: int = 2,
         is_warmup: bool = True,
     ) -> List[Any]:
 
         with tf.device("/cpu:0"):
+            if y is None:
+                y = tf.constant([0])
             inputs = tf.stack(x)
             inputs = tf.cast(inputs, dtype="float32")
 
@@ -155,8 +157,8 @@ class BarlowAugmenter(Augmenter):
     def __call__(
         self,
         x: Any,
-        y: Any = tf.constant([0]),
+        y: Any = None,
         num_augmentations_per_example: int = 2,
         is_warmup: bool = True,
     ) -> List[Any]:
-        return list(self.augment(x))
+        return list(self.augment(x, y))
