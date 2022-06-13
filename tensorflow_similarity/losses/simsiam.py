@@ -70,7 +70,7 @@ class SimSiamLoss(tf.keras.losses.Loss):
         """
         super().__init__(reduction=reduction, name=name, **kwargs)
         self.projection_type = projection_type
-        self.margin = tf.constant([margin])
+        self.margin = margin
 
         if self.projection_type == "negative_cosine_sim":
             self._projection = negative_cosine_sim
@@ -108,7 +108,7 @@ class SimSiamLoss(tf.keras.losses.Loss):
         per_example_projection = self._projection(cosine_simlarity)
 
         # 1D tensor
-        loss: FloatTensor = per_example_projection * tf.constant([0.5]) + self.margin
+        loss: FloatTensor = per_example_projection * 0.5 + self.margin
 
         return loss
 
