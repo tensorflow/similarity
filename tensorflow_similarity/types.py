@@ -15,7 +15,7 @@
 """Core TensorFlow types."""
 
 import dataclasses
-from typing import Any, Callable, Mapping, Sequence, Optional, Union
+from typing import Any, Callable, Mapping, Optional, Union
 
 import numpy as np
 import tensorflow as tf
@@ -141,5 +141,5 @@ class CalibrationResults:
         containing the metric's value computed at each of the distance
         thresholds, e.g., {'f1': [0.99, 0.80], 'distance': [0.0, 1.0]}.
     """
-    cutpoints: Mapping[str, Mapping[str, Union[str, float, int]]]
-    thresholds: Mapping[str, Sequence[Union[float, int]]]
+    cutpoints: Mapping[str, Mapping[str, Union[str, float]]]
+    thresholds: Mapping[str, np.ndarray]

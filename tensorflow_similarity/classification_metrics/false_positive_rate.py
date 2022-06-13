@@ -15,6 +15,7 @@
 import tensorflow as tf
 
 from tensorflow_similarity.types import FloatTensor
+
 from .classification_metric import ClassificationMetric
 
 
@@ -42,9 +43,9 @@ class FalsePositiveRate(ClassificationMetric):
     """
 
     def __init__(self, name: str = "fpr") -> None:
-        super().__init__(name=name,
-                         canonical_name="false_positive_rate",
-                         direction="min")
+        super().__init__(
+            name=name, canonical_name="false_positive_rate", maximize=False
+        )
 
     def compute(
         self,
