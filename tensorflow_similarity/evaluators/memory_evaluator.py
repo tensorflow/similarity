@@ -385,7 +385,7 @@ class MemoryEvaluator(Evaluator):
 
         return target_cp
 
-    def _last_argmax(self, x):
+    def _last_argmax(self, x: np.ndarray) -> int:
         """The index of the last occurrence of the max value.
 
         In case of multiple occurrences of the maximum values, the index
@@ -398,9 +398,9 @@ class MemoryEvaluator(Evaluator):
             The index of the last occurrence of the max value.
         """
         revx = x[::-1]
-        return len(x) - np.argmax(revx) - 1
+        return (len(x) - np.argmax(revx) - 1).item()
 
-    def _last_argmin(self, x):
+    def _last_argmin(self, x: np.ndarray) -> int:
         """The index of the last occurrence of the min value.
 
         In case of multiple occurrences of the minimum values, the index
@@ -413,7 +413,7 @@ class MemoryEvaluator(Evaluator):
             The index of the last occurrence of the min value.
         """
         revx = x[::-1]
-        return len(x) - np.argmin(revx) - 1
+        return (len(x) - np.argmin(revx) - 1).item()
 
     def _is_lower(self, curr, prev, equal=False):
         if equal:
