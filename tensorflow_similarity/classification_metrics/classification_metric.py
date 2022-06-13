@@ -28,11 +28,11 @@ class ClassificationMetric(ABC):
         canonical_name: The canonical name associated with metric, e.g.,
         accuracy
 
-        direction: {'max','min'} the starting point of the search for the
-        optimal distance threhsold.
+        maximize: If True, we attempt to maximize the calibration metric
+        as the distance increases.
 
-        * `max`: Start at the max distance and search decreasing.
-        * `min`: Start at the min distance and search increasing.
+        increasing: If True, the metric should increase as the distance
+        increases.
 
     `ClassificationMetric` measure the matching classification between the
     query label and the label derived from the set of lookup results.
@@ -44,10 +44,12 @@ class ClassificationMetric(ABC):
     def __init__(self,
                  name: str = '',
                  canonical_name: str = '',
-                 direction: str = 'max') -> None:
+                 maximize: bool = True,
+                 increasing: bool = True) -> None:
         self.name = name
         self.canonical_name = canonical_name
-        self.direction = direction
+        self.maximize = maximize
+        self.increasing = increasing
 
     def __str__(self) -> str:
         return self.name
@@ -59,7 +61,8 @@ class ClassificationMetric(ABC):
         return {
             "name": self.name,
             "canonical_name": self.canonical_name,
-            "direction": self.direction
+            "maximize": self.maximize,
+            "increasing": self.increasing
         }
 
     @abstractmethod
