@@ -15,6 +15,7 @@
 import tensorflow as tf
 
 from tensorflow_similarity.types import FloatTensor
+
 from .classification_metric import ClassificationMetric
 
 
@@ -40,15 +41,19 @@ class Precision(ClassificationMetric):
     ```
     """
 
-    def __init__(self, name: str = 'precision') -> None:
-        super().__init__(name=name, canonical_name='precision')
+    def __init__(self, name: str = "precision") -> None:
+        super().__init__(
+            name=name, canonical_name="precision", increasing=False
+        )
 
-    def compute(self,
-                tp: FloatTensor,
-                fp: FloatTensor,
-                tn: FloatTensor,
-                fn: FloatTensor,
-                count: int) -> FloatTensor:
+    def compute(
+        self,
+        tp: FloatTensor,
+        fp: FloatTensor,
+        tn: FloatTensor,
+        fn: FloatTensor,
+        count: int,
+    ) -> FloatTensor:
         """Compute the classification metric.
 
         The `compute()` method supports computing the metric for a set of
@@ -82,8 +87,7 @@ class Precision(ClassificationMetric):
         # 1.0 if the first recall and precision are both zero.
         if (tp + fp)[0] == 0.0 and len(p) > 1:
             initial_precision = tf.constant(
-                    [tf.constant([1.0]), tf.zeros(len(p)-1)],
-                    axis=0
+                [tf.constant([1.0]), tf.zeros(len(p) - 1)], axis=0
             )
             p = p + initial_precision
 
