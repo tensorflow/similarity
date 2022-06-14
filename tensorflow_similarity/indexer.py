@@ -15,33 +15,33 @@
 """Index the embeddings infered by the model to allow distance based
 sub-linear search"""
 
-from collections import defaultdict, deque
 import json
+from collections import defaultdict, deque
 from pathlib import Path
 from time import time
-from typing import DefaultDict, Deque, Dict, List, Mapping, MutableMapping
-from typing import Optional, Sequence, Union
+from typing import (DefaultDict, Deque, Dict, List, Mapping, MutableMapping,
+                    Optional, Sequence, Union)
+
 import numpy as np
-from tabulate import tabulate
 import tensorflow as tf
+from tabulate import tabulate
 from tqdm.auto import tqdm
 
+from .classification_metrics import (ClassificationMetric, F1Score,
+                                     make_classification_metric)
 # internal
-from .distances import distance_canonicalizer, Distance
-from .classification_metrics import ClassificationMetric
-from .classification_metrics import F1Score
-from .classification_metrics import make_classification_metric
+from .distances import Distance, distance_canonicalizer
 from .evaluators import Evaluator, MemoryEvaluator
 from .matchers import ClassificationMatch, make_classification_matcher
 from .retrieval_metrics import RetrievalMetric
-from .search import Search, NMSLibSearch
-from .stores import Store, MemoryStore
+from .search import NMSLibSearch, Search
+from .stores import MemoryStore, Store
+from .types import (CalibrationResults, FloatTensor, Lookup, PandasDataFrame,
+                    Tensor)
 from .utils import unpack_lookup_distances, unpack_lookup_labels
-from .types import FloatTensor, Lookup, PandasDataFrame
-from .types import Tensor, CalibrationResults
 
 
-class Indexer():
+class Indexer:
     """Indexing system that allows to efficiently find nearest embeddings
     by indexing known embeddings and make them searchable using an
     [Approximate Nearest Neighbors Search]
@@ -53,6 +53,7 @@ class Indexer():
     calibrate the [SimilarityModel.match()](similarity_model.md) function via
     the [`Evaluator()`](evaluators/overview.md) classes.
     """
+
     # semantic sugar for the order of the returned data
     EMBEDDINGS = 0
     DISTANCES = 1
@@ -60,14 +61,16 @@ class Indexer():
     DATA = 3
     RANKS = 4
 
-    def __init__(self,
-                 embedding_size: int,
-                 distance: Union[Distance, str] = 'cosine',
-                 search: Union[Search, str] = 'nmslib',
-                 kv_store: Union[Store, str] = 'memory',
-                 evaluator: Union[Evaluator, str] = 'memory',
-                 embedding_output: int = None,
-                 stat_buffer_size: int = 1000) -> None:
+    def __init__(
+        self,
+        embedding_size: int,
+        distance: Union[Distance, str] = "cosine",
+        search: Union[Search, str] = "nmslib",
+        kv_store: Union[Store, str] = "memory",
+        evaluator: Union[Evaluator, str] = "memory",
+        embedding_output: int = None,
+        stat_buffer_size: int = 1000,
+    ) -> None:
         """Index embeddings to make them searchable via KNN
 
         Args:
@@ -115,8 +118,8 @@ class Indexer():
         # calibration
         self.is_calibrated = False
         self.calibration_metric: ClassificationMetric = F1Score()
-        self.cutpoints: Mapping[str, Mapping[str, Union[int, float, str]]] = {}
-        self.calibration_thresholds: Mapping[str, Sequence[Union[float, int]]] = {}  # noqa
+        self.cutpoints: Mapping[str, Mapping[str, Union[float, str]]] = {}
+        self.calibration_thresholds: Mapping[str, np.ndarray] = {}
 
         # initialize internal structures
         self._init_structures()
@@ -128,35 +131,45 @@ class Indexer():
     def _init_structures(self) -> None:
         "(re)initialize internal storage structure"
 
-        if self.search_type == 'nmslib':
-            self.search: Search = NMSLibSearch(distance=self.distance,
-                                               dims=self.embedding_size)
+        if self.search_type == "nmslib":
+            self.search: Search = NMSLibSearch(
+                distance=self.distance, dims=self.embedding_size
+            )
         elif isinstance(self.search_type, Search):
             self.search = self.search_type
         else:
-            raise ValueError("You need to either supply a known search "
-                             "framework name or a Search() object")
+            raise ValueError(
+                "You need to either supply a known search "
+                "framework name or a Search() object"
+            )
 
         # mapper from id to record data
-        if self.kv_store_type == 'memory':
+        if self.kv_store_type == "memory":
             self.kv_store: Store = MemoryStore()
         elif isinstance(self.kv_store_type, Store):
             self.kv_store = self.kv_store_type
         else:
-            raise ValueError("You need to either supply a know key value "
-                             "store name or a Store() object")
+            raise ValueError(
+                "You need to either supply a know key value "
+                "store name or a Store() object"
+            )
 
         # code used to evaluate indexer performance
-        if self.evaluator_type == 'memory':
+        if self.evaluator_type == "memory":
             self.evaluator: Evaluator = MemoryEvaluator()
         elif isinstance(self.evaluator_type, Evaluator):
             self.evaluator = self.evaluator_type
         else:
-            raise ValueError("You need to either supply a know evaluator name "
-                             "or an Evaluator() object")
+            raise ValueError(
+                "You need to either supply a know evaluator name "
+                "or an Evaluator() object"
+            )
+
         # stats
         self._stats: DefaultDict[str, int] = defaultdict(int)
-        self._lookup_timings_buffer: Deque = deque([], maxlen=self.stat_buffer_size)  # noqa
+        self._lookup_timings_buffer: Deque = deque(
+            [], maxlen=self.stat_buffer_size
+        )
 
         # calibration data
         self.is_calibrated = False
@@ -209,13 +222,15 @@ class Indexer():
             label = int(label)
         return label
 
-    def add(self,
-            prediction: FloatTensor,
-            label: Optional[int] = None,
-            data: Tensor = None,
-            build: bool = True,
-            verbose: int = 1):
-        """ Add a single embedding to the indexer
+    def add(
+        self,
+        prediction: FloatTensor,
+        label: Optional[int] = None,
+        data: Tensor = None,
+        build: bool = True,
+        verbose: int = 1,
+    ):
+        """Add a single embedding to the indexer
 
         Args:
             prediction: TF similarity model prediction, may be a multi-headed
@@ -244,12 +259,14 @@ class Indexer():
         # add index to the embedding
         self.search.add(embedding, idx, build=build, verbose=verbose)
 
-    def batch_add(self,
-                  predictions: FloatTensor,
-                  labels: Optional[Sequence[int]] = None,
-                  data: Optional[Tensor] = None,
-                  build: bool = True,
-                  verbose: int = 1):
+    def batch_add(
+        self,
+        predictions: FloatTensor,
+        labels: Optional[Sequence[int]] = None,
+        data: Optional[Tensor] = None,
+        build: bool = True,
+        verbose: int = 1,
+    ):
         """Add a batch of embeddings to the indexer
 
         Args:
@@ -272,14 +289,13 @@ class Indexer():
 
         # store points
         if verbose:
-            print('|-Storing data points in key value store')
+            print("|-Storing data points in key value store")
         idxs = self.kv_store.batch_add(embeddings, labels, data)
         self.search.batch_add(embeddings, idxs, build=build, verbose=verbose)
 
     def single_lookup(
-            self,
-            prediction: FloatTensor,
-            k: int = 5) -> List[Lookup]:
+        self, prediction: FloatTensor, k: int = 5
+    ) -> List[Lookup]:
         """Find the k closest matches of a given embedding
 
         Args:
@@ -301,21 +317,22 @@ class Indexer():
         lookups = []
         for i in range(len(nn_embeddings)):
             # ! casting is needed to avoid slowness down the line
-            lookups.append(Lookup(
-                rank=i + 1,
-                embedding=nn_embeddings[i],
-                distance=float(distances[i]),
-                label=self._cast_label(labels[i]),
-                data=data[i]
-                ))
+            lookups.append(
+                Lookup(
+                    rank=i + 1,
+                    embedding=nn_embeddings[i],
+                    distance=float(distances[i]),
+                    label=self._cast_label(labels[i]),
+                    data=data[i],
+                )
+            )
         self._lookup_timings_buffer.append(lookup_time)
-        self._stats['num_lookups'] += 1
+        self._stats["num_lookups"] += 1
         return lookups
 
-    def batch_lookup(self,
-                     predictions: FloatTensor,
-                     k: int = 5,
-                     verbose: int = 1) -> List[List[Lookup]]:
+    def batch_lookup(
+        self, predictions: FloatTensor, k: int = 5, verbose: int = 1
+    ) -> List[List[Lookup]]:
 
         """Find the k closest matches for a set of embeddings
 
@@ -339,26 +356,27 @@ class Indexer():
 
         if verbose:
             print("\nPerforming NN search\n")
-        batch_idxs, batch_distances = (
-                self.search.batch_lookup(embeddings, k=k))
+        batch_idxs, batch_distances = self.search.batch_lookup(embeddings, k=k)
 
         if verbose:
-            pb = tqdm(total=num_embeddings, desc='Building NN list')
+            pb = tqdm(total=num_embeddings, desc="Building NN list")
         for eidx in range(num_embeddings):
-            lidxs = batch_idxs[eidx]   # list of nn idxs
+            lidxs = batch_idxs[eidx]  # list of nn idxs
             distances = batch_distances[eidx]
 
             nn_embeddings, labels, data = self.kv_store.batch_get(lidxs)
             lookups = []
             for i in range(len(nn_embeddings)):
                 # ! casting is needed to avoid slowness down the line
-                lookups.append(Lookup(
-                    rank=i + 1,
-                    embedding=nn_embeddings[i],
-                    distance=float(distances[i]),
-                    label=self._cast_label(labels[i]),
-                    data=data[i]
-                ))
+                lookups.append(
+                    Lookup(
+                        rank=i + 1,
+                        embedding=nn_embeddings[i],
+                        distance=float(distances[i]),
+                        label=self._cast_label(labels[i]),
+                        data=data[i],
+                    )
+                )
             batch_lookups.append(lookups)
 
             if verbose:
@@ -372,17 +390,18 @@ class Indexer():
         per_lookup_time = lookup_time / num_embeddings
         for _ in range(num_embeddings):
             self._lookup_timings_buffer.append(per_lookup_time)
-        self._stats['num_lookups'] += num_embeddings
+        self._stats["num_lookups"] += num_embeddings
 
         return batch_lookups
 
     # evaluation related functions
     def evaluate_retrieval(
-            self,
-            predictions: FloatTensor,
-            target_labels: Sequence[int],
-            retrieval_metrics: Sequence[RetrievalMetric],
-            verbose: int = 1) -> Dict[str, np.ndarray]:
+        self,
+        predictions: FloatTensor,
+        target_labels: Sequence[int],
+        retrieval_metrics: Sequence[RetrievalMetric],
+        verbose: int = 1,
+    ) -> Dict[str, np.ndarray]:
         """Evaluate the quality of the index against a test dataset.
 
         Args:
@@ -407,9 +426,12 @@ class Indexer():
         k = 1
         for m in retrieval_metrics:
             if not isinstance(m, RetrievalMetric):
-                raise ValueError(m, 'is not a valid RetrivalMetric(). The '
-                                 'RetrivialMetric() must be instantiated with '
-                                 'a valid K.')
+                raise ValueError(
+                    m,
+                    "is not a valid RetrivalMetric(). The "
+                    "RetrivialMetric() must be instantiated with "
+                    "a valid K.",
+                )
             if m.k > k:
                 k = m.k
 
@@ -418,19 +440,21 @@ class Indexer():
 
         # Evaluate them
         return self.evaluator.evaluate_retrieval(
-                retrieval_metrics=retrieval_metrics,
-                target_labels=target_labels,
-                lookups=lookups)
+            retrieval_metrics=retrieval_metrics,
+            target_labels=target_labels,
+            lookups=lookups,
+        )
 
     def evaluate_classification(
-            self,
-            predictions: FloatTensor,
-            target_labels: Sequence[int],
-            distance_thresholds: Union[Sequence[float], FloatTensor],
-            metrics: Sequence[Union[str, ClassificationMetric]] = ['f1'],
-            matcher: Union[str, ClassificationMatch] = 'match_nearest',
-            k: int = 1,
-            verbose: int = 1) -> Dict[str, np.ndarray]:
+        self,
+        predictions: FloatTensor,
+        target_labels: Sequence[int],
+        distance_thresholds: Union[Sequence[float], FloatTensor],
+        metrics: Sequence[Union[str, ClassificationMetric]] = ["f1"],
+        matcher: Union[str, ClassificationMatch] = "match_nearest",
+        k: int = 1,
+        verbose: int = 1,
+    ) -> Dict[str, np.ndarray]:
         """Evaluate the classification performance.
 
         Compute the classification metrics given a set of queries, lookups, and
@@ -461,8 +485,9 @@ class Indexer():
             A Mapping from metric name to the list of values computed for each
             distance threshold.
         """
-        combined_metrics: List[ClassificationMetric] = (
-            [make_classification_metric(m) for m in metrics])
+        combined_metrics: List[ClassificationMetric] = [
+            make_classification_metric(m) for m in metrics
+        ]
 
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
@@ -474,8 +499,8 @@ class Indexer():
         lookup_distances = unpack_lookup_distances(lookups, dtype="float32")
         lookup_labels = unpack_lookup_labels(lookups, dtype=query_labels.dtype)
         thresholds: FloatTensor = tf.cast(
-                tf.convert_to_tensor(distance_thresholds),
-                dtype=lookup_distances.dtype
+            tf.convert_to_tensor(distance_thresholds),
+            dtype=lookup_distances.dtype,
         )
 
         results = self.evaluator.evaluate_classification(
@@ -485,20 +510,28 @@ class Indexer():
             distance_thresholds=thresholds,
             metrics=combined_metrics,
             matcher=matcher,
-            verbose=verbose)
+            verbose=verbose,
+        )
 
         return results
 
-    def calibrate(self,
-                  predictions: FloatTensor,
-                  target_labels: Sequence[int],
-                  thresholds_targets: MutableMapping[str, float],
-                  calibration_metric: Union[str, ClassificationMetric] = "f1_score",  # noqa
-                  k: int = 1,
-                  matcher: Union[str, ClassificationMatch] = 'match_nearest',
-                  extra_metrics: Sequence[Union[str, ClassificationMetric]] = ['precision', 'recall'],  # noqa
-                  rounding: int = 2,
-                  verbose: int = 1) -> CalibrationResults:
+    def calibrate(
+        self,
+        predictions: FloatTensor,
+        target_labels: Sequence[int],
+        thresholds_targets: MutableMapping[str, float],
+        calibration_metric: Union[
+            str, ClassificationMetric
+        ] = "f1_score",  # noqa
+        k: int = 1,
+        matcher: Union[str, ClassificationMatch] = "match_nearest",
+        extra_metrics: Sequence[Union[str, ClassificationMetric]] = [
+            "precision",
+            "recall",
+        ],  # noqa
+        rounding: int = 2,
+        verbose: int = 1,
+    ) -> CalibrationResults:
         """Calibrate model thresholds using a test dataset.
 
         FIXME: more detailed explanation.
@@ -544,8 +577,9 @@ class Indexer():
         # making sure our metrics are all ClassificationMetric objects
         calibration_metric = make_classification_metric(calibration_metric)
 
-        combined_metrics: List[ClassificationMetric] = (
-            [make_classification_metric(m) for m in extra_metrics])
+        combined_metrics: List[ClassificationMetric] = [
+            make_classification_metric(m) for m in extra_metrics
+        ]
 
         # running calibration
         calibration_results = self.evaluator.calibrate(
@@ -556,12 +590,12 @@ class Indexer():
             matcher=matcher,
             extra_metrics=combined_metrics,
             metric_rounding=rounding,
-            verbose=verbose
+            verbose=verbose,
         )
 
         # display cutpoint results if requested
         if verbose:
-            headers = ['name', 'value', 'distance']  # noqa
+            headers = ["name", "value", "distance"]  # noqa
             cutpoints = list(calibration_results.cutpoints.values())
             # dynamically find which metrics we need. We only need to look at
             # the first cutpoints dictionary as all subsequent ones will have
@@ -582,12 +616,14 @@ class Indexer():
         self.calibration_thresholds = calibration_results.thresholds
         return calibration_results
 
-    def match(self,
-              predictions: FloatTensor,
-              no_match_label: int = -1,
-              k=1,
-              matcher: Union[str, ClassificationMatch] = 'match_nearest',
-              verbose: int = 1) -> Dict[str, List[int]]:
+    def match(
+        self,
+        predictions: FloatTensor,
+        no_match_label: int = -1,
+        k=1,
+        matcher: Union[str, ClassificationMatch] = "match_nearest",
+        verbose: int = 1,
+    ) -> Dict[str, List[int]]:
         """Match embeddings against the various cutpoints thresholds
 
         Args:
@@ -627,21 +663,25 @@ class Indexer():
 
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
-        lookup_distances = unpack_lookup_distances(lookups, dtype=predictions.dtype)
+        lookup_distances = unpack_lookup_distances(
+            lookups, dtype=predictions.dtype
+        )
         # TODO(ovallis): The int type should be derived from the model.
         lookup_labels = unpack_lookup_labels(lookups, dtype="int32")
 
         if verbose:
-            pb = tqdm(total=len(lookup_distances) * len(self.cutpoints),
-                      desc='matching embeddings')
+            pb = tqdm(
+                total=len(lookup_distances) * len(self.cutpoints),
+                desc="matching embeddings",
+            )
 
         matches: DefaultDict[str, List[int]] = defaultdict(list)
         for cp_name, cp_data in self.cutpoints.items():
-            distance_threshold = float(cp_data['distance'])
+            distance_threshold = float(cp_data["distance"])
 
             pred_labels, pred_dist = matcher.derive_match(
-                    lookup_labels=lookup_labels,
-                    lookup_distances=lookup_distances)
+                lookup_labels=lookup_labels, lookup_distances=lookup_distances
+            )
 
             for label, distance in zip(pred_labels, pred_dist):
                 if distance <= distance_threshold:
@@ -667,6 +707,7 @@ class Indexer():
             compression: Store index data compressed. Defaults to True.
         """
         path = str(path)
+
         # saving metadata
         metadata = {
             "size": self.size(),
@@ -674,17 +715,17 @@ class Indexer():
             "distance": self.distance.name,
             "embedding_output": self.embedding_output,
             "embedding_size": self.embedding_size,
-
             "kv_store": self.kv_store_type,
             "evaluator": self.evaluator_type,
             "search": self.search_type,
-
             "stat_buffer_size": self.stat_buffer_size,
             "is_calibrated": self.is_calibrated,
-
             "calibration_metric_config": self.calibration_metric.get_config(),
             "cutpoints": self.cutpoints,
-            "calibration_thresholds": self.calibration_thresholds
+            # convert np.arrays to list before serialization
+            "calibration_thresholds": {
+                k: v.tolist() for k, v in self.calibration_thresholds.items()
+            },
         }
 
         metadata_fname = self.__make_metadata_fname(path)
@@ -711,13 +752,15 @@ class Indexer():
         metadata = tf.io.read_file(metadata_fname)
         metadata = tf.keras.backend.eval(metadata)
         md = json.loads(metadata)
-        index = Indexer(distance=md['distance'],
-                        embedding_size=md['embedding_size'],
-                        embedding_output=md['embedding_output'],
-                        kv_store=md['kv_store'],
-                        evaluator=md['evaluator'],
-                        search=md['search'],
-                        stat_buffer_size=md['stat_buffer_size'])
+        index = Indexer(
+            distance=md["distance"],
+            embedding_size=md["embedding_size"],
+            embedding_output=md["embedding_output"],
+            kv_store=md["kv_store"],
+            evaluator=md["evaluator"],
+            search=md["search"],
+            stat_buffer_size=md["stat_buffer_size"],
+        )
 
         # reload the key value store
         if verbose:
@@ -726,20 +769,24 @@ class Indexer():
 
         # rebuild the index
         if verbose:
-            print('Loading search index')
+            print("Loading search index")
         index.search.load(path)
 
         # reload calibration data if any
-        index.is_calibrated = md['is_calibrated']
+        index.is_calibrated = md["is_calibrated"]
         if index.is_calibrated:
             if verbose:
                 print("Loading calibration data")
             index.calibration_metric = make_classification_metric(
-                    metric=md['calibration_metric_config']['canonical_name'],
-                    name=md['calibration_metric_config']['name'])
+                metric=md["calibration_metric_config"]["canonical_name"],
+                name=md["calibration_metric_config"]["name"],
+            )
 
-            index.cutpoints = md['cutpoints']
-            index.calibration_thresholds = md['calibration_thresholds']
+            index.cutpoints = md["cutpoints"]
+            index.calibration_thresholds = {
+                k: np.array(v) for k, v in md["calibration_thresholds"].items()
+            }
+
         return index
 
     def get_calibration_metric(self):
@@ -752,23 +799,23 @@ class Indexer():
     def stats(self):
         """return index statistics"""
         stats = self._stats
-        stats['size'] = self.kv_store.size()
-        stats['stat_buffer_size'] = self.stat_buffer_size
+        stats["size"] = self.kv_store.size()
+        stats["stat_buffer_size"] = self.stat_buffer_size
 
         # query performance - make sure we don't count unused buffer
-        max_idx = min(stats['num_lookups'], self.stat_buffer_size)
+        max_idx = min(stats["num_lookups"], self.stat_buffer_size)
         lookup_timings = list(self._lookup_timings_buffer)[:max_idx]
 
         # ensure we never have an empty list
         lookup_timings = lookup_timings if list(lookup_timings) else [0]
 
         # compute stats
-        stats['query_performance'] = {
-            'min': np.min(lookup_timings),
-            'max': np.max(lookup_timings),
-            'avg': np.average(lookup_timings),
-            'median': np.median(lookup_timings),
-            'stddev': np.std(lookup_timings)
+        stats["query_performance"] = {
+            "min": np.min(lookup_timings),
+            "max": np.max(lookup_timings),
+            "avg": np.average(lookup_timings),
+            "median": np.median(lookup_timings),
+            "stddev": np.std(lookup_timings),
         }
         return stats
 
@@ -778,23 +825,23 @@ class Indexer():
         stats = self.stats()
 
         # info
-        print('[Info]')
+        print("[Info]")
         rows = [
-            ['distance', self.distance],
-            ['key value store', self.kv_store_type],
-            ['search algorithm', self.search_type],
-            ['evaluator', self.evaluator_type],
-            ['index size', self.size()],
-            ['calibrated', self.is_calibrated],
-            ['calibration_metric', self.calibration_metric.name],
-            ['embedding_output', self.embedding_output]
+            ["distance", self.distance],
+            ["key value store", self.kv_store_type],
+            ["search algorithm", self.search_type],
+            ["evaluator", self.evaluator_type],
+            ["index size", self.size()],
+            ["calibrated", self.is_calibrated],
+            ["calibration_metric", self.calibration_metric.name],
+            ["embedding_output", self.embedding_output],
         ]
         print(tabulate(rows))
-        print('\n')
+        print("\n")
 
-        print('\n[Performance]')
-        rows = [['num lookups', stats['num_lookups']]]
-        for k, v in stats['query_performance'].items():
+        print("\n[Performance]")
+        rows = [["num lookups", stats["num_lookups"]]]
+        for k, v in stats["query_performance"].items():
             rows.append([k, v])
         print(tabulate(rows))
 
@@ -812,4 +859,4 @@ class Indexer():
 
     @staticmethod
     def __make_metadata_fname(path):
-        return str(Path(path) / 'index_metadata.json')
+        return str(Path(path) / "index_metadata.json")

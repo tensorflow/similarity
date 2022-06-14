@@ -458,7 +458,7 @@ class SimilarityModel(tf.keras.Model):
         self,
         x: FloatTensor,
         y: IntTensor,
-        thresholds_targets: MutableMapping[str, float] = {},
+        thresholds_targets: Optional[MutableMapping[str, float]] = None,
         k: int = 1,
         calibration_metric: Union[str, ClassificationMetric] = "f1",
         matcher: Union[str, ClassificationMatch] = "match_nearest",
@@ -509,6 +509,8 @@ class SimilarityModel(tf.keras.Model):
         Returns:
             CalibrationResults containing the thresholds and cutpoints Dicts.
         """
+        if thresholds_targets is None:
+            thresholds_targets = {}
 
         # predict
         predictions = self.predict(x)
