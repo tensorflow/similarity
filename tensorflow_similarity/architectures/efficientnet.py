@@ -15,11 +15,14 @@
 "EfficientNet backbone for similarity learning"
 import re
 from typing import Tuple
+
+import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.applications import efficientnet
-from tensorflow_similarity.layers import MetricEmbedding
-from tensorflow_similarity.layers import GeneralizedMeanPooling2D
+from tensorflow_similarity.layers import GeneralizedMeanPooling2D, MetricEmbedding
 from tensorflow_similarity.models import SimilarityModel
+
+from .utils import convert_sync_batchnorm
 
 EFF_INPUT_SIZE = {
     "B0": 224,
@@ -121,7 +124,7 @@ def EfficientNetSim(
     if variant not in EFF_INPUT_SIZE:
         raise ValueError("Unknown efficientnet variant. Valid B0...B7")
 
-    x = build_effnet(x, variant, weights, trainable)
+    x = build_effnet(variant, weights, trainable)(x)
 
     if pooling == "gem":
         x = GeneralizedMeanPooling2D(p=gem_p, name="gem_pool")(x)
@@ -141,13 +144,10 @@ def EfficientNetSim(
     return SimilarityModel(inputs, outputs)
 
 
-def build_effnet(
-    x: layers.Layer, variant: str, weights: str, trainable: str
-) -> layers.Layer:
+def build_effnet(variant: str, weights: str = None, trainable: str = "full") -> tf.keras.Model:
     """Build the requested efficient net.
 
     Args:
-        x: The input layer to the efficientnet.
 
         variant: Which Variant of the EfficientNet to use.
 
@@ -167,6 +167,7 @@ def build_effnet(
     # init
     effnet_fn = EFF_ARCHITECTURE[variant.upper()]
     effnet = effnet_fn(weights=weights, include_top=False)
+    effnet = convert_sync_batchnorm(effnet)
 
     if trainable == "full":
         effnet.trainable = True
@@ -180,17 +181,12 @@ def build_effnet(
     elif trainable == "frozen":
         effnet.trainable = False
     else:
-        raise ValueError(
-            f"{trainable} is not a supported option for 'trainable'."
-        )
+        raise ValueError(f"{trainable} is not a supported option for 'trainable'.")
 
     # Don't train the BN layers if we are loading pre-trained weights.
     if weights:
         for layer in effnet.layers:
-            if isinstance(layer, layers.BatchNormalization):
+            if isinstance(layer, layers.experimental.SyncBatchNormalization):
                 layer.trainable = False
 
-    # wire
-    x = effnet(x)
-
-    return x
+    return effnet
