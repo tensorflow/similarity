@@ -109,7 +109,7 @@ class SimSiamLoss(tf.keras.losses.Loss):
 
         # 1D tensor
         loss: FloatTensor = (
-            tf.math.multiply(per_example_projection * 0.5) + self.margin
+            tf.math.multiply(per_example_projection, 0.5) + self.margin
         )
 
         return loss
