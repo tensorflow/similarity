@@ -98,3 +98,22 @@ class TypesTest(tf.test.TestCase):
         l2 = data_lookup(data=None)
 
         self.assertNotEqual(l1, l2)
+
+    def test_lookup_does_not_match_wrong_class(self):
+        class WrongClass:
+            def __init__(self):
+                self.rank = 1
+                self.distance = 0.1
+                self.label = None
+                self.embedding = None
+                self.data = None
+
+
+        l1 = basic_lookup()
+        l2 = WrongClass()
+
+        self.assertNotEqual(l1, l2)
+
+
+if __name__ == "__main__":
+    tf.test.main()
