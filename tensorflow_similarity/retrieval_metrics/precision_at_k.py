@@ -92,7 +92,7 @@ class PrecisionAtK(RetrievalMetric):
             p_at_k = tf.math.reduce_mean(per_example_p)
         elif self.average == "macro":
             per_class_metrics = 0
-            class_labels = tf.unique(query_labels)[0]
+            class_labels = tf.unique(tf.reshape(query_labels, (-1)))[0]
             for label in class_labels:
                 idxs = tf.where(query_labels == label)
                 c_slice = tf.gather(per_example_p, indices=idxs)
