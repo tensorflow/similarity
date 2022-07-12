@@ -2,7 +2,6 @@ import re
 
 import pytest
 import tensorflow as tf
-
 from tensorflow_similarity.architectures import efficientnet
 
 # TODO(ovallis): rewrite these tests so they aren't so brittle.
@@ -19,7 +18,7 @@ def tf_version_check(major_version, minor_version):
 
 def test_build_effnet_b0_full():
     input_layer = tf.keras.layers.Input((224, 224, 3))
-    output = efficientnet.build_effnet(input_layer, "b0", "imagenet", "full")
+    output = efficientnet.build_effnet("b0", "imagenet", "full")(input_layer)
 
     effnet = output._keras_history.layer
 
@@ -46,7 +45,7 @@ def test_build_effnet_b0_full():
 
 def test_build_effnet_b1_frozen():
     input_layer = tf.keras.layers.Input((240, 240, 3))
-    output = efficientnet.build_effnet(input_layer, "b1", "imagenet", "frozen")
+    output = efficientnet.build_effnet("b1", "imagenet", "frozen")(input_layer)
 
     effnet = output._keras_history.layer
 
@@ -71,7 +70,7 @@ def test_build_effnet_b1_frozen():
 
 def test_build_effnet_b0_partial():
     input_layer = tf.keras.layers.Input((224, 224, 3))
-    output = efficientnet.build_effnet(input_layer, "b0", "imagenet", "partial")
+    output = efficientnet.build_effnet("b0", "imagenet", "partial")(input_layer)
 
     effnet = output._keras_history.layer
 
@@ -104,10 +103,9 @@ def test_build_effnet_b0_partial():
 
 
 def test_build_effnet_unsupported_trainable():
-    input_layer = tf.keras.layers.Input((224, 224, 3))
     msg = "foo is not a supported option for 'trainable'."
     with pytest.raises(ValueError, match=msg):
-        _ = efficientnet.build_effnet(input_layer, "b0", "imagenet", "foo")
+        _ = efficientnet.build_effnet("b0", "imagenet", "foo")
 
 
 def test_unsuported_varient():
@@ -131,9 +129,7 @@ def test_include_top():
 
 def test_l2_norm_false():
     input_shape = (224, 224, 3)
-    effnet = efficientnet.EfficientNetSim(
-        input_shape, include_top=True, l2_norm=False
-    )
+    effnet = efficientnet.EfficientNetSim(input_shape, include_top=True, l2_norm=False)
 
     # The second to last layer should use gem pooling when include_top is True
     assert effnet.layers[-2].name == "gem_pool"
@@ -149,9 +145,7 @@ def test_l2_norm_false():
 )
 def test_include_top_false(pooling, name):
     input_shape = (224, 224, 3)
-    effnet = efficientnet.EfficientNetSim(
-        input_shape, include_top=False, pooling=pooling
-    )
+    effnet = efficientnet.EfficientNetSim(input_shape, include_top=False, pooling=pooling)
 
     # The second to last layer should use gem pooling when include_top is True
     assert effnet.layers[-1].name == name
