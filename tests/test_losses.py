@@ -3,6 +3,7 @@ import numpy as np
 from tensorflow_similarity.losses import TripletLoss, MultiSimilarityLoss
 from tensorflow_similarity.losses import PNLoss
 from tensorflow_similarity.losses import SoftNearestNeighborLoss
+from tensorflow_similarity.losses import MultiNegativesRankLoss
 
 
 # [triplet loss]
@@ -241,3 +242,12 @@ def test_xbm_loss():
     loss_warm(labels2, embeddings2)
     assert loss_warm._y_pred_memory.numpy().shape == (batch_size, embed_dim)
     tf.assert_equal(loss_warm._y_true_memory, labels2)
+
+
+# [multiple negatives ranking loss]
+def test_multineg_rank_loss_serialization():
+    loss = MultiNegativesRankLoss(distance="inner_product")
+    config = loss.get_config()
+    loss2 = MultiNegativesRankLoss.from_config(config)
+    assert loss.name == loss2.name
+    assert loss.distance == loss2.distance

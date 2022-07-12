@@ -25,3 +25,4 @@ from .simclr import SimCLRLoss  # noqa
 from .vicreg import VicReg  # noqa
 from .barlow import Barlow  # noqa
 from .softnn_loss import SoftNearestNeighborLoss  # noqa
+from .multinegrank_loss import MultiNegativesRankLoss # noqa
