@@ -21,7 +21,11 @@ from tensorflow_similarity.classification_metrics import ClassificationMetric
 from tensorflow_similarity.matchers import ClassificationMatch
 from tensorflow_similarity.retrieval_metrics import RetrievalMetric
 from tensorflow_similarity.types import (
-        Lookup, CalibrationResults, IntTensor, FloatTensor)
+    CalibrationResults,
+    FloatTensor,
+    IntTensor,
+    Lookup,
+)
 
 
 class Evaluator(ABC):
@@ -35,11 +39,12 @@ class Evaluator(ABC):
 
     @abstractmethod
     def evaluate_retrieval(
-            self,
-            target_labels: Sequence[int],
-            lookups: Sequence[Sequence[Lookup]],
-            retrieval_metrics: Sequence[RetrievalMetric],
-            distance_rounding: int = 8) -> Dict[str, np.ndarray]:
+        self,
+        target_labels: Sequence[int],
+        lookups: Sequence[Sequence[Lookup]],
+        retrieval_metrics: Sequence[RetrievalMetric],
+        distance_rounding: int = 8,
+    ) -> Dict[str, np.ndarray]:
         """Evaluates lookup performances against a supplied set of metrics
 
         Args:
@@ -69,7 +74,7 @@ class Evaluator(ABC):
         metrics: Sequence[ClassificationMetric],
         matcher: Union[str, ClassificationMatch],
         distance_rounding: int = 8,
-        verbose: int = 1
+        verbose: int = 1,
     ) -> Dict[str, np.ndarray]:
         """Evaluate the classification performance.
 
@@ -116,7 +121,7 @@ class Evaluator(ABC):
         extra_metrics: Sequence[ClassificationMetric] = [],
         distance_rounding: int = 8,
         metric_rounding: int = 6,
-        verbose: int = 1
+        verbose: int = 1,
     ) -> CalibrationResults:
         """Computes the distances thresholds that the classification must match to
         meet a fixed target.

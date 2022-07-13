@@ -130,9 +130,7 @@ def circle_loss(
     # Remove any anchors that have empty neg or pos pairs.
     # NOTE: reshape is required here because valid_anchors is [m] and
     #       p_loss + n_loss is [m, 1].
-    circle_loss = tf.math.multiply(
-        p_loss + n_loss, tf.reshape(valid_anchors, (-1, 1))
-    )
+    circle_loss = tf.math.multiply(p_loss + n_loss, tf.reshape(valid_anchors, (-1, 1)))
 
     return circle_loss
 
@@ -188,11 +186,4 @@ class CircleLoss(MetricLoss):
         distance = distance_canonicalizer(distance)
         self.distance = distance
 
-        super().__init__(
-            circle_loss,
-            name=name,
-            distance=distance,
-            gamma=gamma,
-            margin=margin,
-            **kwargs
-        )
+        super().__init__(circle_loss, name=name, distance=distance, gamma=gamma, margin=margin, **kwargs)

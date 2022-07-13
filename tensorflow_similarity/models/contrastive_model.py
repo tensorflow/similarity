@@ -1,8 +1,8 @@
-from collections import defaultdict
-from copy import copy
 import itertools
 import json
 import os
+from collections import defaultdict
+from copy import copy
 from pathlib import Path
 from typing import (
     Callable,
@@ -19,31 +19,35 @@ from typing import (
 )
 
 import numpy as np
-from tabulate import tabulate
 import tensorflow as tf
-from tqdm.auto import tqdm
-
-from tensorflow.keras.optimizers import Optimizer
+from tabulate import tabulate
 from tensorflow.keras.losses import Loss
 from tensorflow.keras.metrics import Metric
+from tensorflow.keras.optimizers import Optimizer
+from termcolor import cprint
+from tqdm.auto import tqdm
 
-from tensorflow_similarity.classification_metrics import ClassificationMetric
-from tensorflow_similarity.classification_metrics import (
+from tensorflow_similarity.classification_metrics import (  # noqa
+    ClassificationMetric,
     make_classification_metric,
-)  # noqa
-from tensorflow_similarity.distances import Distance
-from tensorflow_similarity.losses import MetricLoss
-from tensorflow_similarity.training_metrics import DistanceMetric
+)
+from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.evaluators.evaluator import Evaluator
 from tensorflow_similarity.indexer import Indexer
+from tensorflow_similarity.losses import MetricLoss
 from tensorflow_similarity.matchers import ClassificationMatch
 from tensorflow_similarity.retrieval_metrics import RetrievalMetric
-from tensorflow_similarity.distances import distance_canonicalizer
-from tensorflow_similarity.stores import Store
 from tensorflow_similarity.search import Search
-from tensorflow_similarity.types import FloatTensor, Lookup, IntTensor, Tensor
-from tensorflow_similarity.types import PandasDataFrame, CalibrationResults
-from termcolor import cprint
+from tensorflow_similarity.stores import Store
+from tensorflow_similarity.training_metrics import DistanceMetric
+from tensorflow_similarity.types import (
+    CalibrationResults,
+    FloatTensor,
+    IntTensor,
+    Lookup,
+    PandasDataFrame,
+    Tensor,
+)
 
 
 class NumpyFloatValuesEncoder(json.JSONEncoder):
@@ -142,13 +146,9 @@ class ContrastiveModel(tf.keras.Model):
         self,
         optimizer: Union[Optimizer, str, Dict, List] = "rmsprop",
         loss: Optional[Union[Loss, MetricLoss, str, Dict, List]] = None,
-        metrics: Optional[
-            Union[Metric, DistanceMetric, str, Dict, List]
-        ] = None,  # noqa
+        metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
         loss_weights: Optional[Union[List, Dict]] = None,
-        weighted_metrics: Optional[
-            Union[Metric, DistanceMetric, str, Dict, List]
-        ] = None,  # noqa
+        weighted_metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
         run_eagerly: bool = False,
         steps_per_execution: int = 1,
         distance: Union[Distance, str] = "cosine",
@@ -277,19 +277,13 @@ class ContrastiveModel(tf.keras.Model):
         self.loss_trackers = {}
         self.loss_trackers["loss"] = tf.keras.metrics.Mean(name="loss")
 
-        self.reg_loss_len = len(self.backbone.losses) + len(
-            self.projector.losses
-        )
+        self.reg_loss_len = len(self.backbone.losses) + len(self.projector.losses)
         if self.predictor is not None:
             self.reg_loss_len += len(self.predictor.losses)
 
         if self.reg_loss_len:
-            self.loss_trackers["contrastive_loss"] = tf.keras.metrics.Mean(
-                name="contrastive_loss"
-            )
-            self.loss_trackers["regularization_loss"] = tf.keras.metrics.Mean(
-                name="regularization_loss"
-            )
+            self.loss_trackers["contrastive_loss"] = tf.keras.metrics.Mean(name="contrastive_loss")
+            self.loss_trackers["regularization_loss"] = tf.keras.metrics.Mean(name="regularization_loss")
 
     @property
     def metrics(self):
@@ -304,9 +298,7 @@ class ContrastiveModel(tf.keras.Model):
 
         # Forward pass through the backbone, projector, and predictor
         with tf.GradientTape() as tape:
-            contrastive_loss, pred1, pred2, z1, z2 = self._forward_pass(
-                view1, view2, training=True
-            )
+            contrastive_loss, pred1, pred2, z1, z2 = self._forward_pass(view1, view2, training=True)
             regularization_loss = sum(self.backbone.losses)
             regularization_loss += sum(self.projector.losses)
             if self.predictor is not None:
@@ -335,12 +327,8 @@ class ContrastiveModel(tf.keras.Model):
         # report loss manually
         self.loss_trackers["loss"].update_state(combined_loss)
         if self.reg_loss_len:
-            self.loss_trackers["contrastive_loss"].update_state(
-                contrastive_loss
-            )
-            self.loss_trackers["regularization_loss"].update_state(
-                regularization_loss
-            )
+            self.loss_trackers["contrastive_loss"].update_state(contrastive_loss)
+            self.loss_trackers["regularization_loss"].update_state(regularization_loss)
 
         # Collect metrics to return
         return_metrics = {}
@@ -355,9 +343,7 @@ class ContrastiveModel(tf.keras.Model):
     def test_step(self, data):
         view1, view2 = self._parse_views(data)
 
-        contrastive_loss, pred1, pred2, z1, z2 = self._forward_pass(
-            view1, view2, training=False
-        )
+        contrastive_loss, pred1, pred2, z1, z2 = self._forward_pass(view1, view2, training=False)
         regularization_loss = sum(self.backbone.losses)
         regularization_loss += sum(self.projector.losses)
         if self.predictor is not None:
@@ -373,12 +359,8 @@ class ContrastiveModel(tf.keras.Model):
         # report loss manually
         self.loss_trackers["loss"].update_state(combined_loss)
         if self.reg_loss_len:
-            self.loss_trackers["contrastive_loss"].update_state(
-                contrastive_loss
-            )
-            self.loss_trackers["regularization_loss"].update_state(
-                regularization_loss
-            )
+            self.loss_trackers["contrastive_loss"].update_state(contrastive_loss)
+            self.loss_trackers["regularization_loss"].update_state(regularization_loss)
 
         # Collect metrics to return
         return_metrics = {}
@@ -410,9 +392,7 @@ class ContrastiveModel(tf.keras.Model):
 
         return loss, pred1, pred2, z1, z2
 
-    def _parse_views(
-        self, data: Sequence[FloatTensor]
-    ) -> Tuple[FloatTensor, FloatTensor]:
+    def _parse_views(self, data: Sequence[FloatTensor]) -> Tuple[FloatTensor, FloatTensor]:
         if len(data) == 2:
             view1 = data[0]
             view2 = data[1]
@@ -516,18 +496,14 @@ class ContrastiveModel(tf.keras.Model):
 
         metadata = {}
         base_metrics = [m for m in super().metrics if m.name != "loss"]
-        metadata["metrics"] = [
-            tf.keras.metrics.serialize(m) for m in base_metrics
-        ]
+        metadata["metrics"] = [tf.keras.metrics.serialize(m) for m in base_metrics]
         metadata["loss"] = tf.keras.losses.serialize(self.loss)
         metadata["optimizer"] = tf.keras.optimizers.serialize(self.optimizer)
         np.save(optw_path, self.optimizer.get_weights())
 
         with open(config_path, "w") as f:
             base_config = self.get_config()
-            config = json.dumps(
-                {**metadata, **base_config}, cls=NumpyFloatValuesEncoder
-            )
+            config = json.dumps({**metadata, **base_config}, cls=NumpyFloatValuesEncoder)
             json.dump(config, f)
 
         if hasattr(self, "_index") and self._index and save_index:
@@ -636,9 +612,7 @@ class ContrastiveModel(tf.keras.Model):
         # check if we we need to set the embedding head
         num_outputs = len(self.output_names)
         if embedding_output is not None and embedding_output > num_outputs:
-            raise ValueError(
-                "Embedding_output value exceed number of model outputs"
-            )
+            raise ValueError("Embedding_output value exceed number of model outputs")
 
         if embedding_output is None and num_outputs > 1:
             print(
@@ -690,10 +664,7 @@ class ContrastiveModel(tf.keras.Model):
         """
 
         if not self._index:
-            raise Exception(
-                "You need to compile the model with a valid"
-                "distance to be able to use the indexing"
-            )
+            raise Exception("You need to compile the model with a valid" "distance to be able to use the indexing")
         if verbose:
             print("[Indexing %d points]" % len(x))
             print("|-Computing embeddings")
@@ -734,10 +705,7 @@ class ContrastiveModel(tf.keras.Model):
         """
 
         if not self._index:
-            raise Exception(
-                "You need to compile the model with a valid"
-                "distance to be able to use the indexing"
-            )
+            raise Exception("You need to compile the model with a valid" "distance to be able to use the indexing")
         if verbose:
             print("[Indexing 1 point]")
             print("|-Computing embeddings")
@@ -752,9 +720,7 @@ class ContrastiveModel(tf.keras.Model):
             verbose=verbose,
         )
 
-    def lookup(
-        self, x: Tensor, k: int = 5, verbose: int = 1
-    ) -> List[List[Lookup]]:
+    def lookup(self, x: Tensor, k: int = 5, verbose: int = 1) -> List[List[Lookup]]:
         """Find the k closest matches in the index for a set of samples.
 
         Args:
@@ -769,9 +735,7 @@ class ContrastiveModel(tf.keras.Model):
             List[List[Lookup]]
         """
         predictions = self.predict(x)
-        return self._index.batch_lookup(
-            predictions=predictions, k=k, verbose=verbose
-        )
+        return self._index.batch_lookup(predictions=predictions, k=k, verbose=verbose)
 
     def single_lookup(self, x: Tensor, k: int = 5) -> List[Lookup]:
         """Find the k closest matches in the index for a given sample.
@@ -959,10 +923,7 @@ class ContrastiveModel(tf.keras.Model):
             IndexError: Index must contain embeddings but is currently empty.
         """
         if self._index.size() == 0:
-            raise IndexError(
-                "Index must contain embeddings but is "
-                "currently empty. Have you run model.index()?"
-            )
+            raise IndexError("Index must contain embeddings but is " "currently empty. Have you run model.index()?")
 
         # get embeddings
         if verbose:
@@ -1032,10 +993,7 @@ class ContrastiveModel(tf.keras.Model):
         # There is some code duplication in this function but that is the best
         # solution to keep the end-user API clean and doing inferences once.
         if self._index.size() == 0:
-            raise IndexError(
-                "Index must contain embeddings but is "
-                "currently empty. Have you run model.index()?"
-            )
+            raise IndexError("Index must contain embeddings but is " "currently empty. Have you run model.index()?")
 
         if not self._index.is_calibrated:
             raise ValueError("Uncalibrated model: run model.calibration()")
@@ -1047,14 +1005,10 @@ class ContrastiveModel(tf.keras.Model):
             print("|-Computing embeddings")
         predictions = self.predict(x)
 
-        results: DefaultDict[
-            str, Dict[str, Union[str, np.ndarray]]
-        ] = defaultdict(dict)
+        results: DefaultDict[str, Dict[str, Union[str, np.ndarray]]] = defaultdict(dict)
 
         if verbose:
-            pb = tqdm(
-                total=len(self._index.cutpoints), desc="Evaluating cutpoints"
-            )
+            pb = tqdm(total=len(self._index.cutpoints), desc="Evaluating cutpoints")
 
         for cp_name, cp_data in self._index.cutpoints.items():
             # create a metric that match at the requested k and threshold

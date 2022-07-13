@@ -16,16 +16,18 @@ from typing import Mapping, Optional, Sequence, Tuple
 
 from matplotlib import pyplot as plt
 
-from tensorflow_similarity.types import Tensor, Lookup
+from tensorflow_similarity.types import Lookup, Tensor
 
 
-def viz_neigbors_imgs(example: Tensor,
-                      example_class: int,
-                      neighbors: Sequence[Lookup],
-                      class_mapping: Optional[Mapping[int, str]] = None,
-                      fig_size: Tuple[int, int] = (24, 4),
-                      cmap: str = 'viridis',
-                      show: bool = True):
+def viz_neigbors_imgs(
+    example: Tensor,
+    example_class: int,
+    neighbors: Sequence[Lookup],
+    class_mapping: Optional[Mapping[int, str]] = None,
+    fig_size: Tuple[int, int] = (24, 4),
+    cmap: str = "viridis",
+    show: bool = True,
+):
     """Display images nearest neighboors
 
     Args:
@@ -63,7 +65,7 @@ def viz_neigbors_imgs(example: Tensor,
         if nbg.label == example_class:
             color = cmap
         else:
-            color = 'Reds'
+            color = "Reds"
         ax.imshow(nbg.data, cmap=color)
         ax.set_title(legend)
         ax.set_xticks([])
@@ -76,7 +78,7 @@ def viz_neigbors_imgs(example: Tensor,
 
 def _get_class_label(example_class, class_mapping):
     if example_class is None:
-        return 'No Label'
+        return "No Label"
 
     if class_mapping is None:
         return str(example_class)

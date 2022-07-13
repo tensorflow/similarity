@@ -1,11 +1,11 @@
 import tensorflow as tf
 from tensorflow.keras.models import load_model
+
 from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.models import SimilarityModel
 from tensorflow_similarity.samplers import MultiShotMemorySampler
-from tensorflow_similarity.training_metrics import dist_gap, min_neg, max_pos
-
+from tensorflow_similarity.training_metrics import dist_gap, max_pos, min_neg
 
 # Set seed to fix flaky tests.
 tf.random.set_seed(303)
@@ -31,7 +31,7 @@ def generate_dataset(num_classes, num_examples_per_class, reps=4):
             idx = i + num_classes * rep
             vect[idx] = 1
         x.extend([vect for _ in range(num_examples_per_class)])
-    return tf.constant(x, dtype='float32'), tf.constant(y, dtype='int32')
+    return tf.constant(x, dtype="float32"), tf.constant(y, dtype="int32")
 
 
 def test_basic_flow(tmp_path):
@@ -43,21 +43,18 @@ def test_basic_flow(tmp_path):
     K = 5
     NUM_MATCHES = 3
 
-    distance = 'cosine'
-    positive_mining_strategy = 'hard'
-    negative_mining_strategy = 'semi-hard'
+    distance = "cosine"
+    positive_mining_strategy = "hard"
+    negative_mining_strategy = "semi-hard"
 
     x, y = generate_dataset(NUM_CLASSES, EXAMPLES_PER_CLASS)
-    sampler = MultiShotMemorySampler(x,
-                                     y,
-                                     classes_per_batch=CLASS_PER_BATCH,
-                                     steps_per_epoch=STEPS_PER_EPOCH)
+    sampler = MultiShotMemorySampler(x, y, classes_per_batch=CLASS_PER_BATCH, steps_per_epoch=STEPS_PER_EPOCH)
 
     # model
-    inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS, ))
+    inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS,))
     # dont use x as variable
-    m = tf.keras.layers.Dense(8, activation='relu')(inputs)
-    m = tf.keras.layers.Dense(4, activation='relu')(m)
+    m = tf.keras.layers.Dense(8, activation="relu")(inputs)
+    m = tf.keras.layers.Dense(4, activation="relu")(m)
     outputs = MetricEmbedding(4)(m)
     model = SimilarityModel(inputs, outputs)
 
@@ -65,18 +62,19 @@ def test_basic_flow(tmp_path):
     triplet_loss = TripletLoss(
         distance=distance,
         positive_mining_strategy=positive_mining_strategy,
-        negative_mining_strategy=negative_mining_strategy)
+        negative_mining_strategy=negative_mining_strategy,
+    )
 
     # compile
     metrics = [dist_gap(distance), min_neg(distance), max_pos(distance)]
-    model.compile(optimizer='adam', metrics=metrics, loss=triplet_loss)
+    model.compile(optimizer="adam", metrics=metrics, loss=triplet_loss)
 
     # train
     history = model.fit(sampler, epochs=15)
 
     # check that history is properly filled
-    assert 'loss' in history.history
-    assert 'dist_gap' in history.history
+    assert "loss" in history.history
+    assert "dist_gap" in history.history
 
     # indexing ensuring that index is working
     model.reset_index()
@@ -105,17 +103,17 @@ def test_basic_flow(tmp_path):
     # calibration
     calibration = model.calibrate(x, y, verbose=0)
     # calibration is a DataClass with two attributes.
-    assert 'thresholds' in calibration.__dict__
-    assert 'cutpoints' in calibration.__dict__
+    assert "thresholds" in calibration.__dict__
+    assert "cutpoints" in calibration.__dict__
 
     # # evaluation
     metrics = model.evaluate_classification(x, y)
-    assert 'optimal' in metrics
-    assert 0 <= metrics['optimal']['precision'] <= 1
-    assert 0 <= metrics['optimal']['recall'] <= 1
+    assert "optimal" in metrics
+    assert 0 <= metrics["optimal"]["precision"] <= 1
+    assert 0 <= metrics["optimal"]["recall"] <= 1
 
     # matchings
-    matches = model.match(x[:NUM_MATCHES], cutpoint='optimal')
+    matches = model.match(x[:NUM_MATCHES], cutpoint="optimal")
     assert len(matches) == NUM_MATCHES
 
     # # index summary

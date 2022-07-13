@@ -14,13 +14,13 @@
 
 import base64
 import io
-from typing import Any, List, Mapping, Sequence, Optional
+from typing import Any, List, Mapping, Optional, Sequence
 
-from distinctipy import distinctipy
 import numpy as np
 import PIL
 import umap
-from bokeh.plotting import ColumnDataSource, figure, show, output_notebook
+from bokeh.plotting import ColumnDataSource, figure, output_notebook, show
+from distinctipy import distinctipy
 from tqdm.auto import tqdm
 
 from tensorflow_similarity.types import FloatTensor, Tensor
@@ -53,33 +53,34 @@ def tensor2images(tensor: Tensor, size: Optional[int] = 64) -> List[str]:
         # if single channel, treat it as black and white
         if a.shape[-1] == 1:
             a = np.reshape(a, (a.shape[0], a.shape[1]))
-            img = PIL.Image.fromarray(a, 'L')
+            img = PIL.Image.fromarray(a, "L")
         else:
             img = PIL.Image.fromarray(a)
 
         img_resized = img.resize((size, size))
         buffer = io.BytesIO()
-        img_resized.save(buffer, format='JPEG')
+        img_resized.save(buffer, format="JPEG")
         img_bytes = buffer.getvalue()
-        img64 = 'data:image/png;base64,%s' % str(
-            base64.b64encode(img_bytes))[2:-1]
+        img64 = "data:image/png;base64,%s" % str(base64.b64encode(img_bytes))[2:-1]
         imgs_b64.append(img64)
 
     return imgs_b64
 
 
-def projector(embeddings: FloatTensor,
-              labels: Optional[Sequence[Any]] = None,
-              class_mapping: Optional[Sequence[int]] = None,
-              images: Optional[Tensor] = None,
-              image_size: int = 64,
-              tooltips_info: Optional[Mapping[str, Sequence[str]]] = None,
-              pt_size: int = 3,
-              colorize: bool = True,
-              pastel_factor: float = 0.1,
-              plot_size: int = 600,
-              active_drag: str = 'box_zoom',
-              densmap: bool = True):
+def projector(
+    embeddings: FloatTensor,
+    labels: Optional[Sequence[Any]] = None,
+    class_mapping: Optional[Sequence[int]] = None,
+    images: Optional[Tensor] = None,
+    image_size: int = 64,
+    tooltips_info: Optional[Mapping[str, Sequence[str]]] = None,
+    pt_size: int = 3,
+    colorize: bool = True,
+    pastel_factor: float = 0.1,
+    plot_size: int = 600,
+    active_drag: str = "box_zoom",
+    densmap: bool = True,
+):
     """Visualize the embeddings in 2D or 3D using UMAP projection
 
     Args:
@@ -151,16 +152,14 @@ def projector(embeddings: FloatTensor,
     if labels is not None and colorize:
         # generate colors
         colors = {}
-        for idx, c in enumerate(
-                distinctipy.get_colors(num_classes,
-                                       pastel_factor=pastel_factor)):
+        for idx, c in enumerate(distinctipy.get_colors(num_classes, pastel_factor=pastel_factor)):
             # this is needed as labels can be strings or int or else
             cls_id = class_list[idx]
             colors[cls_id] = distinctipy.get_hex(c)
 
         # map point to their color
         _colors = [colors[i] for i in _labels_txt]
-        data['colors'] = _colors
+        data["colors"] = _colors
     else:
         _colors = []
 
@@ -169,7 +168,7 @@ def projector(embeddings: FloatTensor,
 
     if images is not None:
         imgs = tensor2images(images, image_size)
-        data['imgs'] = imgs
+        data["imgs"] = imgs
         # have to write custom tooltip html.
         tooltips += '<center><img src="@imgs"/></center>'  # noqa
 
@@ -179,16 +178,18 @@ def projector(embeddings: FloatTensor,
             data[k] = v
             tooltips += "%s:@%s <br>" % (k, k)
 
-    tooltips += 'Class:@labels_txt <br>ID:@id </div>'
+    tooltips += "Class:@labels_txt <br>ID:@id </div>"
 
     # to bokeh format
     source = ColumnDataSource(data=data)
     output_notebook()
-    fig = figure(tooltips=tooltips,
-                 plot_width=plot_size,
-                 plot_height=plot_size,
-                 active_drag=active_drag,
-                 active_scroll="wheel_zoom")
+    fig = figure(
+        tooltips=tooltips,
+        plot_width=plot_size,
+        plot_height=plot_size,
+        active_drag=active_drag,
+        active_scroll="wheel_zoom",
+    )
 
     # remove grid and axis
     fig.xaxis.visible = False
@@ -198,9 +199,9 @@ def projector(embeddings: FloatTensor,
 
     # draw points
     if len(_colors):
-        fig.circle('x', 'y', size=pt_size, color='colors', source=source)
+        fig.circle("x", "y", size=pt_size, color="colors", source=source)
     else:
-        fig.circle('x', 'y', size=pt_size, source=source)
+        fig.circle("x", "y", size=pt_size, source=source)
 
     # render
     output_notebook()

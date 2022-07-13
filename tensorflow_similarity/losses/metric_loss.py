@@ -26,11 +26,7 @@ class MetricLoss(tf.keras.losses.Loss):
     """Wraps a loss function in the `Loss` class."""
 
     def __init__(
-        self,
-        fn: Callable,
-        reduction: Callable = tf.keras.losses.Reduction.AUTO,
-        name: Optional[str] = None,
-        **kwargs
+        self, fn: Callable, reduction: Callable = tf.keras.losses.Reduction.AUTO, name: Optional[str] = None, **kwargs
     ):
         """Initializes `LossFunctionWrapper` class.
         Args:
@@ -53,9 +49,7 @@ class MetricLoss(tf.keras.losses.Loss):
         Returns:
           Loss values per sample.
         """
-        loss: FloatTensor = self.fn(
-            y_true, y_pred, y_true, y_pred, **self._fn_kwargs
-        )
+        loss: FloatTensor = self.fn(y_true, y_pred, y_true, y_pred, **self._fn_kwargs)
         return loss
 
     def get_config(self) -> Dict[str, Any]:

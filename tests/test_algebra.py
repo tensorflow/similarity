@@ -1,8 +1,7 @@
-from absl.testing import parameterized
 import tensorflow as tf
+from absl.testing import parameterized
 
-from tensorflow_similarity.algebra import masked_min, masked_max
-from tensorflow_similarity.algebra import build_masks
+from tensorflow_similarity.algebra import build_masks, masked_max, masked_min
 
 
 class LossTest(tf.test.TestCase, parameterized.TestCase):
@@ -44,9 +43,7 @@ class LossTest(tf.test.TestCase, parameterized.TestCase):
             dtype=tf.int32,
         )
 
-        positive_mask_nodiag, negative_mask_nodiag = build_masks(
-            query_labels, key_labels, batch_size
-        )
+        positive_mask_nodiag, negative_mask_nodiag = build_masks(query_labels, key_labels, batch_size)
         positive_mask_wdiag, negative_mask_wdiag = build_masks(
             query_labels,
             key_labels,
@@ -75,9 +72,7 @@ class LossTest(tf.test.TestCase, parameterized.TestCase):
         self.assertAllEqual(negative_mask_wdiag, negative_mask_nodiag)
 
     def test_masked_max(self):
-        distances = tf.constant(
-            [[1.0, 2.0, 3.0, 0.0], [4.0, 2.0, 1.0, 0.0]], dtype=tf.float32
-        )
+        distances = tf.constant([[1.0, 2.0, 3.0, 0.0], [4.0, 2.0, 1.0, 0.0]], dtype=tf.float32)
         mask = tf.constant([[0, 1, 1, 1], [0, 1, 1, 1]], dtype=tf.float32)
         vals, arg_max = masked_max(distances, mask)
 
@@ -105,9 +100,7 @@ class LossTest(tf.test.TestCase, parameterized.TestCase):
         self.assertEqual(arg_max[1], [1])
 
     def test_masked_min(self):
-        distances = tf.constant(
-            [[1.0, 2.0, 3.0, 0.0], [4.0, 0.0, 1.0, 0.0]], dtype=tf.float32
-        )
+        distances = tf.constant([[1.0, 2.0, 3.0, 0.0], [4.0, 0.0, 1.0, 0.0]], dtype=tf.float32)
         mask = tf.constant([[0, 1, 1, 0], [1, 0, 1, 0]], dtype=tf.float32)
         vals, arg_min = masked_min(distances, mask)
 

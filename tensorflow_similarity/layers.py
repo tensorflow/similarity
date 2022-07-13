@@ -29,6 +29,7 @@ class MetricEmbedding(layers.Dense):
     This layer is usually used as output layer, especially when using cosine
     distance as the similarity metric.
     """
+
     def call(self, inputs: FloatTensor) -> FloatTensor:
         x = super().call(inputs)
         normed_x: FloatTensor = tf.math.l2_normalize(x, axis=1)
@@ -36,13 +37,7 @@ class MetricEmbedding(layers.Dense):
 
 
 class GeneralizedMeanPooling(layers.Layer):
-    def __init__(
-        self,
-        p: float = 3.0,
-        data_format: Optional[str] = None,
-        keepdims: bool = False,
-        **kwargs
-    ) -> None:
+    def __init__(self, p: float = 3.0, data_format: Optional[str] = None, keepdims: bool = False, **kwargs) -> None:
         super().__init__(**kwargs)
 
         self.p = p
@@ -146,21 +141,11 @@ class GeneralizedMeanPooling1D(GeneralizedMeanPooling):
           3D tensor with shape `(batch_size, features, 1)`
     """
 
-    def __init__(
-        self,
-        p: float = 3.0,
-        data_format: Optional[str] = None,
-        keepdims: bool = False,
-        **kwargs
-    ) -> None:
-        super().__init__(
-            p=p, data_format=data_format, keepdims=keepdims, **kwargs
-        )
+    def __init__(self, p: float = 3.0, data_format: Optional[str] = None, keepdims: bool = False, **kwargs) -> None:
+        super().__init__(p=p, data_format=data_format, keepdims=keepdims, **kwargs)
 
         self.input_spec = layers.InputSpec(ndim=3)
-        self.gap = layers.GlobalAveragePooling1D(
-            data_format=data_format, keepdims=keepdims
-        )
+        self.gap = layers.GlobalAveragePooling1D(data_format=data_format, keepdims=keepdims)
         self.step_axis = 1 if self.data_format == "channels_last" else 2
 
     def call(self, inputs: FloatTensor) -> FloatTensor:
@@ -242,16 +227,8 @@ class GeneralizedMeanPooling2D(GeneralizedMeanPooling):
           3D tensor with shape `(batch_size, features, 1)`
     """
 
-    def __init__(
-        self,
-        p: float = 3.0,
-        data_format: Optional[str] = None,
-        keepdims: bool = False,
-        **kwargs
-    ) -> None:
-        super().__init__(
-            p=p, data_format=data_format, keepdims=keepdims, **kwargs
-        )
+    def __init__(self, p: float = 3.0, data_format: Optional[str] = None, keepdims: bool = False, **kwargs) -> None:
+        super().__init__(p=p, data_format=data_format, keepdims=keepdims, **kwargs)
 
         self.input_spec = layers.InputSpec(ndim=4)
         self.gap = layers.GlobalAveragePooling2D(data_format, keepdims)
@@ -279,9 +256,7 @@ class GeneralizedMeanPooling2D(GeneralizedMeanPooling):
             pool_size = (x.shape[1], x.shape[2])
         else:
             pool_size = (x.shape[2], x.shape[3])
-        mpl = layers.MaxPool2D(
-            pool_size=pool_size, data_format=self.data_format
-        )
+        mpl = layers.MaxPool2D(pool_size=pool_size, data_format=self.data_format)
         x = mpl(x)
         if not self.keepdims:
             if self.data_format == "channels_last":

@@ -16,8 +16,9 @@ from typing import Mapping
 
 import tensorflow as tf
 
+from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
+
 from .retrieval_metric import RetrievalMetric
-from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
 class MapAtK(RetrievalMetric):
@@ -78,9 +79,7 @@ class MapAtK(RetrievalMetric):
         **kwargs,
     ) -> None:
         if average == "macro":
-            raise ValueError(
-                "Mean Average Precision only supports micro averaging."
-            )
+            raise ValueError("Mean Average Precision only supports micro averaging.")
 
         if "canonical_name" not in kwargs:
             kwargs["canonical_name"] = "map@k"
@@ -141,9 +140,7 @@ class MapAtK(RetrievalMetric):
 
             avg_p_at_k = tf.math.reduce_mean(avg_p_at_k)
         else:
-            raise ValueError(
-                f"{self.average} is not a supported average option"
-            )
+            raise ValueError(f"{self.average} is not a supported average option")
 
         result: FloatTensor = avg_p_at_k
         return result

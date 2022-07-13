@@ -5,9 +5,7 @@ import tensorflow as tf
 from tensorflow_similarity.types import Tensor
 
 
-def random_apply(
-    func: Callable[[Tensor], Tensor], p: float, x: Tensor
-) -> Tensor:
+def random_apply(func: Callable[[Tensor], Tensor], p: float, x: Tensor) -> Tensor:
     """Randomly apply function func to x with probability p."""
     return tf.cond(
         tf.less(

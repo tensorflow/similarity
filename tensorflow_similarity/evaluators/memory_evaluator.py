@@ -19,14 +19,19 @@ import tensorflow as tf
 from tqdm.auto import tqdm
 
 from tensorflow_similarity.classification_metrics import ClassificationMetric
-from tensorflow_similarity.matchers import (ClassificationMatch,
-                                            make_classification_matcher)
+from tensorflow_similarity.matchers import (
+    ClassificationMatch,
+    make_classification_matcher,
+)
 from tensorflow_similarity.retrieval_metrics import RetrievalMetric
 from tensorflow_similarity.retrieval_metrics.utils import compute_match_mask
-from tensorflow_similarity.types import (CalibrationResults, FloatTensor,
-                                         IntTensor, Lookup)
-from tensorflow_similarity.utils import (unpack_lookup_distances,
-                                         unpack_lookup_labels)
+from tensorflow_similarity.types import (
+    CalibrationResults,
+    FloatTensor,
+    IntTensor,
+    Lookup,
+)
+from tensorflow_similarity.utils import unpack_lookup_distances, unpack_lookup_labels
 
 from .evaluator import Evaluator
 
@@ -68,9 +73,7 @@ class MemoryEvaluator(Evaluator):
         # distances will be len(num_queries x num_neighbors)
         nn_labels = unpack_lookup_labels(lookups, dtype=query_labels.dtype)
         # TODO(ovallis): The float type should be derived from the model.
-        distances = unpack_lookup_distances(
-            lookups, dtype="float32", distance_rounding=distance_rounding
-        )
+        distances = unpack_lookup_distances(lookups, dtype="float32", distance_rounding=distance_rounding)
 
         lookup_set_size = tf.shape(nn_labels)[1]
         for m in retrieval_metrics:
@@ -156,9 +159,7 @@ class MemoryEvaluator(Evaluator):
             pb = tqdm(total=len(metrics), desc="Evaluating")
 
         # evaluating performance as distance value increase
-        results: Dict[str, np.ndarray] = {
-            "distance": distance_thresholds.numpy()
-        }
+        results: Dict[str, np.ndarray] = {"distance": distance_thresholds.numpy()}
         for m in metrics:
             res = m.compute(
                 tp=matcher.tp,
@@ -227,9 +228,7 @@ class MemoryEvaluator(Evaluator):
         """
         # TODO (ovallis): Assert if index is empty, or if the lookup is empty.
         if len(lookups) == 0:
-            raise ValueError(
-                "lookups must not be empty. Is there no data in the index?"
-            )
+            raise ValueError("lookups must not be empty. Is there no data in the index?")
 
         # making a single list of metrics
         # Need expl covariance problem
@@ -244,9 +243,7 @@ class MemoryEvaluator(Evaluator):
         # lookups will be shape(num_queries, num_neighbors)
         # distances will be len(num_queries x num_neighbors)
         # TODO(ovallis): The float type should be derived from the model.
-        lookup_distances = unpack_lookup_distances(
-            lookups, dtype="float32", distance_rounding=distance_rounding
-        )
+        lookup_distances = unpack_lookup_distances(lookups, dtype="float32", distance_rounding=distance_rounding)
         lookup_labels = unpack_lookup_labels(lookups, dtype=query_labels.dtype)
 
         # the unique set of distance values sorted ascending
@@ -266,19 +263,15 @@ class MemoryEvaluator(Evaluator):
 
         cutpoints: Dict[str, Dict[str, Union[str, float]]] = {}
 
-        cutpoints["optimal"] = self._optimal_cutpoint(
-            results, calibration_metric
-        )
+        cutpoints["optimal"] = self._optimal_cutpoint(results, calibration_metric)
 
         for name, value in thresholds_targets.items():
-            target_cp = self._target_cutpoints(
-                results, calibration_metric, name, value
-            )
+            target_cp = self._target_cutpoints(results, calibration_metric, name, value)
             if target_cp:
                 cutpoints[name] = target_cp
 
         # Add the calibration metric as 'value' in the thresholds dict.
-        results['value'] = results[calibration_metric.name]
+        results["value"] = results[calibration_metric.name]
 
         return CalibrationResults(cutpoints=cutpoints, thresholds=results)
 
@@ -365,9 +358,7 @@ class MemoryEvaluator(Evaluator):
               }
               ```
         """
-        indicators = np.where(metrics[calibration_metric.name] >= target_value)[
-            0
-        ]
+        indicators = np.where(metrics[calibration_metric.name] >= target_value)[0]
         target_cp: Dict[str, Union[str, float]] = {}
 
         if indicators.size > 0:
