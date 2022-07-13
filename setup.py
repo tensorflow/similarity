@@ -72,6 +72,9 @@ setup(
     extras_require={
         "dev": [
             "flake8",
+            "black",
+            "pre-commit",
+            "isort",
             "mkdocs",
             "mkdocs-autorefs",
             "mkdocs-material",

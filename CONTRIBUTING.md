@@ -41,6 +41,7 @@ pull request:
 - You **should** provide reference to research papers that describe the feature added if any exists.
 - Please **try** to include a notebook in [examples/](examples/) that demonstrates the features/model if possible or extend an existing one. If you add a new notebook, make sure to provide an edit to the `README.md` that link to it.
 - You **must** update the documentation/src/changelog.md that document the changes triggered by the PR.
+- Your code must be formatted using `black -l 119`. For automated formatting during git commit, run `pre-commit install`.
 
 
 ## Community Guidelines
