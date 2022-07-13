@@ -43,6 +43,11 @@ pull request:
 - You **must** update the documentation/src/changelog.md that document the changes triggered by the PR.
 - Your code must be formatted using `black -l 119`. For automated formatting during git commit, run `pre-commit install`.
 
+### Configure git blame to ignore the commit that migrated the code style to black.
+~~~bash
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+~~~
+
 
 ## Community Guidelines
 
