@@ -53,6 +53,11 @@ jobs:
         COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
         COVERALLS_PARALLEL: true
 
+    - name: Check black formatting 
+      uses: psf/black@stable
+      with:
+        options: "--check --verbose -l 119"
+
   coveralls:
 
     name: Indicate completion to coveralls.io
