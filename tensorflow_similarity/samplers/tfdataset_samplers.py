@@ -14,34 +14,35 @@
 
 from typing import Callable, Optional, Sequence, Tuple, TypeVar, Union
 
-from tqdm.auto import tqdm
 import tensorflow_datasets as tfds
+from tqdm.auto import tqdm
 
-from .samplers import Augmenter
-from .memory_samplers import MultiShotMemorySampler
 from tensorflow_similarity.types import FloatTensor, IntTensor
 
-PreProcessFn = (Callable[[FloatTensor, IntTensor], Tuple[FloatTensor,
-                                                         IntTensor]])
+from .memory_samplers import MultiShotMemorySampler
+from .samplers import Augmenter
+
+PreProcessFn = Callable[[FloatTensor, IntTensor], Tuple[FloatTensor, IntTensor]]
 
 T = TypeVar("T", FloatTensor, IntTensor)
 
 
 class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
-
-    def __init__(self,
-                 dataset_name: str,
-                 classes_per_batch: int,
-                 x_key: str = "image",
-                 y_key: str = "label",
-                 splits: Union[str, Sequence[str]] = ["train", "test"],
-                 examples_per_class_per_batch: int = 2,
-                 steps_per_epoch: int = 1000,
-                 class_list: Sequence[int] = None,
-                 total_examples_per_class: int = None,
-                 preprocess_fn: Optional[PreProcessFn] = None,
-                 augmenter: Optional[Augmenter] = None,
-                 warmup: int = -1):
+    def __init__(
+        self,
+        dataset_name: str,
+        classes_per_batch: int,
+        x_key: str = "image",
+        y_key: str = "label",
+        splits: Union[str, Sequence[str]] = ["train", "test"],
+        examples_per_class_per_batch: int = 2,
+        steps_per_epoch: int = 1000,
+        class_list: Sequence[int] = None,
+        total_examples_per_class: int = None,
+        preprocess_fn: Optional[PreProcessFn] = None,
+        augmenter: Optional[Augmenter] = None,
+        warmup: int = -1,
+    ):
         """Create a Multishot in memory sampler from a dataset downloaded from
         the [TensorFlow datasets catalogue](https://www.tensorflow.org/datasets/catalog/)
 
@@ -119,14 +120,11 @@ class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
             ds, ds_info = tfds.load(dataset_name, split=split, with_info=True)
 
             if x_key not in ds_info.features:
-                raise ValueError("x_key not found - available features are:",
-                                 str(ds_info.features.keys()))
+                raise ValueError("x_key not found - available features are:", str(ds_info.features.keys()))
             if y_key not in ds_info.features:
-                raise ValueError("y_key not found - available features are:",
-                                 str(ds_info.features.keys()))
+                raise ValueError("y_key not found - available features are:", str(ds_info.features.keys()))
 
-            pb = tqdm(total=ds_info.splits[split].num_examples,
-                      desc="converting %s" % split)
+            pb = tqdm(total=ds_info.splits[split].num_examples, desc="converting %s" % split)
 
             for e in ds:
                 x.append(e[x_key])
@@ -156,9 +154,10 @@ class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
             class_list=class_list,
             total_examples_per_class=total_examples_per_class,
             augmenter=augmenter,
-            warmup=warmup)
+            warmup=warmup,
+        )
 
     def _get_slice(self, input_: T, begin: int, size: int) -> T:
         # x and y are lists of tensors, so we need to use python slicing.
-        slice_: T = input_[begin:begin+size]
+        slice_: T = input_[begin : begin + size]
         return slice_

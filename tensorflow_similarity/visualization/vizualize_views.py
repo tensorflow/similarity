@@ -1,17 +1,20 @@
-from matplotlib import pyplot as plt
-from tensorflow import Tensor
-import tensorflow as tf
 from typing import Tuple
 
+import tensorflow as tf
+from matplotlib import pyplot as plt
+from tensorflow import Tensor
 
-def visualize_views(views: Tensor,
-                    labels: Tensor = None,
-                    predictions: Tensor = None,
-                    num_imgs: int = None,
-                    views_per_col: int = 4,
-                    fig_size: Tuple[int, int] = (24, 4),
-                    max_pixel_value: float = 1.0,
-                    min_pixel_value: float = 0.0):
+
+def visualize_views(
+    views: Tensor,
+    labels: Tensor = None,
+    predictions: Tensor = None,
+    num_imgs: int = None,
+    views_per_col: int = 4,
+    fig_size: Tuple[int, int] = (24, 4),
+    max_pixel_value: float = 1.0,
+    min_pixel_value: float = 0.0,
+):
     """Display side by side different image views with labels, and predictions
 
     Args:
@@ -52,8 +55,7 @@ def visualize_views(views: Tensor,
         label = labels[i] if labels else i
 
         if predictions:
-            ax.set_title("Label: {} | Pred: {:.5f}".format(label,
-                                                           predictions[i][0]))
+            ax.set_title("Label: {} | Pred: {:.5f}".format(label, predictions[i][0]))
         elif labels:
             ax.set_title("Label: {}".format(label))
 

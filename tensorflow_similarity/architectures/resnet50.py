@@ -15,11 +15,15 @@
 "ResNet50 backbone for similarity learning"
 import re
 from typing import Tuple
+
+import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.applications import resnet50
-from tensorflow_similarity.layers import MetricEmbedding
-from tensorflow_similarity.layers import GeneralizedMeanPooling2D
+
+from tensorflow_similarity.layers import GeneralizedMeanPooling2D, MetricEmbedding
 from tensorflow_similarity.models import SimilarityModel
+
+from .utils import convert_sync_batchnorm
 
 
 # Create an image augmentation pipeline.
@@ -83,7 +87,7 @@ def ResNet50Sim(
     inputs = layers.Input(shape=input_shape)
     x = inputs
 
-    x = build_resnet(x, weights, trainable)
+    x = build_resnet(weights, trainable)(x)
 
     if pooling == "gem":
         x = GeneralizedMeanPooling2D(p=gem_p, name="gem_pool")(x)
@@ -103,12 +107,10 @@ def ResNet50Sim(
     return SimilarityModel(inputs, outputs)
 
 
-def build_resnet(x: layers.Layer, weights: str, trainable: str) -> layers.Layer:
+def build_resnet(weights: str = None, trainable: str = "full") -> tf.keras.Model:
     """Build the requested ResNet.
 
     Args:
-        x: The input layer to the ResNet.
-
         weights: Use pre-trained weights - the only available currently being
         imagenet.
 
@@ -124,6 +126,7 @@ def build_resnet(x: layers.Layer, weights: str, trainable: str) -> layers.Layer:
 
     # init
     resnet = resnet50.ResNet50(weights=weights, include_top=False)
+    resnet = convert_sync_batchnorm(resnet)
 
     if trainable == "full":
         resnet.trainable = True
@@ -137,17 +140,12 @@ def build_resnet(x: layers.Layer, weights: str, trainable: str) -> layers.Layer:
     elif trainable == "frozen":
         resnet.trainable = False
     else:
-        raise ValueError(
-            f"{trainable} is not a supported option for 'trainable'."
-        )
+        raise ValueError(f"{trainable} is not a supported option for 'trainable'.")
 
     # Don't train the BN layers if we are loading pre-trained weights.
     if weights:
         for layer in resnet.layers:
-            if isinstance(layer, layers.BatchNormalization):
+            if isinstance(layer, layers.experimental.SyncBatchNormalization):
                 layer.trainable = False
 
-    # wire
-    x = resnet(x)
-
-    return x
+    return resnet

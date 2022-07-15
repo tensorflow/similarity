@@ -2,10 +2,10 @@ from typing import Tuple
 
 import tensorflow as tf
 
-from tensorflow_similarity.types import Tensor
 from tensorflow_similarity.augmenters.augmentation_utils.random_apply import (
     random_apply,
 )
+from tensorflow_similarity.types import Tensor
 
 
 def _compute_crop_shape(
@@ -38,15 +38,11 @@ def _compute_crop_shape(
             tf.math.rint(crop_proportion / aspect_ratio * image_width_float),
             tf.int32,
         )
-        crop_width = tf.cast(
-            tf.math.rint(crop_proportion * image_width_float), tf.int32
-        )
+        crop_width = tf.cast(tf.math.rint(crop_proportion * image_width_float), tf.int32)
         return crop_height, crop_width
 
     def _image_wider_than_requested_aspect_ratio():
-        crop_height = tf.cast(
-            tf.math.rint(crop_proportion * image_height_float), tf.int32
-        )
+        crop_height = tf.cast(tf.math.rint(crop_proportion * image_height_float), tf.int32)
         crop_width = tf.cast(
             tf.math.rint(crop_proportion * aspect_ratio * image_height_float),
             tf.int32,
@@ -62,9 +58,7 @@ def _compute_crop_shape(
     return crop_height, crop_width
 
 
-def center_crop(
-    image: Tensor, height: int, width: int, crop_proportion: float
-) -> Tensor:
+def center_crop(image: Tensor, height: int, width: int, crop_proportion: float) -> Tensor:
     """Crops to center of image and rescales to desired size.
 
     Args:
@@ -79,18 +73,12 @@ def center_crop(
     shape = tf.shape(image)
     image_height = shape[0]
     image_width = shape[1]
-    crop_height, crop_width = _compute_crop_shape(
-        image_height, image_width, height / width, crop_proportion
-    )
+    crop_height, crop_width = _compute_crop_shape(image_height, image_width, height / width, crop_proportion)
     offset_height = ((image_height - crop_height) + 1) // 2
     offset_width = ((image_width - crop_width) + 1) // 2
-    image = tf.image.crop_to_bounding_box(
-        image, offset_height, offset_width, crop_height, crop_width
-    )
+    image = tf.image.crop_to_bounding_box(image, offset_height, offset_width, crop_height, crop_width)
 
-    image = tf.image.resize(
-        [image], [height, width], method=tf.image.ResizeMethod.BICUBIC
-    )[0]
+    image = tf.image.resize([image], [height, width], method=tf.image.ResizeMethod.BICUBIC)[0]
 
     return image
 
@@ -144,9 +132,7 @@ def distorted_bounding_box_crop(
         # Crop the image to the specified bounding box.
         offset_y, offset_x, _ = tf.unstack(bbox_begin)
         target_height, target_width, _ = tf.unstack(bbox_size)
-        image = tf.image.crop_to_bounding_box(
-            image, offset_y, offset_x, target_height, target_width
-        )
+        image = tf.image.crop_to_bounding_box(image, offset_y, offset_x, target_height, target_width)
 
         return image
 
@@ -180,9 +166,7 @@ def crop_and_resize(
         max_attempts=100,
         scope=None,
     )
-    img = tf.image.resize(
-        [image], [height, width], method=tf.image.ResizeMethod.BICUBIC
-    )[0]
+    img = tf.image.resize([image], [height, width], method=tf.image.ResizeMethod.BICUBIC)[0]
     return img
 
 
@@ -239,9 +223,7 @@ def random_resized_crop(
     return random_apply(_transform, p=p, x=image)
 
 
-def random_crop_with_resize(
-    image: Tensor, height: int, width: int, p: float = 1.0
-) -> Tensor:
+def random_crop_with_resize(image: Tensor, height: int, width: int, p: float = 1.0) -> Tensor:
     """Randomly crop and resize an image.
 
     Args:

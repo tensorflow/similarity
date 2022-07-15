@@ -1,15 +1,16 @@
-import pytest
 import numpy as np
+import pytest
 import tensorflow as tf
+
 from tensorflow_similarity.distances import (
+    DISTANCES,
     CosineDistance,
+    EuclideanDistance,
     InnerProductSimilarity,
+    ManhattanDistance,
+    SNRDistance,
+    distance_canonicalizer,
 )
-from tensorflow_similarity.distances import EuclideanDistance
-from tensorflow_similarity.distances import ManhattanDistance
-from tensorflow_similarity.distances import SNRDistance
-from tensorflow_similarity.distances import distance_canonicalizer
-from tensorflow_similarity.distances import DISTANCES
 
 
 def test_distance_mapping():
@@ -47,25 +48,11 @@ def test_inner_product_similarity():
 
 
 def test_inner_product_key():
-    a = tf.convert_to_tensor([
-        [0.0, 0.0],
-        [0.0, 1.0],
-        [1.0, 1.0],
-        [3.0, 0.0]
-    ])
-    b = tf.convert_to_tensor([
-        [0.0, 1.0],
-        [1.0, 1.0],
-        [3.0, 0.0]
-    ])
+    a = tf.convert_to_tensor([[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [3.0, 0.0]])
+    b = tf.convert_to_tensor([[0.0, 1.0], [1.0, 1.0], [3.0, 0.0]])
     d = InnerProductSimilarity()
     vals = d(a, b)
-    expected = tf.constant([
-        [0., 0., 0.],
-        [1., 1., 0.],
-        [1., 2., 3.],
-        [0., 3., 9.]
-    ])
+    expected = tf.constant([[0.0, 0.0, 0.0], [1.0, 1.0, 0.0], [1.0, 2.0, 3.0], [0.0, 3.0, 9.0]])
     tf.assert_equal(vals, expected)
 
 
@@ -87,25 +74,11 @@ def test_inner_product_vals():
 
 
 def test_cosine_key():
-    a = tf.convert_to_tensor([
-        [0.0, 0.0],
-        [0.0, 1.0],
-        [1.0, 1.0],
-        [3.0, 0.0]
-    ])
-    b = tf.convert_to_tensor([
-        [0.0, 1.0],
-        [1.0, 1.0],
-        [3.0, 0.0]
-    ])
+    a = tf.convert_to_tensor([[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [3.0, 0.0]])
+    b = tf.convert_to_tensor([[0.0, 1.0], [1.0, 1.0], [3.0, 0.0]])
     d = CosineDistance()
     vals = d(a, b)
-    expected = tf.constant([
-        [1., 1., 1.],
-        [0., 0., 1.],
-        [0., 0., 0.],
-        [1., 0., 0.]
-    ])
+    expected = tf.constant([[1.0, 1.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
     tf.assert_equal(vals, expected)
 
 
@@ -143,22 +116,22 @@ def test_euclidean():
 
 
 def test_euclidean_key():
-    a = tf.convert_to_tensor([
-        [0.0, 1.0],
-        [0.0, 1.0],
-        [1.0, 1.0],
-    ])
-    b = tf.convert_to_tensor([
-        [2.0, 1.0],
-        [1.0, 1.0],
-    ])
+    a = tf.convert_to_tensor(
+        [
+            [0.0, 1.0],
+            [0.0, 1.0],
+            [1.0, 1.0],
+        ]
+    )
+    b = tf.convert_to_tensor(
+        [
+            [2.0, 1.0],
+            [1.0, 1.0],
+        ]
+    )
     d = EuclideanDistance()
     vals = d(a, b)
-    expected = tf.constant([
-        [2., 1.],
-        [2., 1.],
-        [1., 0.]
-    ])
+    expected = tf.constant([[2.0, 1.0], [2.0, 1.0], [1.0, 0.0]])
     tf.assert_equal(vals, expected)
 
 
@@ -179,45 +152,22 @@ def test_euclidean_opposite():
 
 
 def test_manhattan():
-    a = tf.convert_to_tensor([
-        [0.0, 0.0],
-        [0.0, 1.0],
-        [1.0, 1.0],
-        [3.0, 0.0]
-    ])
+    a = tf.convert_to_tensor([[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [3.0, 0.0]])
     d = ManhattanDistance()
     vals = d(a, a)
-    expected = tf.constant([
-        [0.0, 1.0, 2.0, 3.0],
-        [1.0, 0.0, 1.0, 4.0],
-        [2.0, 1.0, 0.0, 3.0],
-        [3.0, 4.0, 3.0, 0.0]
-    ])
+    expected = tf.constant([[0.0, 1.0, 2.0, 3.0], [1.0, 0.0, 1.0, 4.0], [2.0, 1.0, 0.0, 3.0], [3.0, 4.0, 3.0, 0.0]])
     assert tf.math.reduce_all(tf.shape(vals) == (4, 4))
     assert tf.reduce_all(tf.math.equal(vals, expected))
 
 
 def test_manhattan_key():
-    a = tf.convert_to_tensor([
-        [0.0, 0.0],
-        [0.0, 1.0],
-        [1.0, 1.0],
-        [3.0, 0.0]
-    ])
-    b = tf.convert_to_tensor([
-        [0.0, 1.0],
-        [1.0, 1.0],
-        [3.0, 0.0]
-    ])
+    a = tf.convert_to_tensor([[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [3.0, 0.0]])
+    b = tf.convert_to_tensor([[0.0, 1.0], [1.0, 1.0], [3.0, 0.0]])
     d = ManhattanDistance()
     vals = d(a, b)
-    expected = tf.constant([
-        [1.0, 2.0, 3.0],
-        [0.0, 1.0, 4.0],
-        [1.0, 0.0, 3.0],
-        [4.0, 3.0, 0.0]
-    ])
+    expected = tf.constant([[1.0, 2.0, 3.0], [0.0, 1.0, 4.0], [1.0, 0.0, 3.0], [4.0, 3.0, 0.0]])
     tf.assert_equal(vals, expected)
+
 
 def test_manhattan_same():
     a = tf.convert_to_tensor([[1.0, 1.0], [1.0, 1.0]])

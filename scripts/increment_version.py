@@ -20,9 +20,7 @@ def write(rel_path, lines):
 def increment_dev_version(previous_version):
     delim = "dev"
     if delim not in previous_version:
-        raise ValueError(
-            f"The previous version {previous_version} does contain a dev suffix"
-        )
+        raise ValueError(f"The previous version {previous_version} does contain a dev suffix")
     # Split and increment dev version
     main_version, dev_version = previous_version.split(delim)
     dev_version = int(dev_version) + 1

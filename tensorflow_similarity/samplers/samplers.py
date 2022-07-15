@@ -17,8 +17,8 @@ from typing import Any, Callable, List, Mapping, Optional, Tuple, Union
 
 import numpy as np
 from tensorflow import Tensor
-
 from tensorflow.keras.utils import Sequence
+
 from tensorflow_similarity.augmenters import Augmenter
 
 # Not currently used. Might be useful to allows gradual call of augmenter
@@ -26,12 +26,10 @@ Scheduler = Callable[[Any], Any]
 
 # All basic types accepted by tf.keras.Model.fit(). This doesn't include tf.data
 # datasets or keras generators.
-Batch = Union[np.ndarray, List[np.ndarray], Tensor, List[Tensor],
-              Mapping[str, Union[np.ndarray, Tensor]]]
+Batch = Union[np.ndarray, List[np.ndarray], Tensor, List[Tensor], Mapping[str, Union[np.ndarray, Tensor]]]
 
 
 class Sampler(Sequence, metaclass=abc.ABCMeta):
-
     def __init__(
         self,
         classes_per_batch: int,
@@ -85,14 +83,15 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
 
         # Tell the users what to expect as they might be unsure what the batch
         # size will be
-        print(f"\nThe initial batch size is {self.batch_size} "
-              f"({self.classes_per_batch} classes * "
-              f"{self.examples_per_class_per_batch} examples per class) with "
-              f"{self.num_augmentations_per_example} augmenters")
+        print(
+            f"\nThe initial batch size is {self.batch_size} "
+            f"({self.classes_per_batch} classes * "
+            f"{self.examples_per_class_per_batch} examples per class) with "
+            f"{self.num_augmentations_per_example} augmenters"
+        )
 
     @abc.abstractmethod
-    def _get_examples(self, batch_id: int, num_classes: int,
-                      examples_per_class: int) -> Tuple[Batch, Batch]:
+    def _get_examples(self, batch_id: int, num_classes: int, examples_per_class: int) -> Tuple[Batch, Batch]:
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -145,10 +144,8 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
             x, y: Batch
         """
 
-        x, y = self._get_examples(batch_id, self.classes_per_batch,
-                                  self.examples_per_class_per_batch)
+        x, y = self._get_examples(batch_id, self.classes_per_batch, self.examples_per_class_per_batch)
 
         if self.augmenter:
-            x, y = self.augmenter(x, y, self.num_augmentations_per_example,
-                                  self.is_warmup)
+            x, y = self.augmenter(x, y, self.num_augmentations_per_example, self.is_warmup)
         return x, y

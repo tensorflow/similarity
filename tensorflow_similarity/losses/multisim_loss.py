@@ -150,9 +150,7 @@ def multisimilarity_loss(
     # Remove any anchors that have empty neg or pos pairs.
     # NOTE: reshape is required here because valid_anchors is [m] and
     #       p_loss + n_loss is [m, 1].
-    multisim_loss = tf.math.multiply(
-        p_loss + n_loss, tf.reshape(valid_anchors, (-1, 1))
-    )
+    multisim_loss = tf.math.multiply(p_loss + n_loss, tf.reshape(valid_anchors, (-1, 1)))
 
     return multisim_loss
 

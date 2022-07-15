@@ -21,6 +21,7 @@ import pandas as pd
 import tensorflow as tf
 
 from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
+
 from .store import Store
 
 
@@ -89,9 +90,7 @@ class MemoryStore(Store):
             idxs.append(self.add(embedding, label, rec_data))
         return idxs
 
-    def get(
-        self, idx: int
-    ) -> Tuple[FloatTensor, Optional[int], Optional[Tensor]]:
+    def get(self, idx: int) -> Tuple[FloatTensor, Optional[int], Optional[Tensor]]:
         """Get an embedding record from the key value store.
 
         Args:
@@ -103,9 +102,7 @@ class MemoryStore(Store):
 
         return self.embeddings[idx], self.labels[idx], self.data[idx]
 
-    def batch_get(
-        self, idxs: Sequence[int]
-    ) -> Tuple[List[FloatTensor], List[Optional[int]], List[Optional[Tensor]]]:
+    def batch_get(self, idxs: Sequence[int]) -> Tuple[List[FloatTensor], List[Optional[int]], List[Optional[Tensor]]]:
         """Get embedding records from the key value store.
 
         Args:

@@ -81,9 +81,7 @@ class SimSiamLoss(tf.keras.losses.Loss):
         else:
             raise ValueError(f"{self.projection_type} is not supported.")
 
-    def call(
-        self, projector: FloatTensor, predictor: FloatTensor
-    ) -> FloatTensor:
+    def call(self, projector: FloatTensor, predictor: FloatTensor) -> FloatTensor:
         """Compute the loss.
 
         Notes:
@@ -108,9 +106,7 @@ class SimSiamLoss(tf.keras.losses.Loss):
         per_example_projection = self._projection(cosine_simlarity)
 
         # 1D tensor
-        loss: FloatTensor = (
-            tf.math.multiply(per_example_projection, 0.5) + self.margin
-        )
+        loss: FloatTensor = tf.math.multiply(per_example_projection, 0.5) + self.margin
 
         return loss
 

@@ -158,9 +158,7 @@ def logsumexp(pairwise_distances: FloatTensor, mask: FloatTensor) -> Any:
     """
     raw_max = tf.math.reduce_max(pairwise_distances, axis=1, keepdims=True)
 
-    my_max = tf.stop_gradient(
-        tf.where(tf.math.is_finite(raw_max), raw_max, tf.zeros_like(raw_max))
-    )
+    my_max = tf.stop_gradient(tf.where(tf.math.is_finite(raw_max), raw_max, tf.zeros_like(raw_max)))
 
     x = tf.math.subtract(pairwise_distances, my_max)
     x = tf.math.exp(x)

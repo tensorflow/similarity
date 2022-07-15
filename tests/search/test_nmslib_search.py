@@ -1,12 +1,13 @@
 import numpy as np
+
 from tensorflow_similarity.search import NMSLibSearch
 
 
 def test_index_match():
-    target = np.array([1, 1, 2], dtype='float32')
-    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
+    target = np.array([1, 1, 2], dtype="float32")
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
 
-    search_index = NMSLibSearch('cosine', 3)
+    search_index = NMSLibSearch("cosine", 3)
     search_index.add(embs[0], 0)
     search_index.add(embs[1], 1)
 
@@ -17,10 +18,10 @@ def test_index_match():
 
 
 def test_index_save(tmp_path):
-    target = np.array([1, 1, 2], dtype='float32')
-    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
+    target = np.array([1, 1, 2], dtype="float32")
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
 
-    search_index = NMSLibSearch('cosine', 3)
+    search_index = NMSLibSearch("cosine", 3)
     search_index.add(embs[0], 0)
     search_index.add(embs[1], 1)
 
@@ -31,7 +32,7 @@ def test_index_save(tmp_path):
 
     search_index.save(tmp_path)
 
-    search_index2 = NMSLibSearch('cosine', 3)
+    search_index2 = NMSLibSearch("cosine", 3)
     search_index2.load(tmp_path)
 
     idxs2, embs2 = search_index.lookup(target)
@@ -53,11 +54,11 @@ def test_batch_vs_single(tmp_path):
     # gen
     idxs = list(range(index_size))
 
-    targets = np.random.random((num_targets, vect_dim)).astype('float32')
-    embs = np.random.random((index_size, vect_dim)).astype('float32')
+    targets = np.random.random((num_targets, vect_dim)).astype("float32")
+    embs = np.random.random((index_size, vect_dim)).astype("float32")
 
     # build search_index
-    search_index = NMSLibSearch('cosine', vect_dim)
+    search_index = NMSLibSearch("cosine", vect_dim)
     search_index.batch_add(embs, idxs)
 
     # batch

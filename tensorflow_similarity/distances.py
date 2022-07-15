@@ -13,7 +13,7 @@
 # limitations under the License.
 """Vectorized embedding pairwise distances computation functions"""
 from abc import ABC, abstractmethod
-from typing import Union, List
+from typing import List, Union
 
 import tensorflow as tf
 
@@ -26,6 +26,7 @@ class Distance(ABC):
     and add alias names in it.
 
     """
+
     def __init__(self, name: str, aliases: List[str] = []):
         self.name = name
         self.aliases = aliases
@@ -65,9 +66,10 @@ class InnerProductSimilarity(Distance):
     margin in many of the losses. This is likely meant to be used with custom
     loss functions that expect a similarity instead of a distance.
     """
+
     def __init__(self):
         "Init Inner product similarity"
-        super().__init__('inner_product', ['ip'])
+        super().__init__("inner_product", ["ip"])
 
     @tf.function
     def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
@@ -92,9 +94,10 @@ class CosineDistance(Distance):
     The [Cosine Distance](https://en.wikipedia.org/wiki/Cosine_similarity) is
     an angular distance that varies from 0 (similar) to 1 (dissimilar).
     """
+
     def __init__(self):
         "Init Cosine distance"
-        super().__init__('cosine')
+        super().__init__("cosine")
 
     @tf.function
     def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
@@ -109,8 +112,7 @@ class CosineDistance(Distance):
         Returns:
             FloatTensor: Pairwise distance tensor.
         """
-        distances = 1 - tf.linalg.matmul(
-                query_embeddings, key_embeddings, transpose_b=True)
+        distances = 1 - tf.linalg.matmul(query_embeddings, key_embeddings, transpose_b=True)
         min_clip_distances: FloatTensor = tf.math.maximum(distances, 0.0)
         return min_clip_distances
 
@@ -126,9 +128,10 @@ class EuclideanDistance(Distance):
 
     **Alias**: L2 Norm, Pythagorean
     """
+
     def __init__(self):
         "Init Euclidean distance"
-        super().__init__('euclidean', ['l2', 'pythagorean'])
+        super().__init__("euclidean", ["l2", "pythagorean"])
 
     @tf.function
     def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
@@ -147,8 +150,7 @@ class EuclideanDistance(Distance):
         k_squared_norm = tf.math.square(key_embeddings)
         k_squared_norm = tf.math.reduce_sum(k_squared_norm, axis=1, keepdims=True)
 
-        distances: FloatTensor = 2.0 * tf.linalg.matmul(
-            query_embeddings, key_embeddings, transpose_b=True)
+        distances: FloatTensor = 2.0 * tf.linalg.matmul(query_embeddings, key_embeddings, transpose_b=True)
         distances = q_squared_norm - distances + tf.transpose(k_squared_norm)
 
         # Avoid NaN and inf gradients when back propagating through the sqrt.
@@ -169,8 +171,9 @@ class SquaredEuclideanDistance(Distance):
     The [Squared Euclidean Distance](https://en.wikipedia.org/wiki/Euclidean_distance#Squared_Euclidean_distance) is
     a distance that varies from 0 (similar) to infinity (dissimilar).
     """
+
     def __init__(self):
-        super().__init__('squared_euclidean', ['sql2', 'sqeuclidean'])
+        super().__init__("squared_euclidean", ["sql2", "sqeuclidean"])
 
     @tf.function
     def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
@@ -189,8 +192,7 @@ class SquaredEuclideanDistance(Distance):
         k_squared_norm = tf.math.square(key_embeddings)
         k_squared_norm = tf.math.reduce_sum(k_squared_norm, axis=1, keepdims=True)
 
-        distances: FloatTensor = 2.0 * tf.linalg.matmul(
-            query_embeddings, key_embeddings, transpose_b=True)
+        distances: FloatTensor = 2.0 * tf.linalg.matmul(query_embeddings, key_embeddings, transpose_b=True)
         distances = q_squared_norm - distances + tf.transpose(k_squared_norm)
         distances = tf.math.maximum(distances, 0.0)
 
@@ -206,9 +208,10 @@ class ManhattanDistance(Distance):
     two embeddings onto the Cartesian axes. The larger the distance the more
     dissimilar the embeddings are.
     """
+
     def __init__(self):
         "Init Manhattan distance"
-        super().__init__('manhattan', ['l1', 'taxicab'])
+        super().__init__("manhattan", ["l1", "taxicab"])
 
     @tf.function
     def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
@@ -236,9 +239,10 @@ class SNRDistance(Distance):
     The [Signal-to-Noise Ratio distance](https://arxiv.org/abs/1904.02616)
     is the ratio of noise variance to the feature variance.
     """
+
     def __init__(self):
         "Init SNR distance"
-        super().__init__('snr')
+        super().__init__("snr")
 
     @tf.function
     def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
@@ -261,8 +265,7 @@ class SNRDistance(Distance):
         delta = tf.expand_dims(q_rs, axis=1) - tf.expand_dims(k_rs, axis=0)
         noise_var = tf.math.reduce_variance(delta, axis=2)
 
-        distances: FloatTensor = tf.divide(noise_var,
-                                           tf.expand_dims(anchor_var, axis=1))
+        distances: FloatTensor = tf.divide(noise_var, tf.expand_dims(anchor_var, axis=1))
 
         return distances
 
@@ -274,7 +277,7 @@ DISTANCES = [
     SquaredEuclideanDistance(),
     ManhattanDistance(),
     CosineDistance(),
-    SNRDistance()
+    SNRDistance(),
 ]
 
 
@@ -308,9 +311,11 @@ def distance_canonicalizer(user_distance: Union[Distance, str]) -> Distance:
         if user_distance in mapping:
             user_distance = mapping[user_distance]
         else:
-            raise ValueError('Metric not supported by the framework')
+            raise ValueError("Metric not supported by the framework")
 
         return name2fn[user_distance]
 
-    raise ValueError('Unknown distance: must either be a MetricDistance\
-                     or a known distance function')
+    raise ValueError(
+        "Unknown distance: must either be a MetricDistance\
+                     or a known distance function"
+    )

@@ -3,8 +3,7 @@ import re
 import pytest
 import tensorflow as tf
 
-from tensorflow_similarity.samplers import select_examples
-from tensorflow_similarity.samplers import MultiShotMemorySampler
+from tensorflow_similarity.samplers import MultiShotMemorySampler, select_examples
 
 
 def test_valid_class_numbers():
@@ -116,10 +115,7 @@ def test_small_class_size(capsys):
     y = tf.constant([1, 1, 1, 2])
     x = tf.ones([4, 10, 10, 3])
 
-    ms_sampler = MultiShotMemorySampler(x=x,
-                                        y=y,
-                                        classes_per_batch=2,
-                                        examples_per_class_per_batch=3)
+    ms_sampler = MultiShotMemorySampler(x=x, y=y, classes_per_batch=2, examples_per_class_per_batch=3)
 
     _, batch_y = ms_sampler.generate_batch(0)
 
@@ -129,11 +125,12 @@ def test_small_class_size(capsys):
 
     captured = capsys.readouterr()
     expected_msg = (
-            "WARNING: Class 2 only has 1 unique examples, but "
-            "examples_per_class is set to 3. The current batch will sample "
-            "from class examples with replacement, but you may want to "
-            "consider passing an Augmenter function or using the "
-            "SingleShotMemorySampler().")
+        "WARNING: Class 2 only has 1 unique examples, but "
+        "examples_per_class is set to 3. The current batch will sample "
+        "from class examples with replacement, but you may want to "
+        "consider passing an Augmenter function or using the "
+        "SingleShotMemorySampler()."
+    )
 
     match = re.search(expected_msg, captured.out)
     assert bool(match)

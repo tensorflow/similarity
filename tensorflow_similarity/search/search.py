@@ -15,19 +15,13 @@
 from abc import ABC, abstractmethod
 from typing import List, Sequence, Tuple, Union
 
-from tensorflow_similarity.types import FloatTensor
-
 from tensorflow_similarity.distances import Distance
+from tensorflow_similarity.types import FloatTensor
 
 
 class Search(ABC):
-
     @abstractmethod
-    def __init__(self,
-                 distance: Union[Distance, str],
-                 dim: int,
-                 verbose: bool,
-                 **kwargs):
+    def __init__(self, distance: Union[Distance, str], dim: int, verbose: bool, **kwargs):
         """Initializes a nearest neigboors search index.
 
         Args:
@@ -40,11 +34,7 @@ class Search(ABC):
         """
 
     @abstractmethod
-    def add(self,
-            embedding: FloatTensor,
-            idx: int,
-            verbose: int = 1,
-            **kwargs):
+    def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, **kwargs):
         """Add a single embedding to the search index.
 
         Args:
@@ -58,11 +48,7 @@ class Search(ABC):
         """
 
     @abstractmethod
-    def batch_add(self,
-                  embeddings: FloatTensor,
-                  idxs: Sequence[int],
-                  verbose: int = 1,
-                  **kwargs):
+    def batch_add(self, embeddings: FloatTensor, idxs: Sequence[int], verbose: int = 1, **kwargs):
         """Add a batch of embeddings to the search index.
 
         Args:
@@ -76,9 +62,7 @@ class Search(ABC):
         """
 
     @abstractmethod
-    def lookup(self,
-               embedding: FloatTensor,
-               k: int = 5) -> Tuple[List[int], List[float]]:
+    def lookup(self, embedding: FloatTensor, k: int = 5) -> Tuple[List[int], List[float]]:
         """Find embedding K nearest neighboors embeddings.
 
         Args:
@@ -87,9 +71,7 @@ class Search(ABC):
         """
 
     @abstractmethod
-    def batch_lookup(self,
-                     embeddings: FloatTensor,
-                     k: int = 5) -> Tuple[List[List[int]], List[List[float]]]:
+    def batch_lookup(self, embeddings: FloatTensor, k: int = 5) -> Tuple[List[List[int]], List[List[float]]]:
         """Find embeddings K nearest neighboors embeddings.
 
         Args:

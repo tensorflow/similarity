@@ -18,10 +18,7 @@ from typing import Dict, List, Optional, Sequence, Union
 import numpy as np
 import tensorflow as tf
 
-from tensorflow_similarity.types import BoolTensor
-from tensorflow_similarity.types import FloatTensor
-from tensorflow_similarity.types import IntTensor
-from tensorflow_similarity.types import Lookup
+from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor, Lookup
 
 
 def is_tensor_or_variable(x):
@@ -52,9 +49,11 @@ def unpack_lookup_labels(lookups: Sequence[Sequence[Lookup]], dtype: Union[str, 
     ragged_labels = tf.ragged.constant(all_values, dtype=base_type)
 
     if not _same_length_rows(ragged_labels):
-        print(f"WARNING: {_count_of_small_lookup_sets(ragged_labels)} lookup "
-              "sets are shorter than the max lookup set length. Imputing "
-              "0x7FFFFFFF for the missing label lookups.")
+        print(
+            f"WARNING: {_count_of_small_lookup_sets(ragged_labels)} lookup "
+            "sets are shorter than the max lookup set length. Imputing "
+            "0x7FFFFFFF for the missing label lookups."
+        )
 
     result: IntTensor = ragged_labels.to_tensor(default_value=0x7FFFFFFF)
 
@@ -62,9 +61,8 @@ def unpack_lookup_labels(lookups: Sequence[Sequence[Lookup]], dtype: Union[str, 
 
 
 def unpack_lookup_distances(
-        lookups: Sequence[Sequence[Lookup]],
-        dtype: Union[str, tf.DType],
-        distance_rounding: Optional[int] = None) -> FloatTensor:
+    lookups: Sequence[Sequence[Lookup]], dtype: Union[str, tf.DType], distance_rounding: Optional[int] = None
+) -> FloatTensor:
     # using list comprehension as it is faster
     all_values = [[n.distance for n in lu] for lu in lookups]
     # Lookup sets are not guaranteed to all be the same size. Therefore we load
@@ -78,18 +76,24 @@ def unpack_lookup_distances(
         ragged_dists = tf.round(ragged_dists * multiplier) / multiplier
 
     if not _same_length_rows(ragged_dists):
-        print(f"WARNING: {_count_of_small_lookup_sets(ragged_dists)} lookup "
-              "sets are shorter than the max lookup set length. Imputing "
-              "math.inf for the missing distance lookups.")
+        print(
+            f"WARNING: {_count_of_small_lookup_sets(ragged_dists)} lookup "
+            "sets are shorter than the max lookup set length. Imputing "
+            "math.inf for the missing distance lookups."
+        )
 
     dists: FloatTensor = ragged_dists.to_tensor(default_value=math.inf)
 
     return dists
 
 
-def unpack_results(results: Dict[str, np.ndarray], epoch: int, logs: dict,
-                   tb_writer: tf.summary.SummaryWriter,
-                   name_suffix: Optional[str] = "") -> List[str]:
+def unpack_results(
+    results: Dict[str, np.ndarray],
+    epoch: int,
+    logs: dict,
+    tb_writer: tf.summary.SummaryWriter,
+    name_suffix: Optional[str] = "",
+) -> List[str]:
     """Updates logs, writes summary, and returns list of strings of
     evaluation metric"""
     mstr = []

@@ -14,9 +14,7 @@ def test_predict():
             [20, 13, 13, 20, 30],
         ]
     )
-    lookup_distances = tf.constant(
-        [[1.0, 1.1, 1.2, 1.3, 1.4], [2.0, 2.1, 2.2, 2.3, 2.4]]
-    )
+    lookup_distances = tf.constant([[1.0, 1.1, 1.2, 1.3, 1.4], [2.0, 2.1, 2.2, 2.3, 2.4]])
 
     d_labels, d_dist = mn.derive_match(lookup_labels, lookup_distances)
 
