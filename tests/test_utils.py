@@ -14,9 +14,7 @@ def create_lookups():
         lookup_set = []
         for j in range(2):
             label = j + i * 2
-            lookup_set.append(
-                types.Lookup(rank=j, distance=float(j), label=label)
-            )
+            lookup_set.append(types.Lookup(rank=j, distance=float(j), label=label))
 
         lookups.append(lookup_set)
 
@@ -28,30 +26,22 @@ class UtilsTest(tf.test.TestCase):
         self.lookups = create_lookups()
 
     def test_tf_cap_memory_gpu_exists(self):
-        tf.config.experimental.list_physical_devices = MagicMock(
-            return_value=["foo"]
-        )
+        tf.config.experimental.list_physical_devices = MagicMock(return_value=["foo"])
         tf.config.experimental.set_memory_growth = MagicMock()
 
         utils.tf_cap_memory()
         tf.config.experimental.set_memory_growth.assert_called_with("foo", True)
 
     def test_tf_cap_memory_no_gpu(self):
-        tf.config.experimental.list_physical_devices = MagicMock(
-            return_value=[]
-        )
+        tf.config.experimental.list_physical_devices = MagicMock(return_value=[])
         tf.config.experimental.set_memory_growth = MagicMock()
 
         utils.tf_cap_memory()
         tf.config.experimental.set_memory_growth.assert_not_called()
 
     def test_tf_cap_memory_runtime_error(self):
-        tf.config.experimental.list_physical_devices = MagicMock(
-            return_value=["foo"]
-        )
-        tf.config.experimental.set_memory_growth = MagicMock(
-            side_effect=RuntimeError("bar")
-        )
+        tf.config.experimental.list_physical_devices = MagicMock(return_value=["foo"])
+        tf.config.experimental.set_memory_growth = MagicMock(side_effect=RuntimeError("bar"))
 
         with self.captureWritesToStream(sys.stdout) as captured:
             utils.tf_cap_memory()
@@ -96,9 +86,7 @@ class UtilsTest(tf.test.TestCase):
 
     def test_unpack_lookup_distances(self):
         with self.captureWritesToStream(sys.stdout) as captured:
-            unpacked = utils.unpack_lookup_distances(
-                self.lookups, dtype="float32"
-            )
+            unpacked = utils.unpack_lookup_distances(self.lookups, dtype="float32")
 
         expected = tf.constant([[0.0, 1.0], [0.0, 1.0]], dtype="float32")
 
@@ -109,9 +97,7 @@ class UtilsTest(tf.test.TestCase):
         lookups = [[types.Lookup(rank=0, distance=0.11119, label=1)]]
 
         with self.captureWritesToStream(sys.stdout) as captured:
-            unpacked = utils.unpack_lookup_distances(
-                lookups, dtype="float32", distance_rounding=4
-            )
+            unpacked = utils.unpack_lookup_distances(lookups, dtype="float32", distance_rounding=4)
 
         expected = tf.constant([[0.1112]], dtype="float32")
 
@@ -123,13 +109,9 @@ class UtilsTest(tf.test.TestCase):
         self.lookups[1].append(types.Lookup(rank=3, distance=2.0, label=4))
 
         with self.captureWritesToStream(sys.stdout) as captured:
-            unpacked = utils.unpack_lookup_distances(
-                self.lookups, dtype="float32"
-            )
+            unpacked = utils.unpack_lookup_distances(self.lookups, dtype="float32")
 
-        expected = tf.constant(
-            [[0.0, 1.0, math.inf], [0.0, 1.0, 2.0]], dtype="float32"
-        )
+        expected = tf.constant([[0.0, 1.0, math.inf], [0.0, 1.0, 2.0]], dtype="float32")
 
         self.assertAllEqual(unpacked, expected)
 

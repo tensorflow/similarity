@@ -14,10 +14,11 @@
 
 "ResNet50 backbone for similarity learning"
 from typing import Tuple
+
 import tensorflow as tf
 from tensorflow.keras import layers
-from tensorflow_similarity.layers import MetricEmbedding
-from tensorflow_similarity.layers import GeneralizedMeanPooling2D
+
+from tensorflow_similarity.layers import GeneralizedMeanPooling2D, MetricEmbedding
 from tensorflow_similarity.models import SimilarityModel
 
 
@@ -70,7 +71,7 @@ def ResNet18Sim(
     inputs = layers.Input(shape=input_shape)
     x = inputs
 
-    x = build_resnet(x, input_shape)
+    x = build_resnet(input_shape)(x)
 
     if pooling == "gem":
         x = GeneralizedMeanPooling2D(p=gem_p, name="gem_pool")(x)
@@ -90,9 +91,7 @@ def ResNet18Sim(
     return SimilarityModel(inputs, outputs, name="resnet18sim")
 
 
-def build_resnet(
-    x: layers.Layer, input_shape: Tuple[int, int, int]
-) -> layers.Layer:
+def build_resnet(input_shape: Tuple[int, int, int]) -> layers.Layer:
     """Build the requested ResNet.
 
     Args:
@@ -106,9 +105,7 @@ def build_resnet(
     """
     inputs = layers.Input(shape=input_shape)
 
-    layer = tf.keras.layers.ZeroPadding2D(
-        padding=((1, 1), (1, 1)), name="conv1_pad"
-    )(inputs)
+    layer = tf.keras.layers.ZeroPadding2D(padding=((1, 1), (1, 1)), name="conv1_pad")(inputs)
     layer = tf.keras.layers.Conv2D(
         64,
         kernel_size=3,
@@ -117,17 +114,14 @@ def build_resnet(
         kernel_initializer=tf.keras.initializers.LecunUniform(),
         name="conv1_conv",
     )(layer)
-    layer = tf.keras.layers.BatchNormalization(
-        epsilon=1.001e-5, name="conv1_bn"
-    )(layer)
+    layer = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=1.001e-5, name="conv1_bn")(layer)
     layer = tf.keras.layers.Activation("relu", name="conv1_relu")(layer)
 
     outputs = stack_fn(layer)
 
-    # wire
-    x = tf.keras.Model(inputs, outputs, name="resnet18")(x)
+    model = tf.keras.Model(inputs, outputs, name="resnet18")
 
-    return x
+    return model
 
 
 def block0(
@@ -147,9 +141,7 @@ def block0(
             kernel_initializer=tf.keras.initializers.LecunUniform(),
             name=name + "_0_conv",
         )(x)
-        shortcut = tf.keras.layers.BatchNormalization(
-            epsilon=1.001e-5, name=name + "_0_bn"
-        )(shortcut)
+        shortcut = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=1.001e-5, name=name + "_0_bn")(shortcut)
     else:
         shortcut = x
 
@@ -162,9 +154,7 @@ def block0(
         kernel_initializer=tf.keras.initializers.LecunUniform(),
         name=name + "_1_conv",
     )(x)
-    x = tf.keras.layers.BatchNormalization(
-        epsilon=1.001e-5, name=name + "_1_bn"
-    )(x)
+    x = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=1.001e-5, name=name + "_1_bn")(x)
     x = tf.keras.layers.Activation("relu", name=name + "_1_relu")(x)
 
     x = tf.keras.layers.Conv2D(
@@ -175,9 +165,7 @@ def block0(
         kernel_initializer=tf.keras.initializers.LecunUniform(),
         name=name + "_2_conv",
     )(x)
-    x = tf.keras.layers.BatchNormalization(
-        epsilon=1.001e-5, name=name + "_2_bn"
-    )(x)
+    x = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=1.001e-5, name=name + "_2_bn")(x)
 
     x = tf.keras.layers.Add(name=name + "_add")([shortcut, x])
     x = tf.keras.layers.Activation("relu", name=name + "_out")(x)

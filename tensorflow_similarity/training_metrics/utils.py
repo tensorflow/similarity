@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from tensorflow_similarity.samplers.samplers import Sampler
-
 import tensorflow as tf
+
+from tensorflow_similarity.samplers.samplers import Sampler
 
 
 def batch_class_ratio(sampler: Sampler, num_batches: int = 100) -> float:
@@ -39,4 +39,4 @@ def batch_class_ratio(sampler: Sampler, num_batches: int = 100) -> float:
         else:
             break
 
-    return float(ratio/(batch_count+1))
+    return float(ratio / (batch_count + 1))

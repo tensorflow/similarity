@@ -13,16 +13,17 @@
 # limitations under the License.
 
 import os
-from pathlib import Path
 import tempfile
+from pathlib import Path
 from typing import List, Sequence, Tuple, Union
 
 import nmslib
 import tensorflow as tf
 
-from .search import Search
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor
+
+from .search import Search
 
 
 class NMSLibSearch(Search):
@@ -32,13 +33,7 @@ class NMSLibSearch(Search):
     search library [NMSLIB](https://github.com/nmslib/nmslib).
     """
 
-    def __init__(
-        self,
-        distance: Union[Distance, str],
-        dims: int,
-        algorithm: str = "nmslib_hnsw",
-        **kwargs
-    ):
+    def __init__(self, distance: Union[Distance, str], dims: int, algorithm: str = "nmslib_hnsw", **kwargs):
 
         distance_obj: Distance = distance_canonicalizer(distance)
 
@@ -60,14 +55,7 @@ class NMSLibSearch(Search):
         self._search_index = nmslib.init(method=method, space=space)
         self._search_index.createIndex()
 
-    def add(
-        self,
-        embedding: FloatTensor,
-        idx: int,
-        verbose: int = 1,
-        build: bool = True,
-        **kwargs
-    ):
+    def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, build: bool = True, **kwargs):
         """Add an embedding to the index
 
         Args:
@@ -90,14 +78,7 @@ class NMSLibSearch(Search):
         if build:
             self._build(verbose=verbose)
 
-    def batch_add(
-        self,
-        embeddings: FloatTensor,
-        idxs: Sequence[int],
-        verbose: int = 1,
-        build: bool = True,
-        **kwargs
-    ):
+    def batch_add(self, embeddings: FloatTensor, idxs: Sequence[int], verbose: int = 1, build: bool = True, **kwargs):
         """Add a batch of embeddings to the search index.
 
         Args:
@@ -123,9 +104,7 @@ class NMSLibSearch(Search):
                 print("|-Building index.")
             self._build(verbose=verbose)
 
-    def lookup(
-        self, embedding: FloatTensor, k: int = 5
-    ) -> Tuple[List[int], List[float]]:
+    def lookup(self, embedding: FloatTensor, k: int = 5) -> Tuple[List[int], List[float]]:
         """Find embedding K nearest neighboors embeddings.
 
         Args:
@@ -137,9 +116,7 @@ class NMSLibSearch(Search):
         idxs, distances = self._search_index.knnQuery(embedding, k=k)
         return idxs, distances
 
-    def batch_lookup(
-        self, embeddings: FloatTensor, k: int = 5
-    ) -> Tuple[List[List[int]], List[List[float]]]:
+    def batch_lookup(self, embeddings: FloatTensor, k: int = 5) -> Tuple[List[List[int]], List[List[float]]]:
         """Find embeddings K nearest neighboors embeddings.
 
         Args:
@@ -173,9 +150,7 @@ class NMSLibSearch(Search):
 
             # read search_index.bin.dat tmp file and write to fname + .dat
             with tf.io.gfile.GFile(fname + ".dat", "w+b") as gfp:
-                tmpdat = os.path.join(
-                    tmpdirname, os.path.basename(path) + ".dat"
-                )
+                tmpdat = os.path.join(tmpdirname, os.path.basename(path) + ".dat")
                 with open(tmpdat, "rb") as fp:
                     gfp.write(fp.read())
 
@@ -196,9 +171,7 @@ class NMSLibSearch(Search):
 
             # read fname + .dat and write to tmpdat
             with tf.io.gfile.GFile(fname + ".dat", "rb") as gfp:
-                tmpdat = os.path.join(
-                    tmpdirname, os.path.basename(path) + ".dat"
-                )
+                tmpdat = os.path.join(tmpdirname, os.path.basename(path) + ".dat")
                 with open(tmpdat, "w+b") as fp:
                     fp.write(gfp.read())
 

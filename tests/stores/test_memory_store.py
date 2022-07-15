@@ -13,10 +13,7 @@ def build_store(records):
 
 
 def test_in_memory_store_and_retrieve():
-    records = [
-        [[0.1, 0.2], 1, [0, 0, 0]],
-        [[0.2, 0.3], 2, [0, 0, 0]]
-    ]
+    records = [[[0.1, 0.2], 1, [0, 0, 0]], [[0.2, 0.3], 2, [0, 0, 0]]]
 
     kv_store, idxs = build_store(records)
 
@@ -51,10 +48,7 @@ def test_batch_add():
 
 
 def test_save_and_reload(tmp_path):
-    records = [
-        [[0.1, 0.2], 1, [0, 0, 0]],
-        [[0.2, 0.3], 2, [0, 0, 0]]
-    ]
+    records = [[[0.1, 0.2], 1, [0, 0, 0]], [[0.2, 0.3], 2, [0, 0, 0]]]
 
     kv_store, idxs = build_store(records)
     kv_store.save(str(tmp_path))

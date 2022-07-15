@@ -108,7 +108,6 @@ class TypesTest(tf.test.TestCase):
                 self.embedding = None
                 self.data = None
 
-
         l1 = basic_lookup()
         l2 = WrongClass()
 

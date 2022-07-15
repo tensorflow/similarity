@@ -35,5 +35,5 @@ because the optimal distance thresholds will change depending on
 the model, dataset and, training. Accordingly those thresholds
 need to be evaluated empirically for every use-case.
 """
-from .memory_evaluator import MemoryEvaluator  # noqa
 from .evaluator import Evaluator  # noqa
+from .memory_evaluator import MemoryEvaluator  # noqa

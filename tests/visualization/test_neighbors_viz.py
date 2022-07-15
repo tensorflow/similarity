@@ -1,15 +1,14 @@
 from unittest import mock
-import pytest
 
+import pytest
 import tensorflow as tf
 
+from tensorflow_similarity.types import Lookup
 from tensorflow_similarity.visualization import viz_neigbors_imgs
 from tensorflow_similarity.visualization.neighbors_viz import _get_class_label
-from tensorflow_similarity.types import Lookup
 
 
 class TestGetClassLabel:
-
     @pytest.fixture
     def class_mapping(self):
         return {0: "foo", 1: "bar"}
@@ -77,10 +76,7 @@ def test_viz_neighbors_imgs(mock_subplots, mock_show):
         example=query_img,
         example_class=1,
         neighbors=nn,
-        class_mapping={
-            1: "foo",
-            2: "bar"
-        },
+        class_mapping={1: "foo", 2: "bar"},
         fig_size=(10, 10),
         cmap="Blues",
     )

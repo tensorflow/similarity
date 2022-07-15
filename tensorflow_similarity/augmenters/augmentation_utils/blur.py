@@ -2,10 +2,10 @@ from typing import List
 
 import tensorflow as tf
 
-from tensorflow_similarity.types import FloatTensor, Tensor
 from tensorflow_similarity.augmenters.augmentation_utils.random_apply import (
     random_apply,
 )
+from tensorflow_similarity.types import FloatTensor, Tensor
 
 
 def random_blur(
@@ -100,9 +100,7 @@ def gaussian_blur(
     radius = tf.cast(kernel_size / 2, dtype=tf.int32)
     kernel_size = radius * 2 + 1
     x = tf.cast(tf.range(-radius, radius + 1), dtype=tf.float32)
-    blur_filter = tf.exp(
-        -tf.pow(x, 2.0) / (2.0 * tf.pow(tf.cast(sigma, dtype=tf.float32), 2.0))
-    )
+    blur_filter = tf.exp(-tf.pow(x, 2.0) / (2.0 * tf.pow(tf.cast(sigma, dtype=tf.float32), 2.0)))
     blur_filter /= tf.reduce_sum(blur_filter)
     # One vertical and one horizontal filter.
     blur_v = tf.reshape(blur_filter, [kernel_size, 1, 1, 1])
@@ -115,12 +113,8 @@ def gaussian_blur(
         # Tensorflow requires batched input to convolutions,
         # which we can fake with an extra dimension.
         image = tf.expand_dims(image, axis=0)
-    blurred = tf.nn.depthwise_conv2d(
-        image, blur_h, strides=[1, 1, 1, 1], padding=padding
-    )
-    blurred = tf.nn.depthwise_conv2d(
-        blurred, blur_v, strides=[1, 1, 1, 1], padding=padding
-    )
+    blurred = tf.nn.depthwise_conv2d(image, blur_h, strides=[1, 1, 1, 1], padding=padding)
+    blurred = tf.nn.depthwise_conv2d(blurred, blur_v, strides=[1, 1, 1, 1], padding=padding)
     if expand_batch_dim:
         blurred = tf.squeeze(blurred, axis=0)
     return blurred

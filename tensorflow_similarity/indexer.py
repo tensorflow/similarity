@@ -19,16 +19,29 @@ import json
 from collections import defaultdict, deque
 from pathlib import Path
 from time import time
-from typing import (DefaultDict, Deque, Dict, List, Mapping, MutableMapping,
-                    Optional, Sequence, Union)
+from typing import (
+    DefaultDict,
+    Deque,
+    Dict,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Sequence,
+    Union,
+)
 
 import numpy as np
 import tensorflow as tf
 from tabulate import tabulate
 from tqdm.auto import tqdm
 
-from .classification_metrics import (ClassificationMetric, F1Score,
-                                     make_classification_metric)
+from .classification_metrics import (
+    ClassificationMetric,
+    F1Score,
+    make_classification_metric,
+)
+
 # internal
 from .distances import Distance, distance_canonicalizer
 from .evaluators import Evaluator, MemoryEvaluator
@@ -36,8 +49,7 @@ from .matchers import ClassificationMatch, make_classification_matcher
 from .retrieval_metrics import RetrievalMetric
 from .search import NMSLibSearch, Search
 from .stores import MemoryStore, Store
-from .types import (CalibrationResults, FloatTensor, Lookup, PandasDataFrame,
-                    Tensor)
+from .types import CalibrationResults, FloatTensor, Lookup, PandasDataFrame, Tensor
 from .utils import unpack_lookup_distances, unpack_lookup_labels
 
 
@@ -132,16 +144,11 @@ class Indexer:
         "(re)initialize internal storage structure"
 
         if self.search_type == "nmslib":
-            self.search: Search = NMSLibSearch(
-                distance=self.distance, dims=self.embedding_size
-            )
+            self.search: Search = NMSLibSearch(distance=self.distance, dims=self.embedding_size)
         elif isinstance(self.search_type, Search):
             self.search = self.search_type
         else:
-            raise ValueError(
-                "You need to either supply a known search "
-                "framework name or a Search() object"
-            )
+            raise ValueError("You need to either supply a known search " "framework name or a Search() object")
 
         # mapper from id to record data
         if self.kv_store_type == "memory":
@@ -149,10 +156,7 @@ class Indexer:
         elif isinstance(self.kv_store_type, Store):
             self.kv_store = self.kv_store_type
         else:
-            raise ValueError(
-                "You need to either supply a know key value "
-                "store name or a Store() object"
-            )
+            raise ValueError("You need to either supply a know key value " "store name or a Store() object")
 
         # code used to evaluate indexer performance
         if self.evaluator_type == "memory":
@@ -160,16 +164,11 @@ class Indexer:
         elif isinstance(self.evaluator_type, Evaluator):
             self.evaluator = self.evaluator_type
         else:
-            raise ValueError(
-                "You need to either supply a know evaluator name "
-                "or an Evaluator() object"
-            )
+            raise ValueError("You need to either supply a know evaluator name " "or an Evaluator() object")
 
         # stats
         self._stats: DefaultDict[str, int] = defaultdict(int)
-        self._lookup_timings_buffer: Deque = deque(
-            [], maxlen=self.stat_buffer_size
-        )
+        self._lookup_timings_buffer: Deque = deque([], maxlen=self.stat_buffer_size)
 
         # calibration data
         self.is_calibrated = False
@@ -293,9 +292,7 @@ class Indexer:
         idxs = self.kv_store.batch_add(embeddings, labels, data)
         self.search.batch_add(embeddings, idxs, build=build, verbose=verbose)
 
-    def single_lookup(
-        self, prediction: FloatTensor, k: int = 5
-    ) -> List[Lookup]:
+    def single_lookup(self, prediction: FloatTensor, k: int = 5) -> List[Lookup]:
         """Find the k closest matches of a given embedding
 
         Args:
@@ -330,9 +327,7 @@ class Indexer:
         self._stats["num_lookups"] += 1
         return lookups
 
-    def batch_lookup(
-        self, predictions: FloatTensor, k: int = 5, verbose: int = 1
-    ) -> List[List[Lookup]]:
+    def batch_lookup(self, predictions: FloatTensor, k: int = 5, verbose: int = 1) -> List[List[Lookup]]:
 
         """Find the k closest matches for a set of embeddings
 
@@ -485,9 +480,7 @@ class Indexer:
             A Mapping from metric name to the list of values computed for each
             distance threshold.
         """
-        combined_metrics: List[ClassificationMetric] = [
-            make_classification_metric(m) for m in metrics
-        ]
+        combined_metrics: List[ClassificationMetric] = [make_classification_metric(m) for m in metrics]
 
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
@@ -520,9 +513,7 @@ class Indexer:
         predictions: FloatTensor,
         target_labels: Sequence[int],
         thresholds_targets: MutableMapping[str, float],
-        calibration_metric: Union[
-            str, ClassificationMetric
-        ] = "f1_score",  # noqa
+        calibration_metric: Union[str, ClassificationMetric] = "f1_score",  # noqa
         k: int = 1,
         matcher: Union[str, ClassificationMatch] = "match_nearest",
         extra_metrics: Sequence[Union[str, ClassificationMetric]] = [
@@ -577,9 +568,7 @@ class Indexer:
         # making sure our metrics are all ClassificationMetric objects
         calibration_metric = make_classification_metric(calibration_metric)
 
-        combined_metrics: List[ClassificationMetric] = [
-            make_classification_metric(m) for m in extra_metrics
-        ]
+        combined_metrics: List[ClassificationMetric] = [make_classification_metric(m) for m in extra_metrics]
 
         # running calibration
         calibration_results = self.evaluator.calibrate(
@@ -663,9 +652,7 @@ class Indexer:
 
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
-        lookup_distances = unpack_lookup_distances(
-            lookups, dtype=predictions.dtype
-        )
+        lookup_distances = unpack_lookup_distances(lookups, dtype=predictions.dtype)
         # TODO(ovallis): The int type should be derived from the model.
         lookup_labels = unpack_lookup_labels(lookups, dtype="int32")
 
@@ -723,9 +710,7 @@ class Indexer:
             "calibration_metric_config": self.calibration_metric.get_config(),
             "cutpoints": self.cutpoints,
             # convert np.arrays to list before serialization
-            "calibration_thresholds": {
-                k: v.tolist() for k, v in self.calibration_thresholds.items()
-            },
+            "calibration_thresholds": {k: v.tolist() for k, v in self.calibration_thresholds.items()},
         }
 
         metadata_fname = self.__make_metadata_fname(path)
@@ -783,9 +768,7 @@ class Indexer:
             )
 
             index.cutpoints = md["cutpoints"]
-            index.calibration_thresholds = {
-                k: np.array(v) for k, v in md["calibration_thresholds"].items()
-            }
+            index.calibration_thresholds = {k: np.array(v) for k, v in md["calibration_thresholds"].items()}
 
         return index
 

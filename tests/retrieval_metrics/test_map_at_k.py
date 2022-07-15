@@ -38,7 +38,7 @@ def test_compute():
         ],
         dtype=bool,
     )
-    rm = MapAtK(r={0: 10, 1: 3},  k=3)
+    rm = MapAtK(r={0: 10, 1: 3}, k=3)
 
     mapk = rm.compute(query_labels=query_labels, match_mask=match_mask)
 
