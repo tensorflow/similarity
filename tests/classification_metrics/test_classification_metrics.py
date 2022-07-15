@@ -4,13 +4,13 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from tensorflow_similarity.classification_metrics import F1Score
-from tensorflow_similarity.classification_metrics import FalsePositiveRate
-from tensorflow_similarity.classification_metrics import NegativePredictiveValue
-from tensorflow_similarity.classification_metrics import Precision
-from tensorflow_similarity.classification_metrics import Recall
-from tensorflow_similarity.classification_metrics import BinaryAccuracy
 from tensorflow_similarity.classification_metrics import (
+    BinaryAccuracy,
+    F1Score,
+    FalsePositiveRate,
+    NegativePredictiveValue,
+    Precision,
+    Recall,
     make_classification_metric,
 )
 
@@ -57,22 +57,14 @@ test_ids = [
 ]
 
 f1_expected_results = [
-    tf.constant(
-        [1.0, 1.0]
-    ),  # Perfect classification with two distance thresholds
-    tf.constant(
-        [0.0, 0.0]
-    ),  # Inverted classification with two distance thresholds
-    tf.constant(
-        [0.555556, 0.851064]
-    ),  # Decent classification with two distance thresholds
+    tf.constant([1.0, 1.0]),  # Perfect classification with two distance thresholds
+    tf.constant([0.0, 0.0]),  # Inverted classification with two distance thresholds
+    tf.constant([0.555556, 0.851064]),  # Decent classification with two distance thresholds
     tf.constant([1.0]),  # Single distance threshold
 ]
 
 
-@pytest.mark.parametrize(
-    "counts, expected", zip(testdata, f1_expected_results), ids=test_ids
-)
+@pytest.mark.parametrize("counts, expected", zip(testdata, f1_expected_results), ids=test_ids)
 def test_f1(counts, expected):
     f1 = F1Score()
     results = f1.compute(**counts)
@@ -80,22 +72,14 @@ def test_f1(counts, expected):
 
 
 precision_expected_results = [
-    tf.constant(
-        [1.0, 1.0]
-    ),  # Perfect classification with two distance thresholds
-    tf.constant(
-        [0.0, 0.0]
-    ),  # Inverted classification with two distance thresholds
-    tf.constant(
-        [0.909091, 0.909091]
-    ),  # Decent classification with two distance thresholds
+    tf.constant([1.0, 1.0]),  # Perfect classification with two distance thresholds
+    tf.constant([0.0, 0.0]),  # Inverted classification with two distance thresholds
+    tf.constant([0.909091, 0.909091]),  # Decent classification with two distance thresholds
     tf.constant([1.0]),  # Single distance threshold
 ]
 
 
-@pytest.mark.parametrize(
-    "counts, expected", zip(testdata, precision_expected_results), ids=test_ids
-)
+@pytest.mark.parametrize("counts, expected", zip(testdata, precision_expected_results), ids=test_ids)
 def test_precision(counts, expected):
     precision = Precision()
     results = precision.compute(**counts)
@@ -103,22 +87,14 @@ def test_precision(counts, expected):
 
 
 recall_expected_results = [
-    tf.constant(
-        [1.0, 1.0]
-    ),  # Perfect classification with two distance thresholds
-    tf.constant(
-        [0.0, 0.0]
-    ),  # Inverted classification with two distance thresholds
-    tf.constant(
-        [0.4, 0.8]
-    ),  # Decent classification with two distance thresholds
+    tf.constant([1.0, 1.0]),  # Perfect classification with two distance thresholds
+    tf.constant([0.0, 0.0]),  # Inverted classification with two distance thresholds
+    tf.constant([0.4, 0.8]),  # Decent classification with two distance thresholds
     tf.constant([1.0]),  # Single distance threshold
 ]
 
 
-@pytest.mark.parametrize(
-    "counts, expected", zip(testdata, recall_expected_results), ids=test_ids
-)
+@pytest.mark.parametrize("counts, expected", zip(testdata, recall_expected_results), ids=test_ids)
 def test_recall(counts, expected):
     recall = Recall()
     results = recall.compute(**counts)
@@ -126,15 +102,9 @@ def test_recall(counts, expected):
 
 
 binary_accuracy_expected_results = [
-    tf.constant(
-        [0.5, 0.5]
-    ),  # Perfect classification with two distance thresholds
-    tf.constant(
-        [0.0, 0.0]
-    ),  # Inverted classification with two distance thresholds
-    tf.constant(
-        [0.277778, 0.555556]
-    ),  # Decent classification with two distance thresholds
+    tf.constant([0.5, 0.5]),  # Perfect classification with two distance thresholds
+    tf.constant([0.0, 0.0]),  # Inverted classification with two distance thresholds
+    tf.constant([0.277778, 0.555556]),  # Decent classification with two distance thresholds
     tf.constant([0.5]),  # Single distance threshold
 ]
 
@@ -151,22 +121,14 @@ def test_binary_accuracy(counts, expected):
 
 
 fpr_expected_results = [
-    tf.constant(
-        [0.0, 0.0]
-    ),  # Perfect classification with two distance thresholds
-    tf.constant(
-        [1.0, 1.0]
-    ),  # Inverted classification with two distance thresholds
-    tf.constant(
-        [0.090909, 0.181818]
-    ),  # Decent classification with two distance thresholds
+    tf.constant([0.0, 0.0]),  # Perfect classification with two distance thresholds
+    tf.constant([1.0, 1.0]),  # Inverted classification with two distance thresholds
+    tf.constant([0.090909, 0.181818]),  # Decent classification with two distance thresholds
     tf.constant([0.0]),  # Single distance threshold
 ]
 
 
-@pytest.mark.parametrize(
-    "counts, expected", zip(testdata, fpr_expected_results), ids=test_ids
-)
+@pytest.mark.parametrize("counts, expected", zip(testdata, fpr_expected_results), ids=test_ids)
 def test_false_positive_rate(counts, expected):
     fpr = FalsePositiveRate()
     results = fpr.compute(**counts)
@@ -174,22 +136,14 @@ def test_false_positive_rate(counts, expected):
 
 
 npv_expected_results = [
-    tf.constant(
-        [1.0, 1.0]
-    ),  # Perfect classification with two distance thresholds
-    tf.constant(
-        [0.0, 0.0]
-    ),  # Inverted classification with two distance thresholds
-    tf.constant(
-        [0.4, 0.642857]
-    ),  # Decent classification with two distance thresholds
+    tf.constant([1.0, 1.0]),  # Perfect classification with two distance thresholds
+    tf.constant([0.0, 0.0]),  # Inverted classification with two distance thresholds
+    tf.constant([0.4, 0.642857]),  # Decent classification with two distance thresholds
     tf.constant([1.0]),  # Single distance threshold
 ]
 
 
-@pytest.mark.parametrize(
-    "counts, expected", zip(testdata, npv_expected_results), ids=test_ids
-)
+@pytest.mark.parametrize("counts, expected", zip(testdata, npv_expected_results), ids=test_ids)
 def test_negative_predicitve_value(counts, expected):
     npv = NegativePredictiveValue()
     results = npv.compute(**counts)

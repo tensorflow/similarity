@@ -107,9 +107,7 @@ def triplet_loss(
     )
 
     # [Triplet loss computation]
-    triplet_loss = compute_loss(
-        pos_distances, neg_distances, soft_margin, margin
-    )
+    triplet_loss = compute_loss(pos_distances, neg_distances, soft_margin, margin)
 
     return triplet_loss
 

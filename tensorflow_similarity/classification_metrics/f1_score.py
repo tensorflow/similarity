@@ -15,6 +15,7 @@
 import tensorflow as tf
 
 from tensorflow_similarity.types import FloatTensor
+
 from .classification_metric import ClassificationMetric
 
 

@@ -12,22 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Specialized callbacks that track similarity metrics during training"""
-from typing import Dict, List, Optional, Sequence, Union
-from pathlib import Path
 import math
+from pathlib import Path
+from typing import Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.callbacks import Callback
 
-from .classification_metrics import ClassificationMetric
 from .classification_metrics import make_classification_metric  # noqa
-from .matchers import ClassificationMatch
+from .classification_metrics import ClassificationMetric
 from .evaluators import Evaluator, MemoryEvaluator
+from .matchers import ClassificationMatch
 from .models import SimilarityModel
-from .types import Tensor, FloatTensor, IntTensor
-from .utils import unpack_lookup_distances, unpack_lookup_labels
-from .utils import unpack_results
+from .types import FloatTensor, IntTensor, Tensor
+from .utils import unpack_lookup_distances, unpack_lookup_labels, unpack_results
 
 
 class EvalCallback(Callback):
@@ -101,17 +100,13 @@ class EvalCallback(Callback):
         self.target_labels = tf.convert_to_tensor(np.array(target_labels))
 
         # Ensure all label tensors have the same dtype.
-        self.target_labels = tf.cast(
-            self.target_labels, dtype=t_query_labels.dtype
-        )
+        self.target_labels = tf.cast(self.target_labels, dtype=t_query_labels.dtype)
 
         self.targets = targets
         self.distance = distance
         self.evaluator = MemoryEvaluator()
         # typing requires this weird formulation of creating a new list
-        self.metrics: List[ClassificationMetric] = [
-            make_classification_metric(m) for m in metrics
-        ]
+        self.metrics: List[ClassificationMetric] = [make_classification_metric(m) for m in metrics]
         self.k = k
         self.matcher = matcher
 
@@ -143,39 +138,25 @@ class EvalCallback(Callback):
             known_classes = tf.reshape(known_classes, (-1))
             broadcast_classes = tf.expand_dims(known_classes, axis=0)
             broadcast_labels = tf.expand_dims(t_query_labels, axis=-1)
-            known_mask = tf.math.reduce_any(
-                broadcast_classes == broadcast_labels, axis=1
-            )
+            known_mask = tf.math.reduce_any(broadcast_classes == broadcast_labels, axis=1)
             known_idxs = tf.squeeze(tf.where(known_mask))
             unknown_idxs = tf.squeeze(tf.where(~known_mask))
 
         with tf.device("/cpu:0"):
             if self.split_validation:
                 self.queries_known = tf.gather(queries, indices=known_idxs)
-                self.query_labels_known = tf.gather(
-                    t_query_labels, indices=known_idxs
-                )
+                self.query_labels_known = tf.gather(t_query_labels, indices=known_idxs)
                 # Expand to 2D if we only have a single example
                 if tf.rank(self.queries_known) == 1:
-                    self.queries_known = tf.expand_dims(
-                        self.queries_known, axis=0
-                    )
-                    self.query_labels_known = tf.expand_dims(
-                        self.query_labels_known, axis=0
-                    )
+                    self.queries_known = tf.expand_dims(self.queries_known, axis=0)
+                    self.query_labels_known = tf.expand_dims(self.query_labels_known, axis=0)
 
                 self.queries_unknown = tf.gather(queries, indices=unknown_idxs)
-                self.query_labels_unknown = tf.gather(
-                    t_query_labels, indices=unknown_idxs
-                )
+                self.query_labels_unknown = tf.gather(t_query_labels, indices=unknown_idxs)
                 # Expand to 2D if we only have a single example
                 if tf.rank(self.queries_unknown) == 1:
-                    self.queries_unknown = tf.expand_dims(
-                        self.queries_unknown, axis=0
-                    )
-                    self.query_labels_unknown = tf.expand_dims(
-                        self.query_labels_unknown, axis=0
-                    )
+                    self.queries_unknown = tf.expand_dims(self.queries_unknown, axis=0)
+                    self.query_labels_unknown = tf.expand_dims(self.query_labels_unknown, axis=0)
             else:
                 self.queries_known = queries
                 self.query_labels_known = t_query_labels
@@ -239,9 +220,7 @@ class EvalCallback(Callback):
                 )
             )
         else:
-            mstr = unpack_results(
-                known_results, epoch=epoch, logs=logs, tb_writer=self.tb_writer
-            )
+            mstr = unpack_results(known_results, epoch=epoch, logs=logs, tb_writer=self.tb_writer)
         self.model.reset_index()
         print(" - ".join(mstr))
 
@@ -299,9 +278,7 @@ def SplitValidationLoss(
         which we compute the metrics. If None, distance_thresholds is set
         to tf.constant([math.inf])
     """
-    print(
-        "WARNING: SplitValidationLoss is deprecated. Please use EvalCallback."
-    )
+    print("WARNING: SplitValidationLoss is deprecated. Please use EvalCallback.")
     return EvalCallback(
         queries=queries,
         query_labels=query_labels,

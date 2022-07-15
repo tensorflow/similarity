@@ -2,6 +2,7 @@ import re
 
 import pytest
 import tensorflow as tf
+
 from tensorflow_similarity.architectures import efficientnet
 
 # TODO(ovallis): rewrite these tests so they aren't so brittle.

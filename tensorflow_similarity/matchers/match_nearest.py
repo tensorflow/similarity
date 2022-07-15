@@ -14,26 +14,22 @@
 
 from typing import Tuple
 
-from .classification_match import ClassificationMatch
 from tensorflow_similarity.types import FloatTensor, IntTensor
+
+from .classification_match import ClassificationMatch
 
 
 class MatchNearest(ClassificationMatch):
     """Match metrics for labels at k=1."""
 
-    def __init__(self,
-                 name: str = 'nearest',
-                 **kwargs) -> None:
+    def __init__(self, name: str = "nearest", **kwargs) -> None:
 
-        if 'canonical_name' not in kwargs:
-            kwargs['canonical_name'] = 'match_nearest'
+        if "canonical_name" not in kwargs:
+            kwargs["canonical_name"] = "match_nearest"
 
         super().__init__(name=name, **kwargs)
 
-    def derive_match(self,
-                     lookup_labels: IntTensor,
-                     lookup_distances: FloatTensor
-                     ) -> Tuple[IntTensor, FloatTensor]:
+    def derive_match(self, lookup_labels: IntTensor, lookup_distances: FloatTensor) -> Tuple[IntTensor, FloatTensor]:
         """Derive a match label and distance from a set of K neighbors.
 
         For each query, derive a single match label and distance given the

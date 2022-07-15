@@ -1,9 +1,10 @@
-import tensorflow as tf
 import pytest
+import tensorflow as tf
+
+from tensorflow_similarity.callbacks import EvalCallback
 from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.models import SimilarityModel
-from tensorflow_similarity.callbacks import EvalCallback
 
 
 def generate_dataset(num_classes, num_examples_per_class, reps=4, outputs=1):
@@ -29,14 +30,14 @@ def generate_dataset(num_classes, num_examples_per_class, reps=4, outputs=1):
         x.extend([vect for _ in range(num_examples_per_class)])
 
     # copy y if neededs
-    y = tf.constant(y, dtype='int32')
+    y = tf.constant(y, dtype="int32")
     if outputs > 1:
         ny = []
         for _ in range(outputs):
             ny.append(y)
         y = ny
 
-    return tf.constant(x, dtype='float32'), y
+    return tf.constant(x, dtype="float32"), y
 
 
 NUM_CLASSES = 8
@@ -54,9 +55,9 @@ def test_default_multi_output():
     x, y = generate_dataset(NUM_CLASSES, EXAMPLES_PER_CLASS, outputs=2)
 
     # model
-    inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS, ))
+    inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS,))
     # dont use x as variable
-    m = tf.keras.layers.Dense(8, activation='relu')(inputs)
+    m = tf.keras.layers.Dense(8, activation="relu")(inputs)
     o1 = MetricEmbedding(4)(m)
     o2 = MetricEmbedding(4)(m)
     model = SimilarityModel(inputs, [o1, o2])
@@ -65,7 +66,7 @@ def test_default_multi_output():
     triplet_loss = TripletLoss()
 
     # compile
-    model.compile(optimizer='adam', loss=triplet_loss)
+    model.compile(optimizer="adam", loss=triplet_loss)
 
     # callback
     callbacks = [EvalCallback(x, y[0], x, y[0])]
@@ -83,9 +84,9 @@ def test_specified_multi_output():
     x, y = generate_dataset(NUM_CLASSES, EXAMPLES_PER_CLASS, outputs=2)
 
     # model
-    inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS, ))
+    inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS,))
     # dont use x as variable
-    m = tf.keras.layers.Dense(8, activation='relu')(inputs)
+    m = tf.keras.layers.Dense(8, activation="relu")(inputs)
     o1 = MetricEmbedding(6)(m)
     o2 = MetricEmbedding(4)(m)
     model = SimilarityModel(inputs, [o1, o2])
@@ -94,9 +95,7 @@ def test_specified_multi_output():
     triplet_loss = TripletLoss()
 
     # compile
-    model.compile(optimizer='adam',
-                  loss=triplet_loss,
-                  embedding_output=EMBEDDING_OUTPUT)
+    model.compile(optimizer="adam", loss=triplet_loss, embedding_output=EMBEDDING_OUTPUT)
 
     # train
     model.fit(x, y, batch_size=BATCH_SIZE, epochs=1)
@@ -107,13 +106,13 @@ def test_specified_multi_output():
 
 
 def test_invalid_output_idx():
-    inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS, ))
+    inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS,))
     # dont use x as variable
-    m = tf.keras.layers.Dense(8, activation='relu')(inputs)
+    m = tf.keras.layers.Dense(8, activation="relu")(inputs)
     o1 = tf.keras.layers.Dense(6)(m)
     o2 = tf.keras.layers.Dense(4)(m)
     model = SimilarityModel(inputs, [o1, o2])
 
     # check that specificing an invalid output value raise a valueerror
     with pytest.raises(ValueError):
-        model.compile(optimizer='adam', loss='mse', embedding_output=42)
+        model.compile(optimizer="adam", loss="mse", embedding_output=42)

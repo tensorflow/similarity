@@ -1,15 +1,16 @@
 import os
-from typing import List, Optional, Any
-
 from functools import partial
+from typing import Any, List, Optional
+
 import tensorflow as tf
 
-from tensorflow_similarity.types import Tensor
 from tensorflow_similarity.augmenters import Augmenter
+from tensorflow_similarity.types import Tensor
+
+from .augmentation_utils.blur import random_blur
+from .augmentation_utils.color_jitter import random_color_jitter
 from .augmentation_utils.cropping import random_resized_crop
 from .augmentation_utils.flip import random_random_flip_left_right
-from .augmentation_utils.color_jitter import random_color_jitter
-from .augmentation_utils.blur import random_blur
 from .augmentation_utils.solarize import random_solarize
 
 

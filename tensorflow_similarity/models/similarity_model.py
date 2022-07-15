@@ -53,29 +53,34 @@ from typing import (
 )
 
 import numpy as np
-from tabulate import tabulate
 import tensorflow as tf
-from tqdm.auto import tqdm
-from tensorflow.keras.optimizers import Optimizer
-from tensorflow.keras.metrics import Metric
+from tabulate import tabulate
 from tensorflow.keras.losses import Loss
+from tensorflow.keras.metrics import Metric
+from tensorflow.keras.optimizers import Optimizer
+from tqdm.auto import tqdm
 
-from tensorflow_similarity.classification_metrics import ClassificationMetric
 from tensorflow_similarity.classification_metrics import (
+    ClassificationMetric,
     make_classification_metric,
 )
-from tensorflow_similarity.distances import Distance
-from tensorflow_similarity.distances import distance_canonicalizer
-from tensorflow_similarity.training_metrics import DistanceMetric
+from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.evaluators.evaluator import Evaluator
 from tensorflow_similarity.indexer import Indexer
 from tensorflow_similarity.losses import MetricLoss
 from tensorflow_similarity.matchers import ClassificationMatch
 from tensorflow_similarity.retrieval_metrics import RetrievalMetric
-from tensorflow_similarity.stores import Store
 from tensorflow_similarity.search import Search
-from tensorflow_similarity.types import FloatTensor, Lookup, IntTensor, Tensor
-from tensorflow_similarity.types import PandasDataFrame, CalibrationResults
+from tensorflow_similarity.stores import Store
+from tensorflow_similarity.training_metrics import DistanceMetric
+from tensorflow_similarity.types import (
+    CalibrationResults,
+    FloatTensor,
+    IntTensor,
+    Lookup,
+    PandasDataFrame,
+    Tensor,
+)
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -95,13 +100,9 @@ class SimilarityModel(tf.keras.Model):
         self,
         optimizer: Union[Optimizer, str, Dict, List] = "rmsprop",
         loss: Optional[Union[Loss, MetricLoss, str, Dict, List]] = None,
-        metrics: Optional[
-            Union[Metric, DistanceMetric, str, Dict, List]
-        ] = None,  # noqa
+        metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
         loss_weights: Optional[Union[List, Dict]] = None,
-        weighted_metrics: Optional[
-            Union[Metric, DistanceMetric, str, Dict, List]
-        ] = None,  # noqa
+        weighted_metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
         run_eagerly: bool = False,
         steps_per_execution: int = 1,
         distance: Union[Distance, str] = "auto",
@@ -212,15 +213,11 @@ class SimilarityModel(tf.keras.Model):
             try:
                 distance = metric_loss.distance
             except AttributeError:
-                msg = (
-                    "distance='auto' only works if the first loss is a "
-                    "metric loss"
-                )
+                msg = "distance='auto' only works if the first loss is a " "metric loss"
 
                 raise ValueError(msg)
             print(
-                f"Distance metric automatically set to {distance} use the "
-                "distance arg to override.",
+                f"Distance metric automatically set to {distance} use the " "distance arg to override.",
             )
         else:
             distance = distance_canonicalizer(distance)
@@ -307,9 +304,7 @@ class SimilarityModel(tf.keras.Model):
         # check if we we need to set the embedding head
         num_outputs = len(self.output_names)
         if embedding_output is not None and embedding_output > num_outputs:
-            raise ValueError(
-                "Embedding_output value exceed number of model outputs"
-            )
+            raise ValueError("Embedding_output value exceed number of model outputs")
 
         if embedding_output is None and num_outputs > 1:
             print(
@@ -413,9 +408,7 @@ class SimilarityModel(tf.keras.Model):
             verbose=verbose,
         )
 
-    def lookup(
-        self, x: Tensor, k: int = 5, verbose: int = 1
-    ) -> List[List[Lookup]]:
+    def lookup(self, x: Tensor, k: int = 5, verbose: int = 1) -> List[List[Lookup]]:
         """Find the k closest matches in the index for a set of samples.
 
         Args:
@@ -430,9 +423,7 @@ class SimilarityModel(tf.keras.Model):
             List[List[Lookup]]
         """
         predictions = self.predict(x)
-        return self._index.batch_lookup(
-            predictions=predictions, k=k, verbose=verbose
-        )
+        return self._index.batch_lookup(predictions=predictions, k=k, verbose=verbose)
 
     def single_lookup(self, x: Tensor, k: int = 5) -> List[Lookup]:
         """Find the k closest matches in the index for a given sample.
@@ -622,10 +613,7 @@ class SimilarityModel(tf.keras.Model):
             IndexError: Index must contain embeddings but is currently empty.
         """
         if self._index.size() == 0:
-            raise IndexError(
-                "Index must contain embeddings but is "
-                "currently empty. Have you run model.index()?"
-            )
+            raise IndexError("Index must contain embeddings but is " "currently empty. Have you run model.index()?")
 
         # get embeddings
         if verbose:
@@ -696,8 +684,7 @@ class SimilarityModel(tf.keras.Model):
         # solution to keep the end-user API clean and doing inferences once.
         if self._index.size() == 0:
             raise IndexError(
-                "Index must contain embeddings but is currently empty. Have "
-                "you added examples via model.index()?"
+                "Index must contain embeddings but is currently empty. Have " "you added examples via model.index()?"
             )
 
         if not self._index.is_calibrated:
@@ -710,14 +697,10 @@ class SimilarityModel(tf.keras.Model):
             print("|-Computing embeddings")
         predictions = self.predict(x)
 
-        results: DefaultDict[
-            str, Dict[str, Union[str, np.ndarray]]
-        ] = defaultdict(dict)
+        results: DefaultDict[str, Dict[str, Union[str, np.ndarray]]] = defaultdict(dict)
 
         if verbose:
-            pb = tqdm(
-                total=len(self._index.cutpoints), desc="Evaluating cutpoints"
-            )
+            pb = tqdm(total=len(self._index.cutpoints), desc="Evaluating cutpoints")
 
         for cp_name, cp_data in self._index.cutpoints.items():
             # create a metric that match at the requested k and threshold
@@ -850,7 +833,8 @@ class SimilarityModel(tf.keras.Model):
                 msg = msg + (
                     "The model does not currently have an index. To use indexing "
                     "you must call either model.compile() or model.create_index() "
-                    "and set a valid Distance.")
+                    "and set a valid Distance."
+                )
 
             if not save_index:
                 msg = msg + " The save_index param is set to False."
