@@ -14,18 +14,16 @@
 
 from typing import Dict, Type, Union
 
+from .binary_accuracy import BinaryAccuracy  # noqa
 from .classification_metric import ClassificationMetric  # noqa
 from .f1_score import F1Score  # noqa
 from .false_positive_rate import FalsePositiveRate  # noqa
 from .negative_predictive_value import NegativePredictiveValue  # noqa
 from .precision import Precision  # noqa
 from .recall import Recall  # noqa
-from .binary_accuracy import BinaryAccuracy  # noqa
 
 
-def make_classification_metric(
-        metric: Union[str, ClassificationMetric],
-        name: str = '') -> ClassificationMetric:
+def make_classification_metric(metric: Union[str, ClassificationMetric], name: str = "") -> ClassificationMetric:
     """Convert classification metric from str name to object if needed.
 
     Args:
@@ -55,7 +53,7 @@ def make_classification_metric(
         if metric.lower() in METRICS_ALIASES:
             metric = METRICS_ALIASES[metric.lower()](name=metric.lower())
         else:
-            raise ValueError(f'Unknown metric name: {metric}, typo?')
+            raise ValueError(f"Unknown metric name: {metric}, typo?")
 
     if name:
         metric.name = name

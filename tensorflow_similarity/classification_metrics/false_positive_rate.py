@@ -43,9 +43,7 @@ class FalsePositiveRate(ClassificationMetric):
     """
 
     def __init__(self, name: str = "fpr") -> None:
-        super().__init__(
-            name=name, canonical_name="false_positive_rate", maximize=False
-        )
+        super().__init__(name=name, canonical_name="false_positive_rate", maximize=False)
 
     def compute(
         self,

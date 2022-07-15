@@ -1,10 +1,10 @@
-import random
 import math
+import random
 
 import tensorflow as tf
 
-from tensorflow_similarity.evaluators import MemoryEvaluator
 from tensorflow_similarity.classification_metrics import Precision, Recall
+from tensorflow_similarity.evaluators import MemoryEvaluator
 from tensorflow_similarity.matchers import MatchNearest
 from tensorflow_similarity.types import Lookup
 
@@ -32,10 +32,10 @@ def generate_lookups(num_classes, examples_per_class=10, match_rate=0.7):
                     label %= num_classes
 
             e = Lookup(
-                    rank=0,
-                    distance=round(random.uniform(0.0, 1.0), 3),
-                    label=label,
-                )
+                rank=0,
+                distance=round(random.uniform(0.0, 1.0), 3),
+                label=label,
+            )
             lookups.append([e])
             total += 1
 
@@ -48,17 +48,17 @@ def test_evaluate():
     ll = tf.constant([[0], [10], [1], [10], [2], [10], [3], [10]])
     ld = tf.constant([[0.0], [0.1], [0.2], [0.3], [0.4], [0.5], [0.6], [0.7]])
     res = ev.evaluate_classification(
-            query_labels=tf.constant([0, 0, 1, 1, 2, 2, 3, 3]),
-            lookup_labels=ll,
-            lookup_distances=ld,
-            distance_thresholds=tf.constant([math.inf]),
-            metrics=[Precision(), Recall()],
-            matcher=MatchNearest()
+        query_labels=tf.constant([0, 0, 1, 1, 2, 2, 3, 3]),
+        lookup_labels=ll,
+        lookup_distances=ld,
+        distance_thresholds=tf.constant([math.inf]),
+        metrics=[Precision(), Recall()],
+        matcher=MatchNearest(),
     )
 
     expected = {
-            'precision': 0.5,
-            'recall': 1.0,
+        "precision": 0.5,
+        "recall": 1.0,
     }
 
     for metric_name, val in expected.items():
@@ -68,8 +68,9 @@ def test_evaluate():
 def test_comparators():
     # created a regression
     ev = MemoryEvaluator()
-    assert ev._is_higher(1,  0)
+    assert ev._is_higher(1, 0)
     assert ev._is_lower(0, 1)
+
 
 # def test_config():
 

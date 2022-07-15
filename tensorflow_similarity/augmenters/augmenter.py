@@ -14,10 +14,11 @@
 
 
 import abc
-from tensorflow_similarity.types import Tensor
 
 # from tensorflow import Tensor
 from typing import List
+
+from tensorflow_similarity.types import Tensor
 
 
 class Augmenter(abc.ABC):

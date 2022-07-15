@@ -26,15 +26,16 @@ class PandasDataFrame(object):
     """Symbolic pandas frame
     Pandas type are too loose you get an Any. We want a DataFrame
     """
+
     pass
 
 
 class BoolTensor(Tensor):
-    """Bool tensor """
+    """Bool tensor"""
 
 
 class FloatTensor(Tensor):
-    """Float tensor """
+    """Float tensor"""
 
 
 class IntTensor(Tensor):
@@ -47,6 +48,7 @@ class Symbol(Tensor):
     These objects represent the output of an op definition and do not carry a
     value.
     """
+
     pass
 
 
@@ -105,6 +107,7 @@ class Lookup:
         data: The original Tensor representation of the match result.
         Default None.
     """
+
     rank: int
     distance: float
     label: Optional[int] = dataclasses.field(default=None)
@@ -141,5 +144,6 @@ class CalibrationResults:
         containing the metric's value computed at each of the distance
         thresholds, e.g., {'f1': [0.99, 0.80], 'distance': [0.0, 1.0]}.
     """
+
     cutpoints: Mapping[str, Mapping[str, Union[str, float]]]
     thresholds: Mapping[str, np.ndarray]

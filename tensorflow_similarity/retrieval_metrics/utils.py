@@ -13,12 +13,10 @@
 # limitations under the License.
 import tensorflow as tf
 
-from tensorflow_similarity.types import IntTensor
-from tensorflow_similarity.types import BoolTensor
+from tensorflow_similarity.types import BoolTensor, IntTensor
 
 
-def compute_match_mask(query_labels: IntTensor,
-                       lookup_labels: IntTensor) -> BoolTensor:
+def compute_match_mask(query_labels: IntTensor, lookup_labels: IntTensor) -> BoolTensor:
     """Compute a boolean mask (indicator function) marking the TPs in the results.
 
     Args:

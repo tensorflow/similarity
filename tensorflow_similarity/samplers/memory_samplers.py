@@ -14,12 +14,13 @@
 
 import random
 from collections import defaultdict
-from typing import Optional, Tuple, TypeVar, Set, Sequence
+from typing import Optional, Sequence, Set, Tuple, TypeVar
 
 import numpy as np
 import tensorflow as tf
-from tensorflow_similarity.types import FloatTensor, IntTensor
 from tqdm.auto import tqdm
+
+from tensorflow_similarity.types import FloatTensor, IntTensor
 
 from .samplers import Augmenter, Sampler
 from .utils import select_examples
@@ -108,8 +109,7 @@ class MultiShotMemorySampler(Sampler):
 
         if classes_per_batch > len(self.class_list):
             raise ValueError(
-                "the value of classes_per_batch must be <= to the "
-                "number of existing classes in the dataset"
+                "the value of classes_per_batch must be <= to the " "number of existing classes in the dataset"
             )
 
         # We only want to warn users once per class if we are sampling with
@@ -138,9 +138,7 @@ class MultiShotMemorySampler(Sampler):
             cl = cls[idx]
             self.index_per_class[cl].append(idx)
 
-    def _get_examples(
-        self, batch_id: int, num_classes: int, examples_per_class: int
-    ) -> Tuple[FloatTensor, IntTensor]:
+    def _get_examples(self, batch_id: int, num_classes: int, examples_per_class: int) -> Tuple[FloatTensor, IntTensor]:
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -186,7 +184,7 @@ class MultiShotMemorySampler(Sampler):
         batch_x = []
         batch_y = []
         # strip examples if needed. This might happen due to rounding
-        for idx in idxs[:self.batch_size]:
+        for idx in idxs[: self.batch_size]:
             batch_x.append(self._x[idx])
             batch_y.append(self._y[idx])
 
@@ -195,9 +193,7 @@ class MultiShotMemorySampler(Sampler):
             tf.convert_to_tensor(np.array(batch_y)),
         )
 
-    def get_slice(
-        self, begin: int = 0, size: int = -1
-    ) -> Tuple[FloatTensor, IntTensor]:
+    def get_slice(self, begin: int = 0, size: int = -1) -> Tuple[FloatTensor, IntTensor]:
         """Extracts a slice over both the x and y tensors.
 
         This method extracts a slice of size `size` over the first dimension of
@@ -298,9 +294,7 @@ class SingleShotMemorySampler(Sampler):
         self._x = x
         self._y = tf.range(0, self.num_examples, dtype="int32")
 
-    def _get_examples(
-        self, batch_id: int, num_classes: int, examples_per_class: int
-    ) -> Tuple[FloatTensor, IntTensor]:
+    def _get_examples(self, batch_id: int, num_classes: int, examples_per_class: int) -> Tuple[FloatTensor, IntTensor]:
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -326,23 +320,19 @@ class SingleShotMemorySampler(Sampler):
 
         # note: we draw at random the class so the sampler can scale up to
         # millions of points. Shuffling array is simply too slow
-        idxs = tf.random.uniform(
-            (num_classes,), minval=0, maxval=self.num_examples, dtype="int32"
-        )
+        idxs = tf.random.uniform((num_classes,), minval=0, maxval=self.num_examples, dtype="int32")
         # ! don't cast data as different model use different type.
         y = tf.convert_to_tensor([int(i) for i in idxs])
         x = tf.convert_to_tensor([self._x[idx] for idx in y])
 
         # strip examples if needed. This might happen due to rounding
         if len(x) > self.batch_size:
-            x = x[:self.batch_size]
-            y = y[:self.batch_size]
+            x = x[: self.batch_size]
+            y = y[: self.batch_size]
 
         return x, y
 
-    def get_slice(
-        self, begin: int = 0, size: int = -1
-    ) -> Tuple[FloatTensor, IntTensor]:
+    def get_slice(self, begin: int = 0, size: int = -1) -> Tuple[FloatTensor, IntTensor]:
         """Extracts an augmented slice over both the x and y tensors.
 
         This method extracts a slice of size `size` over the first dimension of

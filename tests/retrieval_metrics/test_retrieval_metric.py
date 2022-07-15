@@ -4,7 +4,7 @@ import pytest
 import tensorflow as tf
 
 from tensorflow_similarity.retrieval_metrics import RetrievalMetric
-from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
+from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
 
 
 class ConcreteRetrievalMetric(RetrievalMetric):
@@ -62,10 +62,7 @@ def test_k_greater_than_num_lookups():
         average="macro",
     )
 
-    msg = (
-        "The number of neighbors must be >= K. Number of neighbors is 4 but "
-        "K is 5."
-    )
+    msg = "The number of neighbors must be >= K. Number of neighbors is 4 but " "K is 5."
 
     with pytest.raises(ValueError, match=re.escape(msg)):
         _ = rm._check_shape(query_labels=query_labels, match_mask=match_mask)

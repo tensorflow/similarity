@@ -1,5 +1,7 @@
 import numpy as np
+
 from tensorflow_similarity.indexer import Indexer
+
 from . import DATA_DIR
 
 
@@ -7,33 +9,29 @@ def test_calibration():
     # CALIB TEST
     SIZE = 20
 
-    FNAME = str(DATA_DIR / 'mnist_fashion_embeddings.npz')
+    FNAME = str(DATA_DIR / "mnist_fashion_embeddings.npz")
     data = np.load(FNAME, allow_pickle=True)
-    thresholds_targets = {'0.5': 0.5}
+    thresholds_targets = {"0.5": 0.5}
 
     index = Indexer(3)
-    index.batch_add(data['embeddings_idx'][:SIZE], labels=data['y_idx'][:SIZE])
-    calibration = index.calibrate(data['embeddings_cal'][:SIZE],
-                                  data['y_cal'][:SIZE],
-                                  thresholds_targets,
-                                  verbose=1)
+    index.batch_add(data["embeddings_idx"][:SIZE], labels=data["y_idx"][:SIZE])
+    calibration = index.calibrate(data["embeddings_cal"][:SIZE], data["y_cal"][:SIZE], thresholds_targets, verbose=1)
     # assert 'vl' in cutpoints
-    assert 'optimal' in calibration.cutpoints
-    assert '0.5' in calibration.cutpoints
-    assert len(calibration.thresholds['distance']) == len(
-        calibration.thresholds['value'])
+    assert "optimal" in calibration.cutpoints
+    assert "0.5" in calibration.cutpoints
+    assert len(calibration.thresholds["distance"]) == len(calibration.thresholds["value"])
     assert index.is_calibrated
 
 
 def test_indexer_basic_flow():
 
-    prediction = np.array([[1, 1, 2]], dtype='float32')
-    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
+    prediction = np.array([[1, 1, 2]], dtype="float32")
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
 
     indexer = Indexer(3)
 
     # index data
-    indexer.batch_add(embs, labels=[0, 1], data=['test', 'test2'])
+    indexer.batch_add(embs, labels=[0, 1], data=["test", "test2"])
 
     # lookup
     matches = indexer.single_lookup(prediction)
@@ -43,18 +41,18 @@ def test_indexer_basic_flow():
 
     assert np.array_equal(matches[0].embedding, embs[0])
     assert matches[0].label == 0
-    assert matches[0].data == 'test'
+    assert matches[0].data == "test"
 
 
 def test_indexer_batch_add():
 
-    prediction = np.array([[1, 1, 2]], dtype='float32')
-    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
+    prediction = np.array([[1, 1, 2]], dtype="float32")
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
 
     indexer = Indexer(3)
 
     # index data
-    indexer.batch_add(embs, [0, 1], data=['test', 'test2'])
+    indexer.batch_add(embs, [0, 1], data=["test", "test2"])
     assert indexer.size() == 2
     # check results
     matches = indexer.single_lookup(prediction)
@@ -64,13 +62,13 @@ def test_indexer_batch_add():
 
     assert np.array_equal(matches[0].embedding, embs[0])
     assert matches[0].label == 0
-    assert matches[0].data == 'test'
+    assert matches[0].data == "test"
 
 
 def test_multiple_add():
 
     # arrays of preds which contains a single embedding list(list(embedding))
-    predictions = np.array([[[1, 1, 3]], [[3, 1, 2]]], dtype='float32')
+    predictions = np.array([[[1, 1, 3]], [[3, 1, 2]]], dtype="float32")
 
     indexer = Indexer(3)
     indexer.add(predictions[0])
@@ -82,7 +80,7 @@ def test_multiple_add():
 
 def test_multiple_add_mix_data():
 
-    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
 
     indexer = Indexer(3)
     indexer.batch_add(embs)
@@ -94,7 +92,7 @@ def test_multiple_add_mix_data():
 
 def test_reload(tmp_path):
 
-    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
 
     indexer = Indexer(3)
     indexer.batch_add(embs, verbose=0)
@@ -116,7 +114,7 @@ def test_reload(tmp_path):
 def test_uncompress_reload(tmp_path):
     "Ensure uncompressed index work"
 
-    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype='float32')
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
 
     indexer = Indexer(3)
     indexer.batch_add(embs, verbose=0)
@@ -133,8 +131,8 @@ def test_uncompress_reload(tmp_path):
 
 def test_index_reset():
 
-    prediction = np.array([[1, 1, 2]], dtype='float32')
-    embs = np.array([[1, 1, 3], [3, 1, 2], [3, 2, 3]], dtype='float32')
+    prediction = np.array([[1, 1, 2]], dtype="float32")
+    embs = np.array([[1, 1, 3], [3, 1, 2], [3, 2, 3]], dtype="float32")
 
     indexer = Indexer(3)
 
@@ -156,8 +154,8 @@ def test_index_reset():
     # reset
     indexer.reset()
     stats = indexer.stats()
-    assert stats['num_lookups'] == 0
-    assert stats['num_items'] == 0
+    assert stats["num_lookups"] == 0
+    assert stats["num_items"] == 0
 
     # do-over
     indexer.add([embs[0]], label=42)
@@ -172,7 +170,7 @@ def test_index_reset():
     assert matches[1].label == 43
     assert list(matches[0].embedding) == list(embs[0])
     assert list(matches[1].embedding) == list(embs[1])
-    assert stats['num_lookups'] == 1
+    assert stats["num_lookups"] == 1
 
 
 def test_indexer_batch_ops():

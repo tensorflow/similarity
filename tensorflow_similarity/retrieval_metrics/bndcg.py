@@ -15,8 +15,9 @@ import math
 
 import tensorflow as tf
 
+from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
+
 from .retrieval_metric import RetrievalMetric
-from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
 class BNDCG(RetrievalMetric):
@@ -80,9 +81,7 @@ class BNDCG(RetrievalMetric):
         if "canonical_name" not in kwargs:
             kwargs["canonical_name"] = "ndcg@k"
 
-        super().__init__(
-            name=name, k=k, distance_threshold=distance_threshold, **kwargs
-        )
+        super().__init__(name=name, k=k, distance_threshold=distance_threshold, **kwargs)
 
     def compute(
         self,
@@ -120,9 +119,7 @@ class BNDCG(RetrievalMetric):
                 f"labels is {tf.shape(query_labels)[0]}."
             )
 
-        dist_mask = tf.math.less_equal(
-            lookup_distances, self.distance_threshold
-        )
+        dist_mask = tf.math.less_equal(lookup_distances, self.distance_threshold)
 
         k_slice = tf.math.multiply(
             tf.cast(match_mask, dtype="float"),
@@ -145,16 +142,14 @@ class BNDCG(RetrievalMetric):
             ndcg = tf.math.reduce_mean(per_example_ndcg)
         elif self.average == "macro":
             per_class_metrics = 0
-            class_labels = tf.unique(query_labels)[0]
+            class_labels = tf.unique(tf.reshape(query_labels, (-1)))[0]
             for label in class_labels:
                 idxs = tf.where(query_labels == label)
                 c_slice = tf.gather(per_example_ndcg, indices=idxs)
                 per_class_metrics += tf.math.reduce_mean(c_slice)
             ndcg = tf.math.divide(per_class_metrics, len(class_labels))
         else:
-            raise ValueError(
-                f"{self.average} is not a supported average " "option"
-            )
+            raise ValueError(f"{self.average} is not a supported average " "option")
 
         result: FloatTensor = ndcg
         return result

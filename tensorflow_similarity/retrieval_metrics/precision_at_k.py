@@ -14,8 +14,9 @@
 
 import tensorflow as tf
 
+from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
+
 from .retrieval_metric import RetrievalMetric
-from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
 
 
 class PrecisionAtK(RetrievalMetric):
@@ -92,15 +93,13 @@ class PrecisionAtK(RetrievalMetric):
             p_at_k = tf.math.reduce_mean(per_example_p)
         elif self.average == "macro":
             per_class_metrics = 0
-            class_labels = tf.unique(query_labels)[0]
+            class_labels = tf.unique(tf.reshape(query_labels, (-1)))[0]
             for label in class_labels:
                 idxs = tf.where(query_labels == label)
                 c_slice = tf.gather(per_example_p, indices=idxs)
                 per_class_metrics += tf.math.reduce_mean(c_slice)
             p_at_k = tf.math.divide(per_class_metrics, len(class_labels))
         else:
-            raise ValueError(
-                f"{self.average} is not a supported average " "option"
-            )
+            raise ValueError(f"{self.average} is not a supported average " "option")
         result: FloatTensor = p_at_k
         return result

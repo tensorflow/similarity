@@ -15,20 +15,22 @@
 import itertools
 from typing import Any, Tuple
 
-from matplotlib import pyplot as plt
 import numpy as np
 import tensorflow as tf
+from matplotlib import pyplot as plt
 
-from tensorflow_similarity.types import IntTensor, FloatTensor
+from tensorflow_similarity.types import FloatTensor, IntTensor
 
 
-def confusion_matrix(y_pred: IntTensor,
-                     y_true: IntTensor,
-                     normalize: bool = True,
-                     labels: IntTensor = None,
-                     title: str = 'Confusion matrix',
-                     cmap: str = 'Blues',
-                     show: bool = True) -> Tuple[Any, FloatTensor]:
+def confusion_matrix(
+    y_pred: IntTensor,
+    y_true: IntTensor,
+    normalize: bool = True,
+    labels: IntTensor = None,
+    title: str = "Confusion matrix",
+    cmap: str = "Blues",
+    show: bool = True,
+) -> Tuple[Any, FloatTensor]:
     """Plot confusion matrix
 
     Args:
@@ -56,24 +58,21 @@ def confusion_matrix(y_pred: IntTensor,
         # Ensure we are working with integer tensors.
         if not tf.is_tensor(y_pred):
             y_pred = tf.convert_to_tensor(np.array(y_pred))
-        y_pred = tf.cast(y_pred, dtype='int32')
+        y_pred = tf.cast(y_pred, dtype="int32")
         if not tf.is_tensor(y_true):
             y_true = tf.convert_to_tensor(np.array(y_true))
-        y_true = tf.cast(y_true, dtype='int32')
+        y_true = tf.cast(y_true, dtype="int32")
 
         cm = tf.math.confusion_matrix(y_true, y_pred)
-        cm = tf.cast(cm, dtype='float')
+        cm = tf.cast(cm, dtype="float")
         accuracy = tf.linalg.trace(cm) / tf.math.reduce_sum(cm)
         misclass = 1 - accuracy
 
         if normalize:
-            cm = tf.math.divide_no_nan(
-                    cm,
-                    tf.math.reduce_sum(cm, axis=1)[:, np.newaxis]
-            )
+            cm = tf.math.divide_no_nan(cm, tf.math.reduce_sum(cm, axis=1)[:, np.newaxis])
 
         f, ax = plt.subplots(figsize=(8, 6))
-        im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
+        im = ax.imshow(cm, interpolation="nearest", cmap=cmap)
         ax.set_title(title)
         f.colorbar(im)
 
@@ -93,9 +92,8 @@ def confusion_matrix(y_pred: IntTensor,
             ax.text(j, i, txt, horizontalalignment="center", color=color)
 
         f.tight_layout()
-        ax.set_ylabel('True label')
-        ax.set_xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'.format(
-            accuracy, misclass))
+        ax.set_ylabel("True label")
+        ax.set_xlabel("Predicted label\naccuracy={:0.4f}; misclass={:0.4f}".format(accuracy, misclass))
 
         if show:
             plt.show()

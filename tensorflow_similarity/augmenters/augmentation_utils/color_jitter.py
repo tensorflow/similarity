@@ -2,10 +2,10 @@ import functools
 
 import tensorflow as tf
 
-from tensorflow_similarity.types import Tensor
 from tensorflow_similarity.augmenters.augmentation_utils.random_apply import (
     random_apply,
 )
+from tensorflow_similarity.types import Tensor
 
 
 def color_jitter(
@@ -36,13 +36,9 @@ def color_jitter(
     hue = hue_multiplier * strength
 
     if random_order:
-        return color_jitter_rand(
-            image, brightness, contrast, saturation, hue, impl=impl
-        )
+        return color_jitter_rand(image, brightness, contrast, saturation, hue, impl=impl)
     else:
-        return color_jitter_nonrand(
-            image, brightness, contrast, saturation, hue, impl=impl
-        )
+        return color_jitter_nonrand(image, brightness, contrast, saturation, hue, impl=impl)
 
 
 def color_jitter_nonrand(
@@ -81,21 +77,15 @@ def color_jitter_nonrand(
             if brightness != 0 and i == 0:
                 x = random_brightness(x, max_delta=brightness, impl=impl)
             elif contrast != 0 and i == 1:
-                x = tf.image.random_contrast(
-                    x, lower=1 - contrast, upper=1 + contrast
-                )
+                x = tf.image.random_contrast(x, lower=1 - contrast, upper=1 + contrast)
             elif saturation != 0 and i == 2:
-                x = tf.image.random_saturation(
-                    x, lower=1 - saturation, upper=1 + saturation
-                )
+                x = tf.image.random_saturation(x, lower=1 - saturation, upper=1 + saturation)
             elif hue != 0:
                 x = tf.image.random_hue(x, max_delta=hue)
             return x
 
         for i in range(4):
-            image = apply_transform(
-                i, image, brightness, contrast, saturation, hue
-            )
+            image = apply_transform(i, image, brightness, contrast, saturation, hue)
             image = tf.clip_by_value(image, 0.0, 1.0)
         return image
 
@@ -137,17 +127,13 @@ def color_jitter_rand(
                 if contrast == 0:
                     return x
                 else:
-                    return tf.image.random_contrast(
-                        x, lower=1 - contrast, upper=1 + contrast
-                    )
+                    return tf.image.random_contrast(x, lower=1 - contrast, upper=1 + contrast)
 
             def saturation_foo():
                 if saturation == 0:
                     return x
                 else:
-                    return tf.image.random_saturation(
-                        x, lower=1 - saturation, upper=1 + saturation
-                    )
+                    return tf.image.random_saturation(x, lower=1 - saturation, upper=1 + saturation)
 
             def hue_foo():
                 if hue == 0:
@@ -177,9 +163,7 @@ def to_grayscale(image: Tensor, keep_channels: bool = True) -> Tensor:
     return image
 
 
-def random_brightness(
-    image: Tensor, max_delta: float, impl: str = "multiplicative"
-) -> Tensor:
+def random_brightness(image: Tensor, max_delta: float, impl: str = "multiplicative") -> Tensor:
     """A multiplicative vs additive change of brightness.
 
     Args:
@@ -192,9 +176,7 @@ def random_brightness(
       The brightned image tensor.
     """
     if impl == "multiplicative":
-        factor = tf.random.uniform(
-            [], tf.maximum(1.0 - max_delta, 0), 1.0 + max_delta
-        )
+        factor = tf.random.uniform([], tf.maximum(1.0 - max_delta, 0), 1.0 + max_delta)
         image = image * factor
     elif impl == "additive":
         image = tf.image.random_brightness(image, max_delta=max_delta)

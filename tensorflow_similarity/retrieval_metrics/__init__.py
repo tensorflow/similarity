@@ -15,8 +15,8 @@
 set query examples and a set of indexed examples. Informally it can be thought
 of as how well the space is clustered among other things.
 """
-from .retrieval_metric import RetrievalMetric  # noqa
-from .recall_at_k import RecallAtK  # noqa
-from .precision_at_k import PrecisionAtK  # noqa
-from .map_at_k import MapAtK  # noqa
 from .bndcg import BNDCG  # noqa
+from .map_at_k import MapAtK  # noqa
+from .precision_at_k import PrecisionAtK  # noqa
+from .recall_at_k import RecallAtK  # noqa
+from .retrieval_metric import RetrievalMetric  # noqa

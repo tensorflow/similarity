@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import defaultdict
 import random
+from collections import defaultdict
 from typing import Sequence, Tuple
 
-from tqdm.auto import tqdm
 import numpy as np
+from tqdm.auto import tqdm
 
-from tensorflow_similarity.types import IntTensor, FloatTensor
+from tensorflow_similarity.types import FloatTensor, IntTensor
 
 
 def select_examples(
