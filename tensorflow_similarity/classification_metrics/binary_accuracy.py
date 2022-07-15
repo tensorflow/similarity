@@ -15,6 +15,7 @@
 import tensorflow as tf
 
 from tensorflow_similarity.types import FloatTensor
+
 from .classification_metric import ClassificationMetric
 
 
@@ -47,15 +48,11 @@ class BinaryAccuracy(ClassificationMetric):
                     calibration_metric='binary_accuracy')
     ```
     """
-    def __init__(self, name: str = 'binary_accuracy') -> None:
-        super().__init__(name=name, canonical_name='binary_accuracy')
 
-    def compute(self,
-                tp: FloatTensor,
-                fp: FloatTensor,
-                tn: FloatTensor,
-                fn: FloatTensor,
-                count: int) -> FloatTensor:
+    def __init__(self, name: str = "binary_accuracy") -> None:
+        super().__init__(name=name, canonical_name="binary_accuracy")
+
+    def compute(self, tp: FloatTensor, fp: FloatTensor, tn: FloatTensor, fn: FloatTensor, count: int) -> FloatTensor:
         """Compute the classification metric.
 
         The `compute()` method supports computing the metric for a set of
@@ -80,5 +77,5 @@ class BinaryAccuracy(ClassificationMetric):
         Returns:
             A 1D FloatTensor containing the metric at each distance threshold.
         """
-        result: FloatTensor = tp / tf.constant([count], dtype='float')
+        result: FloatTensor = tp / tf.constant([count], dtype="float")
         return result

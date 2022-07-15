@@ -19,16 +19,13 @@ $ python build_tf_org_api_docs.py --output_dir=/tmp/tfsim
 """
 import os
 import re
-from pathlib import Path
 import shutil
+from pathlib import Path
 
-from absl import app
-from absl import flags
 import tensorflow as tf
+from absl import app, flags
+from tensorflow_docs.api_generator import doc_controls, generate_lib, public_api
 from termcolor import cprint
-from tensorflow_docs.api_generator import doc_controls
-from tensorflow_docs.api_generator import generate_lib
-from tensorflow_docs.api_generator import public_api
 
 from tensorflow_similarity import api as TFSimilarity
 
@@ -55,10 +52,7 @@ flags.DEFINE_bool(
 flags.DEFINE_bool(
     "gen_report",
     False,
-    (
-        "Generate an API report containing the health of the"
-        "docstrings of the public API."
-    ),
+    ("Generate an API report containing the health of the" "docstrings of the public API."),
 )
 
 FLAGS = flags.FLAGS
@@ -130,9 +124,7 @@ def _hide_layer_and_module_methods():
     module_contents = list(tf.Module.__dict__.items())
     optimizer_contents = list(tf.compat.v1.train.Optimizer.__dict__.items())
 
-    for name, obj in (
-        model_contents + layer_contents + module_contents + optimizer_contents
-    ):
+    for name, obj in model_contents + layer_contents + module_contents + optimizer_contents:
 
         if name == "__init__":
             continue

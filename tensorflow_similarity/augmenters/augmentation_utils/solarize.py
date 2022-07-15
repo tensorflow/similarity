@@ -1,9 +1,9 @@
 import tensorflow as tf
 
-from tensorflow_similarity.types import Tensor
 from tensorflow_similarity.augmenters.augmentation_utils.random_apply import (
     random_apply,
 )
+from tensorflow_similarity.types import Tensor
 
 
 def random_solarize(

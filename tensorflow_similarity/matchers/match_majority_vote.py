@@ -16,26 +16,22 @@ from typing import Tuple
 
 import tensorflow as tf
 
-from .classification_match import ClassificationMatch
 from tensorflow_similarity.types import FloatTensor, IntTensor
+
+from .classification_match import ClassificationMatch
 
 
 class MatchMajorityVote(ClassificationMatch):
     """Match metrics for the most common label in a result set."""
 
-    def __init__(self,
-                 name: str = 'majority_vote',
-                 **kwargs) -> None:
+    def __init__(self, name: str = "majority_vote", **kwargs) -> None:
 
-        if 'canonical_name' not in kwargs:
-            kwargs['canonical_name'] = 'match_majority_vote'
+        if "canonical_name" not in kwargs:
+            kwargs["canonical_name"] = "match_majority_vote"
 
         super().__init__(name=name, **kwargs)
 
-    def derive_match(self,
-                     lookup_labels: IntTensor,
-                     lookup_distances: FloatTensor
-                     ) -> Tuple[IntTensor, FloatTensor]:
+    def derive_match(self, lookup_labels: IntTensor, lookup_distances: FloatTensor) -> Tuple[IntTensor, FloatTensor]:
         """Derive a match label and distance from a set of K neighbors.
 
         For each query, derive a single match label and distance given the

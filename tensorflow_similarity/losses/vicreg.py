@@ -58,9 +58,7 @@ class VicReg(tf.keras.losses.Loss):
         batch_size = tf.shape(za)[0]
 
         # distance loss to measure similarity between representations
-        sim_loss = tf.keras.losses.MeanSquaredError(reduction=self.reduction)(
-            za, zb
-        )
+        sim_loss = tf.keras.losses.MeanSquaredError(reduction=self.reduction)(za, zb)
         sim_loss = tf.keras.losses.MeanSquaredError(reduction="none")(za, zb)
 
         za = self.mean_center_columns(za)
@@ -81,9 +79,7 @@ class VicReg(tf.keras.losses.Loss):
         # covariance loss(1d tensor) for redundancy reduction
         cov_loss = off_diag_ca + off_diag_cb
 
-        loss: FloatTensor = (
-            self.lambda_ * sim_loss + self.mu * std_loss + self.nu * cov_loss
-        )
+        loss: FloatTensor = self.lambda_ * sim_loss + self.mu * std_loss + self.nu * cov_loss
 
         return loss
 
@@ -114,9 +110,7 @@ class VicReg(tf.keras.losses.Loss):
         off_diag_c = self.off_diagonal(c)
         off_diag_c = tf.math.pow(off_diag_c, 2)
 
-        off_diag_c = tf.math.reduce_sum(off_diag_c) / tf.cast(
-            num_features, tf.float32
-        )
+        off_diag_c = tf.math.reduce_sum(off_diag_c) / tf.cast(num_features, tf.float32)
 
         return off_diag_c
 

@@ -80,9 +80,7 @@ def soft_nn_loss(
     sacn = tf.reduce_sum(tf.math.multiply(negexpd, pos_mask), axis=1)
 
     # exclude examples with unique class from loss calculation
-    excl = tf.math.not_equal(
-        tf.reduce_sum(pos_mask, axis=1), tf.zeros(batch_size)
-    )
+    excl = tf.math.not_equal(tf.reduce_sum(pos_mask, axis=1), tf.zeros(batch_size))
     excl = tf.cast(excl, tf.float32)
 
     loss = tf.math.divide(sacn, alcn)
@@ -131,10 +129,4 @@ class SoftNearestNeighborLoss(MetricLoss):
         self.distance = distance
         self.temperature = temperature
 
-        super().__init__(
-            fn=soft_nn_loss,
-            name=name,
-            distance=distance,
-            temperature=temperature,
-            **kwargs
-        )
+        super().__init__(fn=soft_nn_loss, name=name, distance=distance, temperature=temperature, **kwargs)

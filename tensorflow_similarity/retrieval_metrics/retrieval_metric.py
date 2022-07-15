@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import abstractmethod
-from abc import ABC
 import math
+from abc import ABC, abstractmethod
 
 import tensorflow as tf
 
-from tensorflow_similarity.types import FloatTensor, IntTensor, BoolTensor
+from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
 
 
 class RetrievalMetric(ABC):
@@ -63,10 +62,7 @@ class RetrievalMetric(ABC):
     @property
     def name(self) -> str:
         if self.distance_threshold and self.distance_threshold != math.inf:
-            return (
-                f"{self._name}@{self.k} : "
-                f"distance_threshold@{self.distance_threshold}"
-            )
+            return f"{self._name}@{self.k} : " f"distance_threshold@{self.distance_threshold}"
         else:
             return f"{self._name}@{self.k}"
 
@@ -111,9 +107,7 @@ class RetrievalMetric(ABC):
             A rank 0 tensor containing the metric.
         """
 
-    def _check_shape(
-        self, query_labels: IntTensor, match_mask: FloatTensor
-    ) -> None:
+    def _check_shape(self, query_labels: IntTensor, match_mask: FloatTensor) -> None:
         if tf.shape(match_mask)[1] < self.k:
             raise ValueError(
                 f"The number of neighbors must be >= K. Number of neighbors is"

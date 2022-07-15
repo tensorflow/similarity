@@ -13,19 +13,14 @@
 # limitations under the License.
 
 from abc import ABC, abstractmethod
-
 from typing import List, Optional, Sequence, Tuple
 
 from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 
 
 class Store(ABC):
-
     @abstractmethod
-    def add(self,
-            embedding: FloatTensor,
-            label: Optional[int] = None,
-            data: Optional[Tensor] = None) -> int:
+    def add(self, embedding: FloatTensor, label: Optional[int] = None, data: Optional[Tensor] = None) -> int:
         """Add an Embedding record to the key value store.
 
         Args:
@@ -38,11 +33,14 @@ class Store(ABC):
         Returns:
             Associated record id.
         """
+
     @abstractmethod
-    def batch_add(self,
-                  embeddings: Sequence[FloatTensor],
-                  labels: Optional[Sequence[int]] = None,
-                  data: Optional[Sequence[Tensor]] = None) -> List[int]:
+    def batch_add(
+        self,
+        embeddings: Sequence[FloatTensor],
+        labels: Optional[Sequence[int]] = None,
+        data: Optional[Sequence[Tensor]] = None,
+    ) -> List[int]:
         """Add a set of embedding records to the key value store.
 
         Args:
@@ -60,9 +58,7 @@ class Store(ABC):
         """
 
     @abstractmethod
-    def get(self, idx: int) -> Tuple[FloatTensor,
-                                     Optional[int],
-                                     Optional[Tensor]]:
+    def get(self, idx: int) -> Tuple[FloatTensor, Optional[int], Optional[Tensor]]:
         """Get an embedding record from the key value store.
 
         Args:
@@ -73,10 +69,7 @@ class Store(ABC):
         """
 
     @abstractmethod
-    def batch_get(self,
-                  idxs: Sequence[int]) -> Tuple[List[FloatTensor],
-                                                List[Optional[int]],
-                                                List[Optional[Tensor]]]:
+    def batch_get(self, idxs: Sequence[int]) -> Tuple[List[FloatTensor], List[Optional[int]], List[Optional[Tensor]]]:
         """Get embedding records from the key value store.
 
         Args:

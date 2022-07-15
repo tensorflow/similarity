@@ -82,9 +82,7 @@ def simclr_eval_augmentation(
       A preprocessed image `Tensor`.
     """
     if crop:
-        image = center_crop(
-            image, height, width, crop_proportion=crop_proportion
-        )
+        image = center_crop(image, height, width, crop_proportion=crop_proportion)
     image = tf.reshape(image, [height, width, 3])
     image = tf.clip_by_value(image, 0.0, 1.0)
     return image
@@ -133,9 +131,7 @@ class SimCLRAugmenter(Augmenter):
             self.augment_img = self._eval_augment_img
 
     @tf.function
-    def augment(
-        self, x: Tensor, y: Tensor, num_views: int, is_warmup: bool
-    ) -> List[Tensor]:
+    def augment(self, x: Tensor, y: Tensor, num_views: int, is_warmup: bool) -> List[Tensor]:
 
         with tf.device("/cpu:0"):
             inputs = tf.stack(x)
@@ -144,9 +140,7 @@ class SimCLRAugmenter(Augmenter):
 
             for _ in range(num_views):
                 # multi-cor augementations
-                view = tf.map_fn(
-                    self.augment_img, inputs, parallel_iterations=self.num_cpu
-                )
+                view = tf.map_fn(self.augment_img, inputs, parallel_iterations=self.num_cpu)
                 views.append(view)
         return views
 
@@ -163,6 +157,4 @@ class SimCLRAugmenter(Augmenter):
         )
 
     def _eval_augment_img(self, img: Tensor) -> Tensor:
-        return simclr_eval_augmentation(
-            img, self.height, self.width, self.crop, self.eval_crop_proportion
-        )
+        return simclr_eval_augmentation(img, self.height, self.width, self.crop, self.eval_crop_proportion)

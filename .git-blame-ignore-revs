@@ -1,0 +1,4 @@
+# Since git version 2.23, git-blame has a feature to ignore any commit in this file.
+
+# Migrate code to black + isort
+dc219c04371306b6975e3b8f68815d94d376263d

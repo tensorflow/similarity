@@ -13,11 +13,11 @@
 # limitations under the License.
 """Classification metrics measure matching classification quality between a
 set query examples and a set of indexed examples. """
+from .binary_accuracy import BinaryAccuracy  # noqa
 from .classification_metric import ClassificationMetric  # noqa
 from .f1_score import F1Score  # noqa
 from .false_positive_rate import FalsePositiveRate  # noqa
 from .negative_predictive_value import NegativePredictiveValue  # noqa
 from .precision import Precision  # noqa
 from .recall import Recall  # noqa
-from .binary_accuracy import BinaryAccuracy  # noqa
 from .utils import make_classification_metric  # noqa

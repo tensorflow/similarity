@@ -15,6 +15,7 @@
 import tensorflow as tf
 
 from tensorflow_similarity.types import FloatTensor
+
 from .classification_metric import ClassificationMetric
 
 
@@ -41,15 +42,10 @@ class Recall(ClassificationMetric):
     ```
     """
 
-    def __init__(self, name: str = 'recall') -> None:
-        super().__init__(name=name, canonical_name='recall')
+    def __init__(self, name: str = "recall") -> None:
+        super().__init__(name=name, canonical_name="recall")
 
-    def compute(self,
-                tp: FloatTensor,
-                fp: FloatTensor,
-                tn: FloatTensor,
-                fn: FloatTensor,
-                count: int) -> FloatTensor:
+    def compute(self, tp: FloatTensor, fp: FloatTensor, tn: FloatTensor, fn: FloatTensor, count: int) -> FloatTensor:
         """Compute the classification metric.
 
         The `compute()` method supports computing the metric for a set of

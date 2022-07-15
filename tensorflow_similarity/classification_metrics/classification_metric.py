@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import abstractmethod
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from tensorflow_similarity.types import FloatTensor
 
@@ -41,11 +40,9 @@ class ClassificationMetric(ABC):
     where each value represents the counts at a specific distance threshold.
     """
 
-    def __init__(self,
-                 name: str = '',
-                 canonical_name: str = '',
-                 maximize: bool = True,
-                 increasing: bool = True) -> None:
+    def __init__(
+        self, name: str = "", canonical_name: str = "", maximize: bool = True, increasing: bool = True
+    ) -> None:
         self.name = name
         self.canonical_name = canonical_name
         self.maximize = maximize
@@ -62,16 +59,11 @@ class ClassificationMetric(ABC):
             "name": self.name,
             "canonical_name": self.canonical_name,
             "maximize": self.maximize,
-            "increasing": self.increasing
+            "increasing": self.increasing,
         }
 
     @abstractmethod
-    def compute(self,
-                tp: FloatTensor,
-                fp: FloatTensor,
-                tn: FloatTensor,
-                fn: FloatTensor,
-                count: int) -> FloatTensor:
+    def compute(self, tp: FloatTensor, fp: FloatTensor, tn: FloatTensor, fn: FloatTensor, count: int) -> FloatTensor:
         """Compute the classification metric.
 
         Args:

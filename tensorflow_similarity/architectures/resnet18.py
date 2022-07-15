@@ -17,6 +17,7 @@ from typing import Tuple
 
 import tensorflow as tf
 from tensorflow.keras import layers
+
 from tensorflow_similarity.layers import GeneralizedMeanPooling2D, MetricEmbedding
 from tensorflow_similarity.models import SimilarityModel
 

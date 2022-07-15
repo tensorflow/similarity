@@ -32,5 +32,5 @@ modifiying the [Indexer](../indexer.md) and sending a PR. In general, unless
 the backend is of general use, its better to not include it as
 a built-in option as it must be supported moving forward.
 """
-from .nmslib_search import NMSLibSearch # noqa
+from .nmslib_search import NMSLibSearch  # noqa
 from .search import Search  # noqa
