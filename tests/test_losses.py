@@ -1,12 +1,9 @@
-import numpy as np
 import tensorflow as tf
-
-from tensorflow_similarity.losses import (
-    MultiSimilarityLoss,
-    PNLoss,
-    SoftNearestNeighborLoss,
-    TripletLoss,
-)
+import numpy as np
+from tensorflow_similarity.losses import TripletLoss, MultiSimilarityLoss
+from tensorflow_similarity.losses import PNLoss
+from tensorflow_similarity.losses import SoftNearestNeighborLoss
+from tensorflow_similarity.losses import ArcFaceLoss
 
 # [triplet loss]
 from tensorflow_similarity.losses.xbm_loss import XBM
@@ -22,10 +19,10 @@ def test_triplet_loss_serialization():
 
 
 def triplet_hard_loss_np(labels, embedding, margin, dist_func, soft=False):
-
     num_data = embedding.shape[0]
     # Reshape labels to compute adjacency matrix.
-    labels_reshaped = np.reshape(labels.astype(np.float32), (labels.shape[0], 1))
+    labels_reshaped = np.reshape(labels.astype(np.float32),
+                                 (labels.shape[0], 1))
 
     adjacency = np.equal(labels_reshaped, labels_reshaped.T)
     pdist_matrix = dist_func(embedding)
@@ -52,7 +49,8 @@ def triplet_hard_loss_np(labels, embedding, margin, dist_func, soft=False):
         if soft:
             loss_np += np.log1p(np.exp(max_pos_distance - min_neg_distance))
         else:
-            loss_np += np.maximum(0.0, max_pos_distance - min_neg_distance + margin)
+            loss_np += np.maximum(0.0,
+                                  max_pos_distance - min_neg_distance + margin)
 
     loss_np /= num_data
     return loss_np
@@ -76,7 +74,8 @@ def test_triplet_loss_easy():
     y_true = tf.random.uniform((num_inputs,), 0, 3, dtype=tf.int32)
     # y_preds: embedding
     y_preds = tf.random.uniform((num_inputs, 16), 0, 1)
-    tpl = TripletLoss(positive_mining_strategy="easy", negative_mining_strategy="easy")
+    tpl = TripletLoss(positive_mining_strategy='easy',
+                      negative_mining_strategy='easy')
     # y_true, y_preds
     loss = tpl(y_true, y_preds)
     assert loss > 0
@@ -88,7 +87,8 @@ def test_triplet_loss_semi_hard():
     y_true = tf.random.uniform((num_inputs,), 0, 3, dtype=tf.int32)
     # y_preds: embedding
     y_preds = tf.random.uniform((num_inputs, 16), 0, 1)
-    tpl = TripletLoss(positive_mining_strategy="easy", negative_mining_strategy="semi-hard")
+    tpl = TripletLoss(positive_mining_strategy='easy',
+                      negative_mining_strategy='semi-hard')
     # y_true, y_preds
     loss = tpl(y_true, y_preds)
     assert loss
@@ -100,7 +100,8 @@ def test_triplet_loss_hard():
     y_true = tf.random.uniform((num_inputs,), 0, 3, dtype=tf.int32)
     # y_preds: embedding
     y_preds = tf.random.uniform((num_inputs, 16), 0, 1)
-    tpl = TripletLoss(positive_mining_strategy="hard", negative_mining_strategy="hard")
+    tpl = TripletLoss(positive_mining_strategy='hard',
+                      negative_mining_strategy='hard')
     # y_true, y_preds
     loss = tpl(y_true, y_preds)
     assert loss
@@ -154,13 +155,13 @@ def softnn_util(y_true, x, temperature=1):
         numerator = 0
         denominator = 0
         for j in range(batch_size):
-            if i == j:
-                continue
+            if i == j: continue
             if y_true[i] == y_true[j]:
-                numerator += np.exp(-1 * np.sum(np.square(x[i] - x[j])) / temperature)
-            denominator += np.exp(-1 * np.sum(np.square(x[i] - x[j])) / temperature)
-        if numerator == 0:
-            continue
+                numerator += np.exp(-1 *
+                                    np.sum(np.square(x[i] - x[j])) / temperature)
+            denominator += np.exp(-1 *
+                                  np.sum(np.square(x[i] - x[j])) / temperature)
+        if numerator == 0: continue
         loss += np.log(numerator / denominator)
     return -loss / batch_size
 
@@ -195,7 +196,7 @@ def test_xbm_loss():
             [3],
             [3],
         ],
-        dtype=tf.int32,
+        dtype=tf.int32
     )
 
     embeddings2 = tf.random.uniform(shape=[batch_size, embed_dim])
@@ -208,7 +209,7 @@ def test_xbm_loss():
             [6],
             [6],
         ],
-        dtype=tf.int32,
+        dtype=tf.int32
     )
 
     distance = "cosine"
@@ -239,3 +240,36 @@ def test_xbm_loss():
     loss_warm(labels2, embeddings2)
     assert loss_warm._y_pred_memory.numpy().shape == (batch_size, embed_dim)
     tf.assert_equal(loss_warm._y_true_memory, labels2)
+
+
+# arcface loss
+"""
+ArcFaceLoss
+    ArcFace: Additive Angular Margin Loss for Deep Face
+    Recognition. [online] arXiv.org. Available at:
+    <https://arxiv.org/abs/1801.07698v3>.
+"""
+
+
+def test_arcface_loss_serialization():
+    n_classes = 10
+    embed_size = 16
+    loss = ArcFaceLoss(num_classes=n_classes, embedding_size=embed_size)
+    config = loss.get_config()
+    loss2 = ArcFaceLoss.from_config(config)
+    assert loss.name == loss2.name
+    assert loss.margin == loss2.margin
+    assert loss.scale == loss2.scale
+    assert loss.num_classes == loss2.num_classes
+    assert loss.embedding_size == loss2.embedding_size
+
+
+
+def test_arcface_loss():
+    tf.random.set_seed(128)
+    loss_fn = ArcFaceLoss(num_classes=4, embedding_size=5)
+    labels = tf.Variable([0, 1, 2, 3])
+    embeddings = tf.Variable(tf.random.uniform(shape=[4, 5]))
+    loss = loss_fn(labels, embeddings)
+
+    assert 60.4 < loss.numpy() < 60.5
