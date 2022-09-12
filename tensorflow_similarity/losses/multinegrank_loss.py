@@ -18,7 +18,7 @@
 """
 
 
-from typing import Any, Callable, Union
+from typing import Any, Union
 
 import tensorflow as tf
 
@@ -32,24 +32,28 @@ def multineg_ranking_loss(
     query_emb: FloatTensor,
     key_emb: FloatTensor,
     scale: float,
-    distance: Callable
+    distance: Distance,
 ) -> Any:
     """Computes the multiple negatives ranking loss.
 
     Args:
         query_emb: Embedded query examples.
         key_emb: Embedded key examples.
+        scale: Float multiplier for scaling loss value
         distance: Which distance function to use to compute the pairwise.
 
     Returns:
         loss: loss value for the current batch.
     """
 
-    pairwise_dist = distance(query_emb, key_emb) * scale
-    expd = tf.math.exp(pairwise_dist)
+    pairwise_sim = distance(query_emb, key_emb) * scale
+    # considering similarity to be - distance
+    if distance.name != "inner_product":
+        pairwise_sim = -pairwise_sim
+    expd = tf.math.exp(pairwise_sim)
 
     sij_sum = tf.math.reduce_sum(expd, axis=1)
-    sii = tf.linalg.diag_part(pairwise_dist)
+    sii = tf.linalg.diag_part(pairwise_sim)
     examples_loss = -sii + tf.math.log(sij_sum)
 
     return examples_loss
@@ -76,8 +80,9 @@ class MultiNegativesRankLoss(MetricLoss):
         """Initializes the MultipleNegativesRankingLoss Loss
 
         Args:
-            `scale`: float value. Defaults to 20
-
+            `distance`: Which distance function to use.
+            `scale`: float value for scaling the loss value.
+                     Defaults to 20
             `name`: Loss name. Defaults to MultipleNegativesRankingLoss.
         """
         # distance canonicalization
@@ -85,14 +90,13 @@ class MultiNegativesRankLoss(MetricLoss):
         self.distance = distance
         self.scale = scale
 
-        super().__init__(
-            multineg_ranking_loss,
-            name=name,
-            distance=distance,
-            **kwargs
-        )
+        super().__init__(multineg_ranking_loss,
+                         name=name,
+                         distance=distance,
+                         **kwargs)
 
-    def call(self, query_emb: FloatTensor,
+    def call(self,
+             query_emb: FloatTensor,
              key_emb: FloatTensor) -> FloatTensor:
         """Invokes the `LossFunctionWrapper` instance.
 
@@ -103,8 +107,8 @@ class MultiNegativesRankLoss(MetricLoss):
         Returns:
           Loss values per sample.
         """
-        loss: FloatTensor = self.fn(
-            query_emb, key_emb, self.scale,
-            **self._fn_kwargs
-        )
+        loss: FloatTensor = self.fn(query_emb,
+                                    key_emb,
+                                    self.scale,
+                                    **self._fn_kwargs)
         return loss
