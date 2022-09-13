@@ -71,7 +71,7 @@ class ArcFaceLoss(MetricLoss):
                  reduction: Callable = tf.keras.losses.Reduction.AUTO,
                  **kwargs):
 
-        super().__init__(None, reduction=reduction, name=name, **kwargs)
+        super().__init__(Callable, reduction=reduction, name=name, **kwargs)
 
         self.num_classes = num_classes
         self.embedding_size = embedding_size
