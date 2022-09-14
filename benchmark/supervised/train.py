@@ -51,7 +51,9 @@ class NpEncoder(json.JSONEncoder):
 
 losses = {}
 losses["circle_loss"] = lambda p: CircleLoss(
-    distance=p.get("distance", "cosine"), gamma=p.get("gamma", 80.0), margin=p.get("margin", 0.40)
+    distance=p.get("distance", "cosine"),
+    gamma=p.get("gamma", 80.0),
+    margin=p.get("margin", 0.40),
 )
 losses["multisim_loss"] = lambda p: MultiSimilarityLoss(
     distance=p.get("distance", "cosine"),
@@ -274,15 +276,16 @@ def run(config):
             for loss_name, lconf in config["losses"].items():
                 for opt_name, oconf in config["optimizer"].items():
                     for training_name, tconf in config["training"].items():
-                        # params = [
-                        #     ["dataset_name", f"{dataset_name}"],
-                        #     ["architecture_name", f"{architecture_name}"],
-                        #     ["loss_name", f"{loss_name}"],
-                        #     ["opt_name", f"{opt_name}"],
-                        #     ["training_name", f"{training_name}"],
-                        # ]
                         headers = ["dataset_name", "architecture_name", "loss_name", "opt_name", "training_name"]
-                        row = [[f"{dataset_name}", f"{architecture_name}", f"{loss_name}", f"{opt_name}", f"{training_name}"]]
+                        row = [
+                            [
+                                f"{dataset_name}",
+                                f"{architecture_name}",
+                                f"{loss_name}",
+                                f"{opt_name}",
+                                f"{training_name}",
+                            ]
+                        ]
                         cprint(tabulate(row, headers=headers), "yellow")
 
                         gc.collect()
