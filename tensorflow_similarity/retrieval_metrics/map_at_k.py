@@ -68,14 +68,15 @@ class MapAtK(RetrievalMetric):
         queries.
 
         * 'micro': Calculates metrics globally over all queries.
+
+        drop_closest_lookup: If True, remove the closest lookup before computing
+        the metrics. This is used when the query set == indexed set.
     """
 
     def __init__(
         self,
         r: Mapping[int, int],
         name: str = "map",
-        k: int = 5,
-        average: str = "micro",
         **kwargs,
     ) -> None:
         if average == "macro":
@@ -84,7 +85,7 @@ class MapAtK(RetrievalMetric):
         if "canonical_name" not in kwargs:
             kwargs["canonical_name"] = "map@k"
 
-        super().__init__(name=name, k=k, average=average, **kwargs)
+        super().__init__(name=name, **kwargs)
         self.r = r
 
     def get_config(self):
@@ -117,9 +118,11 @@ class MapAtK(RetrievalMetric):
         """
         self._check_shape(query_labels, match_mask)
 
-        k_slice = tf.cast(match_mask[:, : self.k], dtype="float")
+        start_k = 1 if self.drop_closest_lookup else 0
+        k_slice = tf.cast(match_mask[:, start_k : start_k+self.k], dtype="float")
+
         tp = tf.math.cumsum(k_slice, axis=1)
-        p_at_k = tf.math.divide(tp, tf.range(1, self.k + 1, dtype="float"))
+        p_at_k = tf.math.divide(tp, tf.range(1, self.k, dtype="float"))
         p_at_k = tf.math.multiply(k_slice, p_at_k)
 
         if self.average == "micro":

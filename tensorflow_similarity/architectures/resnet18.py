@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"ResNet50 backbone for similarity learning"
+"ResNet18 backbone for similarity learning"
 from typing import Tuple
 
 import tensorflow as tf

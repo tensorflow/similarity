@@ -40,16 +40,18 @@ class RecallAtK(RetrievalMetric):
         queries.
 
         * 'micro': Calculates metrics globally over all queries.
-
         * 'macro': Calculates metrics for each label and takes the unweighted
-                   mean.
+        mean.
+
+        drop_closest_lookup: If True, remove the closest lookup before computing
+        the metrics. This is used when the query set == indexed set.
     """
 
-    def __init__(self, name: str = "recall", k: int = 5, **kwargs) -> None:
+    def __init__(self, name: str = "recall", **kwargs) -> None:
         if "canonical_name" not in kwargs:
             kwargs["canonical_name"] = "recall@k"
 
-        super().__init__(name=name, k=k, **kwargs)
+        super().__init__(name=name, **kwargs)
 
     def compute(
         self,
@@ -66,7 +68,7 @@ class RecallAtK(RetrievalMetric):
 
             match_mask: A 2D mask where a 1 indicates a match between the
             jth query and the kth neighbor and a 0 indicates a mismatch.
-
+            k
             **kwargs: Additional compute args.
 
         Returns:
@@ -74,7 +76,9 @@ class RecallAtK(RetrievalMetric):
         """
         self._check_shape(query_labels, match_mask)
 
-        k_slice = match_mask[:, : self.k]
+        start_k = 1 if self.drop_closest_lookup else 0
+        k_slice = match_mask[:, start_k : start_k+self.k]
+
         match_indicator = tf.math.reduce_any(k_slice, axis=1)
         match_indicator = tf.cast(match_indicator, dtype="float")
 
