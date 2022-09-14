@@ -430,6 +430,10 @@ class Indexer:
             if m.k > k:
                 k = m.k
 
+        # Add one more K to handle the case where we drop the closest lookup.
+        # This ensures that we always have enough lookups in the result set.
+        k += 1
+
         # Find NN
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 

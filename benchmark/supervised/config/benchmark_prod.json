@@ -1,0 +1,126 @@
+{
+    "version": "1.0.0",
+    "random_seed": 303,
+
+    "datasets": {
+        "cars196": {
+            "x_key": "image",
+            "y_key": "label",
+            "splits": ["train", "test"],
+            "train_classes": [0, 98],
+            "test_classes": [98, 196],
+            "train_validation_split": {
+                "num_queries": 300,
+                "num_targets": 300
+            },
+            "eval_split": {
+                "mode": "all"
+            }
+        },
+        "caltech_birds2011": {
+            "x_key": "image",
+            "y_key": "label",
+            "splits": ["train", "test"],
+            "train_classes": [0, 100],
+            "test_classes": [100, 199],
+            "train_validation_split": {
+                "num_queries": 300,
+                "num_targets": 300
+            },
+            "eval_split": {
+                "mode": "all"
+            }
+        }
+    },
+    "preprocess": {
+        "train": [
+            {
+                "name": "center_crop",
+                "height": 256,
+                "width": 256
+            }
+        ],
+        "test": [
+            {
+                "name": "center_crop",
+                "height": 227,
+                "width": 227
+            }
+        ]
+    },
+    "augmentations": {
+        "train":[
+            { 
+                "name": "random_resized_crop",
+                "target_size": [227, 227],
+                "crop_area_factor": [0.15625, 1.0],
+                "aspect_ratio_factor": [0.75, 1.3333]
+            },
+            { 
+                "name": "random_flip",
+                "mode": "horizontal"
+            }
+        ]
+    },
+    "architectures": {
+        "effnet_b0": {
+            "architecture": "effnet",
+            "input_shape": [227, 227, 3],
+            "embedding_sizes": [128, 512],
+            "variant": "B0",
+            "trainable": "frozen"
+        },
+        "resnet50": {
+            "architecture": "resnet50",
+            "input_shape": [227, 227, 3],
+            "embedding_sizes": [128, 512],
+            "trainable": "frozen"
+        }
+    },
+    "losses": {
+        "pn_loss_semi": {
+            "loss": "pn_loss",
+            "distance": "cosine",
+            "negative_mining": "semi-hard",
+            "lr": 0.001
+        },
+        "multisim_loss": {
+            "loss": "multisim_loss",
+            "distance": "cosine",
+            "gamma": 256,
+            "margin": 0.25,
+            "lr": 0.001
+        },
+        "circle_loss": {
+            "loss": "circle_loss",
+            "distance": "cosine",
+            "gamma": 256,
+            "margin": 0.25,
+            "lr": 0.001
+        }
+    },
+    "optimizer": {
+        "adam_lr3e-3":{
+            "optimizer": "adam",
+            "lr": 0.003
+        },
+        "lamb_lr3e-3":{
+            "optimizer": "lamb",
+            "lr": 0.003
+        }
+    },
+    "training": {
+        "basic" : {
+            "classes_per_batch": 8,
+            "examples_per_class_per_batch": 4,
+            "steps_per_epoch": 10,
+            "epochs": 2
+        }
+    },
+    "evaluation": {
+        "recall_at_k": {
+            "k": [1,2,4,8,16,32],
+            "average": "micro"
+        }
+    }
+}
