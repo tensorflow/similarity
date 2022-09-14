@@ -4,13 +4,10 @@
 
 ## Running the benchmark
 
-1. Generate datasets: `python generate_datasets.py -c config/benchmark_prod.json`
-datasets should be created under `datasets/__version__/__dataset_name__/
+1. Train models: `python generate_datasets.py -c config/benchmark_prod.json`
 
-2. Train models: `python generate_datasets.py -c config/benchmark_prod.json`
+2. Evaluate performance:
 
-3. Evaluate performance:
-
-4. Analyze results using notebook:
+3. Analyze results using notebook:
 
 ```

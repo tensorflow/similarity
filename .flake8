@@ -1,2 +1,3 @@
 [flake8]
 exclude = tmp.py, tests/
+max-line-length = 120
