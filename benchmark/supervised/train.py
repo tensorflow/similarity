@@ -3,6 +3,7 @@ import argparse
 import gc
 import json
 import os
+import shutil
 
 import keras_cv
 import numpy as np
@@ -15,7 +16,6 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow_addons.optimizers import LAMB
 from termcolor import cprint
 
-from benchmark import clean_dir
 from tensorflow_similarity.architectures import (
     EfficientNetSim,
     ResNet18Sim,
@@ -30,12 +30,14 @@ from tensorflow_similarity.losses import (
     SoftNearestNeighborLoss,
     TripletLoss,
 )
-from tensorflow_similarity.retrieval_metrics import RecallAtK
+from tensorflow_similarity.retrieval_metrics import MapAtK, PrecisionAtK, RecallAtK
 from tensorflow_similarity.samplers import TFDatasetMultiShotMemorySampler
 from tensorflow_similarity.utils import tf_cap_memory
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"  # noqa: E402
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+
+_BENCHMARK_DIR = "benchmark_results"
 
 
 class NpEncoder(json.JSONEncoder):
@@ -49,13 +51,13 @@ class NpEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-losses = {}
-losses["circle_loss"] = lambda p: CircleLoss(
+LOSSES = {}
+LOSSES["circle_loss"] = lambda p: CircleLoss(
     distance=p.get("distance", "cosine"),
     gamma=p.get("gamma", 80.0),
     margin=p.get("margin", 0.40),
 )
-losses["multisim_loss"] = lambda p: MultiSimilarityLoss(
+LOSSES["multisim_loss"] = lambda p: MultiSimilarityLoss(
     distance=p.get("distance", "cosine"),
     alpha=p.get("alpha", 2.0),
     beta=p.get("beta", 40.0),
@@ -63,18 +65,18 @@ losses["multisim_loss"] = lambda p: MultiSimilarityLoss(
     lmda=p.get("lmda", 0.5),
     center=p.get("center", 1.0),
 )
-losses["pn_loss"] = lambda p: PNLoss(
+LOSSES["pn_loss"] = lambda p: PNLoss(
     distance=p.get("distance", "cosine"),
     positive_mining_strategy=p.get("positive_mining", "hard"),
     negative_mining_strategy=p.get("negative_mining", "semi-hard"),
     soft_margin=p.get("soft_margin", False),
     margin=p.get("margin", 1.0),
 )
-losses["soft_nn"] = lambda p: SoftNearestNeighborLoss(
+LOSSES["soft_nn"] = lambda p: SoftNearestNeighborLoss(
     distance=p.get("distance", "cosine"),
     margin=p.get("temperature", 1.0),
 )
-losses["triplet_loss"] = lambda p: TripletLoss(
+LOSSES["triplet_loss"] = lambda p: TripletLoss(
     distance=p.get("distance", "cosine"),
     positive_mining_strategy=p.get("positive_mining", "hard"),
     negative_mining_strategy=p.get("negative_mining", "semi-hard"),
@@ -82,26 +84,83 @@ losses["triplet_loss"] = lambda p: TripletLoss(
     margin=p.get("margin", 1.0),
 )
 
-augmentations = {}
-augmentations["random_resized_crop"] = lambda params: keras_cv.layers.RandomResizedCrop(
-    target_size=params.get("target_size", (227, 227)),
-    crop_area_factor=params.get("crop_area_factor", (0.15625, 1.0)),
-    aspect_ratio_factor=params.get("aspect_ratio_factor", (0.75, 1.333)),
+OPTIMIZERS = {}
+OPTIMIZERS["adam"] = lambda p: Adam(
+    learning_rate=p.get("lr", 0.001),
+    beta_1=p.get("beta_1", 0.9),
+    beta_2=p.get("beta_2", 0.999),
+    epsilon=p.get("epsilon", 1e-07),
+    amsgrad=p.get("amsgrad", False),
 )
-augmentations["random_flip"] = lambda params: keras_cv.layers.RandomFlip(
-    mode=params.get("mode", "horizontal"),
+OPTIMIZERS["lamb"] = lambda p: LAMB(
+    learning_rate=p.get("learning_rate", 0.001),
+    beta_1=p.get("beta_1", 0.9),
+    beta_2=p.get("beta_2", 0.999),
+    epsilon=p.get("epsilon", 1e-06),
+    weight_decay=p.get("weight_decay", 0.0),
+    exclude_from_weight_decay=p.get("exclude_from_weight_decay", None),
+    exclude_from_layer_adaptation=p.get("exclude_from_layer_adaptation", None),
 )
-augmentations["center_crop"] = lambda params: tf.keras.layers.Resizing(
-    height=params.get("height", 256),
-    width=params.get("width", 256),
+
+ARCHITECTURES = {}
+ARCHITECTURES["effnet"] = lambda p: EfficientNetSim(
+    input_shape=p["input_shape"],
+    embedding_size=p.get("embedding", 128),
+    variant=p.get("variant", "B0"),
+    weights=p.get("weights", "imagenet"),
+    trainable=p.get("trainable", "frozen"),
+    l2_norm=p.get("l2_norm", True),
+    include_top=p.get("include_top", True),
+    pooling=p.get("pooling", "gem"),
+    gem_p=p.get("gem_p", 3.0),
+)
+ARCHITECTURES["resnet50"] = lambda p: ResNet50Sim(
+    input_shape=p["input_shape"],
+    embedding_size=p.get("embedding", 128),
+    weights=p.get("weights", "imagenet"),
+    trainable=p.get("trainable", "frozen"),
+    l2_norm=p.get("l2_norm", True),
+    include_top=p.get("include_top", True),
+    pooling=p.get("pooling", "gem"),
+    gem_p=p.get("gem_p", 3.0),
+)
+ARCHITECTURES["resnet18"] = lambda p: ResNet18Sim(
+    input_shape=p["input_shape"],
+    embedding_size=p.get("embedding", 128),
+    l2_norm=p.get("l2_norm", True),
+    include_top=p.get("include_top", True),
+    pooling=p.get("pooling", "gem"),
+    gem_p=p.get("gem_p", 3.0),
+)
+
+
+AUGMENTATIONS = {}
+AUGMENTATIONS["random_resized_crop"] = lambda p: keras_cv.layers.RandomResizedCrop(
+    target_size=p.get("target_size", (227, 227)),
+    crop_area_factor=p.get("crop_area_factor", (0.15625, 1.0)),
+    aspect_ratio_factor=p.get("aspect_ratio_factor", (0.75, 1.333)),
+)
+AUGMENTATIONS["random_flip"] = lambda p: keras_cv.layers.RandomFlip(
+    mode=p.get("mode", "horizontal"),
+)
+AUGMENTATIONS["center_crop"] = lambda p: tf.keras.layers.Resizing(
+    height=p.get("height", 256),
+    width=p.get("width", 256),
     crop_to_aspect_ratio=True,
 )
+
+
+def clean_dir(fpath):
+    "delete previous content and recreate dir"
+    if os.path.exists(fpath):
+        shutil.rmtree(fpath)
+    os.makedirs(fpath, exist_ok=True)
 
 
 def make_loss(params):
     loss_name = params.get("loss", "None")
     try:
-        loss = losses[loss_name](params)
+        loss = LOSSES[loss_name](params)
     except KeyError as exc:
         raise ValueError(f"Unknown loss name: {loss_name}") from exc
 
@@ -113,73 +172,45 @@ def make_loss(params):
 
 def make_optimizer(params):
     opt = params.get("optimizer", "None")
-    if opt == "adam":
-        return Adam(
-            learning_rate=params.get("lr", 0.001),
-            beta_1=params.get("beta_1", 0.9),
-            beta_2=params.get("beta_2", 0.999),
-            epsilon=params.get("epsilon", 1e-07),
-            amsgrad=params.get("amsgrad", False),
-        )
-    elif opt == "lamb":
-        return LAMB(
-            learning_rate=params.get("learning_rate", 0.001),
-            beta_1=params.get("beta_1", 0.9),
-            beta_2=params.get("beta_2", 0.999),
-            epsilon=params.get("epsilon", 1e-06),
-            weight_decay=params.get("weight_decay", 0.0),
-            exclude_from_weight_decay=params.get("exclude_from_weight_decay", None),
-            exclude_from_layer_adaptation=params.get("exclude_from_layer_adaptation", None),
-        )
-    else:
-        raise ValueError(f"Unknown optimizer name: {opt}")
+    try:
+        return OPTIMIZERS[opt](params)
+    except KeyError as exc:
+        raise ValueError(f"Unknown optimizer name: {opt}") from exc
 
 
 def make_architecture(params):
     architecture = params.get("architecture", "None")
-    if architecture == "effnet":
-        return EfficientNetSim(
-            input_shape=params["input_shape"],
-            embedding_size=params.get("embedding", 128),
-            variant=params.get("variant", "B0"),
-            weights=params.get("weights", "imagenet"),
-            trainable=params.get("trainable", "frozen"),
-            l2_norm=params.get("l2_norm", True),
-            include_top=params.get("include_top", True),
-            pooling=params.get("pooling", "gem"),
-            gem_p=params.get("gem_p", 3.0),
-        )
-    elif architecture == "resnet50":
-        return ResNet50Sim(
-            input_shape=params["input_shape"],
-            embedding_size=params.get("embedding", 128),
-            weights=params.get("weights", "imagenet"),
-            trainable=params.get("trainable", "frozen"),
-            l2_norm=params.get("l2_norm", True),
-            include_top=params.get("include_top", True),
-            pooling=params.get("pooling", "gem"),
-            gem_p=params.get("gem_p", 3.0),
-        )
-    elif architecture == "resnet18":
-        return ResNet18Sim(
-            input_shape=params["input_shape"],
-            embedding_size=params.get("embedding", 128),
-            l2_norm=params.get("l2_norm", True),
-            include_top=params.get("include_top", True),
-            pooling=params.get("pooling", "gem"),
-            gem_p=params.get("gem_p", 3.0),
-        )
-    else:
-        raise ValueError(f"Unknown architecture name: {architecture}")
+    try:
+        return ARCHITECTURES[architecture](params)
+    except KeyError as exc:
+        raise ValueError(f"Unknown architecture name: {architecture}") from exc
 
 
-def make_eval_metrics(tconf, econf):
+def make_eval_metrics(tconf, econf, class_counts):
     metrics = []
     drop_closest_lookup = True if tconf["eval_split"]["mode"] == "all" else False
     for metric_name, params in econf.items():
         if metric_name == "recall_at_k":
             for k in params["k"]:
-                metrics.append(RecallAtK(k=k, drop_closest_lookup=drop_closest_lookup))
+                metrics.append(
+                    RecallAtK(
+                        k=k,
+                        average=params.get("average", "micro"),
+                        drop_closest_lookup=drop_closest_lookup,
+                    )
+                )
+        elif metric_name == "precision_at_k":
+            for k in params["k"]:
+                metrics.append(
+                    PrecisionAtK(
+                        k=k,
+                        average=params.get("average", "micro"),
+                        drop_closest_lookup=drop_closest_lookup,
+                    )
+                )
+        elif metric_name == "map_at_k":
+            for k in params["k"]:
+                metrics.append(MapAtK(r=class_counts, k=k, drop_closest_lookup=drop_closest_lookup))
         else:
             raise ValueError(f"Unknown metric name: {metric_name}")
 
@@ -207,7 +238,7 @@ def make_eval_callback(train_ds, num_queries, num_targets):
 
 
 def make_train_sampler(dataset_name, dconf, tconf, pconf, aconf):
-    preprocs = [augmentations[pparams["name"]](pparams) for pparams in pconf["train"]]
+    preprocs = [AUGMENTATIONS[pparams["name"]](pparams) for pparams in pconf["train"]]
 
     def preprocess_fn(x, y):
         with tf.device("/cpu:0"):
@@ -215,7 +246,7 @@ def make_train_sampler(dataset_name, dconf, tconf, pconf, aconf):
                 x = p(x)
         return x, y
 
-    augs = [augmentations[aparams["name"]](aparams) for aparams in aconf["train"]]
+    augs = [AUGMENTATIONS[aparams["name"]](aparams) for aparams in aconf["train"]]
 
     def augmentation_fn(x, y, *args):
         for a in augs:
@@ -236,7 +267,7 @@ def make_train_sampler(dataset_name, dconf, tconf, pconf, aconf):
 
 
 def make_test_data(dataset_name, dconf, tconf, pconf):
-    preprocs = [augmentations[pparams["name"]](pparams) for pparams in pconf["test"]]
+    preprocs = [AUGMENTATIONS[pparams["name"]](pparams) for pparams in pconf["test"]]
 
     def preprocess_fn(x, y):
         with tf.device("/cpu:0"):
@@ -254,12 +285,13 @@ def make_test_data(dataset_name, dconf, tconf, pconf):
         class_list=list(range(*dconf["test_classes"])),
         preprocess_fn=preprocess_fn,
     )
-    return test_ds._x, test_ds._y
+    class_counts = {k: len(v) for k, v in test_ds.index_per_class.items()}
+    return test_ds._x, test_ds._y, class_counts
 
 
 def make_stub(version, dataset_name, architecture_name, loss_name, opt_name):
     run_grp = "_".join([dataset_name, architecture_name, loss_name, opt_name])
-    return os.path.join("models", version, run_grp)
+    return os.path.join(_BENCHMARK_DIR, version, run_grp)
 
 
 def build_model(aconf, lconf, oconf):
@@ -271,6 +303,10 @@ def build_model(aconf, lconf, oconf):
 
 
 def run(config):
+    if config.get("tfds_data_dir", None):
+        os.environ["TFDS_DATA_DIR"] = config["tfds_data_dir"]
+
+    agg_results = {}
     for dataset_name, dconf in config["datasets"].items():
         for architecture_name, aconf in config["architectures"].items():
             for loss_name, lconf in config["losses"].items():
@@ -336,8 +372,9 @@ def run(config):
                         )
 
                         # Evaluation
-                        test_x, test_y = make_test_data(dataset_name, dconf, tconf, pconf)
-                        eval_metrics = make_eval_metrics(dconf, config["evaluation"])
+                        test_x, test_y, class_counts = make_test_data(dataset_name, dconf, tconf, pconf)
+
+                        eval_metrics = make_eval_metrics(dconf, config["evaluation"], class_counts)
 
                         model.reset_index()
                         model.index(test_x, test_y)
@@ -348,7 +385,7 @@ def run(config):
                             retrieval_metrics=eval_metrics,
                         )
 
-                        print(eval_results)
+                        agg_results[os.path.basename(stub)] = eval_results
 
                         # Save history
                         with open(os.path.join(stub, "history.json"), "w") as o:
@@ -357,6 +394,9 @@ def run(config):
                         # Save eval metrics
                         with open(os.path.join(stub, "eval_metrics.json"), "w") as o:
                             o.write(json.dumps(eval_results, cls=NpEncoder))
+
+    with open(os.path.join(os.path.dirname(stub), "all_eval_metrics.json"), "w") as o:
+        o.write(json.dumps(agg_results, cls=NpEncoder))
 
 
 if __name__ == "__main__":
