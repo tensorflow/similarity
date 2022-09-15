@@ -1,6 +1,7 @@
 {
     "version": "1.0.0",
     "random_seed": 303,
+    "tfds_data_dir": "/workspace/tensorflow_datasets",
 
     "datasets": {
         "cars196": {
@@ -110,7 +111,7 @@
         }
     },
     "training": {
-        "basic" : {
+        "basic": {
             "classes_per_batch": 8,
             "examples_per_class_per_batch": 4,
             "steps_per_epoch": 10,
@@ -121,6 +122,13 @@
         "recall_at_k": {
             "k": [1,2,4,8,16,32],
             "average": "micro"
+        },
+        "precision_at_k": {
+            "k": [1,2,4,8,16,32],
+            "average": "micro"
+        },
+        "map_at_k": {
+            "k": [10, 50, 100, 200]
         }
     }
 }
