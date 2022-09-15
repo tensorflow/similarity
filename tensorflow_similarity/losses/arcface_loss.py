@@ -35,7 +35,7 @@ from typing import Any, Callable, Union
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-class ArcFaceLoss(MetricLoss):
+class ArcFaceLoss(tf.keras.losses.Loss):
     """Implement of ArcFace: Additive Angular Margin Loss:
             Step 1: Create a trainable kernel matrix with the shape of [embedding_size, num_classes].
             Step 2: Normalize the kernel and prediction vectors.
@@ -71,7 +71,7 @@ class ArcFaceLoss(MetricLoss):
                  reduction: Callable = tf.keras.losses.Reduction.AUTO,
                  **kwargs):
 
-        super().__init__(Callable, reduction=reduction, name=name, **kwargs)
+        super().__init__(reduction=reduction, name=name, **kwargs)
 
         self.num_classes = num_classes
         self.embedding_size = embedding_size
