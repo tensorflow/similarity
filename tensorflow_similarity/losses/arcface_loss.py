@@ -107,7 +107,7 @@ class ArcFaceLoss(tf.keras.losses.Loss):
     def get_config(self) -> Dict[str, Any]:
         """Contains the loss configuration.
         Returns:
-            A Python dict containing the configuration of the loss.
+            The configuration of the loss.
         """
         config = {
             "num_classes": self.num_classes,
