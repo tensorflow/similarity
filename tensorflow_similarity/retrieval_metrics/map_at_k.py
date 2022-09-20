@@ -79,7 +79,7 @@ class MapAtK(RetrievalMetric):
         name: str = "map",
         **kwargs,
     ) -> None:
-        if kwargs.get('average') == "macro":
+        if kwargs.get("average") == "macro":
             raise ValueError("Mean Average Precision only supports micro averaging.")
 
         if "canonical_name" not in kwargs:
@@ -121,12 +121,12 @@ class MapAtK(RetrievalMetric):
         start_k = 0
         if self.drop_closest_lookup:
             start_k = 1
-            self.r = {k: max(1, v-1) for k, v in self.r.items()}
+            self.r = {k: max(1, v - 1) for k, v in self.r.items()}
 
-        k_slice = tf.cast(match_mask[:, start_k : start_k+self.k], dtype="float")
+        k_slice = tf.cast(match_mask[:, start_k : start_k + self.k], dtype="float")
 
         tp = tf.math.cumsum(k_slice, axis=1)
-        p_at_k = tf.math.divide(tp, tf.range(1, self.k+1, dtype="float"))
+        p_at_k = tf.math.divide(tp, tf.range(1, self.k + 1, dtype="float"))
         p_at_k = tf.math.multiply(k_slice, p_at_k)
 
         if self.average == "micro":
