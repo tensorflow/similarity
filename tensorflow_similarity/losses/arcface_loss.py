@@ -23,6 +23,7 @@ Recognition. [online] arXiv.org. Available at:
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import tensorflow as tf
+
 from tensorflow_similarity.algebra import build_masks
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor, IntTensor
@@ -96,9 +97,7 @@ class ArcFaceLoss(tf.keras.losses.Loss):
         cos_theta = tf.math.cos(cos_theta)
         cos_theta = tf.math.multiply(cos_theta, self.scale)
 
-        cce = tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True, reduction=self.reduction
-        )
+        cce = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=self.reduction)
         loss: FloatTensor = cce(y_true, cos_theta)
 
         return loss
@@ -106,7 +105,7 @@ class ArcFaceLoss(tf.keras.losses.Loss):
     def get_config(self) -> Dict[str, Any]:
         """Contains the loss configuration.
         Returns:
-            The configuration of the loss.
+        The configuration of the ArcFace loss.
         """
         config = {
             "num_classes": self.num_classes,

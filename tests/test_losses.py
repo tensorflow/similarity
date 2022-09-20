@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+
 from tensorflow_similarity.losses import (
     ArcFaceLoss,
     MultiSimilarityLoss,
@@ -87,9 +88,7 @@ def test_triplet_loss_semi_hard():
     y_true = tf.random.uniform((num_inputs,), 0, 3, dtype=tf.int32)
     # y_preds: embedding
     y_preds = tf.random.uniform((num_inputs, 16), 0, 1)
-    tpl = TripletLoss(
-        positive_mining_strategy="easy", negative_mining_strategy="semi-hard"
-    )
+    tpl = TripletLoss(positive_mining_strategy="easy", negative_mining_strategy="semi-hard")
     # y_true, y_preds
     loss = tpl(y_true, y_preds)
     assert loss
@@ -187,30 +186,10 @@ def test_xbm_loss():
     embed_dim = 16
 
     embeddings1 = tf.random.uniform(shape=[batch_size, embed_dim])
-    labels1 = tf.constant(
-        [
-            [1],
-            [1],
-            [2],
-            [2],
-            [3],
-            [3],
-        ],
-        dtype=tf.int32,
-    )
+    labels1 = tf.constant([[1], [1], [2], [2], [3], [3],], dtype=tf.int32,)
 
     embeddings2 = tf.random.uniform(shape=[batch_size, embed_dim])
-    labels2 = tf.constant(
-        [
-            [4],
-            [4],
-            [5],
-            [5],
-            [6],
-            [6],
-        ],
-        dtype=tf.int32,
-    )
+    labels2 = tf.constant([[4], [4], [5], [5], [6], [6],], dtype=tf.int32,)
 
     distance = "cosine"
     loss = MultiSimilarityLoss(distance=distance)
@@ -250,7 +229,7 @@ ArcFaceLoss
     <https://arxiv.org/abs/1801.07698v3>.
 """
 
-
+# serilization test
 def test_arcface_loss_serialization():
     n_classes = 10
     embed_size = 16
@@ -264,6 +243,7 @@ def test_arcface_loss_serialization():
     assert loss.embedding_size == loss2.embedding_size
 
 
+# unit test
 def test_arcface_loss():
     tf.random.set_seed(128)
     loss_fn = ArcFaceLoss(num_classes=4, embedding_size=5)
