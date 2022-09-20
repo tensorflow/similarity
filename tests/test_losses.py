@@ -1,6 +1,5 @@
 import numpy as np
 import tensorflow as tf
-
 from tensorflow_similarity.losses import (
     ArcFaceLoss,
     MultiSimilarityLoss,
