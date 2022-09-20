@@ -125,7 +125,7 @@ class BNDCG(RetrievalMetric):
         k_slice = tf.math.multiply(
             tf.cast(match_mask, dtype="float"),
             tf.cast(dist_mask, dtype="float"),
-        )[:, start_k : start_k+self.k]
+        )[:, start_idx : start_idx+self.k]
 
         rank = tf.range(1, self.k + 1, dtype="float")
         rank_weights = tf.math.divide(tf.math.log1p(rank), tf.math.log(2.0))
