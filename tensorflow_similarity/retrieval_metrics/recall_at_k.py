@@ -77,7 +77,7 @@ class RecallAtK(RetrievalMetric):
         self._check_shape(query_labels, match_mask)
 
         start_k = 1 if self.drop_closest_lookup else 0
-        k_slice = match_mask[:, start_k : start_k+self.k]
+        k_slice = match_mask[:, start_k : start_k + self.k]
 
         match_indicator = tf.math.reduce_any(k_slice, axis=1)
         match_indicator = tf.cast(match_indicator, dtype="float")

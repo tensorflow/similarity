@@ -88,7 +88,7 @@ class PrecisionAtK(RetrievalMetric):
         self._check_shape(query_labels, match_mask)
 
         start_k = 1 if self.drop_closest_lookup else 0
-        k_slice = tf.cast(match_mask[:, start_k : start_k+self.k], dtype="float")
+        k_slice = tf.cast(match_mask[:, start_k : start_k + self.k], dtype="float")
 
         tp = tf.math.reduce_sum(k_slice, axis=1)
         per_example_p = tf.math.divide(tp, self.k)
