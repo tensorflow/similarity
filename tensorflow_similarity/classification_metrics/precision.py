@@ -84,7 +84,7 @@ class Precision(ClassificationMetric):
         # The following accounts for the and sets the first precision value to
         # 1.0 if the first recall and precision are both zero.
         if (tp + fp)[0] == 0.0 and len(p) > 1:
-            initial_precision = tf.constant([tf.constant([1.0]), tf.zeros(len(p) - 1)], axis=0)
+            initial_precision = tf.concat([tf.constant([1.0]), tf.zeros(len(p) - 1)], axis=0)
             p = p + initial_precision
 
         return p
