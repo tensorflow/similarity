@@ -90,14 +90,9 @@ class MultiNegativesRankLoss(MetricLoss):
         self.distance = distance
         self.scale = scale
 
-        super().__init__(multineg_ranking_loss,
-                         name=name,
-                         distance=distance,
-                         **kwargs)
+        super().__init__(multineg_ranking_loss, name=name, distance=distance, **kwargs)
 
-    def call(self,
-             query_emb: FloatTensor,
-             key_emb: FloatTensor) -> FloatTensor:
+    def call(self, query_emb: FloatTensor, key_emb: FloatTensor) -> FloatTensor:
         """Invokes the `LossFunctionWrapper` instance.
 
         Args:
@@ -107,8 +102,5 @@ class MultiNegativesRankLoss(MetricLoss):
         Returns:
           Loss values per sample.
         """
-        loss: FloatTensor = self.fn(query_emb,
-                                    key_emb,
-                                    self.scale,
-                                    **self._fn_kwargs)
+        loss: FloatTensor = self.fn(query_emb, key_emb, self.scale, **self._fn_kwargs)
         return loss

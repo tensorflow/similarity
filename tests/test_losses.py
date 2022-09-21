@@ -2,11 +2,11 @@ import numpy as np
 import tensorflow as tf
 
 from tensorflow_similarity.losses import (
+    MultiNegativesRankLoss,
     MultiSimilarityLoss,
     PNLoss,
     SoftNearestNeighborLoss,
     TripletLoss,
-    MultiNegativesRankLoss,
 )
 
 # [triplet loss]
@@ -222,12 +222,18 @@ def test_xbm_loss():
     tf.assert_equal(loss_nowarm._y_true_memory, labels1)
 
     loss_nowarm(labels2, embeddings2)
-    assert loss_nowarm._y_pred_memory.numpy().shape == (2 * batch_size, embed_dim)
+    assert loss_nowarm._y_pred_memory.numpy().shape == (
+        2 * batch_size,
+        embed_dim,
+    )
     tf.assert_equal(loss_nowarm._y_true_memory, tf.concat([labels2, labels1], axis=0))
 
     # test dequeue
     loss_nowarm(labels2, embeddings2)
-    assert loss_nowarm._y_pred_memory.numpy().shape == (2 * batch_size, embed_dim)
+    assert loss_nowarm._y_pred_memory.numpy().shape == (
+        2 * batch_size,
+        embed_dim,
+    )
     tf.assert_equal(loss_nowarm._y_true_memory, tf.concat([labels2, labels2], axis=0))
 
     # test warmup
