@@ -135,7 +135,7 @@ ARCHITECTURES["resnet18"] = lambda p: ResNet18Sim(
 
 
 AUGMENTATIONS = {}
-AUGMENTATIONS["random_resized_crop"] = lambda p: keras_cv.layers.RandomResizedCrop(
+AUGMENTATIONS["random_resized_crop"] = lambda p: keras_cv.layers.RandomCropAndResize(
     target_size=p.get("target_size", (227, 227)),
     crop_area_factor=p.get("crop_area_factor", (0.15625, 1.0)),
     aspect_ratio_factor=p.get("aspect_ratio_factor", (0.75, 1.333)),
