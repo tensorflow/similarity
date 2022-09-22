@@ -1,14 +1,8 @@
 import numpy as np
 import tensorflow as tf
-
-from tensorflow_similarity.losses import (
-    ArcFaceLoss,
-    MultiSimilarityLoss,
-    PNLoss,
-    SoftNearestNeighborLoss,
-    TripletLoss,
-)
-
+from tensorflow_similarity.losses import (ArcFaceLoss, MultiSimilarityLoss,
+                                          PNLoss, SoftNearestNeighborLoss,
+                                          TripletLoss)
 # [triplet loss]
 from tensorflow_similarity.losses.xbm_loss import XBM
 
@@ -270,6 +264,9 @@ def test_arcface_loss():
     loss_fn = ArcFaceLoss(num_classes=4, embedding_size=5)
     labels = tf.Variable([0, 1, 2, 3])
     embeddings = tf.Variable(tf.random.uniform(shape=[4, 5]))
+    print(embeddings)
+
     loss = loss_fn(labels, embeddings)
+    print(loss)
 
     assert 60.4 < loss.numpy() < 60.5
