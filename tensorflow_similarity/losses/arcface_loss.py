@@ -13,11 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 """ArcFace losses  base class.
-
 ArcFace: Additive Angular Margin Loss for Deep Face
 Recognition. [online] arXiv.org. Available at:
 <https://arxiv.org/abs/1801.07698v3>.
-
 """
 
 from typing import Any, Callable, Dict, Optional, Tuple, Union
@@ -41,11 +39,9 @@ class ArcFaceLoss(tf.keras.losses.Loss):
     Step 4: Create a one-hot vector include the margin value for the ground truth class.
     Step 5: Add margin_hot to the cosine similarity and multiply it by scale.
     Step 6: Calculate the cross-entropy loss.
-
     ArcFace: Additive Angular Margin Loss for Deep Face
              Recognition. [online] arXiv.org. Available at:
              <https://arxiv.org/abs/1801.07698v3>.
-
     Standalone usage:
         >>> loss_fn = tfsim.losses.ArcFaceLoss(num_classes=2, embedding_size=3)
         >>> labels = tf.Variable([1, 0])
@@ -106,7 +102,7 @@ class ArcFaceLoss(tf.keras.losses.Loss):
     def get_config(self) -> Dict[str, Any]:
         """Contains the loss configuration.
         Returns:
-            A Python dict containing the configuration of the loss.
+        The configuration of the ArcFace loss.
         """
         config = {
             "num_classes": self.num_classes,
