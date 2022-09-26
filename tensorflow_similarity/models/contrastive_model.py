@@ -92,24 +92,27 @@ def load_model(filepath):
 
     model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
-    # collect train variables from both the backbone, projector, and projector
-    tvars = model.backbone.trainable_variables
-    tvars = tvars + model.projector.trainable_variables
-    if model.predictor is not None:
-        tvars = tvars + model.predictor.trainable_variables
+    def load_optim_weights():
+        # collect train variables from both the backbone, projector, and projector
+        tvars = model.backbone.trainable_variables
+        tvars = tvars + model.projector.trainable_variables
+        if model.predictor is not None:
+            tvars = tvars + model.predictor.trainable_variables
 
-    # dummy zero gradients
-    zero_grads = [tf.zeros_like(w) for w in tvars]
-    # save current state of variables
-    saved_vars = [tf.identity(w) for w in tvars]
+        # dummy zero gradients
+        zero_grads = [tf.zeros_like(w) for w in tvars]
+        # save current state of variables
+        saved_vars = [tf.identity(w) for w in tvars]
 
-    optimizer.apply_gradients(zip(zero_grads, tvars))
+        model.optimizer.apply_gradients(zip(zero_grads, tvars))
 
-    # Reload variables
-    [x.assign(y) for x, y in zip(tvars, saved_vars)]
+        # Reload variables
+        [x.assign(y) for x, y in zip(tvars, saved_vars)]
 
-    optimizer.set_weights(opt_weights)
+        model.optimizer.set_weights(opt_weights)
 
+    strategy = tf.distribute.get_strategy()
+    strategy.run(load_optim_weights)
     return model
 
 
