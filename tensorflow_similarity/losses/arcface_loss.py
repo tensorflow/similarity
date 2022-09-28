@@ -18,16 +18,12 @@ Recognition. [online] arXiv.org. Available at:
 <https://arxiv.org/abs/1801.07698v3>.
 """
 
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Optional
 
 import tensorflow as tf
-from tensorflow_similarity.algebra import build_masks
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
-from tensorflow_similarity.types import FloatTensor, IntTensor
-from tensorflow_similarity.utils import is_tensor_or_variable
 
-from .metric_loss import MetricLoss
-from .utils import logsumexp
+from tensorflow_similarity.distances import Distance
+from tensorflow_similarity.types import FloatTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -74,7 +70,9 @@ class ArcFaceLoss(tf.keras.losses.Loss):
         self.margin = margin
         self.scale = scale
         self.name = name
-        self.kernel = tf.Variable(tf.random.normal([embedding_size, num_classes]))
+        self.kernel = tf.Variable(
+            tf.random.normal([embedding_size, num_classes]), trainable=True
+        )
 
     def call(self, y_true: FloatTensor, y_pred: FloatTensor) -> FloatTensor:
 
