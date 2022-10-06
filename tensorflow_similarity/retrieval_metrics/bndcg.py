@@ -62,26 +62,26 @@ class BNDCG(RetrievalMetric):
         distance_threshold: The max distance below which a nearest neighbor is
         considered a valid match.
 
-        average: {'micro', 'macro'} Determines the type of averaging performed
-        on the data.
+        average: {'micro'} Determines the type of averaging performed over the
+        queries.
 
-        * 'micro': Calculates metrics globally over all data.
-
+        * 'micro': Calculates metrics globally over all queries.
         * 'macro': Calculates metrics for each label and takes the unweighted
-                   mean.
+        mean.
+
+        drop_closest_lookup: If True, remove the closest lookup before computing
+        the metrics. This is used when the query set == indexed set.
     """
 
     def __init__(
         self,
         name: str = "ndcg",
-        k: int = 5,
-        distance_threshold: float = math.inf,
         **kwargs,
     ) -> None:
         if "canonical_name" not in kwargs:
             kwargs["canonical_name"] = "ndcg@k"
 
-        super().__init__(name=name, k=k, distance_threshold=distance_threshold, **kwargs)
+        super().__init__(name=name, **kwargs)
 
     def compute(
         self,
@@ -121,10 +121,11 @@ class BNDCG(RetrievalMetric):
 
         dist_mask = tf.math.less_equal(lookup_distances, self.distance_threshold)
 
+        start_idx = 1 if self.drop_closest_lookup else 0
         k_slice = tf.math.multiply(
             tf.cast(match_mask, dtype="float"),
             tf.cast(dist_mask, dtype="float"),
-        )[:, : self.k]
+        )[:, start_idx : start_idx + self.k]
 
         rank = tf.range(1, self.k + 1, dtype="float")
         rank_weights = tf.math.divide(tf.math.log1p(rank), tf.math.log(2.0))

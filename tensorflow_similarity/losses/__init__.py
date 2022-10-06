@@ -23,6 +23,6 @@ from .multisim_loss import MultiSimilarityLoss  # noqa
 from .simsiam import SimSiamLoss  # noqa
 from .simclr import SimCLRLoss  # noqa
 from .vicreg import VicReg  # noqa
-from .barlow import Barlow  # noqa
-from .softnn_loss import SoftNearestNeighborLoss  # noqa
 from .arcface_loss import ArcFaceLoss  # noqa
+from .xbm_loss import XBM  # noqa
+

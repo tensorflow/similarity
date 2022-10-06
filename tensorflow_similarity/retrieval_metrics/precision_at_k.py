@@ -47,20 +47,22 @@ class PrecisionAtK(RetrievalMetric):
         distance_threshold: The max distance below which a nearest neighbor is
         considered a valid match.
 
-        average: {'micro', 'macro'} Determines the type of averaging performed
-        on the data.
+        average: {'micro'} Determines the type of averaging performed over the
+        queries.
 
-        * 'micro': Calculates metrics globally over all data.
-
+        * 'micro': Calculates metrics globally over all queries.
         * 'macro': Calculates metrics for each label and takes the unweighted
-                   mean.
+        mean.
+
+        drop_closest_lookup: If True, remove the closest lookup before computing
+        the metrics. This is used when the query set == indexed set.
     """
 
-    def __init__(self, name: str = "precision", k: int = 5, **kwargs) -> None:
+    def __init__(self, name: str = "precision", **kwargs) -> None:
         if "canonical_name" not in kwargs:
             kwargs["canonical_name"] = "precision@k"
 
-        super().__init__(name=name, k=k, **kwargs)
+        super().__init__(name=name, **kwargs)
 
     def compute(
         self,
@@ -85,7 +87,9 @@ class PrecisionAtK(RetrievalMetric):
         """
         self._check_shape(query_labels, match_mask)
 
-        k_slice = tf.cast(match_mask[:, : self.k], dtype="float")
+        start_k = 1 if self.drop_closest_lookup else 0
+        k_slice = tf.cast(match_mask[:, start_k : start_k + self.k], dtype="float")
+
         tp = tf.math.reduce_sum(k_slice, axis=1)
         per_example_p = tf.math.divide(tp, self.k)
 
