@@ -1,9 +1,13 @@
 import numpy as np
 import tensorflow as tf
+from tensorflow_similarity.losses import (
+    ArcFaceLoss,
+    MultiSimilarityLoss,
+    PNLoss,
+    SoftNearestNeighborLoss,
+    TripletLoss,
+)
 
-from tensorflow_similarity.losses import (ArcFaceLoss, MultiSimilarityLoss,
-                                          PNLoss, SoftNearestNeighborLoss,
-                                          TripletLoss)
 # [triplet loss]
 from tensorflow_similarity.losses.xbm_loss import XBM
 
