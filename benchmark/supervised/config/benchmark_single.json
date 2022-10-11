@@ -1,5 +1,5 @@
 {
-    "version": "1.0.0",
+    "version": "1.0.0.1",
     "random_seed": 303,
     "tfds_data_dir": "/workspace/tensorflow_datasets",
 
@@ -9,20 +9,6 @@
             "y_key": "label",
             "train_classes": [0, 98],
             "test_classes": [98, 196],
-            "train_val_splits": {
-                "n_splits": 4,
-                "val_class_pctg": 0.125
-            },
-            "eval_callback": {
-                "max_num_queries": 300,
-                "max_num_targets": 1000
-            }
-        },
-        "caltech_birds2011": {
-            "x_key": "image",
-            "y_key": "label",
-            "train_classes": [0, 100],
-            "test_classes": [100, 199],
             "train_val_splits": {
                 "n_splits": 4,
                 "val_class_pctg": 0.125
@@ -68,20 +54,9 @@
             "embedding_sizes": [128, 512],
             "variant": "B0",
             "trainable": "frozen"
-        },
-        "resnet50": {
-            "architecture": "resnet50",
-            "input_shape": [227, 227, 3],
-            "embedding_sizes": [128, 512],
-            "trainable": "frozen"
         }
     },
     "losses": {
-        "pn_loss_semi": {
-            "loss": "pn_loss",
-            "distance": "cosine",
-            "negative_mining": "semi-hard"
-        },
         "multisim_loss": {
             "loss": "multisim_loss",
             "distance": "cosine",
@@ -89,21 +64,11 @@
             "beta": 40.0,
             "epsilon": 0.1,
             "lmda": 0.5
-        },
-        "circle_loss": {
-            "loss": "circle_loss",
-            "distance": "cosine",
-            "gamma": 80.0,
-            "margin": 0.4
         }
     },
     "optimizer": {
         "adam_lr3e-3":{
             "optimizer": "adam",
-            "lr": 0.003
-        },
-        "lamb_lr3e-3":{
-            "optimizer": "lamb",
             "lr": 0.003
         }
     },
@@ -111,8 +76,7 @@
         "basic": {
             "classes_per_batch": 8,
             "examples_per_class_per_batch": 4,
-            "steps_per_epoch": 1,
-            "epochs": 1
+            "epochs": 200
         }
     },
     "evaluation": {
@@ -127,3 +91,4 @@
         "map_at_r": { }
     }
 }
+
