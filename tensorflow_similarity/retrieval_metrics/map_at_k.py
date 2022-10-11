@@ -54,6 +54,12 @@ class MapAtK(RetrievalMetric):
         r: A mapping from class id to the number of examples in the index,
         e.g., r[4] = 10 represents 10 indexed examples from class 4.
 
+        clip_at_r: If True, set precision at K values to 0.0 for all values
+        with rank greater than the count defined in the r mapping, e.g., a
+        result set of 10 values, for a query label with 7 indexed examples,
+        will have the last 3 precision at K values set to 0.0. Use this to
+        compute MAP@R. See section 3.2 of https://arxiv.org/pdf/2003.08505.pdf
+
         name: Name associated with the metric object, e.g., avg_precision@5
 
         canonical_name: The canonical name associated with metric, e.g.,
@@ -76,6 +82,7 @@ class MapAtK(RetrievalMetric):
     def __init__(
         self,
         r: Mapping[int, int],
+        clip_at_r: bool = False,
         name: str = "map",
         **kwargs,
     ) -> None:
@@ -87,10 +94,12 @@ class MapAtK(RetrievalMetric):
 
         super().__init__(name=name, **kwargs)
         self.r = r
+        self.clip_at_r = clip_at_r
 
     def get_config(self):
         config = {
             "r": self.r,
+            "clip_at_r": self.clip_at_r,
         }
         base_config = super().get_config()
         return {**base_config, **config}
@@ -121,7 +130,7 @@ class MapAtK(RetrievalMetric):
         start_k = 0
         if self.drop_closest_lookup:
             start_k = 1
-            self.r = {k: max(1, v - 1) for k, v in self.r.items()}
+            self.r = {k: tf.math.maximum(1, v - 1) for k, v in self.r.items()}
 
         k_slice = tf.cast(match_mask[:, start_k : start_k + self.k], dtype="float")
 
@@ -140,6 +149,20 @@ class MapAtK(RetrievalMetric):
                 default_value=-1,
             )
             class_counts = table.lookup(query_labels)
+
+            if self.clip_at_r:
+                query_masks = []
+                result_set_size = tf.shape(p_at_k)[1]
+                for cc in class_counts:
+                    cc = tf.cast(cc, dtype=result_set_size.dtype)
+                    num_zeros = tf.math.subtract(result_set_size, cc)
+                    query_masks.append(
+                        tf.concat([tf.ones([1, cc]), tf.zeros([1, num_zeros])], axis=1)
+                    )
+
+                mask = tf.concat(query_masks, axis=0)
+                p_at_k = tf.math.multiply(p_at_k, mask)
+
             avg_p_at_k = tf.math.divide(
                 tf.math.reduce_sum(p_at_k, axis=1),
                 tf.cast(class_counts, dtype="float"),
