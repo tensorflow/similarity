@@ -10,7 +10,7 @@
             "train_classes": [0, 98],
             "test_classes": [98, 196],
             "train_val_splits": {
-                "n_splits": 4,
+                "n_splits": 1,
                 "val_class_pctg": 0.125
             },
             "eval_callback": {
@@ -48,12 +48,11 @@
         ]
     },
     "architectures": {
-        "effnet_b0": {
-            "architecture": "effnet",
+        "resnet50": {
+            "architecture": "resnet50",
             "input_shape": [227, 227, 3],
-            "embedding_sizes": [128, 512],
-            "variant": "B0",
-            "trainable": "frozen"
+            "embedding_sizes": [128],
+            "trainable": "full"
         }
     },
     "losses": {
@@ -67,9 +66,9 @@
         }
     },
     "optimizer": {
-        "adam_lr3e-3":{
-            "optimizer": "adam",
-            "lr": 0.003
+        "lamb_lr3e-3":{
+            "optimizer": "lamb",
+            "lr": 0.000001
         }
     },
     "training": {
