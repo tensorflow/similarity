@@ -132,7 +132,7 @@ class MapAtK(RetrievalMetric):
             start_k = 1
             self.r = {k: tf.math.maximum(1, v - 1) for k, v in self.r.items()}
 
-        k_slice = tf.cast(match_mask[:, start_k : start_k + self.k], dtype="float")
+        k_slice = tf.cast(match_mask[:, start_k : start_k + self.k], dtype="float")  # noqa
 
         tp = tf.math.cumsum(k_slice, axis=1)
         p_at_k = tf.math.divide(tp, tf.range(1, self.k + 1, dtype="float"))
@@ -151,22 +151,19 @@ class MapAtK(RetrievalMetric):
             class_counts = table.lookup(query_labels)
 
             if self.clip_at_r:
-                query_masks = []
-                result_set_size = tf.shape(p_at_k)[1]
-                for cc in class_counts:
-                    cc = tf.cast(cc, dtype=result_set_size.dtype)
-                    num_zeros = tf.math.subtract(result_set_size, cc)
-                    query_masks.append(
-                        tf.concat([tf.ones([1, cc]), tf.zeros([1, num_zeros])], axis=1)
-                    )
-
-                mask = tf.concat(query_masks, axis=0)
-                p_at_k = tf.math.multiply(p_at_k, mask)
-
-            avg_p_at_k = tf.math.divide(
-                tf.math.reduce_sum(p_at_k, axis=1),
-                tf.cast(class_counts, dtype="float"),
-            )
+                elems = (p_at_k, tf.expand_dims(class_counts, axis=1))
+                # for each row i in p_at_k, reduce_sum the first class_count[i] values and divide by
+                # class_count[i]
+                avg_p_at_k = tf.map_fn(
+                    lambda x: tf.math.reduce_sum(x[0][: x[1][0]]) / tf.cast(x[1], dtype="float"),
+                    elems,
+                    fn_output_signature="float"
+                )
+            else:
+                avg_p_at_k = tf.math.divide(
+                    tf.math.reduce_sum(p_at_k, axis=1),
+                    tf.cast(class_counts, dtype="float"),
+                )
 
             avg_p_at_k = tf.math.reduce_mean(avg_p_at_k)
         else:
