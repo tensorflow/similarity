@@ -21,7 +21,7 @@ Recognition. [online] arXiv.org. Available at:
 from typing import Any, Callable, Dict, Optional
 
 import tensorflow as tf
-from tensorflow_similarity.distances import Distance
+
 from tensorflow_similarity.types import FloatTensor
 
 
@@ -69,9 +69,7 @@ class ArcFaceLoss(tf.keras.losses.Loss):
         self.margin = margin
         self.scale = scale
         self.name = name
-        self.kernel = tf.Variable(
-            tf.random.normal([embedding_size, num_classes]), trainable=True
-        )
+        self.kernel = tf.Variable(tf.random.normal([embedding_size, num_classes]), trainable=True)
 
     def call(self, y_true: FloatTensor, y_pred: FloatTensor) -> FloatTensor:
 
@@ -89,9 +87,7 @@ class ArcFaceLoss(tf.keras.losses.Loss):
         cos_theta = tf.math.cos(cos_theta)
         cos_theta = tf.math.multiply(cos_theta, self.scale)
 
-        cce = tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True, reduction=self.reduction
-        )
+        cce = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=self.reduction)
         loss: FloatTensor = cce(y_true, cos_theta)
 
         return loss

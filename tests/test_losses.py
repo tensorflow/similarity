@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+
 from tensorflow_similarity.losses import (
     ArcFaceLoss,
     MultiSimilarityLoss,
@@ -87,9 +88,7 @@ def test_triplet_loss_semi_hard():
     y_true = tf.random.uniform((num_inputs,), 0, 3, dtype=tf.int32)
     # y_preds: embedding
     y_preds = tf.random.uniform((num_inputs, 16), 0, 1)
-    tpl = TripletLoss(
-        positive_mining_strategy="easy", negative_mining_strategy="semi-hard"
-    )
+    tpl = TripletLoss(positive_mining_strategy="easy", negative_mining_strategy="semi-hard")
     # y_true, y_preds
     loss = tpl(y_true, y_preds)
     assert loss
