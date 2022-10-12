@@ -157,7 +157,7 @@ class MapAtK(RetrievalMetric):
                 avg_p_at_k = tf.map_fn(
                     lambda x: tf.math.reduce_sum(x[0][: x[1][0]]) / tf.cast(x[1], dtype="float"),
                     elems,
-                    fn_output_signature="float"
+                    fn_output_signature="float",
                 )
             else:
                 avg_p_at_k = tf.math.divide(

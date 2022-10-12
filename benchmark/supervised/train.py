@@ -106,7 +106,7 @@ def run(config):
                                     version,
                                     dataset_name,
                                     architecture_name,
-                                    aconf['embedding'],
+                                    aconf["embedding"],
                                     loss_name,
                                     opt_name,
                                     fold,
