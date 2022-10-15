@@ -1,5 +1,5 @@
 {
-    "version": "1.0.0.1",
+    "version": "1.0.0.2",
     "random_seed": 303,
     "tfds_data_dir": "/workspace/tensorflow_datasets",
 
@@ -19,37 +19,37 @@
             }
         }
     },
-    "preprocess": [
-            {
+    "preprocess": {
+        "center_crop": {
                 "name": "center_crop",
                 "height": 256,
                 "width": 256
             }
-    ],
+    },
     "augmentations": {
-        "train":[
-            { 
+        "train": {
+            "random_resized_crop": { 
                 "name": "random_resized_crop",
                 "target_size": [227, 227],
                 "crop_area_factor": [0.15625, 1.0],
                 "aspect_ratio_factor": [0.75, 1.3333]
             },
-            { 
+            "random_flip": { 
                 "name": "random_flip",
                 "mode": "horizontal"
             }
-        ],
-        "test": [
-            {
+        },
+        "test": {
+            "center_crop": {
                 "name": "center_crop",
                 "height": 227,
                 "width": 227
             }
-        ]
+        }
     },
     "architectures": {
         "resnet50": {
-            "architecture": "resnet50",
+            "name": "resnet50",
             "input_shape": [227, 227, 3],
             "embedding_sizes": [128],
             "trainable": "full"
@@ -57,7 +57,7 @@
     },
     "losses": {
         "multisim_loss": {
-            "loss": "multisim_loss",
+            "name": "multisim_loss",
             "distance": "cosine",
             "alpha": 2.0,
             "beta": 40.0,
@@ -66,18 +66,28 @@
         }
     },
     "optimizer": {
-        "lamb_lr3e-3":{
-            "optimizer": "lamb",
-            "lr": 0.000001
+        "lamb":{
+            "name": "lamb_lr1e-3",
+            "lr": 0.001
         }
     },
-    "training": {
-        "basic": {
-            "classes_per_batch": 8,
-            "examples_per_class_per_batch": 4,
-            "epochs": 200
+    "training": [
+        {
+            "name": "basic",
+            "train": {
+                "classes_per_batch": 16,
+                "examples_per_class_per_batch": 16
+            },
+            "val": {
+                "classes_per_batch": 10,
+                "examples_per_class_per_batch": 16
+            },
+            "epochs": 200,
+            "lr_schedule": {
+                "warmup_pctg": 0.5
+            }
         }
-    },
+    ],
     "evaluation": {
         "recall_at_k": {
             "k": [1,2,4,8,16,32],

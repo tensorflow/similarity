@@ -28,8 +28,8 @@ OPTIMIZERS["rmsprop"] = lambda p: RMSprop(
 
 
 def make_optimizer(params):
-    opt = params.get("optimizer", "None")
+    opt_id = params.get("opt_id", "None")
     try:
-        return OPTIMIZERS[opt](params)
+        return OPTIMIZERS[opt_id](params)
     except KeyError as exc:
-        raise ValueError(f"Unknown optimizer name: {opt}") from exc
+        raise ValueError(f"Unknown optimizer name: {opt_id}") from exc

@@ -20,6 +20,7 @@ from tabulate import tabulate
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from termcolor import cprint
 
+from tensorflow_similarity.schedules import WarmUpCosine
 from tensorflow_similarity.utils import tf_cap_memory
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
@@ -47,12 +48,15 @@ def run(config):
                 "max_val_examples": 10000,
             }
 
-        for architecture_name, aconf in config["architectures"].items():
+        for architecture_id, aconf in config["architectures"].items():
+            aconf["architecture_id"] = architecture_id
             for embedding_size in aconf.get("embedding_sizes", [128]):
                 aconf["embedding"] = embedding_size
-                for loss_name, lconf in config["losses"].items():
-                    for opt_name, oconf in config["optimizer"].items():
-                        for training_name, tconf in config["training"].items():
+                for loss_id, lconf in config["losses"].items():
+                    lconf["loss_id"] = loss_id
+                    for opt_id, oconf in config["optimizer"].items():
+                        oconf["opt_id"] = opt_id
+                        for tconf in config["training"]:
                             version = config["version"]
                             pconf = config["preprocess"]
                             aug_conf = config["augmentations"]
@@ -78,10 +82,10 @@ def run(config):
                                 row = [
                                     [
                                         f"{dataset_name}",
-                                        f"{architecture_name}-{aconf['embedding']}",
-                                        f"{loss_name}",
-                                        f"{opt_name}",
-                                        f"{training_name}",
+                                        f"{aconf['name']}-{aconf['embedding']}",
+                                        f"{lconf['name']}",
+                                        f"{oconf['name']}",
+                                        f"{tconf['name']}",
                                     ]
                                 ]
                                 print("\n")
@@ -91,24 +95,27 @@ def run(config):
                                 aug_fns = make_augmentations(aug_conf["train"])
                                 cprint("\n|-building train dataset\n", "blue")
                                 train_ds = datasets.make_sampler(
-                                    ds_splits["train"][0], ds_splits["train"][1], tconf, aug_fns
+                                    ds_splits["train"][0],
+                                    ds_splits["train"][1],
+                                    tconf["train"],
+                                    aug_fns,
                                 )
                                 cprint("\n|-building val dataset\n", "blue")
                                 val_ds = datasets.make_sampler(
-                                    ds_splits["val"][0], ds_splits["val"][1], tconf, aug_fns
+                                    ds_splits["val"][0],
+                                    ds_splits["val"][1],
+                                    tconf["val"],
+                                    aug_fns,
                                 )
-
-                                # Build model
-                                model = build_model(aconf, lconf, oconf)
 
                                 # Make result path
                                 stub = utils.make_stub(
                                     version,
                                     dataset_name,
-                                    architecture_name,
-                                    aconf['embedding'],
-                                    loss_name,
-                                    opt_name,
+                                    aconf["name"],
+                                    aconf["embedding"],
+                                    lconf["name"],
+                                    oconf["name"],
                                     fold,
                                 )
                                 utils.clean_dir(stub)
@@ -143,6 +150,7 @@ def run(config):
                                     epochs = tconf["epochs"]
                                 else:
                                     epochs = 1000
+                                    # TODO(ovallis): expose EarlyStopping params in config
                                     early_stopping = EarlyStopping(
                                         monitor="val_loss",
                                         patience=5,
@@ -151,6 +159,20 @@ def run(config):
                                         restore_best_weights=True,
                                     )
                                     callbacks.append(early_stopping)
+
+                                if "lr_schedule" in tconf:
+                                    batch_size = train_ds.classes_per_batch * train_ds.examples_per_class_per_batch
+                                    total_steps = (train_ds.num_examples // batch_size) * epochs
+                                    wu_steps = int(total_steps * tconf["lr_schedule"]["warmup_pctg"])
+                                    d_steps = total_steps - wu_steps
+                                    lr_schedule = WarmUpCosine(
+                                        initial_learning_rate=oconf["lr"],
+                                        decay_steps=d_steps,
+                                        warmup_steps=wu_steps,
+                                    )
+                                    # TODO(ovallis): find a better way to set this instead of clobbering
+                                    # the lr param value
+                                    oconf["lr"] = lr_schedule
 
                                 t_msg = [
                                     "\n|-Training",
@@ -165,6 +187,10 @@ def run(config):
                                     f"|  -- Num targets:       {len(callbacks[0].targets)}",
                                 ]
                                 cprint("\n".join(t_msg) + "\n", "green")
+
+                                # Build model
+                                model = build_model(aconf, lconf, oconf)
+
                                 history = model.fit(
                                     train_ds,
                                     steps_per_epoch=steps_per_epoch,
@@ -181,14 +207,13 @@ def run(config):
                                     ds_splits["test"][0], ds_splits["test"][1], test_aug_fns
                                 )
 
-                                print("Make Metrics")
                                 eval_metrics = metrics.make_eval_metrics(dconf, config["evaluation"], class_counts)
 
                                 try:
                                     model.reset_index()
                                 except AttributeError:
                                     model.create_index()
-                                print("Add Examples to Index")
+
                                 model.index(test_x, test_y)
 
                                 e_msg = [
