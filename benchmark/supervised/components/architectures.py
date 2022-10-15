@@ -37,8 +37,8 @@ ARCHITECTURES["resnet18"] = lambda p: ResNet18Sim(
 
 
 def make_architecture(params):
-    architecture = params.get("architecture", "None")
+    architecture_id = params.get("architecture_id", "None")
     try:
-        return ARCHITECTURES[architecture](params)
+        return ARCHITECTURES[architecture_id](params)
     except KeyError as exc:
-        raise ValueError(f"Unknown architecture name: {architecture}") from exc
+        raise ValueError(f"Unknown architecture name: {architecture_id}") from exc

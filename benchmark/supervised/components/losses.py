@@ -42,11 +42,11 @@ LOSSES["triplet_loss"] = lambda p: TripletLoss(
 
 
 def make_loss(params):
-    loss_name = params.get("loss", "None")
+    loss_id = params.get("loss_id", "None")
     try:
-        loss = LOSSES[loss_name](params)
+        loss = LOSSES[loss_id](params)
     except KeyError as exc:
-        raise ValueError(f"Unknown loss name: {loss_name}") from exc
+        raise ValueError(f"Unknown loss name: {loss_id}") from exc
 
     if params.get("xbm", False):
         return XBM(loss=loss, memory_size=params.get("memory_size", 1), warmup_steps=params.get("warmup_steps", 0))

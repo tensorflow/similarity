@@ -18,4 +18,4 @@ AUGMENTATIONS["center_crop"] = lambda p: tf.keras.layers.Resizing(
 
 
 def make_augmentations(cfg):
-    return [AUGMENTATIONS[params["name"]](params) for params in cfg]
+    return [AUGMENTATIONS[aug_id](params) for aug_id, params in cfg.items()]

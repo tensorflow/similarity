@@ -4,8 +4,8 @@ from tensorflow_similarity.retrieval_metrics import MapAtK, PrecisionAtK, Recall
 
 def make_eval_metrics(tconf, econf, class_counts):
     metrics = []
-    for metric_name, params in econf.items():
-        if metric_name == "recall_at_k":
+    for metric_id, params in econf.items():
+        if metric_id == "recall_at_k":
             for k in params["k"]:
                 metrics.append(
                     RecallAtK(
@@ -14,7 +14,7 @@ def make_eval_metrics(tconf, econf, class_counts):
                         drop_closest_lookup=True,
                     )
                 )
-        elif metric_name == "precision_at_k":
+        elif metric_id == "precision_at_k":
             for k in params["k"]:
                 metrics.append(
                     PrecisionAtK(
@@ -23,7 +23,7 @@ def make_eval_metrics(tconf, econf, class_counts):
                         drop_closest_lookup=True,
                     )
                 )
-        elif metric_name == "map_at_r":
+        elif metric_id == "map_at_r":
             max_class_count = max(class_counts.values())
             metrics.append(
                 MapAtK(
@@ -35,7 +35,7 @@ def make_eval_metrics(tconf, econf, class_counts):
                 )
             )
         else:
-            raise ValueError(f"Unknown metric name: {metric_name}")
+            raise ValueError(f"Unknown metric name: {metric_id}")
 
     return metrics
 
