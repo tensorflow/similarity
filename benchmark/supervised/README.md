@@ -4,7 +4,7 @@
 
 ## Running the benchmark
 
-1. Train models: `python generate_datasets.py -c config/benchmark_prod.json`
+1. Train models: `python train.py -c config/benchmark_prod.json`
 
 2. Evaluate performance:
 
