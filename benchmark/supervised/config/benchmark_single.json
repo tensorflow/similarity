@@ -57,8 +57,8 @@
         }
     },
     "losses": {
-        "multisim_loss": {
-            "name": "multisim_loss",
+        "multisim": {
+            "name": "multisim",
             "distance": "cosine",
             "alpha": 2.0,
             "beta": 40.0,
@@ -68,8 +68,8 @@
     },
     "optimizer": {
         "lamb":{
-            "name": "lamb_lr5e-5",
-            "lr": 0.00005
+            "name": "lamb_lr1e-3",
+            "lr": 0.001
         }
     },
     "training": [
@@ -83,7 +83,10 @@
                 "classes_per_batch": 10,
                 "examples_per_class_per_batch": 16
             },
-            "epochs": 200
+            "epochs": 200,
+            "lr_schedule": {
+                "warmup_pctg": 0.5
+            }
         }
     ],
     "evaluation": {
