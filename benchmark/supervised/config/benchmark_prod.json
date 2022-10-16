@@ -5,6 +5,7 @@
 
     "datasets": {
         "cars196": {
+            "name": "cars196_50pct_cls_splt",
             "x_key": "image",
             "y_key": "label",
             "train_classes": [0, 98],
@@ -19,6 +20,7 @@
             }
         },
         "caltech_birds2011": {
+            "name": "caltechbirds2011_50pct_cls_splt",
             "x_key": "image",
             "y_key": "label",
             "train_classes": [0, 100],
@@ -107,8 +109,9 @@
             "lr": 0.00005
         }
     },
-    "training": {
-        "basic": {
+    "training": [
+        {
+            "name": "basic",
             "train": {
                 "classes_per_batch": 16,
                 "examples_per_class_per_batch": 8
@@ -117,12 +120,12 @@
                 "classes_per_batch": 8,
                 "examples_per_class_per_batch": 8
             },
-            "epochs": 200
+            "epochs": 200,
             "lr_schedule": {
                 "warmup_pctg": 0.1
             }
         }
-    },
+    ],
     "evaluation": {
         "recall_at_k": {
             "k": [1,2,4,8,16,32],

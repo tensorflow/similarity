@@ -5,6 +5,7 @@
 
     "datasets": {
         "cars196": {
+            "name": "cars196_50pct_cls_splt",
             "x_key": "image",
             "y_key": "label",
             "train_classes": [0, 98],
@@ -67,8 +68,8 @@
     },
     "optimizer": {
         "lamb":{
-            "name": "lamb_lr1e-3",
-            "lr": 0.001
+            "name": "lamb_lr5e-5",
+            "lr": 0.00005
         }
     },
     "training": [
@@ -82,10 +83,7 @@
                 "classes_per_batch": 10,
                 "examples_per_class_per_batch": 16
             },
-            "epochs": 200,
-            "lr_schedule": {
-                "warmup_pctg": 0.5
-            }
+            "epochs": 200
         }
     ],
     "evaluation": {

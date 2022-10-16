@@ -1,3 +1,10 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+import tensorflow as tf
+
 from tensorflow_similarity.losses import (
     XBM,
     CircleLoss,
@@ -41,14 +48,17 @@ LOSSES["triplet_loss"] = lambda p: TripletLoss(
 )
 
 
-def make_loss(params):
-    loss_id = params.get("loss_id", "None")
+def make_loss(loss_id: str, params: Mapping[str, Any]) -> tf.keras.Loss:
     try:
         loss = LOSSES[loss_id](params)
     except KeyError as exc:
         raise ValueError(f"Unknown loss name: {loss_id}") from exc
 
     if params.get("xbm", False):
-        return XBM(loss=loss, memory_size=params.get("memory_size", 1), warmup_steps=params.get("warmup_steps", 0))
+        return XBM(
+            loss=loss,
+            memory_size=params.get("memory_size", 1),
+            warmup_steps=params.get("warmup_steps", 0),
+        )
 
     return loss
