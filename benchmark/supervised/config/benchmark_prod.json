@@ -1,5 +1,5 @@
 {
-    "version": "1.0.0",
+    "version": "1.0.0.0",
     "random_seed": 303,
     "tfds_data_dir": "/workspace/tensorflow_datasets",
 
@@ -79,13 +79,14 @@
         }
     },
     "losses": {
-        "pn_loss": {
-            "name": "pn_loss_semi_hard",
+        "pn": {
+            "name": "pn_semi_hard",
             "distance": "cosine",
+            "positive_mining": "hard",
             "negative_mining": "semi-hard"
         },
         "multisim": {
-            "name": "multisim_loss",
+            "name": "multisim",
             "distance": "cosine",
             "alpha": 2.0,
             "beta": 40.0,
@@ -93,20 +94,43 @@
             "lmda": 0.5
         },
         "circle": {
-            "name": "circle_loss",
+            "name": "circle",
             "distance": "cosine",
             "gamma": 80.0,
             "margin": 0.4
+        },
+        "triplet": {
+            "name": "triplet_semi_hard",
+            "distance": "cosine",
+            "positive_mining": "hard",
+            "negative_mining": "semi-hard"
+        },
+        "soft_nn": {
+            "name": "soft_nn_tmp_1",
+            "distance": "sql2",
+            "temperature": 1
+        },
+        "multisim": {
+            "name": "xbm_multisim",
+            "distance": "cosine",
+            "alpha": 2.0,
+            "beta": 40.0,
+            "epsilon": 0.1,
+            "lmda": 0.5,
+            "xbm": {
+                "memory_size": 1000,
+                "warmup_steps": 100
+            }
         }
     },
     "optimizer": {
         "adam":{
-            "name": "adam_lr5e-5",
-            "lr": 0.00005
+            "name": "adam_lr1e-3",
+            "lr": 0.001
         },
         "lamb":{
-            "name": "lamb_lr5e-5",
-            "lr": 0.00005
+            "name": "lamb_lr1e-3",
+            "lr": 0.001
         }
     },
     "training": [
@@ -114,15 +138,15 @@
             "name": "basic",
             "train": {
                 "classes_per_batch": 16,
-                "examples_per_class_per_batch": 8
+                "examples_per_class_per_batch": 16
             },
             "val": {
-                "classes_per_batch": 8,
-                "examples_per_class_per_batch": 8
+                "classes_per_batch": 10,
+                "examples_per_class_per_batch": 16
             },
             "epochs": 200,
             "lr_schedule": {
-                "warmup_pctg": 0.1
+                "warmup_pctg": 0.5
             }
         }
     ],
