@@ -9,6 +9,7 @@ import re
 from collections.abc import Mapping
 from typing import Any
 
+import nmslib
 import tensorflow as tf
 import tensorflow.keras.backend
 import tensorflow.random
@@ -46,7 +47,6 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
     if cfg.get("tfds_data_dir", None):
         os.environ["TFDS_DATA_DIR"] = cfg["tfds_data_dir"]
 
-    agg_results = {}
     version = cfg["version"]
     random_seed = cfg["random_seed"]
     preproc_fns = make_augmentations(cfg["preprocess"])
@@ -56,10 +56,10 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
     p = re.compile(filter_pattern)
     experiments = [e for e in make_experiments(cfg) if p.match(e.run_grp)]
 
-    cprint("Run Groups\n", "blue")
     for exp in experiments:
         cprint(f"|-{exp.run_grp}", "blue")
 
+    cprint(f"{len(experiments)} Run Groups\n", "blue")
     if input("Would you like to continue: [Y/n] ").lower() != "y":
         cprint("Exit", "red")
         return
@@ -200,6 +200,9 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
 
         eval_metrics = metrics.make_eval_metrics(cfg["evaluation"], class_counts)
 
+        # TODO(ovallis): Enable updating the nmslib params as part of the SimilarityModel __init__
+        model._index.search._serach_index = nmslib.init(method="brute_force", space="cosinesimil")
+
         try:
             model.reset_index()
         except AttributeError:
@@ -219,8 +222,6 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
             retrieval_metrics=eval_metrics,
         )
 
-        agg_results[os.path.basename(stub)] = eval_results
-
         # Save history
         with open(os.path.join(stub, "history.json"), "w") as o:
             o.write(json.dumps(history.history, cls=utils.NpEncoder))
@@ -228,9 +229,6 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
         # Save eval metrics
         with open(os.path.join(stub, "eval_metrics.json"), "w") as o:
             o.write(json.dumps(eval_results, cls=utils.NpEncoder))
-
-    with open(os.path.join(os.path.dirname(stub), "all_eval_metrics.json"), "w") as o:
-        o.write(json.dumps(agg_results, cls=utils.NpEncoder))
 
 
 if __name__ == "__main__":
