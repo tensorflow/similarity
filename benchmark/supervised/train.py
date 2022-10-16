@@ -65,7 +65,6 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
         return
     else:
         cprint("Begin Training", "green")
-        return
 
     for exp in experiments:
         gc.collect()

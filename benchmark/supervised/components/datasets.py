@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableSequence, Sequence
+from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from typing import Any, Callable
 
@@ -121,17 +121,18 @@ def make_sampler(
 # TODO(ovallis): aug_fns type should be tuple[Callable[[FloatTensor], FloatTensor]], but
 # mypy doesn't recogonize the return types of the callabels.
 def make_eval_data(
-    x: MutableSequence[FloatTensor],
-    y: MutableSequence[IntTensor],
+    x: Sequence[FloatTensor],
+    y: Sequence[IntTensor],
     aug_fns: tuple[Any, ...],
 ) -> tuple[FloatTensor, IntTensor, dict[int, int]]:
+    aug_x = []
     with tf.device("/cpu:0"):
         # TODO(ovallis): batch proccess instead of 1 at a time
         for idx in tqdm(range(len(x)), desc="Preprocessing data"):
             for p in aug_fns:
-                x[idx] = p(x[idx])
+                aug_x.append(p(x[idx]))
 
     unique, counts = np.unique(y, return_counts=True)
     class_counts = {k: v for k, v in zip(unique, counts)}
 
-    return (tf.convert_to_tensor(np.array(x)), tf.convert_to_tensor(np.array(y)), class_counts)
+    return (tf.convert_to_tensor(np.array(aug_x)), tf.convert_to_tensor(np.array(y)), class_counts)
