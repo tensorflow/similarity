@@ -37,7 +37,7 @@ def triplet_loss(
     remove_diagonal: bool = True,
     positive_mining_strategy: str = "hard",
     negative_mining_strategy: str = "semi-hard",
-    soft_margin: bool = False,
+    soft_margin: bool = True,
     margin: float = 1.0,
 ) -> Any:
     """Triplet loss computations.
@@ -137,7 +137,7 @@ class TripletLoss(MetricLoss):
         distance: Union[Distance, str] = "cosine",
         positive_mining_strategy: str = "hard",
         negative_mining_strategy: str = "semi-hard",
-        soft_margin: bool = False,
+        soft_margin: bool = True,
         margin: float = 1.0,
         name: str = "TripletLoss",
         **kwargs
