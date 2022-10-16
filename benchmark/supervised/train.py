@@ -60,6 +60,13 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
     for exp in experiments:
         cprint(f"|-{exp.run_grp}", "blue")
 
+    if input("Would you like to continue: [Y/n] ").lower() != "y":
+        cprint("Exit", "red")
+        return
+    else:
+        cprint("Begin Training", "green")
+        return
+
     for exp in experiments:
         gc.collect()
         tf.keras.backend.clear_session()
