@@ -26,6 +26,7 @@ from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor
 
 from .metric_loss import MetricLoss
+from .utils import logsumexp
 
 
 def multineg_ranking_loss(
@@ -47,14 +48,13 @@ def multineg_ranking_loss(
     """
 
     pairwise_sim = distance(query_emb, key_emb) * scale
-    # considering similarity to be - distance
     if distance.name != "inner_product":
-        pairwise_sim = -pairwise_sim
-    expd = tf.math.exp(pairwise_sim)
+        raise ValueError("Distance must be inner_product")
 
-    sij_sum = tf.math.reduce_sum(expd, axis=1)
     sii = tf.linalg.diag_part(pairwise_sim)
-    examples_loss = -sii + tf.math.log(sij_sum)
+    sij_mask = tf.ones(pairwise_sim.shape)
+    sij = logsumexp(pairwise_sim, sij_mask)
+    examples_loss = -sii + sij
 
     return examples_loss
 
@@ -90,9 +90,13 @@ class MultiNegativesRankLoss(MetricLoss):
         self.distance = distance
         self.scale = scale
 
-        super().__init__(multineg_ranking_loss, name=name, distance=distance, **kwargs)
+        super().__init__(
+            multineg_ranking_loss, name=name, distance=distance, **kwargs
+        )
 
-    def call(self, query_emb: FloatTensor, key_emb: FloatTensor) -> FloatTensor:
+    def call(
+        self, query_emb: FloatTensor, key_emb: FloatTensor
+    ) -> FloatTensor:
         """Invokes the `LossFunctionWrapper` instance.
 
         Args:
@@ -102,5 +106,7 @@ class MultiNegativesRankLoss(MetricLoss):
         Returns:
           Loss values per sample.
         """
-        loss: FloatTensor = self.fn(query_emb, key_emb, self.scale, **self._fn_kwargs)
+        loss: FloatTensor = self.fn(
+            query_emb, key_emb, self.scale, **self._fn_kwargs
+        )
         return loss
