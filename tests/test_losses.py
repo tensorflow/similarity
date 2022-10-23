@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from tensorflow_similarity.losses import (
+    MultiNegativesRankLoss,
     MultiSimilarityLoss,
     PNLoss,
     SoftNearestNeighborLoss,
@@ -221,12 +222,18 @@ def test_xbm_loss():
     tf.assert_equal(loss_nowarm._y_true_memory, labels1)
 
     loss_nowarm(labels2, embeddings2)
-    assert loss_nowarm._y_pred_memory.numpy().shape == (2 * batch_size, embed_dim)
+    assert loss_nowarm._y_pred_memory.numpy().shape == (
+        2 * batch_size,
+        embed_dim,
+    )
     tf.assert_equal(loss_nowarm._y_true_memory, tf.concat([labels2, labels1], axis=0))
 
     # test dequeue
     loss_nowarm(labels2, embeddings2)
-    assert loss_nowarm._y_pred_memory.numpy().shape == (2 * batch_size, embed_dim)
+    assert loss_nowarm._y_pred_memory.numpy().shape == (
+        2 * batch_size,
+        embed_dim,
+    )
     tf.assert_equal(loss_nowarm._y_true_memory, tf.concat([labels2, labels2], axis=0))
 
     # test warmup
@@ -239,3 +246,12 @@ def test_xbm_loss():
     loss_warm(labels2, embeddings2)
     assert loss_warm._y_pred_memory.numpy().shape == (batch_size, embed_dim)
     tf.assert_equal(loss_warm._y_true_memory, labels2)
+
+
+# [multiple negatives ranking loss]
+def test_multineg_rank_loss_serialization():
+    loss = MultiNegativesRankLoss(distance="inner_product")
+    config = loss.get_config()
+    loss2 = MultiNegativesRankLoss.from_config(config)
+    assert loss.name == loss2.name
+    assert loss.distance == loss2.distance
