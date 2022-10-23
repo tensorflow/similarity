@@ -18,6 +18,7 @@ Contrastive learning specialized losses.
 from .barlow import Barlow  # noqa
 from .circle_loss import CircleLoss  # noqa
 from .metric_loss import MetricLoss  # noqa
+from .multinegrank_loss import MultiNegativesRankLoss  # noqa
 from .multisim_loss import MultiSimilarityLoss  # noqa
 from .pn_loss import PNLoss  # noqa
 from .simclr import SimCLRLoss  # noqa
