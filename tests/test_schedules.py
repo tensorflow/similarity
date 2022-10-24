@@ -1,122 +1,104 @@
-from unittest import TestCase
+# Copyright 2021 The TensorFlow Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import math
 
 import numpy as np
-import pytest
 import tensorflow as tf
+from absl.testing import parameterized
+from keras.optimizers.schedules import learning_rate_schedule
+from tensorflow.python.framework import combinations
 
-from tensorflow_similarity.schedules import WarmUpCosine
-
-testdata = [
-    range(10),
-    [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9],
-    np.arange(10),
-    tf.range(10, dtype="float32"),
-]
-
-test_ids = ["python range", "python list", "numpy arange", "tf range"]
+from tensorflow_similarity.schedules import WarmupCosineDecay
 
 
-@pytest.mark.parametrize("steps", testdata, ids=test_ids)
-def test_warmup_cosine(steps):
-    warmup_cosine = WarmUpCosine(
-        initial_learning_rate=1.0,
-        decay_steps=10,
-        warmup_steps=2,
-        warmup_learning_rate=0.5,
-        alpha=0.1,
-        name="foo",
-    )
-
-    lrs = warmup_cosine(steps)
-
-    expected_lrs = tf.constant(
-        [
-            0.5,
-            0.7334816,
-            0.9140576,
-            0.8145034,
-            0.68905765,
-            0.54999995,
-            0.41094226,
-            0.28549662,
-            0.18594232,
-            0.12202458,
-        ]
-    )
-
-    np.testing.assert_allclose(expected_lrs, lrs, rtol=1e-06)
+def _maybe_serialized(lr_decay, serialize_and_deserialize):
+    if serialize_and_deserialize:
+        serialized = learning_rate_schedule.serialize(lr_decay)
+        return learning_rate_schedule.deserialize(serialized)
+    else:
+        return lr_decay
 
 
-def test_warmup_cosine_no_warmup():
-    warmup_cosine = WarmUpCosine(
-        initial_learning_rate=1.0,
-        decay_steps=10,
-        warmup_steps=0,
-        warmup_learning_rate=0.5,
-        alpha=0.1,
-        name="foo",
-    )
-
-    lrs = warmup_cosine(range(10))
-
-    expected_lrs = tf.constant(
-        [
-            1.0,
-            0.977975,
-            0.9140576,
-            0.8145034,
-            0.68905765,
-            0.54999995,
-            0.41094226,
-            0.28549662,
-            0.18594232,
-            0.12202458,
-        ]
-    )
-
-    np.testing.assert_allclose(expected_lrs, lrs, rtol=1e-06)
+def np_warmup_cosine_decay(*, step, max_lr, total_steps, warmup_steps, alpha=0.0):
+    step = min(step, total_steps)
+    if step < warmup_steps:
+        decayed = step / warmup_steps
+    else:
+        decay_steps = total_steps - warmup_steps
+        completed_fraction = (step - warmup_steps) / decay_steps
+        cosine_decay = 0.5 * (1.0 + math.cos(math.pi * completed_fraction))
+        decayed = (1.0 - alpha) * cosine_decay + alpha
+    return max_lr * decayed
 
 
-def test_warmup_cosine_config():
-    warmup_cosine = WarmUpCosine(
-        initial_learning_rate=1.0,
-        decay_steps=10,
-        warmup_steps=2,
-        warmup_learning_rate=0.0,
-        alpha=0.1,
-        name="foo",
-    )
+@combinations.generate(combinations.combine(mode=["graph", "eager"], serialize=[False, True]))
+class WarmupCosineDecayTest(tf.test.TestCase, parameterized.TestCase):
+    def testDecay(self, serialize):
+        num_training_steps = 1000
+        warmup_steps = 500
+        max_lr = 1.0
+        for step in range(0, 1500, 250):
+            decayed_lr = WarmupCosineDecay(max_lr, num_training_steps, warmup_steps)
+            decayed_lr = _maybe_serialized(decayed_lr, serialize)
+            expected = np_warmup_cosine_decay(
+                step=step,
+                max_lr=max_lr,
+                total_steps=num_training_steps,
+                warmup_steps=warmup_steps,
+            )
+            self.assertAllClose(self.evaluate(decayed_lr(step)), expected, 1e-6)
 
-    config = warmup_cosine.get_config()
+    def testAlpha(self, serialize):
+        num_training_steps = 1000
+        warmup_steps = 500
+        max_lr = 1.0
+        alpha = 0.1
+        for step in range(0, 1500, 250):
+            decayed_lr = WarmupCosineDecay(max_lr, num_training_steps, warmup_steps, alpha)
+            decayed_lr = _maybe_serialized(decayed_lr, serialize)
+            expected = np_warmup_cosine_decay(
+                step=step,
+                max_lr=max_lr,
+                total_steps=num_training_steps,
+                warmup_steps=warmup_steps,
+                alpha=alpha,
+            )
+            self.assertAllClose(self.evaluate(decayed_lr(step)), expected, 1e-6)
 
-    expected_config = {
-        "initial_learning_rate": 1.0,
-        "decay_steps": 10,
-        "alpha": 0.1,
-        "warmup_learning_rate": 0.0,
-        "warmup_steps": 2,
-        "name": "foo",
-    }
+    def testFloat64InitLearningRate(self, serialize):
+        num_training_steps = 1000
+        warmup_steps = 500
+        max_lr = np.float64(1.0)
+        for step in range(0, 1500, 250):
+            decayed_lr = WarmupCosineDecay(max_lr, num_training_steps, warmup_steps)
+            decayed_lr = _maybe_serialized(decayed_lr, serialize)
+            expected = np_warmup_cosine_decay(
+                step=step,
+                max_lr=max_lr,
+                total_steps=num_training_steps,
+                warmup_steps=warmup_steps,
+            )
+            self.assertAllClose(self.evaluate(decayed_lr(step)), expected, 1e-6)
 
-    TestCase().assertDictEqual(expected_config, config)
+    def testMaxWarmupSteps(self, serialize):
+        num_training_steps = 1000
+        warmup_steps = 1000
+        max_lr = 1.0
+        msg = "warmup_steps must be less than the total steps"
+        with self.assertRaisesRegex(ValueError, msg):
+            _ = WarmupCosineDecay(max_lr, num_training_steps, warmup_steps)
 
 
-def test_warmup_cosine_assert_smaller_warmup_learning_rate():
-    msg = "warmup_learning_rate must be smaller than the initial_learning_rate"
-    with pytest.raises(ValueError, match=msg):
-        _ = WarmUpCosine(
-            initial_learning_rate=1.0,
-            decay_steps=10,
-            warmup_steps=5,
-            warmup_learning_rate=1.5,
-        )
-
-
-def test_warmup_cosine_assert_smaller_warmup_steps():
-    msg = "warmup_steps must be smaller than the decay_steps"
-    with pytest.raises(ValueError, match=msg):
-        _ = WarmUpCosine(
-            initial_learning_rate=1.0,
-            decay_steps=10,
-            warmup_steps=20,
-        )
+if __name__ == "__main__":
+    tf.test.main()
