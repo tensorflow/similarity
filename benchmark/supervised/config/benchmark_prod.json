@@ -1,5 +1,5 @@
 {
-    "version": "1.0.0.0",
+    "version": "1.0.1",
     "random_seed": 303,
     "tfds_data_dir": "/workspace/tensorflow_datasets",
 
@@ -80,10 +80,19 @@
     },
     "losses": {
         "pn": {
-            "name": "pn_semi_hard",
+            "name": "pn_semi_hard_margin_0.1",
             "distance": "cosine",
             "positive_mining": "hard",
-            "negative_mining": "semi-hard"
+            "negative_mining": "semi-hard",
+            "soft_margin": false,
+            "margin": 0.1
+        },
+        "pn": {
+            "name": "pn_semi_hard_soft_margin",
+            "distance": "cosine",
+            "positive_mining": "hard",
+            "negative_mining": "semi-hard",
+            "soft_margin": true
         },
         "multisim": {
             "name": "multisim",
@@ -100,10 +109,19 @@
             "margin": 0.4
         },
         "triplet": {
-            "name": "triplet_semi_hard",
+            "name": "triplet_semi_hard_margin_0.1",
             "distance": "cosine",
             "positive_mining": "hard",
-            "negative_mining": "semi-hard"
+            "negative_mining": "semi-hard",j
+            "soft_margin": false,
+            "margin": 0.1
+        },
+        "triplet": {
+            "name": "triplet_semi_soft_margin",
+            "distance": "cosine",
+            "positive_mining": "hard",
+            "negative_mining": "semi-hard",
+            "soft_margin": true
         },
         "soft_nn": {
             "name": "soft_nn_tmp_1",
@@ -125,12 +143,12 @@
     },
     "optimizer": {
         "adam":{
-            "name": "adam_lr1e-3",
-            "lr": 0.001
+            "name": "adam_lr1e-4",
+            "lr": 0.0001
         },
         "lamb":{
-            "name": "lamb_lr1e-3",
-            "lr": 0.001
+            "name": "lamb_lr1e-4",
+            "lr": 0.0001
         }
     },
     "training": [
@@ -146,7 +164,8 @@
             },
             "epochs": 200,
             "lr_schedule": {
-                "warmup_pctg": 0.5
+                "warmup_pctg": 0.5,
+                "min_lr": 0.0000001
             }
         }
     ],

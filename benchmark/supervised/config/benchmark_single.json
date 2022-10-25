@@ -57,19 +57,19 @@
         }
     },
     "losses": {
-        "multisim": {
-            "name": "multisim",
+        "pn": {
+            "name": "pn_semi_hard_margin_0.1",
             "distance": "cosine",
-            "alpha": 2.0,
-            "beta": 40.0,
-            "epsilon": 0.1,
-            "lmda": 0.5
+            "positive_mining": "hard",
+            "negative_mining": "semi-hard",
+            "soft_margin": false,
+            "margin": 0.1
         }
     },
     "optimizer": {
         "lamb":{
-            "name": "lamb_lr1e-3",
-            "lr": 0.001
+            "name": "lamb_lr1e-4",
+            "lr": 0.0001
         }
     },
     "training": [
@@ -83,9 +83,10 @@
                 "classes_per_batch": 10,
                 "examples_per_class_per_batch": 16
             },
-            "epochs": 200,
+            "epochs": 2,
             "lr_schedule": {
-                "warmup_pctg": 0.5
+                "warmup_pctg": 0.5,
+                "min_lr": 0.0000001
             }
         }
     ],
