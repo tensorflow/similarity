@@ -28,7 +28,7 @@ from tabulate import tabulate
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from termcolor import cprint
 
-from tensorflow_similarity.schedules import WarmUpCosine
+from tensorflow_similarity.schedules import WarmupCosineDecay
 from tensorflow_similarity.utils import tf_cap_memory
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
@@ -156,15 +156,17 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
             )
             callbacks.append(early_stopping)
 
+        # TODO(ovallis): break this out into a benchmark component
         if "lr_schedule" in exp.training.params:
             batch_size = train_ds.classes_per_batch * train_ds.examples_per_class_per_batch
             total_steps = (train_ds.num_examples // batch_size) * epochs
             wu_steps = int(total_steps * exp.training.params["lr_schedule"]["warmup_pctg"])
-            d_steps = total_steps - wu_steps
-            exp.lr_schedule = WarmUpCosine(
-                initial_learning_rate=exp.opt.params["lr"],
-                decay_steps=d_steps,
+            alpha = exp.training.params["lr_schedule"]["min_lr"] / exp.opt.params["lr"]
+            exp.lr_schedule = WarmupCosineDecay(
+                max_learning_rate=exp.opt.params["lr"],
+                total_steps=total_steps,
                 warmup_steps=wu_steps,
+                alpha=alpha,
             )
 
         t_msg = [
@@ -201,7 +203,8 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
         eval_metrics = metrics.make_eval_metrics(cfg["evaluation"], class_counts)
 
         # TODO(ovallis): Enable updating the nmslib params as part of the SimilarityModel __init__
-        model._index.search._serach_index = nmslib.init(method="brute_force", space="cosinesimil")
+        del model._index.search._search_index
+        model._index.search._search_index = nmslib.init(method="brute_force", space="cosinesimil")
 
         try:
             model.reset_index()
@@ -232,7 +235,6 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
 
 
 if __name__ == "__main__":
-    tf_cap_memory()
 
     parser = argparse.ArgumentParser(description="Train model")
     parser.add_argument("--config", "-c", help="config path")
@@ -242,5 +244,10 @@ if __name__ == "__main__":
     if not args.config:
         parser.print_usage()
         quit()
+
+    tf_cap_memory()
+    gc.collect()
+    tf.keras.backend.clear_session()
+
     config = json.loads(open(args.config).read())
     run(config, filter_pattern=args.filter)
