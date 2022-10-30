@@ -34,3 +34,4 @@ a built-in option as it must be supported moving forward.
 """
 from .nmslib_search import NMSLibSearch  # noqa
 from .search import Search  # noqa
+from .utils import make_search  # noqa

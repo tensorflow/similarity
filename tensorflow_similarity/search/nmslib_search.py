@@ -15,12 +15,13 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import List, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import nmslib
 import tensorflow as tf
+from termcolor import cprint
 
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
+from tensorflow_similarity.distances import Distance
 from tensorflow_similarity.types import FloatTensor
 
 from .search import Search
@@ -28,32 +29,65 @@ from .search import Search
 
 class NMSLibSearch(Search):
     """
-    Efficiently find nearest embeddings by indexing known embeddings and make
-    them searchable using the  [Approximate Nearest Neigboors Search](https://en.wikipedia.org/wiki/Nearest_neighbor_search)
+    Efficiently find nearest embeddings by indexing known embeddings and make them searchable using the
+    [Approximate Nearest Neigboors Search](https://en.wikipedia.org/wiki/Nearest_neighbor_search)
     search library [NMSLIB](https://github.com/nmslib/nmslib).
     """
 
-    def __init__(self, distance: Union[Distance, str], dims: int, algorithm: str = "nmslib_hnsw", **kwargs):
-
-        distance_obj: Distance = distance_canonicalizer(distance)
+    def __init__(
+        self,
+        distance: Union[Distance, str],
+        dim: int,
+        method: str = "hnsw",
+        space_params: Optional[dict] = None,
+        data_type: Union[nmslib.DataType, int] = nmslib.DataType.DENSE_VECTOR,
+        dtype: Union[nmslib.DistType, int] = nmslib.DistType.FLOAT,
+        index_params: Optional[dict] = None,
+        query_params: Optional[dict] = None,
+        verbose: int = 0,
+        name: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__(distance=distance, dim=dim, verbose=verbose, name=name)
+        self.method = method
+        self.data_type = nmslib.DataType(data_type) if isinstance(data_type, int) else data_type
+        self.dtype = nmslib.DistType(dtype) if isinstance(dtype, int) else dtype
+        self.space_params = space_params
+        self.index_params = index_params
+        self.query_params = query_params
 
         # convert to nmslib word
-        if distance_obj.name == "cosine":
+        if self.distance.name == "cosine":
             space = "cosinesimil"
-        elif distance_obj.name == "euclidean":
+        elif self.distance.name in ("euclidean", "squared_euclidean"):
             space = "l2"
-        elif distance_obj.name == "manhattan":
+        elif self.distance.name == "manhattan":
             space = "l1"
         else:
             raise ValueError("Unsupported metric space")
 
-        if algorithm == "nmslib_hnsw":
-            method = "hnsw"
-        else:
-            raise ValueError("Unsupported algorithm")
+        if verbose:
+            t_msg = [
+                "\n|-Initialize NMSLib Index",
+                f"|  - space:        {space}",
+                f"|  - method:       {self.method}",
+                f"|  - data_type:    {self.data_type}",
+                f"|  - dist_type:    {self.dtype}",
+                f"|  - space_params: {self.space_params}",
+                f"|  - index_params: {self.index_params}",
+                f"|  - query_params: {self.query_params}",
+            ]
+            cprint("\n".join(t_msg) + "\n", "green")
 
-        self._search_index = nmslib.init(method=method, space=space)
-        self._search_index.createIndex()
+        self._search_index = nmslib.init(
+            space=space,
+            space_params=self.space_params,
+            method=self.method,
+            data_type=self.data_type,
+            dtype=self.dtype,
+        )
+        self._search_index.createIndex(index_params=self.index_params)
+        self._search_index.setQueryTimeParams(params=self.query_params)
 
     def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, build: bool = True, **kwargs):
         """Add an embedding to the index
@@ -180,7 +214,25 @@ class NMSLibSearch(Search):
     def _build(self, verbose=0):
         """Build the index this is need to take into account the new points"""
         show = True if verbose else False
-        self._search_index.createIndex(print_progress=show)
+        self._search_index.createIndex(index_params=self.index_params, print_progress=show)
 
     def __make_fname(self, path):
         return str(Path(path) / "search_index.bin")
+
+    def get_config(self) -> Dict[str, Any]:
+        """Contains the search configuration.
+
+        Returns:
+            A Python dict containing the configuration of the search obj.
+        """
+        config = {
+            "method": self.method,
+            "space_params": self.space_params,
+            "data_type": int(self.data_type),
+            "dtype": int(self.dtype),
+            "index_params": self.index_params,
+            "query_params": self.query_params,
+        }
+
+        base_config = super().get_config()
+        return {**base_config, **config}

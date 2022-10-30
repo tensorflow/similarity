@@ -13,10 +13,11 @@ from . import utils
 @dataclasses.dataclass(eq=True, frozen=True)
 class Component:
     cid: str
+    name: str
     params: Mapping[str, Any]
 
     def __hash__(self):
-        return hash((self.cid, self.params["name"]))
+        return hash((self.cid, self.name))
 
 
 @dataclasses.dataclass
@@ -35,7 +36,7 @@ def make_experiments(cfg: Mapping[str, Any]) -> list[Experiment]:
     experiments = []
 
     # Generate the cross product of all the experiment params.
-    for (did, dcfg), (aid, acfg), (lid, lcfg), (oid, ocfg), t in product(
+    for (dn, dcfg), (an, acfg), (ln, lcfg), (on, ocfg), tcfg in product(
         cfg["datasets"].items(),
         cfg["architectures"].items(),
         cfg["losses"].items(),
@@ -48,22 +49,22 @@ def make_experiments(cfg: Mapping[str, Any]) -> list[Experiment]:
                 "val_class_pctg": 0.05,
                 "max_val_examples": 10000,
             }
-        dataset = Component(cid=did, params=dcfg)
-        loss = Component(cid=lid, params=lcfg)
-        opt = Component(cid=oid, params=ocfg)
-        training = Component(cid=t["name"], params=t)
+        dataset = Component(cid=dcfg["component"], name=dn, params=dcfg)
+        loss = Component(cid=lcfg["component"], name=ln, params=lcfg)
+        opt = Component(cid=ocfg["component"], name=on, params=ocfg)
+        training = Component(cid="", name=tcfg["name"], params=tcfg)
 
         for embedding_size in acfg.get("embedding_sizes", [128]):
             acfg["embedding"] = embedding_size
-            architecture = Component(cid=aid, params=acfg)
+            architecture = Component(cid=acfg["component"], name=an, params=acfg)
 
             for fold in range(dataset.params["train_val_splits"]["n_splits"]):
                 run_grp = utils.make_run_grp(
-                    dataset.params["name"],
-                    architecture.params["name"],
+                    dataset.name,
+                    architecture.name,
                     architecture.params["embedding"],
-                    loss.params["name"],
-                    opt.params["name"],
+                    loss.name,
+                    opt.name,
                     fold,
                 )
                 experiments.append(
