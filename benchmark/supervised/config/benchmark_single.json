@@ -4,14 +4,14 @@
     "tfds_data_dir": "/workspace/tensorflow_datasets",
 
     "datasets": {
-        "cars196": {
-            "name": "cars196_50pct_cls_splt",
+        "cars196_50pct_cls_splt": {
+            "component": "cars196",
             "x_key": "image",
             "y_key": "label",
             "train_classes": [0, 98],
             "test_classes": [98, 196],
             "train_val_splits": {
-                "n_splits": 1,
+                "n_splits": 4,
                 "val_class_pctg": 0.125
             },
             "eval_callback": {
@@ -22,7 +22,7 @@
     },
     "preprocess": {
         "center_crop": {
-                "name": "center_crop",
+                "component": "center_crop",
                 "height": 256,
                 "width": 256
             }
@@ -30,19 +30,19 @@
     "augmentations": {
         "train": {
             "random_resized_crop": { 
-                "name": "random_resized_crop",
+                "component": "random_resized_crop",
                 "target_size": [227, 227],
                 "crop_area_factor": [0.15625, 1.0],
                 "aspect_ratio_factor": [0.75, 1.3333]
             },
             "random_flip": { 
-                "name": "random_flip",
+                "component": "random_flip",
                 "mode": "horizontal"
             }
         },
         "test": {
             "center_crop": {
-                "name": "center_crop",
+                "component": "center_crop",
                 "height": 227,
                 "width": 227
             }
@@ -50,25 +50,22 @@
     },
     "architectures": {
         "resnet50": {
-            "name": "resnet50",
+            "component": "resnet50",
             "input_shape": [227, 227, 3],
             "embedding_sizes": [128],
             "trainable": "full"
         }
     },
     "losses": {
-        "pn": {
-            "name": "pn_semi_hard_margin_0.1",
-            "distance": "cosine",
-            "positive_mining": "hard",
-            "negative_mining": "semi-hard",
-            "soft_margin": false,
-            "margin": 0.1
-        }
+        "soft_nn_tmp_1": {
+            "component": "soft_nn",
+            "distance": "sql2",
+            "temperature": 1
+        },
     },
     "optimizer": {
-        "lamb":{
-            "name": "lamb_lr1e-4",
+        "lamb_lr1e-4":{
+            "component": "lamb",
             "lr": 0.0001
         }
     },

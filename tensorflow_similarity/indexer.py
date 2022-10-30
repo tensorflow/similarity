@@ -47,7 +47,7 @@ from .distances import Distance, distance_canonicalizer
 from .evaluators import Evaluator, MemoryEvaluator
 from .matchers import ClassificationMatch, make_classification_matcher
 from .retrieval_metrics import RetrievalMetric
-from .search import NMSLibSearch, Search
+from .search import NMSLibSearch, Search, make_search
 from .stores import MemoryStore, Store
 from .types import CalibrationResults, FloatTensor, Lookup, PandasDataFrame, Tensor
 from .utils import unpack_lookup_distances, unpack_lookup_labels
@@ -144,7 +144,7 @@ class Indexer:
         "(re)initialize internal storage structure"
 
         if self.search_type == "nmslib":
-            self.search: Search = NMSLibSearch(distance=self.distance, dims=self.embedding_size)
+            self.search: Search = NMSLibSearch(distance=self.distance, dim=self.embedding_size)
         elif isinstance(self.search_type, Search):
             self.search = self.search_type
         else:
@@ -708,7 +708,7 @@ class Indexer:
             "embedding_size": self.embedding_size,
             "kv_store": self.kv_store_type,
             "evaluator": self.evaluator_type,
-            "search": self.search_type,
+            "search_config": self.search.get_config(),
             "stat_buffer_size": self.stat_buffer_size,
             "is_calibrated": self.is_calibrated,
             "calibration_metric_config": self.calibration_metric.get_config(),
@@ -741,13 +741,14 @@ class Indexer:
         metadata = tf.io.read_file(metadata_fname)
         metadata = tf.keras.backend.eval(metadata)
         md = json.loads(metadata)
+        search = make_search(md["search_config"])
         index = Indexer(
             distance=md["distance"],
             embedding_size=md["embedding_size"],
             embedding_output=md["embedding_output"],
             kv_store=md["kv_store"],
             evaluator=md["evaluator"],
-            search=md["search"],
+            search=search,
             stat_buffer_size=md["stat_buffer_size"],
         )
 

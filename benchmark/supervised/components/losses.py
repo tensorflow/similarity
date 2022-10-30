@@ -36,8 +36,8 @@ LOSSES["pn"] = lambda p: PNLoss(
     margin=p.get("margin", 0.1),
 )
 LOSSES["soft_nn"] = lambda p: SoftNearestNeighborLoss(
-    distance=p.get("distance", "cosine"),
-    margin=p.get("temperature", 1.0),
+    distance=p.get("distance", "sql2"),
+    temperature=p.get("temperature", 1.0),
 )
 LOSSES["triplet"] = lambda p: TripletLoss(
     distance=p.get("distance", "cosine"),

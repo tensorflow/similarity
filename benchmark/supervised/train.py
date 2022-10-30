@@ -6,10 +6,10 @@ import gc
 import json
 import os
 import re
+import tracemalloc
 from collections.abc import Mapping
 from typing import Any
 
-import nmslib
 import tensorflow as tf
 import tensorflow.keras.backend
 import tensorflow.random
@@ -29,7 +29,10 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from termcolor import cprint
 
 from tensorflow_similarity.schedules import WarmupCosineDecay
+from tensorflow_similarity.search import NMSLibSearch
 from tensorflow_similarity.utils import tf_cap_memory
+
+# from tensorflow_similarity.utils import tf_cap_memory
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -39,11 +42,20 @@ def make_model(exp: Experiment) -> tf.keras.Model:
     model = make_architecture(exp.architecture.cid, exp.architecture.params)
     loss = make_loss(exp.loss.cid, exp.loss.params)
     opt = make_optimizer(exp.opt.cid, exp.opt.params, exp.lr_schedule)
-    model.compile(optimizer=opt, loss=loss)
+    search = NMSLibSearch(
+        distance=loss.distance,
+        dim=exp.architecture.params["embedding"],
+        method="hnsw",
+        index_params={"efConstruction": 100, "M": 15},
+    )
+    model.compile(optimizer=opt, loss=loss, search=search)
     return model
 
 
 def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
+    tracemalloc.start()
+    snapshots = []
+
     if cfg.get("tfds_data_dir", None):
         os.environ["TFDS_DATA_DIR"] = cfg["tfds_data_dir"]
 
@@ -67,8 +79,6 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
         cprint("Begin Training", "green")
 
     for exp in experiments:
-        gc.collect()
-        tf.keras.backend.clear_session()
         tf.random.set_seed(random_seed)
 
         # Make result path
@@ -76,7 +86,7 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
         utils.clean_dir(stub)
 
         # Load the raw dataset
-        cprint(f"\n|-loading and preprocessing {exp.dataset.cid}\n", "blue")
+        cprint(f"\n|-loading and preprocessing {exp.dataset.name}\n", "blue")
         x, y = datasets.load_tf_dataset(exp.dataset, preproc_fns)
 
         headers = [
@@ -89,11 +99,11 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
         ]
         row = [
             [
-                f"{exp.dataset.params['name']}",
-                f"{exp.architecture.params['name']}-{exp.architecture.params['embedding']}",
-                f"{exp.loss.params['name']}",
-                f"{exp.opt.params['name']}",
-                f"{exp.training.params['name']}",
+                f"{exp.dataset.name}",
+                f"{exp.architecture.name}-{exp.architecture.params['embedding']}",
+                f"{exp.loss.name}",
+                f"{exp.opt.name}",
+                f"{exp.training.name}",
                 f"{exp.fold}",
             ]
         ]
@@ -202,14 +212,14 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
 
         eval_metrics = metrics.make_eval_metrics(cfg["evaluation"], class_counts)
 
-        # TODO(ovallis): Enable updating the nmslib params as part of the SimilarityModel __init__
-        del model._index.search._search_index
-        model._index.search._search_index = nmslib.init(method="brute_force", space="cosinesimil")
-
-        try:
-            model.reset_index()
-        except AttributeError:
-            model.create_index()
+        del model._index.search
+        del model._index.search_type
+        model._index.search_type = NMSLibSearch(
+            distance=model.loss.distance,
+            dim=exp.architecture.params["embedding"],
+            method="brute_force",
+        )
+        model.reset_index()
 
         model.index(test_x, test_y)
 
@@ -232,6 +242,38 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
         # Save eval metrics
         with open(os.path.join(stub, "eval_metrics.json"), "w") as o:
             o.write(json.dumps(eval_results, cls=utils.NpEncoder))
+
+        # Ensure we release all the mem
+        for c in callbacks:
+            del c
+        for e in eval_metrics:
+            del e
+        del model._index.search
+        del model._index.search_type
+        del model
+        del exp.lr_schedule
+        del train_ds._x
+        del train_ds._y
+        del val_ds._x
+        del val_ds._y
+        del ds_splits
+        del train_ds
+        del val_ds
+        del test_x
+        del test_y
+        tf.keras.backend.clear_session()
+        gc.collect()
+
+        snapshots.append(tracemalloc.take_snapshot())
+
+        if len(snapshots) == 1:
+            top_stats = snapshots[0].statistics("lineno")
+        else:
+            top_stats = snapshots[-1].compare_to(snapshots[-2], "lineno")
+
+        print("[ Top 10 stats ]")
+        for stat in top_stats[:10]:
+            print(stat)
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@
 
 import random
 from collections import defaultdict
-from typing import Optional, Sequence, Set, Tuple, TypeVar
+from typing import Optional, Sequence, Set, Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -24,8 +24,6 @@ from tensorflow_similarity.types import FloatTensor, IntTensor
 
 from .samplers import Augmenter, Sampler
 from .utils import select_examples
-
-T = TypeVar("T", FloatTensor, IntTensor)
 
 
 class MultiShotMemorySampler(Sampler):
@@ -117,24 +115,20 @@ class MultiShotMemorySampler(Sampler):
         self._small_classes: Set[int] = set()
 
         # filter
-        x, y = select_examples(
+        self._x, self._y = select_examples(
             x,
             y,
             class_list=self.class_list,
             num_examples_per_class=total_examples_per_class,
         )
 
-        # assign after potential selection
-        self._x = x
-        self._y = y
-
         # we need to reindex here  as the numbers of samples might have
         # changed due to the filtering
         # In this sampler, contrary to file based one, the pool of examples
         # wont' change so we can optimize by doing this step in the constructor
         self.index_per_class = defaultdict(list)
-        cls = [int(c) for c in y]  # need to cast as  tensor lookup are slowww
-        for idx in tqdm(range(len(x)), desc="indexing classes"):
+        cls = [int(c) for c in self._y]  # need to cast as  tensor lookup are slowww
+        for idx in tqdm(range(len(self._x)), desc="indexing classes"):
             cl = cls[idx]
             self.index_per_class[cl].append(idx)
 
@@ -209,19 +203,10 @@ class MultiShotMemorySampler(Sampler):
         Returns:
             A Tuple of FloatTensor and IntTensor
         """
-        slice_x: FloatTensor = self._get_slice(self._x, begin, size)
-        slice_y: IntTensor = self._get_slice(self._y, begin, size)
+        slice_x = self._x[begin : begin + size]
+        slice_y = self._y[begin : begin + size]
 
-        return slice_x, slice_y
-
-    def _get_slice(self, input_: T, begin: int, size: int) -> T:
-        b = [0] * len(tf.shape(input_))
-        b[0] = begin
-        s = [-1] * len(tf.shape(input_))
-        s[0] = size
-
-        slice_: T = tf.slice(input_, b, s)
-        return slice_
+        return tf.convert_to_tensor(slice_x), tf.convert_to_tensor(slice_y)
 
     @property
     def num_examples(self) -> int:
@@ -348,8 +333,8 @@ class SingleShotMemorySampler(Sampler):
         Returns:
             A Tuple of FloatTensor and IntTensor
         """
-        slice_x: FloatTensor = self._get_slice(self._x, begin, size)
-        slice_y: IntTensor = self._get_slice(self._y, begin, size)
+        slice_x = tf.convert_to_tensor(self._x[begin : begin + size])
+        slice_y = tf.convert_to_tensor(self._y[begin : begin + size])
         if self.augmenter is not None:
             slice_x, slice_y = self.augmenter(
                 slice_x,
@@ -359,15 +344,6 @@ class SingleShotMemorySampler(Sampler):
             )
 
         return slice_x, slice_y
-
-    def _get_slice(self, input_: T, begin: int, size: int) -> T:
-        b = [0] * len(tf.shape(input_))
-        b[0] = begin
-        s = [-1] * len(tf.shape(input_))
-        s[0] = size
-
-        slice_: T = tf.slice(input_, b, s)
-        return slice_
 
     @property
     def num_examples(self) -> int:

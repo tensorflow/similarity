@@ -13,15 +13,21 @@
 # limitations under the License.
 
 from abc import ABC, abstractmethod
-from typing import List, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
-from tensorflow_similarity.distances import Distance
+from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor
 
 
 class Search(ABC):
-    @abstractmethod
-    def __init__(self, distance: Union[Distance, str], dim: int, verbose: bool, **kwargs):
+    def __init__(
+        self,
+        distance: Union[Distance, str],
+        dim: int,
+        verbose: int = 0,
+        name: Optional[str] = None,
+        **kwargs,
+    ):
         """Initializes a nearest neigboors search index.
 
         Args:
@@ -32,6 +38,10 @@ class Search(ABC):
 
             verbose: be verbose.
         """
+        self.distance: Distance = distance_canonicalizer(distance)
+        self.dim = dim
+        self.verbose = verbose
+        self.name = name if name is not None else self.__class__.__name__
 
     @abstractmethod
     def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, **kwargs):
@@ -94,3 +104,19 @@ class Search(ABC):
         Args:
             path: where to store the data
         """
+
+    def get_config(self) -> Dict[str, Any]:
+        """Contains the search configuration.
+
+        Returns:
+            A Python dict containing the configuration of the search obj.
+        """
+        config = {
+            "distance": self.distance.name,
+            "dim": self.dim,
+            "verbose": self.verbose,
+            "name": self.name,
+            "canonical_name": self.__class__.__name__,
+        }
+
+        return config
