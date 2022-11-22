@@ -1,3 +1,10 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+import tensorflow as tf
+
 from tensorflow_similarity.architectures import (
     EfficientNetSim,
     ResNet18Sim,
@@ -36,9 +43,8 @@ ARCHITECTURES["resnet18"] = lambda p: ResNet18Sim(
 )
 
 
-def make_architecture(params):
-    architecture = params.get("architecture", "None")
+def make_architecture(architecture_id: str, params: Mapping[str, Any]) -> tf.keras.Model:
     try:
-        return ARCHITECTURES[architecture](params)
+        return ARCHITECTURES[architecture_id](params)
     except KeyError as exc:
-        raise ValueError(f"Unknown architecture name: {architecture}") from exc
+        raise ValueError(f"Unknown architecture name: {architecture_id}") from exc

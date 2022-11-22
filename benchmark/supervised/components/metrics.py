@@ -1,11 +1,22 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
 from tensorflow_similarity.callbacks import EvalCallback
-from tensorflow_similarity.retrieval_metrics import MapAtK, PrecisionAtK, RecallAtK
+from tensorflow_similarity.retrieval_metrics import (
+    MapAtK,
+    PrecisionAtK,
+    RecallAtK,
+    RetrievalMetric,
+)
+from tensorflow_similarity.samplers import MultiShotMemorySampler
 
 
-def make_eval_metrics(tconf, econf, class_counts):
+def make_eval_metrics(ecfg: Mapping[str, Any], class_counts: Mapping[int, int]) -> list[RetrievalMetric]:
     metrics = []
-    for metric_name, params in econf.items():
-        if metric_name == "recall_at_k":
+    for metric_id, params in ecfg.items():
+        if metric_id == "recall_at_k":
             for k in params["k"]:
                 metrics.append(
                     RecallAtK(
@@ -14,7 +25,7 @@ def make_eval_metrics(tconf, econf, class_counts):
                         drop_closest_lookup=True,
                     )
                 )
-        elif metric_name == "precision_at_k":
+        elif metric_id == "precision_at_k":
             for k in params["k"]:
                 metrics.append(
                     PrecisionAtK(
@@ -23,7 +34,7 @@ def make_eval_metrics(tconf, econf, class_counts):
                         drop_closest_lookup=True,
                     )
                 )
-        elif metric_name == "map_at_r":
+        elif metric_id == "map_at_r":
             max_class_count = max(class_counts.values())
             metrics.append(
                 MapAtK(
@@ -35,12 +46,12 @@ def make_eval_metrics(tconf, econf, class_counts):
                 )
             )
         else:
-            raise ValueError(f"Unknown metric name: {metric_name}")
+            raise ValueError(f"Unknown metric name: {metric_id}")
 
     return metrics
 
 
-def make_eval_callback(val_ds, num_queries, num_targets):
+def make_eval_callback(val_ds: MultiShotMemorySampler, num_queries: int, num_targets: int) -> EvalCallback:
     # Setup EvalCallback by splitting the test data into targets and queries.
     num_queries = min(num_queries, val_ds.num_examples // 2)
     num_targets = min(val_ds.num_examples - num_queries, num_targets)

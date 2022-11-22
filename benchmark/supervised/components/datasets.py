@@ -1,32 +1,47 @@
+from __future__ import annotations
+
+from collections.abc import Mapping, Sequence
+from functools import lru_cache
+from typing import Any, Callable
+
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from tqdm.auto import tqdm
 
 from tensorflow_similarity.samplers import MultiShotMemorySampler
+from tensorflow_similarity.types import FloatTensor, IntTensor
+
+from .experiments import Component
 
 
-def load_tf_dataset(dataset_name, cfg, preproc_fns):
+# Ensure we only reload the dataset when it's passed new params
+@lru_cache(maxsize=1)
+def load_tf_dataset(
+    cfg: Component,
+    preproc_fns: tuple[Callable[[FloatTensor], FloatTensor]],
+) -> tuple[FloatTensor, IntTensor]:
     x, y = [], []
     split = "all"
-    ds, ds_info = tfds.load(dataset_name, split=split, with_info=True)
+    ds, ds_info = tfds.load(cfg.cid, split=split, with_info=True)
 
-    if cfg["x_key"] not in ds_info.features:
+    if cfg.params["x_key"] not in ds_info.features:
         raise ValueError("x_key not found - available features are:", str(ds_info.features.keys()))
-    if cfg["y_key"] not in ds_info.features:
+    if cfg.params["y_key"] not in ds_info.features:
         raise ValueError("y_key not found - available features are:", str(ds_info.features.keys()))
 
     pb = tqdm(total=ds_info.splits[split].num_examples, desc="converting %s" % split)
 
     # unpack the feature and labels
     for e in ds:
-        x.append(e[cfg["x_key"]])
-        y.append(e[cfg["y_key"]])
+        x.append(e[cfg.params["x_key"]])
+        y.append(e[cfg.params["y_key"]])
         pb.update()
     pb.close()
 
     # Apply preproccessing
     with tf.device("/cpu:0"):
+        # TODO(ovallis): batch proccess instead of 1 at a time
         for idx in tqdm(range(len(x)), desc="Preprocessing data"):
             for p in preproc_fns:
                 x[idx] = p(x[idx])
@@ -34,7 +49,12 @@ def load_tf_dataset(dataset_name, cfg, preproc_fns):
     return x, y
 
 
-def create_splits(x, y, cfg, fold_id):
+def create_splits(
+    x: Sequence[FloatTensor],
+    y: Sequence[IntTensor],
+    cfg: Mapping[str, Any],
+    fold: int,
+) -> dict[str, tuple[FloatTensor, IntTensor]]:
     train_x, train_y = [], []
     val_x, val_y = [], []
     test_x, test_y = [], []
@@ -47,7 +67,7 @@ def create_splits(x, y, cfg, fold_id):
     # ensure we have at least 1 class for validation
     val_len = int(len(train_classes) * cfg["train_val_splits"]["val_class_pctg"])
     val_len = max(1, val_len)
-    val_start = val_len * fold_id
+    val_start = val_len * fold
     val_end = val_start + val_len
 
     # constuct the disjoint sets of val and train classes
@@ -76,7 +96,14 @@ def create_splits(x, y, cfg, fold_id):
     return {"train": (train_x, train_y), "val": (val_x, val_y), "test": (test_x, test_y)}
 
 
-def make_sampler(x, y, tconf, aug_fns):
+# TODO(ovallis): aug_fns type should be tuple[Callable[[FloatTensor], FloatTensor]], but
+# mypy doesn't recogonize the return types of the callabels.
+def make_sampler(
+    x: Sequence[FloatTensor],
+    y: Sequence[IntTensor],
+    cfg: dict[str, Any],
+    aug_fns: tuple[Any, ...],
+) -> MultiShotMemorySampler:
     def augmentation_fn(x, y, *args):
         for a in aug_fns:
             x = a(x)
@@ -85,19 +112,27 @@ def make_sampler(x, y, tconf, aug_fns):
     return MultiShotMemorySampler(
         x,
         y,
-        classes_per_batch=tconf.get("classes_per_batch", 2),
-        examples_per_class_per_batch=tconf.get("examples_per_class_per_batch", 2),
+        classes_per_batch=cfg.get("classes_per_batch", 2),
+        examples_per_class_per_batch=cfg.get("examples_per_class_per_batch", 2),
         augmenter=augmentation_fn,
     )
 
 
-def make_eval_data(x, y, aug_fns):
+# TODO(ovallis): aug_fns type should be tuple[Callable[[FloatTensor], FloatTensor]], but
+# mypy doesn't recogonize the return types of the callabels.
+def make_eval_data(
+    x: Sequence[FloatTensor],
+    y: Sequence[IntTensor],
+    aug_fns: tuple[Any, ...],
+) -> tuple[FloatTensor, IntTensor, dict[int, int]]:
+    aug_x = []
     with tf.device("/cpu:0"):
+        # TODO(ovallis): batch proccess instead of 1 at a time
         for idx in tqdm(range(len(x)), desc="Preprocessing data"):
             for p in aug_fns:
-                x[idx] = p(x[idx])
+                aug_x.append(p(x[idx]))
 
     unique, counts = np.unique(y, return_counts=True)
     class_counts = {k: v for k, v in zip(unique, counts)}
 
-    return (tf.convert_to_tensor(np.array(x)), tf.convert_to_tensor(np.array(y)), class_counts)
+    return (tf.convert_to_tensor(np.array(aug_x)), tf.convert_to_tensor(np.array(y)), class_counts)

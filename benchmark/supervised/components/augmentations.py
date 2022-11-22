@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
 import keras_cv
 import tensorflow as tf
 
@@ -17,5 +22,7 @@ AUGMENTATIONS["center_crop"] = lambda p: tf.keras.layers.Resizing(
 )
 
 
-def make_augmentations(cfg):
-    return [AUGMENTATIONS[params["name"]](params) for params in cfg]
+# TODO(ovallis): Return type should be tuple[Callable[[FloatTensor], FloatTensor]], but
+# mypy doesn't recogonize the return types of the callabels.
+def make_augmentations(cfg: Mapping[str, Any]) -> tuple[Any, ...]:
+    return tuple([AUGMENTATIONS[aug_id](params) for aug_id, params in cfg.items()])

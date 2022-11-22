@@ -17,7 +17,9 @@
     Structure-preserving visualisation of high dimensional single-cell dataset
     Sci Rep 9, 8914 (2019). https://doi.org/10.1038/s41598-019-45301-0
 """
-from typing import Any, Callable, Union
+from __future__ import annotations
+
+from typing import Any
 
 import tensorflow as tf
 
@@ -34,12 +36,12 @@ def pn_loss(
     query_embeddings: FloatTensor,
     key_labels: IntTensor,
     key_embeddings: FloatTensor,
-    distance: Callable,
+    distance: Distance,
     remove_diagonal: bool = True,
     positive_mining_strategy: str = "hard",
     negative_mining_strategy: str = "semi-hard",
-    soft_margin: bool = False,
-    margin: float = 1.0,
+    soft_margin: bool = True,
+    margin: float = 0.1,
 ) -> Any:
     """Positive Negative loss computations.
 
@@ -47,30 +49,19 @@ def pn_loss(
 
     Args:
         query_labels: labels associated with the query embed.
-
         query_embeddings: Embedded query examples.
-
         key_labels: labels associated with the key embed.
-
         key_embeddings: Embedded key examples.
-
-        distance: Which distance function to use to compute the pairwise
-        distances between embeddings. Defaults to 'cosine'.
-
-        remove_diagonal: Bool. If True, will set diagonal to False in positive pair mask
-
+        distance: The distance function to use to compute the pairwise distances
+            between embeddings.
+        remove_diagonal: If True, set the diagonal to False in the positive pair
+            mask
         positive_mining_strategy: What mining strategy to use to select
-        embedding from the same class. Defaults to 'hard'.
-        Available: {'easy', 'hard'}
-
+            embedding from the same class. {'easy', 'hard'}
         negative_mining_strategy: What mining strategy to use for select the
-        embedding from the different class. Defaults to 'semi-hard'.
-        Available: {'hard', 'semi-hard', 'easy'}
-
-        soft_margin: [description]. Defaults to True. Use a soft margin
-        instead of an explicit one.
-
-        margin: Use an explicit value for the margin term. Defaults to 1.0.
+            embedding from the different class. {'hard', 'semi-hard', 'easy'}
+        soft_margin: If True, use a soft margin instead of an explicit one.
+        margin: Use an explicit value for the margin term.
 
     Returns:
         Loss: The loss value for the current batch.
@@ -153,41 +144,31 @@ class PNLoss(MetricLoss):
 
     def __init__(
         self,
-        distance: Union[Distance, str] = "cosine",
+        distance: Distance | str = "cosine",
         positive_mining_strategy: str = "hard",
         negative_mining_strategy: str = "semi-hard",
-        soft_margin: bool = False,
-        margin: float = 1.0,
+        soft_margin: bool = True,
+        margin: float = 0.1,
         name: str = "PNLoss",
-        **kwargs
+        **kwargs,
     ):
         """Initializes the PN Loss.
 
         Args:
-            distance: Which distance function to use to compute
-            the pairwise distances between embeddings. Defaults to 'cosine'.
-
-            positive_mining_strategy: What mining strategy to
-            use to select embedding from the same class. Defaults to 'hard'.
-            available: {'easy', 'hard'}
-
-            negative_mining_strategy: What mining strategy to
-            use for select the embedding from the different class.
-            Defaults to 'semi-hard'. Available: {'hard', 'semi-hard', 'easy'}
-
-            soft_margin: [description]. Defaults to True.
-            Use a soft margin instead of an explicit one.
-
-            margin: Use an explicit value for the margin
-            term. Defaults to 1.0.
-
-            name: Loss name. Defaults to PNLoss.
+            distance: The distance function to use to compute the pairwise
+                distances between embeddings.
+            positive_mining_strategy: What mining strategy to use to select
+                embedding from the same class. {'easy', 'hard'}
+            negative_mining_strategy: What mining strategy to use for select the
+                embedding from the different class. {'hard', 'semi-hard', 'easy'}
+            soft_margin: If True, use a soft margin instead of an explicit one.
+            margin: Use an explicit value for the margin term.
+            name: Loss name.
 
         Raises:
             ValueError: Invalid positive mining strategy.
             ValueError: Invalid negative mining strategy.
-            ValueError: Margin value is not used when soft_margin is set
-                        to True.
+            ValueError: Margin value is not used when soft_margin is set to True.
         """
 
         # distance canonicalization
@@ -202,11 +183,8 @@ class PNLoss(MetricLoss):
             raise ValueError("Invalid negative mining strategy.")
 
         # Ensure users knows its one or the other
-        if margin != 1.0 and soft_margin:
-            raise ValueError(
-                "Margin value is not used when soft_margin is\
-                              set to True"
-            )
+        if margin != 0.1 and soft_margin:
+            raise ValueError("Margin value is not used when soft_margin is set to True")
 
         super().__init__(
             pn_loss,
@@ -216,5 +194,5 @@ class PNLoss(MetricLoss):
             negative_mining_strategy=negative_mining_strategy,
             soft_margin=soft_margin,
             margin=margin,
-            **kwargs
+            **kwargs,
         )

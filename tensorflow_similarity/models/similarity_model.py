@@ -216,9 +216,7 @@ class SimilarityModel(tf.keras.Model):
                 msg = "distance='auto' only works if the first loss is a " "metric loss"
 
                 raise ValueError(msg)
-            print(
-                f"Distance metric automatically set to {distance} use the " "distance arg to override.",
-            )
+            print(f"Distance metric automatically set to {distance} use the " "distance arg to override.")
         else:
             distance = distance_canonicalizer(distance)
 
@@ -261,7 +259,7 @@ class SimilarityModel(tf.keras.Model):
 
     def create_index(
         self,
-        distance: Union[Distance, str] = "cosine",
+        distance: Union[Distance, str] = "auto",
         search: Union[Search, str] = "nmslib",
         kv_store: Union[Store, str] = "memory",
         evaluator: Union[Evaluator, str] = "memory",
@@ -358,6 +356,8 @@ class SimilarityModel(tf.keras.Model):
         if verbose:
             print("[Indexing %d points]" % len(x))
             print("|-Computing embeddings")
+        with tf.device("/cpu:0"):
+            x = tf.convert_to_tensor(np.array(x))
         predictions = self.predict(x)
 
         self._index.batch_add(
@@ -400,6 +400,7 @@ class SimilarityModel(tf.keras.Model):
 
         x = tf.expand_dims(x, axis=0)
         prediction = self.predict(x)
+
         self._index.add(
             prediction=prediction,
             label=y,
@@ -422,7 +423,10 @@ class SimilarityModel(tf.keras.Model):
             list of list of k nearest neighboors:
             List[List[Lookup]]
         """
+        with tf.device("/cpu:0"):
+            x = tf.convert_to_tensor(np.array(x))
         predictions = self.predict(x)
+
         return self._index.batch_lookup(predictions=predictions, k=k, verbose=verbose)
 
     def single_lookup(self, x: Tensor, k: int = 5) -> List[Lookup]:
@@ -439,6 +443,7 @@ class SimilarityModel(tf.keras.Model):
         """
         x = tf.expand_dims(x, axis=0)
         prediction = self.predict(x)
+
         return self._index.single_lookup(prediction=prediction, k=k)
 
     def index_summary(self):
@@ -504,6 +509,8 @@ class SimilarityModel(tf.keras.Model):
             thresholds_targets = {}
 
         # predict
+        with tf.device("/cpu:0"):
+            x = tf.convert_to_tensor(np.array(x))
         predictions = self.predict(x)
 
         # calibrate
@@ -568,6 +575,8 @@ class SimilarityModel(tf.keras.Model):
             raise ValueError("Uncalibrated model: run model.calibration()")
 
         # get predictions
+        with tf.device("/cpu:0"):
+            x = tf.convert_to_tensor(np.array(x))
         predictions = self.predict(x)
 
         # matching
@@ -618,6 +627,8 @@ class SimilarityModel(tf.keras.Model):
         # get embeddings
         if verbose:
             print("|-Computing embeddings")
+        with tf.device("/cpu:0"):
+            x = tf.convert_to_tensor(np.array(x))
         predictions = self.predict(x)
 
         if verbose:
@@ -695,6 +706,8 @@ class SimilarityModel(tf.keras.Model):
         # get embeddings
         if verbose:
             print("|-Computing embeddings")
+        with tf.device("/cpu:0"):
+            x = tf.convert_to_tensor(np.array(x))
         predictions = self.predict(x)
 
         results: DefaultDict[str, Dict[str, Union[str, np.ndarray]]] = defaultdict(dict)
