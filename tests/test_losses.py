@@ -2,6 +2,8 @@ import numpy as np
 import tensorflow as tf
 
 from tensorflow_similarity.losses import (
+
+    ArcFaceLoss,
     MultiNegativesRankLoss,
     MultiSimilarityLoss,
     PNLoss,
@@ -23,7 +25,6 @@ def test_triplet_loss_serialization():
 
 
 def triplet_hard_loss_np(labels, embedding, margin, dist_func, soft=False):
-
     num_data = embedding.shape[0]
     # Reshape labels to compute adjacency matrix.
     labels_reshaped = np.reshape(labels.astype(np.float32), (labels.shape[0], 1))
@@ -248,6 +249,41 @@ def test_xbm_loss():
     tf.assert_equal(loss_warm._y_true_memory, labels2)
 
 
+
+# arcface loss
+"""
+ArcFaceLoss
+    ArcFace: Additive Angular Margin Loss for Deep Face
+    Recognition. [online] arXiv.org. Available at:
+    <https://arxiv.org/abs/1801.07698v3>.
+"""
+
+
+def test_arcface_loss_serialization():
+    n_classes = 10
+    embed_size = 16
+    loss = ArcFaceLoss(num_classes=n_classes, embedding_size=embed_size)
+    config = loss.get_config()
+    loss2 = ArcFaceLoss.from_config(config)
+    assert loss.name == loss2.name
+    assert loss.margin == loss2.margin
+    assert loss.scale == loss2.scale
+    assert loss.num_classes == loss2.num_classes
+    assert loss.embedding_size == loss2.embedding_size
+
+
+def test_arcface_loss():
+    tf.random.set_seed(128)
+    loss_fn = ArcFaceLoss(num_classes=4, embedding_size=5)
+    labels = tf.Variable([0, 1, 2, 3])
+    embeddings = tf.Variable(tf.random.uniform(shape=[4, 5]))
+    print(embeddings)
+
+    loss = loss_fn(labels, embeddings)
+    print(loss)
+
+    assert 60.4 < loss.numpy() < 60.5
+    
 # [multiple negatives ranking loss]
 def test_multineg_rank_loss_serialization():
     loss = MultiNegativesRankLoss(distance="inner_product")
@@ -255,3 +291,4 @@ def test_multineg_rank_loss_serialization():
     loss2 = MultiNegativesRankLoss.from_config(config)
     assert loss.name == loss2.name
     assert loss.distance == loss2.distance
+

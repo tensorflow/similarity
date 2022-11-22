@@ -15,6 +15,7 @@
 """
 Contrastive learning specialized losses.
 """
+from .arcface_loss import ArcFaceLoss  # noqa
 from .barlow import Barlow  # noqa
 from .circle_loss import CircleLoss  # noqa
 from .metric_loss import MetricLoss  # noqa
