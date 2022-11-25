@@ -185,8 +185,8 @@ def projector(
     output_notebook()
     fig = figure(
         tooltips=tooltips,
-        plot_width=plot_size,
-        plot_height=plot_size,
+        width=plot_size,
+        height=plot_size,
         active_drag=active_drag,
         active_scroll="wheel_zoom",
     )
