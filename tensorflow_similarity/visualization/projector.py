@@ -24,7 +24,7 @@ from distinctipy import distinctipy
 from tqdm.auto import tqdm
 
 from tensorflow_similarity.types import FloatTensor, Tensor
-
+from bokeh import __version__
 
 def tensor2images(tensor: Tensor, size: Optional[int] = 64) -> List[str]:
     """Convert tensor images back to in memory images
@@ -183,13 +183,23 @@ def projector(
     # to bokeh format
     source = ColumnDataSource(data=data)
     output_notebook()
-    fig = figure(
-        tooltips=tooltips,
-        width=plot_size,
-        height=plot_size,
-        active_drag=active_drag,
-        active_scroll="wheel_zoom",
-    )
+    # Bokeh backward compatibility
+    if int(__version__.split('.')[0]) >= 3:
+        fig = figure(
+            tooltips=tooltips,
+            width=plot_size,
+            height=plot_size,
+            active_drag=active_drag,
+            active_scroll="wheel_zoom",
+        )
+    else:
+        fig = figure(
+            tooltips=tooltips,
+            plot_width=plot_size,
+            plot_height=plot_size,
+            active_drag=active_drag,
+            active_scroll="wheel_zoom",
+        )
 
     # remove grid and axis
     fig.xaxis.visible = False
