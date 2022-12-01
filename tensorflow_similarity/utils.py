@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 "Various utilities functions for improved quality of life."
+from __future__ import annotations
+
 import math
-from typing import Dict, List, Optional, Sequence, Union
+from collections.abc import Mapping, MutableMapping, Sequence
+from typing import Any
 
 import numpy as np
 import tensorflow as tf
@@ -39,7 +42,7 @@ def tf_cap_memory():
                 print(e)
 
 
-def unpack_lookup_labels(lookups: Sequence[Sequence[Lookup]], dtype: Union[str, tf.DType]) -> IntTensor:
+def unpack_lookup_labels(lookups: Sequence[Sequence[Lookup]], dtype: str | tf.DType) -> IntTensor:
     # Using list comprehension as it is faster
     all_values = [[n.label for n in lu] for lu in lookups]
     # Lookup sets are not guaranteed to all be the same size. Therefore we load
@@ -61,7 +64,7 @@ def unpack_lookup_labels(lookups: Sequence[Sequence[Lookup]], dtype: Union[str, 
 
 
 def unpack_lookup_distances(
-    lookups: Sequence[Sequence[Lookup]], dtype: Union[str, tf.DType], distance_rounding: Optional[int] = None
+    lookups: Sequence[Sequence[Lookup]], dtype: str | tf.DType, distance_rounding: int | None = None
 ) -> FloatTensor:
     # using list comprehension as it is faster
     all_values = [[n.distance for n in lu] for lu in lookups]
@@ -88,12 +91,12 @@ def unpack_lookup_distances(
 
 
 def unpack_results(
-    results: Dict[str, np.ndarray],
+    results: Mapping[str, np.ndarray],
     epoch: int,
-    logs: dict,
+    logs: MutableMapping[str, Any],
     tb_writer: tf.summary.SummaryWriter,
-    name_suffix: Optional[str] = "",
-) -> List[str]:
+    name_suffix: str | None = "",
+) -> list[str]:
     """Updates logs, writes summary, and returns list of strings of
     evaluation metric"""
     mstr = []

@@ -11,7 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Optional, Sequence, Tuple, TypeVar, Union
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import Callable, Tuple, TypeVar
 
 import tensorflow_datasets as tfds
 from tqdm.auto import tqdm
@@ -33,13 +36,13 @@ class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):
         classes_per_batch: int,
         x_key: str = "image",
         y_key: str = "label",
-        splits: Union[str, Sequence[str]] = ["train", "test"],
+        splits: str | Sequence[str] = ["train", "test"],
         examples_per_class_per_batch: int = 2,
         steps_per_epoch: int = 1000,
-        class_list: Sequence[int] = None,
-        total_examples_per_class: int = None,
-        preprocess_fn: Optional[PreProcessFn] = None,
-        augmenter: Optional[Augmenter] = None,
+        class_list: Sequence[int] | None = None,
+        total_examples_per_class: int | None = None,
+        preprocess_fn: PreProcessFn | None = None,
+        augmenter: Augmenter | None = None,
         warmup: int = -1,
     ):
         """Create a Multishot in memory sampler from a dataset downloaded from

@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Dict, MutableMapping, Sequence, Union
+from collections.abc import MutableMapping, Sequence
 
 import numpy as np
 
@@ -44,7 +45,7 @@ class Evaluator(ABC):
         lookups: Sequence[Sequence[Lookup]],
         retrieval_metrics: Sequence[RetrievalMetric],
         distance_rounding: int = 8,
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """Evaluates lookup performances against a supplied set of metrics
 
         Args:
@@ -72,10 +73,10 @@ class Evaluator(ABC):
         lookup_distances: FloatTensor,
         distance_thresholds: FloatTensor,
         metrics: Sequence[ClassificationMetric],
-        matcher: Union[str, ClassificationMatch],
+        matcher: str | ClassificationMatch,
         distance_rounding: int = 8,
         verbose: int = 1,
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """Evaluate the classification performance.
 
         Compute the classification metrics given a set of queries, lookups, and
@@ -117,7 +118,7 @@ class Evaluator(ABC):
         lookups: Sequence[Sequence[Lookup]],
         thresholds_targets: MutableMapping[str, float],
         calibration_metric: ClassificationMetric,
-        matcher: Union[str, ClassificationMatch],
+        matcher: str | ClassificationMatch,
         extra_metrics: Sequence[ClassificationMetric] = [],
         distance_rounding: int = 8,
         metric_rounding: int = 6,

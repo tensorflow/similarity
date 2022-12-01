@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple
 
 import tensorflow as tf
 
@@ -53,7 +53,7 @@ class ClassificationMatch(ABC):
             "distance_thresholds": self.distance_thresholds,
         }
 
-    def compile(self, distance_thresholds: Optional[FloatTensor] = None):
+    def compile(self, distance_thresholds: FloatTensor | None = None):
         """Configures the distance thresholds used during matching.
 
         Args:
@@ -67,7 +67,7 @@ class ClassificationMatch(ABC):
         self.distance_thresholds = tf.sort(tf.cast(distance_thresholds, dtype="float32"))
 
     @abstractmethod
-    def derive_match(self, lookup_labels: IntTensor, lookup_distances: FloatTensor) -> Tuple[IntTensor, FloatTensor]:
+    def derive_match(self, lookup_labels: IntTensor, lookup_distances: FloatTensor) -> tuple[IntTensor, FloatTensor]:
         """Derive a match label and distance from a set of K neighbors.
 
         For each query, derive a single match label and distance given the
@@ -93,7 +93,7 @@ class ClassificationMatch(ABC):
 
     def _compute_match_indicators(
         self, query_labels: IntTensor, lookup_labels: IntTensor, lookup_distances: FloatTensor
-    ) -> Tuple[BoolTensor, BoolTensor]:
+    ) -> tuple[BoolTensor, BoolTensor]:
         """Compute the match indicator tensor.
 
         Compute the match indicator tensor given a set of query labels and a

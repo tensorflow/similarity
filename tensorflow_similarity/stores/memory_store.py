@@ -11,10 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import io
+from collections.abc import Sequence
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -31,17 +32,17 @@ class MemoryStore(Store):
     def __init__(self) -> None:
         # We are using a native python array in memory for its row speed.
         # Serialization / export relies on Arrow.
-        self.labels: List[Optional[int]] = []
-        self.embeddings: List[FloatTensor] = []
-        self.data: List[Optional[Tensor]] = []
+        self.labels: list[int | None] = []
+        self.embeddings: list[FloatTensor] = []
+        self.data: list[Tensor | None] = []
         self.num_items: int = 0
         pass
 
     def add(
         self,
         embedding: FloatTensor,
-        label: Optional[int] = None,
-        data: Optional[Tensor] = None,
+        label: int | None = None,
+        data: Tensor | None = None,
     ) -> int:
         """Add an Embedding record to the key value store.
 
@@ -65,9 +66,9 @@ class MemoryStore(Store):
     def batch_add(
         self,
         embeddings: Sequence[FloatTensor],
-        labels: Optional[Sequence[int]] = None,
-        data: Optional[Sequence[Tensor]] = None,
-    ) -> List[int]:
+        labels: Sequence[int] | None = None,
+        data: Sequence[Tensor] | None = None,
+    ) -> list[int]:
         """Add a set of embedding records to the key value store.
 
         Args:
@@ -83,14 +84,14 @@ class MemoryStore(Store):
         Returns:
             List of associated record id.
         """
-        idxs: List[int] = []
+        idxs: list[int] = []
         for idx, embedding in enumerate(embeddings):
             label = None if labels is None else labels[idx]
             rec_data = None if data is None else data[idx]
             idxs.append(self.add(embedding, label, rec_data))
         return idxs
 
-    def get(self, idx: int) -> Tuple[FloatTensor, Optional[int], Optional[Tensor]]:
+    def get(self, idx: int) -> tuple[FloatTensor, int | None, Tensor | None]:
         """Get an embedding record from the key value store.
 
         Args:
@@ -102,7 +103,7 @@ class MemoryStore(Store):
 
         return self.embeddings[idx], self.labels[idx], self.data[idx]
 
-    def batch_get(self, idxs: Sequence[int]) -> Tuple[List[FloatTensor], List[Optional[int]], List[Optional[Tensor]]]:
+    def batch_get(self, idxs: Sequence[int]) -> tuple[list[FloatTensor], list[int | None], list[Tensor | None]]:
         """Get embedding records from the key value store.
 
         Args:

@@ -11,10 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import random
 from collections import defaultdict
-from typing import Optional, Sequence, Set, Tuple
+from collections.abc import Sequence
 
 import numpy as np
 import tensorflow as tf
@@ -34,9 +35,9 @@ class MultiShotMemorySampler(Sampler):
         classes_per_batch: int = 2,
         examples_per_class_per_batch: int = 2,
         steps_per_epoch: int = 1000,
-        class_list: Sequence[int] = None,
-        total_examples_per_class: int = None,
-        augmenter: Optional[Augmenter] = None,
+        class_list: Sequence[int] | None = None,
+        total_examples_per_class: int | None = None,
+        augmenter: Augmenter | None = None,
         warmup: int = -1,
     ):
         """Create a Multishot in memory sampler that ensures that each batch is
@@ -112,7 +113,7 @@ class MultiShotMemorySampler(Sampler):
 
         # We only want to warn users once per class if we are sampling with
         # replacement
-        self._small_classes: Set[int] = set()
+        self._small_classes: set[int] = set()
 
         # filter
         self._x, self._y = select_examples(
@@ -132,7 +133,7 @@ class MultiShotMemorySampler(Sampler):
             cl = cls[idx]
             self.index_per_class[cl].append(idx)
 
-    def _get_examples(self, batch_id: int, num_classes: int, examples_per_class: int) -> Tuple[FloatTensor, IntTensor]:
+    def _get_examples(self, batch_id: int, num_classes: int, examples_per_class: int) -> tuple[FloatTensor, IntTensor]:
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -187,7 +188,7 @@ class MultiShotMemorySampler(Sampler):
             tf.convert_to_tensor(np.array(batch_y)),
         )
 
-    def get_slice(self, begin: int = 0, size: int = -1) -> Tuple[FloatTensor, IntTensor]:
+    def get_slice(self, begin: int = 0, size: int = -1) -> tuple[FloatTensor, IntTensor]:
         """Extracts a slice over both the x and y tensors.
 
         This method extracts a slice of size `size` over the first dimension of
@@ -279,7 +280,7 @@ class SingleShotMemorySampler(Sampler):
         self._x = x
         self._y = tf.range(0, self.num_examples, dtype="int32")
 
-    def _get_examples(self, batch_id: int, num_classes: int, examples_per_class: int) -> Tuple[FloatTensor, IntTensor]:
+    def _get_examples(self, batch_id: int, num_classes: int, examples_per_class: int) -> tuple[FloatTensor, IntTensor]:
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -317,7 +318,7 @@ class SingleShotMemorySampler(Sampler):
 
         return x, y
 
-    def get_slice(self, begin: int = 0, size: int = -1) -> Tuple[FloatTensor, IntTensor]:
+    def get_slice(self, begin: int = 0, size: int = -1) -> tuple[FloatTensor, IntTensor]:
         """Extracts an augmented slice over both the x and y tensors.
 
         This method extracts a slice of size `size` over the first dimension of

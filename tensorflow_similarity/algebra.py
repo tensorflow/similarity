@@ -11,16 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 "Set of useful algebraic functions used through the package"
-from typing import Tuple
+from __future__ import annotations
 
 import tensorflow as tf
 
 from .types import BoolTensor, FloatTensor, IntTensor
 
 
-def masked_max(distances: FloatTensor, mask: BoolTensor, dim: int = 1) -> Tuple[FloatTensor, FloatTensor]:
+def masked_max(distances: FloatTensor, mask: BoolTensor, dim: int = 1) -> tuple[FloatTensor, FloatTensor]:
     """Computes the maximum values over masked pairwise distances.
 
     We need to use this formula to make sure all values are >=0.
@@ -45,7 +44,7 @@ def masked_max(distances: FloatTensor, mask: BoolTensor, dim: int = 1) -> Tuple[
     return tf.cast(masked_max, dtype=tf.float32), arg_max
 
 
-def masked_min(distances: FloatTensor, mask: BoolTensor, dim: int = 1) -> Tuple[FloatTensor, FloatTensor]:
+def masked_min(distances: FloatTensor, mask: BoolTensor, dim: int = 1) -> tuple[FloatTensor, FloatTensor]:
     """Computes the minimal values over masked pairwise distances.
 
     Args:
@@ -70,7 +69,7 @@ def masked_min(distances: FloatTensor, mask: BoolTensor, dim: int = 1) -> Tuple[
 
 def build_masks(
     query_labels: IntTensor, key_labels: IntTensor, batch_size: int, remove_diagonal: bool = True
-) -> Tuple[BoolTensor, BoolTensor]:
+) -> tuple[BoolTensor, BoolTensor]:
     """Build masks that allows to select only the positive or negatives
     embeddings.
     Args:

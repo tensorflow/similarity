@@ -16,7 +16,9 @@
     A Simple Framework for Contrastive Learning of Visual Representations
     https://arxiv.org/abs/2002.05709
 """
-from typing import Any, Dict
+from __future__ import annotations
+
+from typing import Any
 
 import tensorflow as tf
 
@@ -129,7 +131,7 @@ class SimCLRLoss(tf.keras.losses.Loss):
             # Using [-1] trick to support also scalar input.
             return tf.reshape(ext_tensor, [-1] + ext_tensor.shape.as_list()[2:])
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         config = {
             "temperature": self.temperature,
         }

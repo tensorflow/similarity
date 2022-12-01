@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 "ResNet50 backbone for similarity learning"
+from __future__ import annotations
+
 import re
-from typing import Tuple
 
 import tensorflow as tf
 from tensorflow.keras import layers
@@ -28,14 +28,14 @@ from .utils import convert_sync_batchnorm
 
 # Create an image augmentation pipeline.
 def ResNet50Sim(
-    input_shape: Tuple[int],
+    input_shape: tuple[int, int, int],
     embedding_size: int = 128,
     weights: str = "imagenet",
     trainable: str = "frozen",
     l2_norm: bool = True,
     include_top: bool = True,
     pooling: str = "gem",
-    gem_p=3.0,
+    gem_p: float = 3.0,
 ) -> SimilarityModel:
     """Build an ResNet50 Model backbone for similarity learning
 
@@ -107,7 +107,7 @@ def ResNet50Sim(
     return SimilarityModel(inputs, outputs)
 
 
-def build_resnet(weights: str = None, trainable: str = "full") -> tf.keras.Model:
+def build_resnet(weights: str | None = None, trainable: str = "full") -> tf.keras.Model:
     """Build the requested ResNet.
 
     Args:

@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
+from collections.abc import MutableMapping, Sequence
 from pathlib import Path
 
 import numpy as np
@@ -48,7 +48,7 @@ class EvalCallback(Callback):
         target_labels: Sequence[int],
         distance: str = "cosine",
         metrics: Sequence[str | ClassificationMetric] = ["binary_accuracy"],
-        tb_logdir: str = None,
+        tb_logdir: str | None = None,
         k: int = 1,
         matcher: str | ClassificationMatch = "match_nearest",
         distance_thresholds: FloatTensor | None = None,
@@ -107,7 +107,7 @@ class EvalCallback(Callback):
         self.evaluator = MemoryEvaluator()
         # typing requires this weird formulation of creating a new list
         self.classification_metrics: list[ClassificationMetric] = [make_classification_metric(m) for m in metrics]
-        self.retrieval_metrics = retrieval_metrics
+        self.retrieval_metrics = retrieval_metrics if retrieval_metrics is not None else []
         self.k = k
         self.matcher = matcher
 
@@ -164,7 +164,7 @@ class EvalCallback(Callback):
                 self.queries_unknown = None
                 self.query_labels_unknown = None
 
-    def on_epoch_end(self, epoch: int, logs: dict = None):
+    def on_epoch_end(self, epoch: int, logs: MutableMapping | None = None):
         """Computes the eval metrics at the end of each epoch.
 
         NOTE: This method resets the index and batch adds the target embeddings
@@ -251,7 +251,7 @@ def _compute_metrics(
     k: int,
     matcher: str | ClassificationMatch,
     distance_thresholds: FloatTensor,
-) -> dict[str, np.ndarray]:
+) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray]]:
     """Compute the classification metrics.
 
     Args:
@@ -306,6 +306,6 @@ def _compute_metrics(
             retrieval_metrics=retrieval_metrics,
         )
     else:
-        retrieval_metrics = {}
+        retrieval_results = {}
 
     return classification_results, retrieval_results

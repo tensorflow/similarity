@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import abc
-from typing import Any, Callable, List, Mapping, Optional, Tuple, Union
+from typing import Any, Callable, List, Mapping, Union
 
 import numpy as np
 from tensorflow import Tensor
-from tensorflow.keras.utils import Sequence
+from tensorflow.keras.utils import Sequence as KerasSequence
 
 from tensorflow_similarity.augmenters import Augmenter
 
@@ -26,18 +27,19 @@ Scheduler = Callable[[Any], Any]
 
 # All basic types accepted by tf.keras.Model.fit(). This doesn't include tf.data
 # datasets or keras generators.
+# TODO(ovallis): Replace Union with pep585 typing '|' once numpy arrays support it.
 Batch = Union[np.ndarray, List[np.ndarray], Tensor, List[Tensor], Mapping[str, Union[np.ndarray, Tensor]]]
 
 
-class Sampler(Sequence, metaclass=abc.ABCMeta):
+class Sampler(KerasSequence, metaclass=abc.ABCMeta):
     def __init__(
         self,
         classes_per_batch: int,
         examples_per_class_per_batch: int = 2,
         num_augmentations_per_example: int = 1,
         steps_per_epoch: int = 1000,
-        augmenter: Optional[Augmenter] = None,
-        # scheduler: Optional[Scheduler] = None,
+        augmenter: Augmenter | None = None,
+        # scheduler: Scheduler | None = None,
         warmup: int = 0,
     ) -> None:
         """Create a dataset sampler that ensure that each batch contains at
@@ -91,7 +93,7 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
         )
 
     @abc.abstractmethod
-    def _get_examples(self, batch_id: int, num_classes: int, examples_per_class: int) -> Tuple[Batch, Batch]:
+    def _get_examples(self, batch_id: int, num_classes: int, examples_per_class: int) -> tuple[Batch, Batch]:
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -130,10 +132,10 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
             print("Warmup complete")
             self.is_warmup = False
 
-    def __getitem__(self, batch_id: int) -> Tuple[Batch, Batch]:
+    def __getitem__(self, batch_id: int) -> tuple[Batch, Batch]:
         return self.generate_batch(batch_id)
 
-    def generate_batch(self, batch_id: int) -> Tuple[Batch, Batch]:
+    def generate_batch(self, batch_id: int) -> tuple[Batch, Batch]:
         """Generate a batch of data.
 
 

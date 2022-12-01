@@ -11,12 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from __future__ import annotations
 
 import abc
-
-# from tensorflow import Tensor
-from typing import List
 
 from tensorflow_similarity.types import Tensor
 
@@ -29,7 +26,7 @@ class Augmenter(abc.ABC):
         y: Tensor,
         num_augmentations_per_example: int,
         is_warmup: bool,
-    ) -> List[Tensor]:
+    ) -> list[Tensor]:
         pass
 
     def __call__(
@@ -38,5 +35,5 @@ class Augmenter(abc.ABC):
         y: Tensor,
         num_augmentations_per_example: int,
         is_warmup: bool,
-    ) -> List[Tensor]:
+    ) -> list[Tensor]:
         return self.augment(x, y, num_augmentations_per_example, is_warmup)
