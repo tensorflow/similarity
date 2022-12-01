@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+import numpy as np
+
 from tensorflow_similarity.callbacks import EvalCallback
 from tensorflow_similarity.retrieval_metrics import (
     MapAtK,
@@ -45,6 +47,17 @@ def make_eval_metrics(ecfg: Mapping[str, Any], class_counts: Mapping[int, int]) 
                     name="map@R",
                 )
             )
+        elif metric_id == "r_precision":
+            max_class_count = max(class_counts.values())
+            metrics.append(
+                PrecisionAtK(
+                    r=class_counts,
+                    clip_at_r=True,
+                    k=max_class_count,
+                    drop_closest_lookup=True,
+                    name="R_Precision",
+                )
+            )
         else:
             raise ValueError(f"Unknown metric name: {metric_id}")
 
@@ -65,11 +78,17 @@ def make_eval_callback(val_ds: MultiShotMemorySampler, num_queries: int, num_tar
     targets_x, targets_y = val_ds.augmenter(
         targets_x, targets_y, val_ds.num_augmentations_per_example, val_ds.is_warmup
     )
+
+    unique, counts = np.unique(targets_y, return_counts=True)
+    class_counts = {k: v for k, v in zip(unique, counts)}
+    retrieval_metrics = make_eval_metrics({"map_at_r": {}, "r_precision": {}}, class_counts)
+
     return EvalCallback(
         queries_x,
         queries_y,
         targets_x,
         targets_y,
-        metrics=["binary_accuracy", "precision"],
-        k=1,
+        metrics=["binary_accuracy"],
+        k=max(class_counts.values()),
+        retrieval_metrics=retrieval_metrics,
     )
