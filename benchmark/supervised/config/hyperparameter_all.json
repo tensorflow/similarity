@@ -2,16 +2,20 @@
     "version": "1.0.1",
     "random_seed": 303,
     "tfds_data_dir": "/workspace/tensorflow_datasets",
+    "hyperparameter_dir": "benchmark_hyperparameters",
+    "benchmark_dir": "benchmark_results",
+    "dataset_dir": "benchmark_datasets",
 
     "datasets": {
         "cars196_50pct_cls_splt": {
-            "component": "cars196",
+            "component": "tfds",
+            "dataset_id": "cars196",
             "x_key": "image",
             "y_key": "label",
             "train_classes": [0, 98],
             "test_classes": [98, 196],
             "train_val_splits": {
-                "n_splits": 4,
+                "num_splits": 4,
                 "val_class_pctg": 0.125
             },
             "eval_callback": {
@@ -20,13 +24,14 @@
             }
         },
         "caltechbirds2011_50pct_cls_splt": {
-            "component": "caltech_birds2011",
+            "component": "tfds",
+            "dataset_id": "caltech_birds2011",
             "x_key": "image",
             "y_key": "label",
             "train_classes": [0, 100],
             "test_classes": [100, 199],
             "train_val_splits": {
-                "n_splits": 4,
+                "num_splits": 4,
                 "val_class_pctg": 0.125
             },
             "eval_callback": {
@@ -64,88 +69,125 @@
         }
     },
     "architectures": {
-        "effnet_b0": {
-            "component": "effnet",
-            "input_shape": [227, 227, 3],
-            "embedding_sizes": [128, 512],
-            "variant": "B0",
-            "trainable": "full"
-        },
         "resnet50": {
             "component": "resnet50",
             "input_shape": [227, 227, 3],
-            "embedding_sizes": [128, 512],
+            "embedding_sizes": [128],
             "trainable": "full"
         }
     },
     "losses": {
-        "pn_semi_hard_margin_0.1": {
+        "pn_semi_hard_margin": {
             "component": "pn",
             "distance": "cosine",
-            "positive_mining": "hard",
-            "negative_mining": "semi-hard",
+            "positive_mining": "easy",
+            "negative_mining": {
+                "component": "choice",
+                "values": ["hard", "semi-hard"]
+            },
             "soft_margin": false,
-            "margin": 0.1
+            "margin": {
+                "component": "float",
+                "min_value": 0.1,
+                "max_value": 0.7,
+                "sampling": "linear"
+            }
         },
         "pn_semi_hard_soft_margin": {
             "component": "pn",
             "distance": "cosine",
-            "positive_mining": "hard",
-            "negative_mining": "semi-hard",
+            "positive_mining": {
+                "component": "choice",
+                "values": ["easy", "hard"]
+            },
+            "negative_mining": {
+                "component": "choice",
+                "values": ["hard", "semi-hard"]
+            },
             "soft_margin": true
         },
         "multisim": {
             "component": "multisim",
             "distance": "cosine",
-            "alpha": 2.0,
-            "beta": 40.0,
-            "epsilon": 0.1,
-            "lmda": 0.5
+            "alpha": {
+                "component": "float",
+                "min_value": 1.0,
+                "max_value": 10.0,
+                "sampling": "linear"
+            },
+            "beta": {
+                "component": "float",
+                "min_value": 10.0,
+                "max_value": 80.0,
+                "sampling": "linear"
+            },
+            "epsilon": {
+                "component": "float",
+                "min_value": 0.005,
+                "max_value": 0.5,
+                "sampling": "log"
+            },
+            "lmda": {
+                "component": "float",
+                "min_value": 0.005,
+                "max_value": 0.5,
+                "sampling": "log"
+            }
         },
         "circle": {
             "component": "circle",
             "distance": "cosine",
-            "gamma": 80.0,
-            "margin": 0.4
+            "gamma": {
+                "component": "float",
+                "min_value": 10.0,
+                "max_value": 300.00,
+                "sampling": "log"
+            },
+            "margin": {
+                "component": "float",
+                "min_value": 0.005,
+                "max_value": 0.5,
+                "sampling": "log"
+            }
         },
         "triplet_semi_hard_margin_0.1": {
             "component": "triplet",
             "distance": "cosine",
-            "positive_mining": "hard",
-            "negative_mining": "semi-hard",
+            "positive_mining": "easy",
+            "negative_mining": {
+                "component": "choice",
+                "values": ["hard", "semi-hard"]
+            },
             "soft_margin": false,
-            "margin": 0.1
+            "margin": {
+                "component": "float",
+                "min_value": 0.001,
+                "max_value": 1.0,
+                "sampling": "log"
+            }
         },
         "triplet_semi_soft_margin": {
             "component": "triplet",
             "distance": "cosine",
-            "positive_mining": "hard",
-            "negative_mining": "semi-hard",
+            "positive_mining": "easy",
+            "negative_mining": {
+                "component": "choice",
+                "values": ["hard", "semi-hard"]
+            },
             "soft_margin": true
         },
         "soft_nn_tmp_1": {
             "component": "soft_nn",
             "distance": "sql2",
-            "temperature": 1
-        },
-        "xbm_multisim": {
-            "component": "multisim",
-            "distance": "cosine",
-            "alpha": 2.0,
-            "beta": 40.0,
-            "epsilon": 0.1,
-            "lmda": 0.5,
-            "xbm": {
-                "memory_size": 1000,
-                "warmup_steps": 100
+            "temperature": {
+                "component": "float",
+                "min_value": 0.05,
+                "max_value": 5.0,
+                "sampling": "log"
             }
         }
     },
     "optimizer": {
-        "adam_lr1e-4":{
-            "component": "adam",
-            "lr": 0.0001
-        },
         "lamb_lr1e-4":{
             "component": "lamb",
             "lr": 0.0001
@@ -162,12 +204,7 @@
                 "classes_per_batch": 10,
                 "examples_per_class_per_batch": 16
             },
-            "steps_per_epoch": 1,
-            "epochs": 1,
-            "lr_schedule": {
-                "warmup_pctg": 0.5,
-                "min_lr": 0.0000001
-            }
+            "epochs": 50
         }
     ],
     "evaluation": {
@@ -179,6 +216,8 @@
             "k": [1,2,4,8,16,32],
             "average": "micro"
         },
-        "map_at_r": { }
+        "map_at_r": { },
+        "r_precision": { }
     }
 }
+
