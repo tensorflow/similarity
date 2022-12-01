@@ -11,17 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
-from typing import Mapping
+from collections.abc import Mapping
 
 import tensorflow as tf
 
-from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
-
-from .retrieval_metric import RetrievalMetric
+from .precision_at_k import PrecisionAtK
 
 
-class MapAtK(RetrievalMetric):
+class MapAtK(PrecisionAtK):
     r"""Mean Average precision - mAP@K is computed as.
 
     $$
@@ -81,7 +80,7 @@ class MapAtK(RetrievalMetric):
 
     def __init__(
         self,
-        r: Mapping[int, int],
+        r: Mapping[int, int] | None = None,
         clip_at_r: bool = False,
         name: str = "map",
         **kwargs,
@@ -92,82 +91,17 @@ class MapAtK(RetrievalMetric):
         if "canonical_name" not in kwargs:
             kwargs["canonical_name"] = "map@k"
 
-        super().__init__(name=name, **kwargs)
-        self.r = r
-        self.clip_at_r = clip_at_r
+        super().__init__(r=r, clip_at_r=clip_at_r, name=name, **kwargs)
 
-    def get_config(self):
-        config = {
-            "r": self.r,
-            "clip_at_r": self.clip_at_r,
-        }
-        base_config = super().get_config()
-        return {**base_config, **config}
+    @property
+    def name(self) -> str:
+        if self.clip_at_r:
+            return f"{self._name}"
 
-    def compute(
-        self,
-        *,  # keyword only arguments see PEP-570
-        query_labels: IntTensor,
-        match_mask: BoolTensor,
-        **kwargs,
-    ) -> FloatTensor:
-        """Compute the metric
+        return super().name
 
-        Args:
-            query_labels: A 1D array of the labels associated with the
-            embedding queries.
-
-            match_mask: A 2D mask where a 1 indicates a match between the
-            jth query and the kth neighbor and a 0 indicates a mismatch.
-
-            **kwargs: Additional compute args
-
-        Returns:
-            A rank 0 tensor containing the metric.
-        """
-        self._check_shape(query_labels, match_mask)
-
-        start_k = 0
-        if self.drop_closest_lookup:
-            start_k = 1
-            self.r = {k: tf.math.maximum(1, v - 1) for k, v in self.r.items()}
-
-        k_slice = tf.cast(match_mask[:, start_k : start_k + self.k], dtype="float")  # noqa
-
-        tp = tf.math.cumsum(k_slice, axis=1)
-        p_at_k = tf.math.divide(tp, tf.range(1, self.k + 1, dtype="float"))
-        p_at_k = tf.math.multiply(k_slice, p_at_k)
-
-        if self.average == "micro":
-            table = tf.lookup.StaticHashTable(
-                tf.lookup.KeyValueTensorInitializer(
-                    list(self.r.keys()),
-                    list(self.r.values()),
-                    key_dtype=query_labels.dtype,
-                    value_dtype=query_labels.dtype,
-                ),
-                default_value=-1,
-            )
-            class_counts = table.lookup(query_labels)
-
-            if self.clip_at_r:
-                elems = (p_at_k, tf.expand_dims(class_counts, axis=1))
-                # for each row i in p_at_k, reduce_sum the first class_count[i] values and divide by
-                # class_count[i]
-                avg_p_at_k = tf.map_fn(
-                    lambda x: tf.math.reduce_sum(x[0][: x[1][0]]) / tf.cast(x[1], dtype="float"),
-                    elems,
-                    fn_output_signature="float",
-                )
-            else:
-                avg_p_at_k = tf.math.divide(
-                    tf.math.reduce_sum(p_at_k, axis=1),
-                    tf.cast(class_counts, dtype="float"),
-                )
-
-            avg_p_at_k = tf.math.reduce_mean(avg_p_at_k)
-        else:
-            raise ValueError(f"{self.average} is not a supported average option")
-
-        result: FloatTensor = avg_p_at_k
-        return result
+    def _get_matches(self, x):
+        tp = tf.math.cumsum(x, axis=1)
+        p_at_k = tf.math.divide_no_nan(tp, tf.range(1, x.shape[1] + 1, dtype="float"))
+        p_at_k = tf.math.multiply(x, p_at_k)
+        return p_at_k

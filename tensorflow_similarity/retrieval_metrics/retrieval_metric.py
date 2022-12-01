@@ -67,7 +67,7 @@ class RetrievalMetric(ABC):
     @property
     def name(self) -> str:
         if self.distance_threshold and self.distance_threshold != math.inf:
-            return f"{self._name}@{self.k} : " f"distance_threshold@{self.distance_threshold}"
+            return f"{self._name}@{self.k} : distance_threshold@{self.distance_threshold}"
         else:
             return f"{self._name}@{self.k}"
 
