@@ -98,7 +98,7 @@ def unpack_results(
     evaluation metric"""
     mstr = []
     for metric_name, vals in results.items():
-        float_val = vals[0]
+        float_val = vals[0] if isinstance(vals, np.ndarray) else vals
         full_metric_name = f"{metric_name}{name_suffix}"
         logs[full_metric_name] = float_val
         mstr.append(f"{full_metric_name}: {float_val:.4f}")
