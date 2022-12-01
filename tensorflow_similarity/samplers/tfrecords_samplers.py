@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import os
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import tensorflow as tf
 from absl import logging
@@ -24,11 +25,11 @@ def TFRecordDatasetSampler(
     deserialization_fn: Callable,
     example_per_class: int = 2,
     batch_size: int = 32,
-    shards_per_cycle: int = None,
-    compression: Optional[str] = None,
+    shards_per_cycle: int | None = None,
+    compression: str | None = None,
     parallelism: int = tf.data.AUTOTUNE,
     async_cycle: bool = False,
-    prefetch_size: Optional[int] = None,
+    prefetch_size: int | None = None,
     shard_suffix: str = "*.tfrec",
     num_repeat: int = -1,
 ) -> tf.data.Dataset:

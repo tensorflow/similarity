@@ -16,7 +16,10 @@
     Barlow Twins: Self-Supervised Learning via Redundancy Reduction
     https://arxiv.org/abs/2103.03230
 """
-from typing import Any, Callable, Dict, Optional
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any
 
 import tensorflow as tf
 
@@ -52,8 +55,8 @@ class Barlow(tf.keras.losses.Loss):
         lambda_: float = 5e-3,
         margin: float = 1e-12,
         reduction: Callable = tf.keras.losses.Reduction.AUTO,
-        name: Optional[str] = None,
-        **kwargs
+        name: str | None = None,
+        **kwargs,
     ):
         super().__init__(reduction=reduction, name=name, **kwargs)
         self.lambda_ = lambda_
@@ -92,7 +95,7 @@ class Barlow(tf.keras.losses.Loss):
 
         return loss
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         config = {
             "lambda_": self.lambda_,
             "margin": self.margin,

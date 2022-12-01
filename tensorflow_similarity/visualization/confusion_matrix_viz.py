@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Visualization utilities for TensorFlow Similarity."""
+from __future__ import annotations
 
 import itertools
-from typing import Any, Tuple
+from typing import Any
 
 import numpy as np
 import tensorflow as tf
@@ -26,11 +28,11 @@ def confusion_matrix(
     y_pred: IntTensor,
     y_true: IntTensor,
     normalize: bool = True,
-    labels: IntTensor = None,
+    labels: IntTensor | None = None,
     title: str = "Confusion matrix",
     cmap: str = "Blues",
     show: bool = True,
-) -> Tuple[Any, FloatTensor]:
+) -> tuple[Any, FloatTensor]:
     """Plot confusion matrix
 
     Args:

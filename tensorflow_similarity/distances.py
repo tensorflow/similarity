@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Vectorized embedding pairwise distances computation functions"""
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import List, Union
+from collections.abc import Sequence
 
 import tensorflow as tf
 
@@ -27,9 +29,9 @@ class Distance(ABC):
 
     """
 
-    def __init__(self, name: str, aliases: List[str] = []):
-        self.name = name
-        self.aliases = aliases
+    def __init__(self, name: str, aliases: Sequence[str]):
+        self.name = name if name is not None else "distance"
+        self.aliases = aliases if aliases is not None else None
 
     @abstractmethod
     def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
@@ -67,9 +69,11 @@ class InnerProductSimilarity(Distance):
     loss functions that expect a similarity instead of a distance.
     """
 
-    def __init__(self):
+    def __init__(self, name: str | None = None, aliases: Sequence[str] | None = None):
         "Init Inner product similarity"
-        super().__init__("inner_product", ["ip"])
+        name = name if name is not None else "inner_product"
+        aliases = aliases if aliases is not None else ["ip"]
+        super().__init__(name, aliases)
 
     @tf.function
     def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
@@ -95,9 +99,11 @@ class CosineDistance(Distance):
     an angular distance that varies from 0 (similar) to 1 (dissimilar).
     """
 
-    def __init__(self):
+    def __init__(self, name: str | None = None, aliases: Sequence[str] | None = None):
         "Init Cosine distance"
-        super().__init__("cosine")
+        name = name if name is not None else "cosine"
+        aliases = aliases if aliases is not None else []
+        super().__init__(name, aliases)
 
     @tf.function
     def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
@@ -129,9 +135,11 @@ class EuclideanDistance(Distance):
     **Alias**: L2 Norm, Pythagorean
     """
 
-    def __init__(self):
+    def __init__(self, name: str | None = None, aliases: Sequence[str] | None = None):
         "Init Euclidean distance"
-        super().__init__("euclidean", ["l2", "pythagorean"])
+        name = name if name is not None else "euclidean"
+        aliases = aliases if aliases is not None else ["l2", "pythagorean"]
+        super().__init__(name, aliases)
 
     @tf.function
     def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
@@ -172,8 +180,11 @@ class SquaredEuclideanDistance(Distance):
     a distance that varies from 0 (similar) to infinity (dissimilar).
     """
 
-    def __init__(self):
-        super().__init__("squared_euclidean", ["sql2", "sqeuclidean"])
+    def __init__(self, name: str | None = None, aliases: Sequence[str] | None = None):
+        "Init Squared Euclidean distance"
+        name = name if name is not None else "squared_euclidean"
+        aliases = aliases if aliases is not None else ["sql2", "sqeuclidean"]
+        super().__init__(name, aliases)
 
     @tf.function
     def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
@@ -209,9 +220,11 @@ class ManhattanDistance(Distance):
     dissimilar the embeddings are.
     """
 
-    def __init__(self):
+    def __init__(self, name: str | None = None, aliases: Sequence[str] | None = None):
         "Init Manhattan distance"
-        super().__init__("manhattan", ["l1", "taxicab"])
+        name = name if name is not None else "manhattan"
+        aliases = aliases if aliases is not None else ["l1", "taxicab"]
+        super().__init__(name, aliases)
 
     @tf.function
     def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
@@ -240,9 +253,11 @@ class SNRDistance(Distance):
     is the ratio of noise variance to the feature variance.
     """
 
-    def __init__(self):
+    def __init__(self, name: str | None = None, aliases: Sequence[str] | None = None):
         "Init SNR distance"
-        super().__init__("snr")
+        name = name if name is not None else "snr"
+        aliases = aliases if aliases is not None else ["signal-to-noise-ratio"]
+        super().__init__(name, aliases)
 
     @tf.function
     def call(self, query_embeddings: FloatTensor, key_embeddings: FloatTensor) -> FloatTensor:
@@ -281,7 +296,7 @@ DISTANCES = [
 ]
 
 
-def distance_canonicalizer(user_distance: Union[Distance, str]) -> Distance:
+def distance_canonicalizer(user_distance: Distance | str) -> Distance:
     """Normalize user requested distance to its matching Distance object.
 
     Args:

@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
-from typing import Dict, MutableMapping, Sequence, Union
+from collections.abc import MutableMapping, Sequence
 
 import numpy as np
 import tensorflow as tf
@@ -45,7 +46,7 @@ class MemoryEvaluator(Evaluator):
         lookups: Sequence[Sequence[Lookup]],
         retrieval_metrics: Sequence[RetrievalMetric],
         distance_rounding: int = 8,
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """Evaluates lookup performances against a supplied set of metrics
 
         Args:
@@ -106,10 +107,10 @@ class MemoryEvaluator(Evaluator):
         lookup_distances: FloatTensor,
         distance_thresholds: FloatTensor,
         metrics: Sequence[ClassificationMetric],
-        matcher: Union[str, ClassificationMatch],
+        matcher: str | ClassificationMatch,
         distance_rounding: int = 8,
         verbose: int = 1,
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """Evaluate the classification performance.
 
         Compute the classification metrics given a set of queries, lookups, and
@@ -159,7 +160,7 @@ class MemoryEvaluator(Evaluator):
             pb = tqdm(total=len(metrics), desc="Evaluating")
 
         # evaluating performance as distance value increase
-        results: Dict[str, np.ndarray] = {"distance": distance_thresholds.numpy()}
+        results: dict[str, np.ndarray] = {"distance": distance_thresholds.numpy()}
         for m in metrics:
             res = m.compute(
                 tp=matcher.tp,
@@ -184,7 +185,7 @@ class MemoryEvaluator(Evaluator):
         lookups: Sequence[Sequence[Lookup]],
         thresholds_targets: MutableMapping[str, float],
         calibration_metric: ClassificationMetric,
-        matcher: Union[str, ClassificationMatch],
+        matcher: str | ClassificationMatch,
         extra_metrics: Sequence[ClassificationMetric] = [],
         distance_rounding: int = 8,
         metric_rounding: int = 6,
@@ -261,7 +262,7 @@ class MemoryEvaluator(Evaluator):
             verbose=verbose,
         )
 
-        cutpoints: Dict[str, Dict[str, Union[str, float]]] = {}
+        cutpoints: dict[str, dict[str, str | float]] = {}
 
         cutpoints["optimal"] = self._optimal_cutpoint(results, calibration_metric)
 
@@ -277,9 +278,9 @@ class MemoryEvaluator(Evaluator):
 
     def _optimal_cutpoint(
         self,
-        metrics: Dict[str, np.ndarray],
+        metrics: dict[str, np.ndarray],
         calibration_metric: ClassificationMetric,
-    ) -> Dict[str, Union[str, float]]:
+    ) -> dict[str, str | float]:
         """Compute the optimal distance threshold for the calibration metric.
 
         Args:
@@ -323,11 +324,11 @@ class MemoryEvaluator(Evaluator):
 
     def _target_cutpoints(
         self,
-        metrics: Dict[str, np.ndarray],
+        metrics: dict[str, np.ndarray],
         calibration_metric: ClassificationMetric,
         target_name: str,
         target_value: float,
-    ) -> Dict[str, Union[str, float]]:
+    ) -> dict[str, str | float]:
         """Compute the distance at the target metric for the calibration metric.
 
         Args:
@@ -359,7 +360,7 @@ class MemoryEvaluator(Evaluator):
               ```
         """
         indicators = np.where(metrics[calibration_metric.name] >= target_value)[0]
-        target_cp: Dict[str, Union[str, float]] = {}
+        target_cp: dict[str, str | float] = {}
 
         if indicators.size > 0:
             if calibration_metric.increasing:

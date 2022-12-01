@@ -11,11 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import os
 import tempfile
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any
 
 import nmslib
 import tensorflow as tf
@@ -36,16 +38,16 @@ class NMSLibSearch(Search):
 
     def __init__(
         self,
-        distance: Union[Distance, str],
+        distance: Distance | str,
         dim: int,
         method: str = "hnsw",
-        space_params: Optional[dict] = None,
-        data_type: Union[nmslib.DataType, int] = nmslib.DataType.DENSE_VECTOR,
-        dtype: Union[nmslib.DistType, int] = nmslib.DistType.FLOAT,
-        index_params: Optional[dict] = None,
-        query_params: Optional[dict] = None,
+        space_params: Mapping[str, Any] | None = None,
+        data_type: nmslib.DataType | int = nmslib.DataType.DENSE_VECTOR,
+        dtype: nmslib.DistType | int = nmslib.DistType.FLOAT,
+        index_params: Mapping[str, Any] | None = None,
+        query_params: Mapping[str, Any] | None = None,
         verbose: int = 0,
-        name: Optional[str] = None,
+        name: str | None = None,
         **kwargs,
     ):
         super().__init__(distance=distance, dim=dim, verbose=verbose, name=name)
@@ -138,19 +140,19 @@ class NMSLibSearch(Search):
                 print("|-Building index.")
             self._build(verbose=verbose)
 
-    def lookup(self, embedding: FloatTensor, k: int = 5) -> Tuple[List[int], List[float]]:
+    def lookup(self, embedding: FloatTensor, k: int = 5) -> tuple[list[int], list[float]]:
         """Find embedding K nearest neighboors embeddings.
 
         Args:
             embedding: Query embedding as predicted by the model.
             k: Number of nearest neighboors embedding to lookup. Defaults to 5.
         """
-        idxs: List[int] = []
-        distances: List[float] = []
+        idxs: list[int] = []
+        distances: list[float] = []
         idxs, distances = self._search_index.knnQuery(embedding, k=k)
         return idxs, distances
 
-    def batch_lookup(self, embeddings: FloatTensor, k: int = 5) -> Tuple[List[List[int]], List[List[float]]]:
+    def batch_lookup(self, embeddings: FloatTensor, k: int = 5) -> tuple[list[list[int]], list[list[float]]]:
         """Find embeddings K nearest neighboors embeddings.
 
         Args:
@@ -219,7 +221,7 @@ class NMSLibSearch(Search):
     def __make_fname(self, path):
         return str(Path(path) / "search_index.bin")
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         """Contains the search configuration.
 
         Returns:

@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Specialized Similarity `keras.layers`"""
+from __future__ import annotations
+
 import math
-from typing import Any, Dict, Optional
+from typing import Any
 
 import tensorflow as tf
 from tensorflow.keras import layers
@@ -37,7 +39,7 @@ class MetricEmbedding(layers.Dense):
 
 
 class GeneralizedMeanPooling(layers.Layer):
-    def __init__(self, p: float = 3.0, data_format: Optional[str] = None, keepdims: bool = False, **kwargs) -> None:
+    def __init__(self, p: float = 3.0, data_format: str | None = None, keepdims: bool = False, **kwargs) -> None:
         super().__init__(**kwargs)
 
         self.p = p
@@ -76,7 +78,7 @@ class GeneralizedMeanPooling(layers.Layer):
     def _neg_inf(self, x):
         return self._pos_inf(x * -1) * -1
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         config = {
             "p": self.p,
             "data_format": self.data_format,
@@ -141,7 +143,7 @@ class GeneralizedMeanPooling1D(GeneralizedMeanPooling):
           3D tensor with shape `(batch_size, features, 1)`
     """
 
-    def __init__(self, p: float = 3.0, data_format: Optional[str] = None, keepdims: bool = False, **kwargs) -> None:
+    def __init__(self, p: float = 3.0, data_format: str | None = None, keepdims: bool = False, **kwargs) -> None:
         super().__init__(p=p, data_format=data_format, keepdims=keepdims, **kwargs)
 
         self.input_spec = layers.InputSpec(ndim=3)
@@ -227,7 +229,7 @@ class GeneralizedMeanPooling2D(GeneralizedMeanPooling):
           3D tensor with shape `(batch_size, features, 1)`
     """
 
-    def __init__(self, p: float = 3.0, data_format: Optional[str] = None, keepdims: bool = False, **kwargs) -> None:
+    def __init__(self, p: float = 3.0, data_format: str | None = None, keepdims: bool = False, **kwargs) -> None:
         super().__init__(p=p, data_format=data_format, keepdims=keepdims, **kwargs)
 
         self.input_spec = layers.InputSpec(ndim=4)

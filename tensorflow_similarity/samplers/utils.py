@@ -11,10 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import random
 from collections import defaultdict
-from typing import Sequence, Tuple
+from collections.abc import Sequence
 
 import numpy as np
 from tqdm.auto import tqdm
@@ -25,9 +26,9 @@ from tensorflow_similarity.types import FloatTensor, IntTensor
 def select_examples(
     x: FloatTensor,
     y: IntTensor,
-    class_list: Sequence[int] = None,
-    num_examples_per_class: int = None,
-) -> Tuple[np.ndarray, np.ndarray]:
+    class_list: Sequence[int] | None = None,
+    num_examples_per_class: int | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
     """Randomly select at most N examples per class
 
     Args:

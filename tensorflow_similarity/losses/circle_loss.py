@@ -15,7 +15,9 @@
 """Circle Loss.
     [Circle Loss: A Unified Perspective of Pair Similarity Optimization](https://arxiv.org/abs/2002.10857)
 """
-from typing import Any, Callable, Union
+from __future__ import annotations
+
+from typing import Any
 
 import tensorflow as tf
 
@@ -32,7 +34,7 @@ def circle_loss(
     query_embeddings: FloatTensor,
     key_labels: IntTensor,
     key_embeddings: FloatTensor,
-    distance: Callable,
+    distance: Distance,
     remove_diagonal: bool = True,
     gamma: float = 80,
     margin: float = 0.4,
@@ -157,11 +159,11 @@ class CircleLoss(MetricLoss):
 
     def __init__(
         self,
-        distance: Union[Distance, str] = "cosine",
+        distance: Distance | str = "cosine",
         gamma: float = 80.0,
         margin: float = 0.40,
         name: str = "CircleLoss",
-        **kwargs
+        **kwargs,
     ):
         """Initializes a CircleLoss
 

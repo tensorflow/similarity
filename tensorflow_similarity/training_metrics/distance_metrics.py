@@ -11,26 +11,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 "Metrics computed over embeddings"
+from __future__ import annotations
+
+from typing import Any
+
 import tensorflow as tf
 from tensorflow.keras.metrics import Metric
 
 from tensorflow_similarity.algebra import build_masks, masked_max, masked_min
-from tensorflow_similarity.distances import distance_canonicalizer
+from tensorflow_similarity.distances import Distance, distance_canonicalizer
+from tensorflow_similarity.types import FloatTensor, IntTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class DistanceMetric(Metric):
     def __init__(
         self,
-        distance,
-        aggregate="mean",
-        anchor="positive",
-        name=None,
-        positive_mining_strategy="hard",
-        negative_mining_strategy="hard",
-        **kwargs
+        distance: Distance | str,
+        aggregate: str = "mean",
+        anchor: str = "positive",
+        name: str | None = None,
+        positive_mining_strategy: str = "hard",
+        negative_mining_strategy: str = "hard",
+        **kwargs,
     ):
 
         if not name:
@@ -58,7 +62,7 @@ class DistanceMetric(Metric):
         # result variable
         self.aggregated_distances = tf.Variable(0, dtype="float32")
 
-    def update_state(self, labels, embeddings, sample_weight):
+    def update_state(self, labels: IntTensor, embeddings: FloatTensor, sample_weight: FloatTensor) -> None:
 
         # [distances]
         pairwise_distances = self.distance(embeddings, embeddings)
@@ -90,13 +94,13 @@ class DistanceMetric(Metric):
 
         self.aggregated_distances = aggregated_distances
 
-    def reset_state(self):
+    def reset_state(self) -> None:
         self.aggregated_distances = tf.Variable(0, dtype="float32")
 
-    def result(self):
+    def result(self) -> tf.Variable:
         return self.aggregated_distances
 
-    def get_config(self):
+    def get_config(self) -> dict[str, Any]:
         config = {
             "distance": self.distance.name,
             "aggregate": self.aggregate,
@@ -110,7 +114,7 @@ class DistanceMetric(Metric):
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class DistanceGapMetric(Metric):
-    def __init__(self, distance, name=None, **kwargs):
+    def __init__(self, distance: Distance | str, name: str | None = None, **kwargs):
         name = name if name else "dist_gap"
         super().__init__(name=name, **kwargs)
         self.distance = distance
@@ -118,15 +122,15 @@ class DistanceGapMetric(Metric):
         self.min_neg_fn = DistanceMetric(distance, aggregate="min", anchor="negative")
         self.gap = tf.Variable(0, dtype="float32")
 
-    def update_state(self, labels, embeddings, sample_weight):
+    def update_state(self, labels: IntTensor, embeddings: FloatTensor, sample_weight: FloatTensor):
         max_pos = self.max_pos_fn(labels, embeddings, sample_weight)
         min_neg = self.min_neg_fn(labels, embeddings, sample_weight)
         self.gap.assign(tf.abs(min_neg - max_pos))
 
-    def result(self):
+    def result(self) -> tf.Variable:
         return self.gap
 
-    def get_config(self):
+    def get_config(self) -> dict[str, Any]:
         config = {
             "distance": self.distance,
         }
@@ -136,49 +140,49 @@ class DistanceGapMetric(Metric):
 
 # aliases
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-def dist_gap(distance):
+def dist_gap(distance: Distance | str) -> DistanceGapMetric:
     return DistanceGapMetric(distance)
 
 
 # max
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-def max_pos(distance):
+def max_pos(distance: Distance | str) -> DistanceMetric:
     return DistanceMetric(distance, aggregate="max")
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-def max_neg(distance):
+def max_neg(distance: Distance | str) -> DistanceMetric:
     return DistanceMetric(distance, aggregate="max", anchor="negative")
 
 
 # avg
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-def avg_pos(distance):
+def avg_pos(distance: Distance | str) -> DistanceGapMetric:
     return DistanceMetric(distance, aggregate="mean")
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-def avg_neg(distance):
+def avg_neg(distance: Distance | str) -> DistanceMetric:
     return DistanceMetric(distance, aggregate="mean", anchor="negative")
 
 
 # min
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-def min_pos(distance):
+def min_pos(distance: Distance | str) -> DistanceMetric:
     return DistanceMetric(distance, aggregate="min")
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-def min_neg(distance):
+def min_neg(distance: Distance | str) -> DistanceMetric:
     return DistanceMetric(distance, aggregate="min", anchor="negative")
 
 
 # sum
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-def sum_pos(distance):
+def sum_pos(distance: Distance | str) -> DistanceMetric:
     return DistanceMetric(distance, aggregate="sum")
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
-def sum_neg(distance):
+def sum_neg(distance: Distance | str) -> DistanceMetric:
     return DistanceMetric(distance, aggregate="sum", anchor="negative")

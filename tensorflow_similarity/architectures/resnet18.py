@@ -11,9 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 "ResNet18 backbone for similarity learning"
-from typing import Tuple
+from __future__ import annotations
 
 import tensorflow as tf
 from tensorflow.keras import layers
@@ -24,12 +23,12 @@ from tensorflow_similarity.models import SimilarityModel
 
 # Create an image augmentation pipeline.
 def ResNet18Sim(
-    input_shape: Tuple[int, int, int],
+    input_shape: tuple[int, int, int],
     embedding_size: int = 128,
     l2_norm: bool = True,
     include_top: bool = True,
     pooling: str = "gem",
-    gem_p=3.0,
+    gem_p: float = 3.0,
 ) -> SimilarityModel:
     """Build an ResNet18 Model backbone for similarity learning
 
@@ -91,7 +90,7 @@ def ResNet18Sim(
     return SimilarityModel(inputs, outputs, name="resnet18sim")
 
 
-def build_resnet(input_shape: Tuple[int, int, int]) -> layers.Layer:
+def build_resnet(input_shape: tuple[int, int, int]) -> layers.Layer:
     """Build the requested ResNet.
 
     Args:
@@ -127,10 +126,10 @@ def build_resnet(input_shape: Tuple[int, int, int]) -> layers.Layer:
 def block0(
     x,
     filters,
-    kernel_size=3,
-    stride=1,
-    conv_shortcut=True,
-    name=None,
+    kernel_size: int = 3,
+    stride: int = 1,
+    conv_shortcut: bool = True,
+    name: str = "",
 ):
     if conv_shortcut:
         shortcut = tf.keras.layers.Conv2D(
@@ -139,9 +138,9 @@ def block0(
             strides=stride,
             use_bias=False,
             kernel_initializer=tf.keras.initializers.LecunUniform(),
-            name=name + "_0_conv",
+            name=f"{name}_0_conv",
         )(x)
-        shortcut = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=1.001e-5, name=name + "_0_bn")(shortcut)
+        shortcut = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=1.001e-5, name=f"{name}_0_bn")(shortcut)
     else:
         shortcut = x
 
@@ -152,10 +151,10 @@ def block0(
         padding="SAME",
         use_bias=False,
         kernel_initializer=tf.keras.initializers.LecunUniform(),
-        name=name + "_1_conv",
+        name=f"{name}_1_conv",
     )(x)
-    x = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=1.001e-5, name=name + "_1_bn")(x)
-    x = tf.keras.layers.Activation("relu", name=name + "_1_relu")(x)
+    x = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=1.001e-5, name=f"{name}_1_bn")(x)
+    x = tf.keras.layers.Activation("relu", name=f"{name}_1_relu")(x)
 
     x = tf.keras.layers.Conv2D(
         filters,
@@ -163,23 +162,23 @@ def block0(
         padding="SAME",
         use_bias=False,
         kernel_initializer=tf.keras.initializers.LecunUniform(),
-        name=name + "_2_conv",
+        name=f"{name}_2_conv",
     )(x)
-    x = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=1.001e-5, name=name + "_2_bn")(x)
+    x = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=1.001e-5, name=f"{name}_2_bn")(x)
 
-    x = tf.keras.layers.Add(name=name + "_add")([shortcut, x])
-    x = tf.keras.layers.Activation("relu", name=name + "_out")(x)
+    x = tf.keras.layers.Add(name=f"{name}_add")([shortcut, x])
+    x = tf.keras.layers.Activation("relu", name=f"{name}_out")(x)
     return x
 
 
-def stack0(x, filters, blocks, stride1=2, name=None):
-    x = block0(x, filters, stride=stride1, name=name + "_block1")
+def stack0(x, filters, blocks, stride1: int = 2, name: str = ""):
+    x = block0(x, filters, stride=stride1, name=f"{name}_block1")
     for i in range(2, blocks + 1):
         x = block0(
             x,
             filters,
             conv_shortcut=False,
-            name=name + "_block" + str(i),
+            name=f"{name}_block" + str(i),
         )
     return x
 

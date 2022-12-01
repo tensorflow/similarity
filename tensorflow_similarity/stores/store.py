@@ -11,16 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Sequence, Tuple
+from collections.abc import Sequence
 
 from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 
 
 class Store(ABC):
     @abstractmethod
-    def add(self, embedding: FloatTensor, label: Optional[int] = None, data: Optional[Tensor] = None) -> int:
+    def add(self, embedding: FloatTensor, label: int | None = None, data: Tensor | None = None) -> int:
         """Add an Embedding record to the key value store.
 
         Args:
@@ -38,9 +39,9 @@ class Store(ABC):
     def batch_add(
         self,
         embeddings: Sequence[FloatTensor],
-        labels: Optional[Sequence[int]] = None,
-        data: Optional[Sequence[Tensor]] = None,
-    ) -> List[int]:
+        labels: Sequence[int] | None = None,
+        data: Sequence[Tensor] | None = None,
+    ) -> list[int]:
         """Add a set of embedding records to the key value store.
 
         Args:
@@ -58,7 +59,7 @@ class Store(ABC):
         """
 
     @abstractmethod
-    def get(self, idx: int) -> Tuple[FloatTensor, Optional[int], Optional[Tensor]]:
+    def get(self, idx: int) -> tuple[FloatTensor, int | None, Tensor | None]:
         """Get an embedding record from the key value store.
 
         Args:
@@ -69,7 +70,7 @@ class Store(ABC):
         """
 
     @abstractmethod
-    def batch_get(self, idxs: Sequence[int]) -> Tuple[List[FloatTensor], List[Optional[int]], List[Optional[Tensor]]]:
+    def batch_get(self, idxs: Sequence[int]) -> tuple[list[FloatTensor], list[int | None], list[Tensor | None]]:
         """Get embedding records from the key value store.
 
         Args:

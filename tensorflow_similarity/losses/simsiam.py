@@ -16,8 +16,11 @@
     Exploring Simple Siamese Representation Learning
     https://bit.ly/3LxsWdj
 """
+from __future__ import annotations
+
 import math
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
 
 import tensorflow as tf
 
@@ -51,7 +54,7 @@ class SimSiamLoss(tf.keras.losses.Loss):
         projection_type: str = "negative_cosine_sim",
         margin: float = 0.001,
         reduction: Callable = tf.keras.losses.Reduction.AUTO,
-        name: Optional[str] = None,
+        name: str | None = None,
         **kwargs,
     ):
         """Create the SimSiam Loss.
@@ -110,7 +113,7 @@ class SimSiamLoss(tf.keras.losses.Loss):
 
         return loss
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         config = {
             "projection_type": self.projection_type,
             "margin": self.margin,

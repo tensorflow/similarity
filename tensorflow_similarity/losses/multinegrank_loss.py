@@ -16,9 +16,9 @@
     Useful in situations where there are only positive examples
     All other example in a batch is considered as negative
 """
+from __future__ import annotations
 
-
-from typing import Any, Union
+from typing import Any
 
 import tensorflow as tf
 
@@ -73,9 +73,9 @@ class MultiNegativesRankLoss(MetricLoss):
     def __init__(
         self,
         name: str = "MultipleNegativesRankingLoss",
-        distance: Union[Distance, str] = "inner_product",
+        distance: Distance | str = "inner_product",
         scale: float = 20,
-        **kwargs
+        **kwargs,
     ):
         """Initializes the MultipleNegativesRankingLoss Loss
 
