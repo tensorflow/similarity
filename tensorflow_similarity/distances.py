@@ -50,7 +50,7 @@ class Distance(ABC):
         return self.name
 
     def get_config(self):
-        return {}
+        return {"name": self.name, "aliases": self.aliases}
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
