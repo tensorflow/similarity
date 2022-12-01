@@ -34,7 +34,7 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
         self,
         classes_per_batch: int,
         examples_per_class_per_batch: int = 2,
-        num_augmentations_per_example: int = 0,
+        num_augmentations_per_example: int = 1,
         steps_per_epoch: int = 1000,
         augmenter: Optional[Augmenter] = None,
         # scheduler: Optional[Scheduler] = None,
@@ -57,7 +57,7 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
             use per batch. Defaults to 2.
 
             num_augmentations_per_example: how many augmented versions of an
-            example will be produced by the augmenter. Defaults to 0.
+            example will be produced by the augmenter. Defaults to 1.
 
             steps_per_epoch: How many steps/batches per epoch. Defaults to
             1000.
@@ -87,7 +87,7 @@ class Sampler(Sequence, metaclass=abc.ABCMeta):
             f"\nThe initial batch size is {self.batch_size} "
             f"({self.classes_per_batch} classes * "
             f"{self.examples_per_class_per_batch} examples per class) with "
-            f"{self.num_augmentations_per_example} augmenters"
+            f"{0 if self.augmenter is None else self.num_augmentations_per_example} augmentations"
         )
 
     @abc.abstractmethod
