@@ -12,19 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Specialized callbacks that track similarity metrics during training"""
+from __future__ import annotations
+
 import math
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.callbacks import Callback
 
-from .classification_metrics import make_classification_metric  # noqa
-from .classification_metrics import ClassificationMetric
+from .classification_metrics import ClassificationMetric, make_classification_metric
 from .evaluators import Evaluator, MemoryEvaluator
 from .matchers import ClassificationMatch
 from .models import SimilarityModel
+from .retrieval_metrics import RetrievalMetric
 from .types import FloatTensor, IntTensor, Tensor
 from .utils import unpack_lookup_distances, unpack_lookup_labels, unpack_results
 
@@ -45,15 +47,13 @@ class EvalCallback(Callback):
         targets: Tensor,
         target_labels: Sequence[int],
         distance: str = "cosine",
-        metrics: Sequence[Union[str, ClassificationMetric]] = [
-            "binary_accuracy",
-            "f1score",
-        ],  # noqa
+        metrics: Sequence[str | ClassificationMetric] = ["binary_accuracy"],
         tb_logdir: str = None,
         k: int = 1,
-        matcher: Union[str, ClassificationMatch] = "match_nearest",
-        distance_thresholds: Optional[FloatTensor] = None,
-        known_classes: Optional[IntTensor] = None,
+        matcher: str | ClassificationMatch = "match_nearest",
+        distance_thresholds: FloatTensor | None = None,
+        known_classes: IntTensor | None = None,
+        retrieval_metrics: Sequence[RetrievalMetric] | None = None,
     ):
         """Evaluate model matching quality against a validation dataset at
         epoch end.
@@ -106,7 +106,8 @@ class EvalCallback(Callback):
         self.distance = distance
         self.evaluator = MemoryEvaluator()
         # typing requires this weird formulation of creating a new list
-        self.metrics: List[ClassificationMetric] = [make_classification_metric(m) for m in metrics]
+        self.classification_metrics: list[ClassificationMetric] = [make_classification_metric(m) for m in metrics]
+        self.retrieval_metrics = retrieval_metrics
         self.k = k
         self.matcher = matcher
 
@@ -180,130 +181,77 @@ class EvalCallback(Callback):
         # rebuild the index
         self.model.index(self.targets, self.target_labels, verbose=0)
 
-        known_results = _compute_classification_metrics(
+        known_results = _compute_metrics(
             queries=self.queries_known,
             query_labels=self.query_labels_known,
             model=self.model,
             evaluator=self.evaluator,
-            metrics=self.metrics,
+            classification_metrics=self.classification_metrics,
+            retrieval_metrics=self.retrieval_metrics,
             k=self.k,
             matcher=self.matcher,
             distance_thresholds=self.distance_thresholds,
         )
 
+        mstr = []
+
         if self.split_validation:
-            unknown_results = _compute_classification_metrics(
+            unknown_results = _compute_metrics(
                 queries=self.queries_unknown,
                 query_labels=self.query_labels_unknown,
                 model=self.model,
                 evaluator=self.evaluator,
-                metrics=self.metrics,
+                classification_metrics=self.classification_metrics,
+                retrieval_metrics=self.retrieval_metrics,
                 k=self.k,
                 matcher=self.matcher,
                 distance_thresholds=self.distance_thresholds,
             )
 
-            mstr = unpack_results(
-                known_results,
-                epoch=epoch,
-                logs=logs,
-                tb_writer=self.tb_writer,
-                name_suffix="_known_classes",
-            )
-            mstr.extend(
-                unpack_results(
-                    unknown_results,
-                    epoch=epoch,
-                    logs=logs,
-                    tb_writer=self.tb_writer,
-                    name_suffix="_unknown_classes",
+            for a, b in zip(known_results, unknown_results):
+                mstr.extend(
+                    unpack_results(
+                        a,
+                        epoch=epoch,
+                        logs=logs,
+                        tb_writer=self.tb_writer,
+                        name_suffix="_known_classes",
+                    )
                 )
-            )
+                mstr.extend(
+                    unpack_results(
+                        b,
+                        epoch=epoch,
+                        logs=logs,
+                        tb_writer=self.tb_writer,
+                        name_suffix="_unknown_classes",
+                    )
+                )
         else:
-            mstr = unpack_results(known_results, epoch=epoch, logs=logs, tb_writer=self.tb_writer)
+            for a in known_results:
+                mstr.extend(
+                    unpack_results(
+                        a,
+                        epoch=epoch,
+                        logs=logs,
+                        tb_writer=self.tb_writer,
+                    )
+                )
         self.model.reset_index()
         print(" - ".join(mstr))
 
 
-def SplitValidationLoss(
-    queries: Tensor,
-    query_labels: Sequence[int],
-    targets: Tensor,
-    target_labels: Sequence[int],
-    known_classes: IntTensor,
-    distance: str = "cosine",
-    metrics: Sequence[Union[str, ClassificationMetric]] = [
-        "binary_accuracy",
-        "f1score",
-    ],  # noqa
-    tb_logdir: str = None,
-    k: int = 1,
-    matcher: Union[str, ClassificationMatch] = "match_nearest",
-    distance_thresholds: Optional[FloatTensor] = None,
-):
-    """Creates the validation callbacks.
-
-    Args:
-        queries: Test examples that will be tested against the built index.
-
-        query_labels: Queries nearest neighbors expected labels.
-
-        targets: Examples that are indexed.
-
-        target_labels: Target examples labels.
-
-        known_classes: The set of classes seen during training.
-
-        distance: Distance function used to compute pairwise distance
-        between examples embeddings.
-
-        metrics: List of
-        'tf.similarity.classification_metrics.ClassificationMetric()` to
-        compute during the evaluation. Defaults to ['binary_accuracy',
-        'f1score'].
-
-        tb_logdir: Where to write TensorBoard logs. Defaults to None.
-
-        k: The number of nearest neighbors to return for each query.
-        The lookups are consumed by the Matching Strategy and used to
-        derive the matching label and distance.
-
-        matcher: {'match_nearest', 'match_majority_vote'} or
-        ClassificationMatch object. Defines the classification matching,
-        e.g., match_nearest will count a True Positive if the query_label
-        is equal to the label of the nearest neighbor and the distance is
-        less than or equal to the distance threshold.
-
-        distance_thresholds: A 1D tensor denoting the distances points at
-        which we compute the metrics. If None, distance_thresholds is set
-        to tf.constant([math.inf])
-    """
-    print("WARNING: SplitValidationLoss is deprecated. Please use EvalCallback.")
-    return EvalCallback(
-        queries=queries,
-        query_labels=query_labels,
-        targets=targets,
-        target_labels=target_labels,
-        distance=distance,
-        metrics=metrics,
-        tb_logdir=tb_logdir,
-        k=k,
-        matcher=matcher,
-        distance_thresholds=distance_thresholds,
-        known_classes=known_classes,
-    )
-
-
-def _compute_classification_metrics(
+def _compute_metrics(
     queries: Tensor,
     query_labels: IntTensor,
     model: SimilarityModel,
     evaluator: Evaluator,
-    metrics: Sequence[ClassificationMetric],
+    classification_metrics: Sequence[ClassificationMetric],
+    retrieval_metrics: Sequence[RetrievalMetric],
     k: int,
-    matcher: Union[str, ClassificationMatch],
+    matcher: str | ClassificationMatch,
     distance_thresholds: FloatTensor,
-) -> Dict[str, np.ndarray]:
+) -> dict[str, np.ndarray]:
     """Compute the classification metrics.
 
     Args:
@@ -336,19 +284,28 @@ def _compute_classification_metrics(
     lookup_distances = unpack_lookup_distances(lookups, model.dtype)
     lookup_labels = unpack_lookup_labels(lookups, query_labels.dtype)
 
-    # TODO(ovallis): Support passing other matchers. Currently we are using
-    # match_nearest.
-    results = evaluator.evaluate_classification(
-        query_labels=query_labels,
-        lookup_labels=lookup_labels,
-        lookup_distances=lookup_distances,
-        distance_thresholds=distance_thresholds,
-        metrics=metrics,
-        matcher=matcher,
-        verbose=0,
-    )
+    if classification_metrics:
+        classification_results = evaluator.evaluate_classification(
+            query_labels=query_labels,
+            lookup_labels=lookup_labels,
+            lookup_distances=lookup_distances,
+            distance_thresholds=distance_thresholds,
+            metrics=classification_metrics,
+            matcher=matcher,
+            verbose=0,
+        )
+        # The callbacks don't set a distance theshold so we remove it here.
+        classification_results.pop("distance")
+    else:
+        classification_results = {}
 
-    # The callbacks don't set a distance theshold so we remove it here.
-    results.pop("distance")
+    if retrieval_metrics:
+        retrieval_results = evaluator.evaluate_retrieval(
+            target_labels=query_labels,
+            lookups=lookups,
+            retrieval_metrics=retrieval_metrics,
+        )
+    else:
+        retrieval_metrics = {}
 
-    return results
+    return classification_results, retrieval_results
