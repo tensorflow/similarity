@@ -147,7 +147,7 @@ class GeneralizedMeanPooling1D(GeneralizedMeanPooling):
         super().__init__(p=p, data_format=data_format, keepdims=keepdims, **kwargs)
 
         self.input_spec = layers.InputSpec(ndim=3)
-        self.gap = layers.GlobalAveragePooling1D(data_format=data_format, keepdims=keepdims)
+        self.gap = layers.GlobalAveragePooling1D(data_format=data_format, keepdims=keepdims, **kwargs)
         self.step_axis = 1 if self.data_format == "channels_last" else 2
 
     def call(self, inputs: FloatTensor) -> FloatTensor:
@@ -233,7 +233,7 @@ class GeneralizedMeanPooling2D(GeneralizedMeanPooling):
         super().__init__(p=p, data_format=data_format, keepdims=keepdims, **kwargs)
 
         self.input_spec = layers.InputSpec(ndim=4)
-        self.gap = layers.GlobalAveragePooling2D(data_format, keepdims)
+        self.gap = layers.GlobalAveragePooling2D(data_format=data_format, keepdims=keepdims, **kwargs)
 
     def call(self, inputs: FloatTensor) -> FloatTensor:
         x = inputs
