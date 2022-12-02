@@ -87,9 +87,9 @@ setup(
             "types-tabulate",
             "wheel",
         ],
-        "tensorflow": ["tensorflow>=2.4"],
-        "tensorflow-gpu": ["tensorflow-gpu>=2.4"],
-        "tensorflow-cpu": ["tensorflow-cpu>=2.4"],
+        "tensorflow": ["tensorflow>=2.4,<=2.9"],
+        "tensorflow-gpu": ["tensorflow-gpu>=2.4,<=2.9"],
+        "tensorflow-cpu": ["tensorflow-cpu>=2.4,<=2.9"],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
