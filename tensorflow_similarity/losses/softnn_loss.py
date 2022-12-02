@@ -16,7 +16,9 @@
     FaceNet: A Unified Embedding for Face Recognition and Clustering
     https://arxiv.org/abs/1902.01889
 """
-from typing import Any, Callable, Union
+from __future__ import annotations
+
+from typing import Any
 
 import tensorflow as tf
 
@@ -32,7 +34,7 @@ def soft_nn_loss(
     query_embeddings: FloatTensor,
     key_labels: IntTensor,
     key_embeddings: FloatTensor,
-    distance: Callable,
+    distance: Distance,
     temperature: float,
     remove_diagonal: bool = True,
 ) -> Any:
@@ -107,10 +109,10 @@ class SoftNearestNeighborLoss(MetricLoss):
 
     def __init__(
         self,
-        distance: Union[Distance, str] = "sql2",
+        distance: Distance | str = "sql2",
         temperature: float = 1,
         name: str = "SoftNearestNeighborLoss",
-        **kwargs
+        **kwargs,
     ):
         """Initializes the SoftNearestNeighborLoss Loss
 

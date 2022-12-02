@@ -13,9 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """Core TensorFlow types."""
+from __future__ import annotations
 
 import dataclasses
-from typing import Any, Callable, Mapping, Optional, Union
+from collections.abc import Mapping
+from typing import Any, Callable
 
 import numpy as np
 import tensorflow as tf
@@ -110,9 +112,9 @@ class Lookup:
 
     rank: int
     distance: float
-    label: Optional[int] = dataclasses.field(default=None)
-    embedding: Optional[np.ndarray] = dataclasses.field(default=None)
-    data: Optional[Tensor] = dataclasses.field(default=None)
+    label: int | None = dataclasses.field(default=None)
+    embedding: np.ndarray | None = dataclasses.field(default=None)
+    data: Tensor | None = dataclasses.field(default=None)
 
     def __eq__(self, other) -> bool:
         if other.__class__ is not self.__class__:
@@ -145,5 +147,5 @@ class CalibrationResults:
         thresholds, e.g., {'f1': [0.99, 0.80], 'distance': [0.0, 1.0]}.
     """
 
-    cutpoints: Mapping[str, Mapping[str, Union[str, float]]]
+    cutpoints: Mapping[str, Mapping[str, str | float]]
     thresholds: Mapping[str, np.ndarray]

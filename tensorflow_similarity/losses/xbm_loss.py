@@ -15,7 +15,10 @@
     Cross-batch memory for embedding learning.
     https://arxiv.org/abs/1912.06798
 """
-from typing import Any, Callable, Dict, Optional
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any
 
 import tensorflow as tf
 
@@ -81,7 +84,7 @@ class XBM(MetricLoss):
         memory_size: int,
         warmup_steps: int = 0,
         reduction: Callable = tf.keras.losses.Reduction.AUTO,
-        name: Optional[str] = None,
+        name: str | None = None,
         **kwargs,
     ):
         super().__init__(loss.fn, reduction, name, **kwargs)
@@ -137,7 +140,7 @@ class XBM(MetricLoss):
         loss: FloatTensor = self.fn(y_true, y_pred, y_true_mem, y_pred_mem, **self._fn_kwargs)
         return loss
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         config = {
             "loss": tf.keras.utils.serialize_keras_object(self.loss),
             "memory_size": self.memory_size,
@@ -148,6 +151,6 @@ class XBM(MetricLoss):
         return dict(list(base_config.items()) + list(config.items()))
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> MetricLoss:
+    def from_config(cls, config: dict[str, Any]) -> MetricLoss:
         config["loss"] = tf.keras.utils.deserialize_keras_object(config["loss"])
         return cls(**config)

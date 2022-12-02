@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 "EfficientNet backbone for similarity learning"
+from __future__ import annotations
+
 import re
-from typing import Tuple
 
 import tensorflow as tf
 from tensorflow.keras import layers
@@ -49,7 +49,7 @@ EFF_ARCHITECTURE = {
 
 
 def EfficientNetSim(
-    input_shape: Tuple[int, int, int],
+    input_shape: tuple[int, int, int],
     embedding_size: int = 128,
     variant: str = "B0",
     weights: str = "imagenet",
@@ -57,7 +57,7 @@ def EfficientNetSim(
     l2_norm: bool = True,
     include_top: bool = True,
     pooling: str = "gem",
-    gem_p=3.0,
+    gem_p: float = 3.0,
 ) -> SimilarityModel:
     """Build an EfficientNet Model backbone for similarity learning
 
@@ -145,7 +145,7 @@ def EfficientNetSim(
     return SimilarityModel(inputs, outputs)
 
 
-def build_effnet(variant: str, weights: str = None, trainable: str = "full") -> tf.keras.Model:
+def build_effnet(variant: str, weights: str | None = None, trainable: str = "full") -> tf.keras.Model:
     """Build the requested efficient net.
 
     Args:

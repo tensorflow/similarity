@@ -16,7 +16,9 @@
     Multi-Similarity Loss with General Pair Weighting for Deep Metric Learning
     https://arxiv.org/abs/1904.06627
 """
-from typing import Any, Callable, Union
+from __future__ import annotations
+
+from typing import Any
 
 import tensorflow as tf
 
@@ -33,7 +35,7 @@ def multisimilarity_loss(
     query_embeddings: FloatTensor,
     key_labels: IntTensor,
     key_embeddings: FloatTensor,
-    distance: Callable,
+    distance: Distance,
     remove_diagonal: bool = True,
     alpha: float = 2.0,
     beta: float = 40,
@@ -171,14 +173,14 @@ class MultiSimilarityLoss(MetricLoss):
 
     def __init__(
         self,
-        distance: Union[Distance, str] = "cosine",
+        distance: Distance | str = "cosine",
         alpha: float = 2.0,
         beta: float = 40.0,
         epsilon: float = 0.1,
         lmda: float = 0.5,
         center: float = 1.0,
         name: str = "MultiSimilarityLoss",
-        **kwargs
+        **kwargs,
     ):
         """Initializes the Multi Similarity Loss.
 
@@ -230,5 +232,5 @@ class MultiSimilarityLoss(MetricLoss):
             epsilon=epsilon,
             lmda=lmda,
             center=center,
-            **kwargs
+            **kwargs,
         )

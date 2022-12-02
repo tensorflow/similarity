@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Any
 
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor
@@ -22,10 +24,10 @@ from tensorflow_similarity.types import FloatTensor
 class Search(ABC):
     def __init__(
         self,
-        distance: Union[Distance, str],
+        distance: Distance | str,
         dim: int,
         verbose: int = 0,
-        name: Optional[str] = None,
+        name: str | None = None,
         **kwargs,
     ):
         """Initializes a nearest neigboors search index.
@@ -72,7 +74,7 @@ class Search(ABC):
         """
 
     @abstractmethod
-    def lookup(self, embedding: FloatTensor, k: int = 5) -> Tuple[List[int], List[float]]:
+    def lookup(self, embedding: FloatTensor, k: int = 5) -> tuple[list[int], list[float]]:
         """Find embedding K nearest neighboors embeddings.
 
         Args:
@@ -81,7 +83,7 @@ class Search(ABC):
         """
 
     @abstractmethod
-    def batch_lookup(self, embeddings: FloatTensor, k: int = 5) -> Tuple[List[List[int]], List[List[float]]]:
+    def batch_lookup(self, embeddings: FloatTensor, k: int = 5) -> tuple[list[list[int]], list[list[float]]]:
         """Find embeddings K nearest neighboors embeddings.
 
         Args:
@@ -105,7 +107,7 @@ class Search(ABC):
             path: where to store the data
         """
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         """Contains the search configuration.
 
         Returns:

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import dataclasses
+import os
 from collections.abc import Mapping
 from itertools import product
 from typing import Any
 
 from tensorflow.keras.optimizers.schedules import LearningRateSchedule
 
-from . import utils
+from . import datasets, utils
 
 
 @dataclasses.dataclass(eq=True, frozen=True)
@@ -23,7 +24,7 @@ class Component:
 @dataclasses.dataclass
 class Experiment:
     run_grp: str
-    fold: int
+    path: str
     dataset: Component
     architecture: Component
     loss: Component
@@ -32,7 +33,7 @@ class Experiment:
     lr_schedule: LearningRateSchedule | None = None
 
 
-def make_experiments(cfg: Mapping[str, Any]) -> list[Experiment]:
+def make_experiments(cfg: Mapping[str, Any], output_dir: str) -> list[Experiment]:
     experiments = []
 
     # Generate the cross product of all the experiment params.
@@ -43,13 +44,7 @@ def make_experiments(cfg: Mapping[str, Any]) -> list[Experiment]:
         cfg["optimizer"].items(),
         cfg["training"],
     ):
-        if "train_val_splits" not in dcfg:
-            dcfg["train_val_splits"] = {
-                "n_splits": 1,
-                "val_class_pctg": 0.05,
-                "max_val_examples": 10000,
-            }
-        dataset = Component(cid=dcfg["component"], name=dn, params=dcfg)
+        dataset = datasets.utils.make_dataset_config(name=dn, params=dcfg)
         loss = Component(cid=lcfg["component"], name=ln, params=lcfg)
         opt = Component(cid=ocfg["component"], name=on, params=ocfg)
         training = Component(cid="", name=tcfg["name"], params=tcfg)
@@ -58,24 +53,22 @@ def make_experiments(cfg: Mapping[str, Any]) -> list[Experiment]:
             acfg["embedding"] = embedding_size
             architecture = Component(cid=acfg["component"], name=an, params=acfg)
 
-            for fold in range(dataset.params["train_val_splits"]["n_splits"]):
-                run_grp = utils.make_run_grp(
-                    dataset.name,
-                    architecture.name,
-                    architecture.params["embedding"],
-                    loss.name,
-                    opt.name,
-                    fold,
+            run_grp = utils.make_run_grp(
+                dataset.name,
+                architecture.name,
+                architecture.params["embedding"],
+                loss.name,
+                opt.name,
+            )
+            experiments.append(
+                Experiment(
+                    run_grp=run_grp,
+                    path=os.path.join(output_dir, run_grp),
+                    dataset=dataset,
+                    architecture=architecture,
+                    loss=loss,
+                    opt=opt,
+                    training=training,
                 )
-                experiments.append(
-                    Experiment(
-                        run_grp=run_grp,
-                        fold=fold,
-                        dataset=dataset,
-                        architecture=architecture,
-                        loss=loss,
-                        opt=opt,
-                        training=training,
-                    )
-                )
+            )
     return experiments

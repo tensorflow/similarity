@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Utility functions for computing the metric loss."""
-from typing import Any, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 import tensorflow as tf
 
@@ -24,7 +26,7 @@ def positive_distances(
     positive_mining_strategy: str,
     distances: FloatTensor,
     positive_mask: BoolTensor,
-) -> Tuple[FloatTensor, FloatTensor]:
+) -> tuple[FloatTensor, FloatTensor]:
     """Positive distance computation.
 
     Args:
@@ -54,7 +56,7 @@ def negative_distances(
     distances: FloatTensor,
     negative_mask: BoolTensor,
     positive_mask: BoolTensor,
-) -> Tuple[FloatTensor, FloatTensor]:
+) -> tuple[FloatTensor, FloatTensor]:
     """Negative distance computation.
 
     Args:

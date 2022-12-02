@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
@@ -67,7 +68,7 @@ class RetrievalMetric(ABC):
     @property
     def name(self) -> str:
         if self.distance_threshold and self.distance_threshold != math.inf:
-            return f"{self._name}@{self.k} : " f"distance_threshold@{self.distance_threshold}"
+            return f"{self._name}@{self.k} : distance_threshold@{self.distance_threshold}"
         else:
             return f"{self._name}@{self.k}"
 

@@ -13,8 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 """Metric losses  base class."""
+from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
 
 import tensorflow as tf
 
@@ -26,7 +28,7 @@ class MetricLoss(tf.keras.losses.Loss):
     """Wraps a loss function in the `Loss` class."""
 
     def __init__(
-        self, fn: Callable, reduction: Callable = tf.keras.losses.Reduction.AUTO, name: Optional[str] = None, **kwargs
+        self, fn: Callable, reduction: Callable = tf.keras.losses.Reduction.AUTO, name: str | None = None, **kwargs
     ):
         """Initializes `LossFunctionWrapper` class.
         Args:
@@ -52,7 +54,7 @@ class MetricLoss(tf.keras.losses.Loss):
         loss: FloatTensor = self.fn(y_true, y_pred, y_true, y_pred, **self._fn_kwargs)
         return loss
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         """Contains the loss configuration.
 
         Returns:

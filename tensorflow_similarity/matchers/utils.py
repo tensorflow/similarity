@@ -11,15 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
-from typing import Dict, Type, Union
+from typing import Type
 
 from .classification_match import ClassificationMatch
 from .match_majority_vote import MatchMajorityVote
 from .match_nearest import MatchNearest
 
 
-def make_classification_matcher(matcher: Union[str, ClassificationMatch]) -> ClassificationMatch:
+def make_classification_matcher(matcher: str | ClassificationMatch) -> ClassificationMatch:
     """Convert classification matcher from str name to object if needed.
 
     Args:
@@ -36,7 +37,7 @@ def make_classification_matcher(matcher: Union[str, ClassificationMatch]) -> Cla
         ClassificationMatch: Instantiated matcher if needed.
     """
     # ! Matcher must be non-instantiated.
-    MATCHER_ALIASES: Dict[str, Type[ClassificationMatch]] = {
+    MATCHER_ALIASES: dict[str, Type[ClassificationMatch]] = {
         "match_nearest": MatchNearest,
         "match_majority_vote": MatchMajorityVote,
     }

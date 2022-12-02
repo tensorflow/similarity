@@ -15,7 +15,10 @@
     VICReg: Variance-Invariance-Covariance Regularization for Self-Supervised Learning
     https://arxiv.org/abs/2105.04906
 """
-from typing import Any, Callable, Dict, Optional
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any
 
 import tensorflow as tf
 
@@ -36,8 +39,8 @@ class VicReg(tf.keras.losses.Loss):
         mu: float = 25,
         nu: float = 1,
         reduction: Callable = tf.keras.losses.Reduction.NONE,
-        name: Optional[str] = None,
-        **kwargs
+        name: str | None = None,
+        **kwargs,
     ):
         super().__init__(reduction=reduction, name=name, **kwargs)
         self.lambda_ = lambda_
@@ -83,7 +86,7 @@ class VicReg(tf.keras.losses.Loss):
 
         return loss
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         config = {
             "std_const": self.std_const,
             "lambda_": self.lambda_,

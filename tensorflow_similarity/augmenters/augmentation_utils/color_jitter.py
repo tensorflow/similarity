@@ -1,3 +1,19 @@
+# Copyright 2020 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+from __future__ import annotations
+
 import functools
 
 import tensorflow as tf
@@ -11,10 +27,10 @@ from tensorflow_similarity.types import Tensor
 def color_jitter(
     image: Tensor,
     strength: float = 1.0,
-    brightness_multiplier=0.8,
-    contrast_multiplier=0.8,
-    saturation_multiplier=0.8,
-    hue_multiplier=0.2,
+    brightness_multiplier: float = 0.8,
+    contrast_multiplier: float = 0.8,
+    saturation_multiplier: float = 0.8,
+    hue_multiplier: float = 0.2,
     random_order: bool = True,
     impl: str = "multiplicative",
 ) -> Tensor:
@@ -43,10 +59,10 @@ def color_jitter(
 
 def color_jitter_nonrand(
     image: Tensor,
-    brightness: float = 0,
-    contrast: float = 0,
-    saturation: float = 0,
-    hue: float = 0,
+    brightness: float = 0.0,
+    contrast: float = 0.0,
+    saturation: float = 0.0,
+    hue: float = 0.0,
     impl: str = "multiplicative",
 ) -> Tensor:
     """Distorts the color of the image (jittering order is fixed).
@@ -92,10 +108,10 @@ def color_jitter_nonrand(
 
 def color_jitter_rand(
     image: Tensor,
-    brightness: float = 0,
-    contrast: float = 0,
-    saturation: float = 0,
-    hue: float = 0,
+    brightness: float = 0.0,
+    contrast: float = 0.0,
+    saturation: float = 0.0,
+    hue: float = 0.0,
     impl: str = "multiplicative",
 ) -> Tensor:
     """Distorts the color of the image (jittering order is random).
@@ -187,12 +203,12 @@ def random_brightness(image: Tensor, max_delta: float, impl: str = "multiplicati
 
 def random_color_jitter(
     image: Tensor,
-    p_execute=1.0,
+    p_execute: float = 1.0,
     p_jitter: float = 0.8,
-    brightness_multiplier=0.8,
-    contrast_multiplier=0.8,
-    saturation_multiplier=0.8,
-    hue_multiplier=0.2,
+    brightness_multiplier: float = 0.8,
+    contrast_multiplier: float = 0.8,
+    saturation_multiplier: float = 0.8,
+    hue_multiplier: float = 0.2,
     p_grey: float = 0.2,
     strength: float = 1.0,
     impl: str = "multiplicative",

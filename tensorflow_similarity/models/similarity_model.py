@@ -38,19 +38,12 @@ model.compile(optimizer=Adam(LR), loss=similarity_loss)
 history = model.fit(train_ds)
 ```
 """
+from __future__ import annotations
+
 from collections import defaultdict
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from copy import copy
 from pathlib import Path
-from typing import (
-    DefaultDict,
-    Dict,
-    List,
-    MutableMapping,
-    MutableSequence,
-    Optional,
-    Sequence,
-    Union,
-)
 
 import numpy as np
 import tensorflow as tf
@@ -98,18 +91,18 @@ class SimilarityModel(tf.keras.Model):
 
     def compile(
         self,
-        optimizer: Union[Optimizer, str, Dict, List] = "rmsprop",
-        loss: Optional[Union[Loss, MetricLoss, str, Dict, List]] = None,
-        metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
-        loss_weights: Optional[Union[List, Dict]] = None,
-        weighted_metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
+        optimizer: Optimizer | str | Mapping | Sequence = "rmsprop",
+        loss: Loss | MetricLoss | str | Mapping | Sequence | None = None,
+        metrics: Metric | DistanceMetric | str | Mapping | Sequence | None = None,  # noqa
+        loss_weights: Mapping | Sequence | None = None,
+        weighted_metrics: Metric | DistanceMetric | str | Mapping | Sequence | None = None,  # noqa
         run_eagerly: bool = False,
         steps_per_execution: int = 1,
-        distance: Union[Distance, str] = "auto",
-        embedding_output: Optional[int] = None,
-        kv_store: Union[Store, str] = "memory",
-        search: Union[Search, str] = "nmslib",
-        evaluator: Union[Evaluator, str] = "memory",
+        distance: Distance | str = "auto",
+        embedding_output: int | None = None,
+        kv_store: Store | str = "memory",
+        search: Search | str = "nmslib",
+        evaluator: Evaluator | str = "memory",
         stat_buffer_size: int = 1000,
         **kwargs,
     ):
@@ -259,11 +252,11 @@ class SimilarityModel(tf.keras.Model):
 
     def create_index(
         self,
-        distance: Union[Distance, str] = "auto",
-        search: Union[Search, str] = "nmslib",
-        kv_store: Union[Store, str] = "memory",
-        evaluator: Union[Evaluator, str] = "memory",
-        embedding_output: int = None,
+        distance: Distance | str = "auto",
+        search: Search | str = "nmslib",
+        kv_store: Store | str = "memory",
+        evaluator: Evaluator | str = "memory",
+        embedding_output: int | None = None,
         stat_buffer_size: int = 1000,
     ) -> None:
         """Create the model index to make embeddings searchable via KNN.
@@ -330,8 +323,8 @@ class SimilarityModel(tf.keras.Model):
     def index(
         self,
         x: Tensor,
-        y: IntTensor = None,
-        data: Optional[Tensor] = None,
+        y: IntTensor | None = None,
+        data: Tensor | None = None,
         build: bool = True,
         verbose: int = 1,
     ):
@@ -371,8 +364,8 @@ class SimilarityModel(tf.keras.Model):
     def index_single(
         self,
         x: Tensor,
-        y: IntTensor = None,
-        data: Optional[Tensor] = None,
+        y: IntTensor | None = None,
+        data: Tensor | None = None,
         build: bool = True,
         verbose: int = 1,
     ):
@@ -409,7 +402,7 @@ class SimilarityModel(tf.keras.Model):
             verbose=verbose,
         )
 
-    def lookup(self, x: Tensor, k: int = 5, verbose: int = 1) -> List[List[Lookup]]:
+    def lookup(self, x: Tensor, k: int = 5, verbose: int = 1) -> list[list[Lookup]]:
         """Find the k closest matches in the index for a set of samples.
 
         Args:
@@ -421,7 +414,7 @@ class SimilarityModel(tf.keras.Model):
 
         Returns
             list of list of k nearest neighboors:
-            List[List[Lookup]]
+            list[list[Lookup]]
         """
         with tf.device("/cpu:0"):
             x = tf.convert_to_tensor(np.array(x))
@@ -429,7 +422,7 @@ class SimilarityModel(tf.keras.Model):
 
         return self._index.batch_lookup(predictions=predictions, k=k, verbose=verbose)
 
-    def single_lookup(self, x: Tensor, k: int = 5) -> List[Lookup]:
+    def single_lookup(self, x: Tensor, k: int = 5) -> list[Lookup]:
         """Find the k closest matches in the index for a given sample.
 
         Args:
@@ -439,7 +432,7 @@ class SimilarityModel(tf.keras.Model):
 
         Returns
             list of the k nearest neigboors info:
-            List[Lookup]
+            list[Lookup]
         """
         x = tf.expand_dims(x, axis=0)
         prediction = self.predict(x)
@@ -454,11 +447,11 @@ class SimilarityModel(tf.keras.Model):
         self,
         x: FloatTensor,
         y: IntTensor,
-        thresholds_targets: Optional[MutableMapping[str, float]] = None,
+        thresholds_targets: MutableMapping[str, float] | None = None,
         k: int = 1,
-        calibration_metric: Union[str, ClassificationMetric] = "f1",
-        matcher: Union[str, ClassificationMatch] = "match_nearest",
-        extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = [
+        calibration_metric: str | ClassificationMetric = "f1",
+        matcher: str | ClassificationMatch = "match_nearest",
+        extra_metrics: MutableSequence[str | ClassificationMetric] = [
             "precision",
             "recall",
         ],  # noqa
@@ -532,7 +525,7 @@ class SimilarityModel(tf.keras.Model):
         cutpoint="optimal",
         no_match_label=-1,
         k=1,
-        matcher: Union[str, ClassificationMatch] = "match_nearest",
+        matcher: str | ClassificationMatch = "match_nearest",
         verbose=0,
     ):
         """Match a set of examples against the calibrated index
@@ -600,7 +593,7 @@ class SimilarityModel(tf.keras.Model):
         y: IntTensor,
         retrieval_metrics: Sequence[RetrievalMetric],  # noqa
         verbose: int = 1,
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """Evaluate the quality of the index against a test dataset.
 
         Args:
@@ -654,13 +647,13 @@ class SimilarityModel(tf.keras.Model):
         x: Tensor,
         y: IntTensor,
         k: int = 1,
-        extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = [
+        extra_metrics: MutableSequence[str | ClassificationMetric] = [
             "precision",
             "recall",
         ],  # noqa
-        matcher: Union[str, ClassificationMatch] = "match_nearest",
+        matcher: str | ClassificationMatch = "match_nearest",
         verbose: int = 1,
-    ) -> DefaultDict[str, Dict[str, Union[str, np.ndarray]]]:
+    ) -> defaultdict[str, dict[str, str | np.ndarray]]:
         """Evaluate model classification matching on a given evaluation dataset.
 
         Args:
@@ -710,7 +703,7 @@ class SimilarityModel(tf.keras.Model):
             x = tf.convert_to_tensor(np.array(x))
         predictions = self.predict(x)
 
-        results: DefaultDict[str, Dict[str, Union[str, np.ndarray]]] = defaultdict(dict)
+        results: defaultdict[str, dict[str, str | np.ndarray]] = defaultdict(dict)
 
         if verbose:
             pb = tqdm(total=len(self._index.cutpoints), desc="Evaluating cutpoints")
@@ -722,7 +715,7 @@ class SimilarityModel(tf.keras.Model):
             metrics = copy(extra_metrics)
             metrics.append(metric)
 
-            res: Dict[str, Union[str, np.ndarray]] = {}
+            res: dict[str, str | np.ndarray] = {}
             res.update(
                 self._index.evaluate_classification(
                     predictions,
@@ -792,7 +785,7 @@ class SimilarityModel(tf.keras.Model):
         compression: bool = True,
         overwrite: bool = True,
         include_optimizer: bool = True,
-        save_format: Optional[str] = None,
+        save_format: str | None = None,
         signatures=None,
         options=None,
         save_traces: bool = True,

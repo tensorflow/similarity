@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
-from typing import Dict, Type, Union
+from typing import Type
 
 from .binary_accuracy import BinaryAccuracy  # noqa
 from .classification_metric import ClassificationMetric  # noqa
@@ -23,7 +24,7 @@ from .precision import Precision  # noqa
 from .recall import Recall  # noqa
 
 
-def make_classification_metric(metric: Union[str, ClassificationMetric], name: str = "") -> ClassificationMetric:
+def make_classification_metric(metric: str | ClassificationMetric, name: str = "") -> ClassificationMetric:
     """Convert classification metric from str name to object if needed.
 
     Args:
@@ -36,7 +37,7 @@ def make_classification_metric(metric: Union[str, ClassificationMetric], name: s
         ClassificationMetric: Instantiated metric if needed.
     """
     # ! Metrics must be non-instantiated.
-    METRICS_ALIASES: Dict[str, Type[ClassificationMetric]] = {
+    METRICS_ALIASES: dict[str, Type[ClassificationMetric]] = {
         "recall": Recall,
         "precision": Precision,
         "f1": F1Score,

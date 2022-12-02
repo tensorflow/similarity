@@ -1,22 +1,25 @@
+# Copyright 2021 The TensorFlow Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+from __future__ import annotations
+
 import itertools
 import json
 import os
 from collections import defaultdict
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from copy import copy
 from pathlib import Path
-from typing import (
-    Callable,
-    DefaultDict,
-    Dict,
-    List,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-)
 
 import numpy as np
 import tensorflow as tf
@@ -119,7 +122,7 @@ class ContrastiveModel(tf.keras.Model):
         self,
         backbone: tf.keras.Model,
         projector: tf.keras.Model,
-        predictor: Optional[tf.keras.Model] = None,
+        predictor: tf.keras.Model | None = None,
         algorithm: str = "simsiam",
         **kwargs,
     ) -> None:
@@ -144,18 +147,18 @@ class ContrastiveModel(tf.keras.Model):
 
     def compile(
         self,
-        optimizer: Union[Optimizer, str, Dict, List] = "rmsprop",
-        loss: Optional[Union[Loss, MetricLoss, str, Dict, List]] = None,
-        metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
-        loss_weights: Optional[Union[List, Dict]] = None,
-        weighted_metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
+        optimizer: Optimizer | str | Mapping | Sequence = "rmsprop",
+        loss: Loss | MetricLoss | str | Mapping | Sequence | None = None,
+        metrics: Metric | DistanceMetric | str | Mapping | Sequence | None = None,  # noqa
+        loss_weights: Mapping | Sequence | None = None,
+        weighted_metrics: Metric | DistanceMetric | str | Mapping | Sequence | None = None,  # noqa
         run_eagerly: bool = False,
         steps_per_execution: int = 1,
-        distance: Union[Distance, str] = "cosine",
-        embedding_output: Optional[int] = None,
-        kv_store: Union[Store, str] = "memory",
-        search: Union[Search, str] = "nmslib",
-        evaluator: Union[Evaluator, str] = "memory",
+        distance: Distance | str = "cosine",
+        embedding_output: int | None = None,
+        kv_store: Store | str = "memory",
+        search: Search | str = "nmslib",
+        evaluator: Evaluator | str = "memory",
         stat_buffer_size: int = 1000,
         **kwargs,
     ):
@@ -392,7 +395,7 @@ class ContrastiveModel(tf.keras.Model):
 
         return loss, pred1, pred2, z1, z2
 
-    def _parse_views(self, data: Sequence[FloatTensor]) -> Tuple[FloatTensor, FloatTensor]:
+    def _parse_views(self, data: Sequence[FloatTensor]) -> tuple[FloatTensor, FloatTensor]:
         if len(data) == 2:
             view1 = data[0]
             view2 = data[1]
@@ -417,14 +420,14 @@ class ContrastiveModel(tf.keras.Model):
 
     def save(
         self,
-        filepath: Union[str, Path],
+        filepath: str | Path,
         save_index: bool = True,
         compression: bool = True,
         overwrite: bool = True,
         include_optimizer: bool = True,
-        save_format: Optional[str] = None,
-        signatures: Optional[Union[Callable, Mapping[str, Callable]]] = None,
-        options: Optional[tf.saved_model.SaveOptions] = None,
+        save_format: str | None = None,
+        signatures: Callable | Mapping[str, Callable] | None = None,
+        options: tf.saved_model.SaveOptions | None = None,
         save_traces: bool = True,
     ) -> None:
         """Save Constrative model backbone, projector, and predictor
@@ -524,10 +527,10 @@ class ContrastiveModel(tf.keras.Model):
     def predict(
         self,
         x: FloatTensor,
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         verbose: int = 0,
-        steps: Optional[int] = None,
-        callbacks: Optional[tf.keras.callbacks.Callback] = None,
+        steps: int | None = None,
+        callbacks: tf.keras.callbacks.Callback | None = None,
         max_queue_size: int = 10,
         workers: int = 1,
         use_multiprocessing: bool = False,
@@ -569,11 +572,11 @@ class ContrastiveModel(tf.keras.Model):
 
     def create_index(
         self,
-        distance: Union[Distance, str] = "cosine",
-        search: Union[Search, str] = "nmslib",
-        kv_store: Union[Store, str] = "memory",
-        evaluator: Union[Evaluator, str] = "memory",
-        embedding_output: Optional[int] = None,
+        distance: Distance | str = "cosine",
+        search: Search | str = "nmslib",
+        kv_store: Store | str = "memory",
+        evaluator: Evaluator | str = "memory",
+        embedding_output: int | None = None,
         stat_buffer_size: int = 1000,
     ) -> None:
         """Create the model index to make embeddings searchable via KNN.
@@ -640,8 +643,8 @@ class ContrastiveModel(tf.keras.Model):
     def index(
         self,
         x: Tensor,
-        y: IntTensor = None,
-        data: Optional[Tensor] = None,
+        y: IntTensor | None = None,
+        data: Tensor | None = None,
         build: bool = True,
         verbose: int = 1,
     ):
@@ -681,8 +684,8 @@ class ContrastiveModel(tf.keras.Model):
     def index_single(
         self,
         x: Tensor,
-        y: IntTensor = None,
-        data: Optional[Tensor] = None,
+        y: IntTensor | None = None,
+        data: Tensor | None = None,
         build: bool = True,
         verbose: int = 1,
     ):
@@ -720,7 +723,7 @@ class ContrastiveModel(tf.keras.Model):
             verbose=verbose,
         )
 
-    def lookup(self, x: Tensor, k: int = 5, verbose: int = 1) -> List[List[Lookup]]:
+    def lookup(self, x: Tensor, k: int = 5, verbose: int = 1) -> list[list[Lookup]]:
         """Find the k closest matches in the index for a set of samples.
 
         Args:
@@ -732,12 +735,12 @@ class ContrastiveModel(tf.keras.Model):
 
         Returns
             list of list of k nearest neighboors:
-            List[List[Lookup]]
+            list[list[Lookup]]
         """
         predictions = self.predict(x)
         return self._index.batch_lookup(predictions=predictions, k=k, verbose=verbose)
 
-    def single_lookup(self, x: Tensor, k: int = 5) -> List[Lookup]:
+    def single_lookup(self, x: Tensor, k: int = 5) -> list[Lookup]:
         """Find the k closest matches in the index for a given sample.
 
         Args:
@@ -747,7 +750,7 @@ class ContrastiveModel(tf.keras.Model):
 
         Returns
             list of the k nearest neigboors info:
-            List[Lookup]
+            list[Lookup]
         """
         x = tf.expand_dims(x, axis=0)
         prediction = self.predict(x)
@@ -763,9 +766,9 @@ class ContrastiveModel(tf.keras.Model):
         y: IntTensor,
         thresholds_targets: MutableMapping[str, float] = {},
         k: int = 1,
-        calibration_metric: Union[str, ClassificationMetric] = "f1",
-        matcher: Union[str, ClassificationMatch] = "match_nearest",
-        extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = [
+        calibration_metric: str | ClassificationMetric = "f1",
+        matcher: str | ClassificationMatch = "match_nearest",
+        extra_metrics: MutableSequence[str | ClassificationMetric] = [
             "precision",
             "recall",
         ],  # noqa
@@ -835,7 +838,7 @@ class ContrastiveModel(tf.keras.Model):
         cutpoint="optimal",
         no_match_label=-1,
         k=1,
-        matcher: Union[str, ClassificationMatch] = "match_nearest",
+        matcher: str | ClassificationMatch = "match_nearest",
         verbose=0,
     ):
         """Match a set of examples against the calibrated index
@@ -901,7 +904,7 @@ class ContrastiveModel(tf.keras.Model):
         y: IntTensor,
         retrieval_metrics: Sequence[RetrievalMetric],  # noqa
         verbose: int = 1,
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """Evaluate the quality of the index against a test dataset.
 
         Args:
@@ -953,13 +956,13 @@ class ContrastiveModel(tf.keras.Model):
         x: Tensor,
         y: IntTensor,
         k: int = 1,
-        extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = [
+        extra_metrics: MutableSequence[str | ClassificationMetric] = [
             "precision",
             "recall",
         ],  # noqa
-        matcher: Union[str, ClassificationMatch] = "match_nearest",
+        matcher: str | ClassificationMatch = "match_nearest",
         verbose: int = 1,
-    ) -> DefaultDict[str, Dict[str, Union[str, np.ndarray]]]:
+    ) -> defaultdict[str, dict[str, str | np.ndarray]]:
         """Evaluate model classification matching on a given evaluation dataset.
 
         Args:
@@ -1005,7 +1008,7 @@ class ContrastiveModel(tf.keras.Model):
             print("|-Computing embeddings")
         predictions = self.predict(x)
 
-        results: DefaultDict[str, Dict[str, Union[str, np.ndarray]]] = defaultdict(dict)
+        results: defaultdict[str, dict[str, str | np.ndarray]] = defaultdict(dict)
 
         if verbose:
             pb = tqdm(total=len(self._index.cutpoints), desc="Evaluating cutpoints")
@@ -1017,7 +1020,7 @@ class ContrastiveModel(tf.keras.Model):
             metrics = copy(extra_metrics)
             metrics.append(metric)
 
-            res: Dict[str, Union[str, np.ndarray]] = {}
+            res: dict[str, str | np.ndarray] = {}
             res.update(
                 self._index.evaluate_classification(
                     predictions,
