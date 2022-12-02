@@ -78,7 +78,7 @@ setup(
             "mkdocs-autorefs",
             "mkdocs-material",
             "mkdocstrings",
-            "mypy",
+            "mypy=<0.982",
             "pytest",
             "pytype",
             "setuptools",
