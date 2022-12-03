@@ -21,12 +21,13 @@ from typing import Any
 import numpy as np
 import PIL
 import umap
+from bokeh import __version__
 from bokeh.plotting import ColumnDataSource, figure, output_notebook, show
 from distinctipy import distinctipy
 from tqdm.auto import tqdm
 
 from tensorflow_similarity.types import FloatTensor, Tensor
-from bokeh import __version__
+
 
 def tensor2images(tensor: Tensor, size: int = 64) -> list[str]:
     """Convert tensor images back to in memory images
@@ -186,7 +187,7 @@ def projector(
     source = ColumnDataSource(data=data)
     output_notebook()
     # Bokeh backward compatibility
-    if int(__version__.split('.')[0]) >= 3:
+    if int(__version__.split(".")[0]) >= 3:
         fig = figure(
             tooltips=tooltips,
             width=plot_size,
