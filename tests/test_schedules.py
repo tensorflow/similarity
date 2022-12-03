@@ -16,7 +16,7 @@ import math
 import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
-from keras.optimizers.schedules import learning_rate_schedule
+from tensorflow.keras.optimizers.schedules import learning_rate_schedule
 from tensorflow.python.framework import combinations
 
 from tensorflow_similarity.schedules import WarmupCosineDecay
