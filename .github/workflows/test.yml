@@ -13,7 +13,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.7, 3.10]
+        tf-version: [2.7, 2.10]
 
     steps:
     - uses: actions/checkout@v2
@@ -28,7 +29,8 @@ jobs:
     
     - name: Install package
       run: |
-        pip install ".[tensorflow,dev]"
+        pip install ".[dev]"
+        pip install tensorflow==${{ matrix.tf-version }}
         
     - name: Lint with flake8
       run: |
