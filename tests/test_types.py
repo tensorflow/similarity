@@ -1,13 +1,6 @@
-import random
-
-import numpy as np
 import tensorflow as tf
 
 from tensorflow_similarity import types
-
-random.seed(303)
-np.random.seed(606)
-tf.random.set_seed(808)
 
 
 def basic_lookup(rank=1, distance=0.1):
@@ -64,19 +57,19 @@ class TypesTest(tf.test.TestCase):
         self.assertNotEqual(l1, l2)
 
     def test_embedding_lookup_eq(self):
-        l1 = embedding_lookup(embedding=np.ones((1, 512)))
-        l2 = embedding_lookup(embedding=np.ones((1, 512)))
+        l1 = embedding_lookup(embedding=tf.ones((1, 512)))
+        l2 = embedding_lookup(embedding=tf.ones((1, 512)))
 
         self.assertEqual(l1, l2)
 
     def test_embedding_lookup_not_eq(self):
-        l1 = embedding_lookup(embedding=np.ones((1, 512)))
-        l2 = embedding_lookup(embedding=np.ones((1, 512)) + 1)
+        l1 = embedding_lookup(embedding=tf.ones((1, 512)))
+        l2 = embedding_lookup(embedding=tf.ones((1, 512)) + 1)
 
         self.assertNotEqual(l1, l2)
 
     def test_optional_embedding_lookup_not_eq(self):
-        l1 = embedding_lookup(embedding=np.ones((1, 512)))
+        l1 = embedding_lookup(embedding=tf.ones((1, 512)))
         l2 = embedding_lookup(embedding=None)
 
         self.assertNotEqual(l1, l2)

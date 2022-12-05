@@ -13,13 +13,11 @@
 # limitations under the License.
 from __future__ import annotations
 
-import itertools
-import json
-import os
 from collections import defaultdict
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from copy import copy
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import tensorflow as tf
@@ -53,80 +51,50 @@ from tensorflow_similarity.types import (
 )
 
 
-class NumpyFloatValuesEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.float32):
-            return float(obj)
-        return json.JSONEncoder.default(self, obj)
-
-
-def load_model(filepath):
-    spath = Path(filepath)
-    backbone_path = spath / "backbone"
-    proj_path = spath / "projector"
-    pred_path = spath / "predictor"
-    optw_path = spath / "opt_weights.npy"
-    config_path = spath / "config.json"
-
-    backbone = tf.keras.models.load_model(backbone_path)
-    projector = tf.keras.models.load_model(proj_path)
-
-    if os.path.isdir(pred_path):
-        predictor = tf.keras.models.load_model(pred_path)
+def create_contrastive_model(
+    *args,
+    backbone: tf.keras.Model,
+    projector: tf.keras.Model,
+    predictor: tf.keras.Model | None = None,
+    algorithm: str = "simsiam",
+    **kwargs,
+) -> ContrastiveModel:
+    """Create a contrastive model."""
+    input_shape = backbone.input_shape[1:]
+    inputs = tf.keras.layers.Input(shape=input_shape, name="main_model_input")
+    if algorithm == "simsiam":
+        if predictor is None:
+            raise ValueError("The predictor should be specified when using the simsiam algorithm.")
+        outputs = predictor(projector(backbone(inputs)))
+    elif algorithm in ("simclr", "barlow"):
+        outputs = projector(backbone(inputs))
     else:
-        predictor = None
+        raise ValueError(f"Unknown algorithm: {algorithm}")
 
-    with open(config_path, "r") as f:
-        config = json.load(f)
-        metadata = json.loads(config)
-
-    optimizer = tf.keras.optimizers.deserialize(metadata["optimizer"])
-    opt_weights = np.load(optw_path, allow_pickle=True)
-    loss = tf.keras.losses.deserialize(metadata["loss"])
-    metrics = [tf.keras.metrics.deserialize(m) for m in metadata["metrics"]]
-    algorithm = metadata["algorithm"]
-
-    model = ContrastiveModel(
+    return ContrastiveModel(
+        *args,
         backbone=backbone,
         projector=projector,
         predictor=predictor,
         algorithm=algorithm,
+        inputs=inputs,
+        outputs=outputs,
+        **kwargs,
     )
-
-    model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
-
-    # collect train variables from both the backbone, projector, and projector
-    tvars = model.backbone.trainable_variables
-    tvars = tvars + model.projector.trainable_variables
-    if model.predictor is not None:
-        tvars = tvars + model.predictor.trainable_variables
-
-    # dummy zero gradients
-    zero_grads = [tf.zeros_like(w) for w in tvars]
-    # save current state of variables
-    saved_vars = [tf.identity(w) for w in tvars]
-
-    optimizer.apply_gradients(zip(zero_grads, tvars))
-
-    # Reload variables
-    [x.assign(y) for x, y in zip(tvars, saved_vars)]
-
-    optimizer.set_weights(opt_weights)
-
-    return model
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class ContrastiveModel(tf.keras.Model):
     def __init__(
         self,
+        *args,
         backbone: tf.keras.Model,
         projector: tf.keras.Model,
         predictor: tf.keras.Model | None = None,
         algorithm: str = "simsiam",
         **kwargs,
     ) -> None:
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         self.backbone = backbone
         self.projector = projector
         self.predictor = predictor
@@ -294,7 +262,8 @@ class ContrastiveModel(tf.keras.Model):
         # the loss in train_step and test_step.
         base_metrics = [m for m in super().metrics if m.name != "loss"]
         loss_trackers = self.loss_trackers.values()
-        return itertools.chain(loss_trackers, base_metrics)
+        base_metrics.extend(loss_trackers)
+        return base_metrics
 
     def train_step(self, data):
         view1, view2 = self._parse_views(data)
@@ -397,16 +366,15 @@ class ContrastiveModel(tf.keras.Model):
 
     def _parse_views(self, data: Sequence[FloatTensor]) -> tuple[FloatTensor, FloatTensor]:
         if len(data) == 2:
-            view1 = data[0]
-            view2 = data[1]
+            view1, view2 = data
         else:
-            view1 = data[0]
-            view2 = data[0]
+            view1 = view2 = data[0]
 
         return view1, view2
 
     # fix TF 2.x < 2.7 bugs when using generator
-    def call(self, inputs):
+    # todo(ovallis): link to original issue.
+    def call(self, inputs, training=None, mask=None):
         return inputs
 
     def summary(self):
@@ -417,112 +385,6 @@ class ContrastiveModel(tf.keras.Model):
         if self.predictor is not None:
             cprint("\n[Predictor]", "magenta")
             self.projector.summary()
-
-    def save(
-        self,
-        filepath: str | Path,
-        save_index: bool = True,
-        compression: bool = True,
-        overwrite: bool = True,
-        include_optimizer: bool = True,
-        save_format: str | None = None,
-        signatures: Callable | Mapping[str, Callable] | None = None,
-        options: tf.saved_model.SaveOptions | None = None,
-        save_traces: bool = True,
-    ) -> None:
-        """Save Constrative model backbone, projector, and predictor
-
-        Args:
-            filepath: where to save the model.
-            save_index: Save the index content. Defaults to True.
-            compression: Compress index data. Defaults to True.
-            overwrite: Overwrite previous model. Defaults to True.
-            include_optimizer: Save optimizer state. Defaults to True.
-            save_format: Either 'tf' or 'h5', indicating whether to save the
-              model to Tensorflow SavedModel or HDF5. Defaults to 'tf' in
-              TF 2.X, and 'h5' in TF 1.X.
-            signatures: Signatures to save with the SavedModel. Applicable to
-              the 'tf' format only. Please see the signatures argument in
-              tf.saved_model.save for details.
-            options: A `tf.saved_model.SaveOptions` to save with the model.
-              Defaults to None.
-            save_traces (optional): When enabled, the SavedModel will store the
-              function traces for each layer. This can be disabled, so that only
-              the configs of each layer are stored.  Defaults to True. Disabling
-              this will decrease serialization time and reduce file size, but it
-              requires that all custom layers/models implement a get_config()
-              method.
-        """
-        spath = Path(filepath)
-        backbone_path = spath / "backbone"
-        proj_path = spath / "projector"
-        pred_path = spath / "predictor"
-        optw_path = spath / "opt_weights.npy"
-        config_path = spath / "config.json"
-
-        cprint("[Saving backbone model]", "blue")
-        cprint("|-path:%s" % backbone_path, "green")
-        self.backbone.save(
-            backbone_path,
-            overwrite=overwrite,
-            include_optimizer=include_optimizer,
-            save_format=save_format,
-            signatures=signatures,
-            options=options,
-            save_traces=save_traces,
-        )
-
-        cprint("[Saving projector model]", "blue")
-        cprint("|-path:%s" % proj_path, "green")
-        self.projector.save(
-            proj_path,
-            overwrite=overwrite,
-            include_optimizer=include_optimizer,
-            save_format=save_format,
-            signatures=signatures,
-            options=options,
-            save_traces=save_traces,
-        )
-
-        if self.predictor is not None:
-            cprint("[Saving predictor model]", "blue")
-            cprint("|-path:%s" % pred_path, "green")
-            self.predictor.save(
-                pred_path,
-                overwrite=overwrite,
-                include_optimizer=include_optimizer,
-                save_format=save_format,
-                signatures=signatures,
-                options=options,
-                save_traces=save_traces,
-            )
-
-        metadata = {}
-        base_metrics = [m for m in super().metrics if m.name != "loss"]
-        metadata["metrics"] = [tf.keras.metrics.serialize(m) for m in base_metrics]
-        metadata["loss"] = tf.keras.losses.serialize(self.loss)
-        metadata["optimizer"] = tf.keras.optimizers.serialize(self.optimizer)
-        np.save(optw_path, self.optimizer.get_weights())
-
-        with open(config_path, "w") as f:
-            base_config = self.get_config()
-            config = json.dumps({**metadata, **base_config}, cls=NumpyFloatValuesEncoder)
-            json.dump(config, f)
-
-        if hasattr(self, "_index") and self._index and save_index:
-            self.save_index(filepath, compression=compression)
-        else:
-            print("Index not saved as save_index=False")
-
-    def get_config(self):
-        config = {
-            "algorithm": self.algorithm,
-        }
-        return config
-
-    # TODO(ovallis): Overwrite load
-
-    # TODO(ovallis): Overwrite summary to show the whole model.
 
     def predict(
         self,
@@ -567,8 +429,6 @@ class ContrastiveModel(tf.keras.Model):
         output: FloatTensor = tf.math.l2_normalize(x, axis=1)
 
         return output
-
-    # TODO (ovallis): Refactor the following indexing code into a MixIn.
 
     def create_index(
         self,
@@ -1083,6 +943,67 @@ class ContrastiveModel(tf.keras.Model):
         index_path = Path(filepath) / "index"
         self._index.save(index_path, compression=compression)
 
+    def save(
+        self,
+        filepath: str | Path,
+        save_index: bool = True,
+        compression: bool = True,
+        overwrite: bool = True,
+        include_optimizer: bool = True,
+        save_format: str | None = None,
+        signatures: Callable | Mapping[str, Callable] | None = None,
+        options: tf.saved_model.SaveOptions | None = None,
+        save_traces: bool = True,
+    ) -> None:
+        """Save Constrative model backbone, projector, and predictor
+
+        Args:
+            filepath: where to save the model.
+            save_index: Save the index content. Defaults to True.
+            compression: Compress index data. Defaults to True.
+            overwrite: Overwrite previous model. Defaults to True.
+            include_optimizer: Save optimizer state. Defaults to True.
+            save_format: Either 'tf' or 'h5', indicating whether to save the
+              model to Tensorflow SavedModel or HDF5. Defaults to 'tf' in
+              TF 2.X, and 'h5' in TF 1.X.
+            signatures: Signatures to save with the SavedModel. Applicable to
+              the 'tf' format only. Please see the signatures argument in
+              tf.saved_model.save for details.
+            options: A `tf.saved_model.SaveOptions` to save with the model.
+              Defaults to None.
+            save_traces (optional): When enabled, the SavedModel will store the
+              function traces for each layer. This can be disabled, so that only
+              the configs of each layer are stored.  Defaults to True. Disabling
+              this will decrease serialization time and reduce file size, but it
+              requires that all custom layers/models implement a get_config()
+              method.
+        """
+        super().save(
+            filepath,
+            overwrite=overwrite,
+            include_optimizer=include_optimizer,
+            save_format=save_format,
+            signatures=signatures,
+            options=options,
+            save_traces=save_traces,
+        )
+
+        if hasattr(self, "_index") and self._index and save_index:
+            self.save_index(filepath, compression=compression)
+        else:
+            msg = "The index was not saved with the model."
+            if not hasattr(self, "_index"):
+                msg = msg + (
+                    "The model does not currently have an index. To use indexing "
+                    "you must call either model.compile() or model.create_index() "
+                    "and set a valid Distance."
+                )
+
+            if not save_index:
+                msg = msg + " The save_index param is set to False."
+
+            print(msg)
+
     def to_data_frame(self, num_items: int = 0) -> PandasDataFrame:
         """Export data as pandas dataframe
 
@@ -1095,9 +1016,22 @@ class ContrastiveModel(tf.keras.Model):
         """
         return self._index.to_data_frame(num_items=num_items)
 
-    # We don't need from_config as the index is reloaded separatly.
-    # this is kept as a reminder that it was looked into and decided to split
-    # the index reloading instead of overloading this method.
-    # @classmethod
-    # def from_config(cls, config):
-    #     return super().from_config(**config)
+    def get_config(self) -> dict[str, Any]:
+        config = {
+            "backbone": self.backbone,
+            "projector": self.projector,
+            "predictor": self.predictor,
+            "algorithm": self.algorithm,
+        }
+        base_config = super().get_config()
+        return {**base_config, **config}
+
+    @classmethod
+    def from_config(cls, config):
+        if "layers" in config:
+            del config["layers"]
+        if "input_layers" in config:
+            del config["input_layers"]
+        if "output_layers" in config:
+            del config["output_layers"]
+        return create_contrastive_model(**config)
