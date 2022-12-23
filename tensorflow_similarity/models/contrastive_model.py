@@ -14,7 +14,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import (Callable, Mapping, MutableMapping,
+                             MutableSequence, Sequence)
 from copy import copy
 from pathlib import Path
 from typing import Any
@@ -25,13 +26,8 @@ from tabulate import tabulate
 from tensorflow.keras.losses import Loss
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
-from termcolor import cprint
-from tqdm.auto import tqdm
-
 from tensorflow_similarity.classification_metrics import (  # noqa
-    ClassificationMetric,
-    make_classification_metric,
-)
+    ClassificationMetric, make_classification_metric)
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.evaluators.evaluator import Evaluator
 from tensorflow_similarity.indexer import Indexer
@@ -41,14 +37,11 @@ from tensorflow_similarity.retrieval_metrics import RetrievalMetric
 from tensorflow_similarity.search import Search
 from tensorflow_similarity.stores import Store
 from tensorflow_similarity.training_metrics import DistanceMetric
-from tensorflow_similarity.types import (
-    CalibrationResults,
-    FloatTensor,
-    IntTensor,
-    Lookup,
-    PandasDataFrame,
-    Tensor,
-)
+from tensorflow_similarity.types import (CalibrationResults, FloatTensor,
+                                         IntTensor, Lookup, PandasDataFrame,
+                                         Tensor)
+from termcolor import cprint
+from tqdm.auto import tqdm
 
 
 def create_contrastive_model(
@@ -261,9 +254,9 @@ class ContrastiveModel(tf.keras.Model):
         # We remove the compiled loss metric because we want to manually track
         # the loss in train_step and test_step.
         base_metrics = [m for m in super().metrics if m.name != "loss"]
-        loss_trackers = self.loss_trackers.values()
-        base_metrics.extend(loss_trackers)
-        return base_metrics
+        loss_trackers = list(self.loss_trackers.values())
+        loss_trackers.extend(base_metrics)
+        return loss_trackers
 
     def train_step(self, data):
         view1, view2 = self._parse_views(data)
