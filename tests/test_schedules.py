@@ -16,7 +16,7 @@ import math
 import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
-from keras.optimizers.schedules import learning_rate_schedule
+from tensorflow.keras.optimizers import schedules
 from tensorflow.python.framework import combinations
 
 from tensorflow_similarity.schedules import WarmupCosineDecay
@@ -24,8 +24,8 @@ from tensorflow_similarity.schedules import WarmupCosineDecay
 
 def _maybe_serialized(lr_decay, serialize_and_deserialize):
     if serialize_and_deserialize:
-        serialized = learning_rate_schedule.serialize(lr_decay)
-        return learning_rate_schedule.deserialize(serialized)
+        serialized = schedules.serialize(lr_decay)
+        return schedules.deserialize(serialized)
     else:
         return lr_decay
 

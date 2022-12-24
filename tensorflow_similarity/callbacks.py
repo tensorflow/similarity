@@ -238,7 +238,6 @@ class EvalCallback(Callback):
                     )
                 )
         self.model.reset_index()
-        print(" - ".join(mstr))
 
 
 def _compute_metrics(

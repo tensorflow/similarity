@@ -224,16 +224,29 @@ class SimilarityModel(tf.keras.Model):
         )
 
         # call underlying keras method
-        super().compile(
-            optimizer=optimizer,
-            loss=loss,
-            metrics=metrics,
-            loss_weights=loss_weights,
-            weighted_metrics=weighted_metrics,
-            run_eagerly=run_eagerly,
-            steps_per_execution=steps_per_execution,
-            **kwargs,
-        )
+        if tf.executing_eagerly():
+            super().compile(
+                optimizer=optimizer,
+                loss=loss,
+                metrics=metrics,
+                loss_weights=loss_weights,
+                weighted_metrics=weighted_metrics,
+                run_eagerly=run_eagerly,
+                steps_per_execution=steps_per_execution,
+                **kwargs,
+            )
+        else:
+            # apprently keras calls training_v1.py in graph mode which does not
+            # support the steps_per_execution arg.
+            super().compile(
+                optimizer=optimizer,
+                loss=loss,
+                metrics=metrics,
+                loss_weights=loss_weights,
+                weighted_metrics=weighted_metrics,
+                run_eagerly=run_eagerly,
+                **kwargs,
+            )
 
     @property
     def _index(self) -> Indexer:
@@ -347,10 +360,11 @@ class SimilarityModel(tf.keras.Model):
         """
 
         if verbose:
-            print("[Indexing %d points]" % len(x))
+            print("[Indexing {tf.shape(x)} points]")
             print("|-Computing embeddings")
         with tf.device("/cpu:0"):
             x = tf.convert_to_tensor(np.array(x))
+
         predictions = self.predict(x)
 
         self._index.batch_add(

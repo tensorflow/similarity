@@ -23,7 +23,14 @@ def create_lookups():
 
 class UtilsTest(tf.test.TestCase):
     def setUp(self):
+        super().setUp()
+        # the lookups collection may be modified by the tests, so it must be
+        # created in setUp before each test.
         self.lookups = create_lookups()
+
+    def tearDown(self):
+        super().tearDown()
+        del self.lookups
 
     def test_tf_cap_memory_gpu_exists(self):
         tf.config.experimental.list_physical_devices = MagicMock(return_value=["foo"])
