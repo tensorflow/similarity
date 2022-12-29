@@ -46,8 +46,7 @@ def soft_nn_loss(
         key_labels: labels associated with the key embed.
         key_embeddings: Embedded key examples.
         distance: Which distance function to use to compute the pairwise.
-        temperature: Controls relative importance given
-                        to the pair of points.
+        temperature: Controls relative importance given to the pair of points.
         remove_diagonal: Bool. If True, will set diagonal to False in positive pair mask
 
     Returns:
@@ -131,4 +130,10 @@ class SoftNearestNeighborLoss(MetricLoss):
         self.distance = distance
         self.temperature = temperature
 
-        super().__init__(fn=soft_nn_loss, name=name, distance=distance, temperature=temperature, **kwargs)
+        super().__init__(
+            fn=soft_nn_loss,
+            name=name,
+            distance=distance,
+            temperature=temperature,
+            **kwargs,
+        )
