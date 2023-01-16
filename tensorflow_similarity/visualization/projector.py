@@ -11,14 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import base64
 import io
-from typing import Any, List, Mapping, Optional, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import numpy as np
 import PIL
 import umap
+from bokeh import __version__
 from bokeh.plotting import ColumnDataSource, figure, output_notebook, show
 from distinctipy import distinctipy
 from tqdm.auto import tqdm
@@ -26,7 +29,7 @@ from tqdm.auto import tqdm
 from tensorflow_similarity.types import FloatTensor, Tensor
 
 
-def tensor2images(tensor: Tensor, size: Optional[int] = 64) -> List[str]:
+def tensor2images(tensor: Tensor, size: int = 64) -> list[str]:
     """Convert tensor images back to in memory images
     encoded in base 64.
 
@@ -69,11 +72,11 @@ def tensor2images(tensor: Tensor, size: Optional[int] = 64) -> List[str]:
 
 def projector(
     embeddings: FloatTensor,
-    labels: Optional[Sequence[Any]] = None,
-    class_mapping: Optional[Sequence[int]] = None,
-    images: Optional[Tensor] = None,
+    labels: Sequence[Any] | None = None,
+    class_mapping: Sequence[int] | None = None,
+    images: Tensor | None = None,
     image_size: int = 64,
-    tooltips_info: Optional[Mapping[str, Sequence[str]]] = None,
+    tooltips_info: Mapping[str, Sequence[str]] | None = None,
     pt_size: int = 3,
     colorize: bool = True,
     pastel_factor: float = 0.1,
@@ -183,13 +186,23 @@ def projector(
     # to bokeh format
     source = ColumnDataSource(data=data)
     output_notebook()
-    fig = figure(
-        tooltips=tooltips,
-        plot_width=plot_size,
-        plot_height=plot_size,
-        active_drag=active_drag,
-        active_scroll="wheel_zoom",
-    )
+    # Bokeh backward compatibility
+    if int(__version__.split(".")[0]) >= 3:
+        fig = figure(
+            tooltips=tooltips,
+            width=plot_size,
+            height=plot_size,
+            active_drag=active_drag,
+            active_scroll="wheel_zoom",
+        )
+    else:
+        fig = figure(
+            tooltips=tooltips,
+            plot_width=plot_size,
+            plot_height=plot_size,
+            active_drag=active_drag,
+            active_scroll="wheel_zoom",
+        )
 
     # remove grid and axis
     fig.xaxis.visible = False
