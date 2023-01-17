@@ -26,7 +26,7 @@ def TFRecordDatasetSampler(
     batch_size: int = 32,
     shards_per_cycle: int = None,
     compression: Optional[str] = None,
-    parallelism: int = tf.data.AUTOTUNE,
+    parallelism: int = tf.data.experimental.AUTOTUNE,
     async_cycle: bool = False,
     prefetch_size: Optional[int] = None,
     shard_suffix: str = "*.tfrec",
