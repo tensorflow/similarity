@@ -125,13 +125,18 @@ def semi_hard_easy_mask(
     """
     empty = tf.zeros_like(distances, dtype=tf.bool)
     updates = tf.ones(tf.shape(max_neg_idxs)[0], dtype=tf.bool)
+    # tf.tensor_scatter_nd_update requires both the row and col idxs.
+    # here we use a range for the row idxs and take the max_neg_idxs as the cols.
     row_idxs = tf.range(tf.shape(max_neg_idxs)[0])
     col_idxs = tf.cast(max_neg_idxs, dtype=row_idxs.dtype)
     indicies = tf.concat(
         (tf.expand_dims(row_idxs, axis=-1), tf.expand_dims(col_idxs, axis=-1)),
         axis=1,
     )
-    easy_mask = tf.tensor_scatter_nd_update(empty, indicies, updates)
+
+    # easy mask is a boolean tensor because we cast empty and updates to bool.
+    easy_mask: BoolTensor = tf.tensor_scatter_nd_update(empty, indicies, updates)
+
     return easy_mask
 
 
