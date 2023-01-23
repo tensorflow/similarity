@@ -140,7 +140,7 @@ def test_small_class_size(capsys):
         "examples_per_class is set to 3. The current batch will sample "
         "from class examples with replacement, but you may want to "
         "consider passing an Augmenter function or using the "
-        "SingleShotFileSampler()."
+        "SingleShotMemorySampler()."
     )
 
     match = re.search(expected_msg, captured.out)
