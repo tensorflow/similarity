@@ -13,30 +13,26 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import Optional, Sequence, Tuple, TypeVar, Callable
+from collections.abc import Callable, Sequence
+from typing import TypeVar
 
 import tensorflow as tf
 
 from tensorflow_similarity.types import FloatTensor, IntTensor
 
-from .samplers import Augmenter
 from .memory_samplers import MultiShotMemorySampler
+from .samplers import Augmenter
 
 T = TypeVar("T", FloatTensor, IntTensor)
 
 
-def load_image(
-    path: str,
-    target_size: Optional[Tuple[int, int]] = None
-) -> T:
+def load_image(path: str, target_size: tuple[int, int] | None = None) -> T:
     image_string = tf.io.read_file(path)
-    image = tf.image.decode_jpeg(image_string, channels=3)
+    image: T = tf.image.decode_jpeg(image_string, channels=3)
     image = tf.image.convert_image_dtype(image, tf.float32)
     if target_size:
-        image = tf.image.resize(
-            image, target_size, method=tf.image.ResizeMethod.LANCZOS3
-        )
-        image = tf.clip_by_value(image, 0., 1.)
+        image = tf.image.resize(image, target_size, method=tf.image.ResizeMethod.LANCZOS3)
+        image = tf.clip_by_value(image, 0.0, 1.0)
     return image
 
 
