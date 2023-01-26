@@ -42,7 +42,12 @@ def np_warmup_cosine_decay(*, step, max_lr, total_steps, warmup_steps, alpha=0.0
     return max_lr * decayed
 
 
-@combinations.generate(combinations.combine(mode=["graph", "eager"], serialize=[False, True]))
+@combinations.generate(
+    combinations.combine(
+        mode=["graph", "eager"],
+        serialize=[False, True],
+    )
+)
 class WarmupCosineDecayTest(tf.test.TestCase, parameterized.TestCase):
     def testDecay(self, serialize):
         num_training_steps = 1000

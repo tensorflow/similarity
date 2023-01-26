@@ -19,7 +19,7 @@ from typing import Any
 import tensorflow as tf
 
 from tensorflow_similarity.algebra import masked_max, masked_min
-from tensorflow_similarity.types import BoolTensor, FloatTensor
+from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
 
 
 def positive_distances(
@@ -83,18 +83,22 @@ def negative_distances(
         # find the *non-zero* minimal distance between negative labels
         negative_distances, neg_idxs = masked_min(distances, negative_mask)
     elif negative_mining_strategy == "semi-hard":
-        # find the minimal distance between negative label gt than max distance
-        # between positive labels
+        # Find the negative label with the minimal distance that is greater
+        # than the maximal positive distance. If no such negative exists,
+        # i.e., max(d(a,n)) < max(d(a,p)), then use the maximal negative
+        # distance, as in the easy case.
+
         # find max value of positive distance
         max_positive, _ = masked_max(distances, positive_mask)
 
         # select distance that are above the max positive distance
         greater_distances = tf.math.greater(distances, max_positive)
 
-        # combine with negative mask: keep negative value if greater,
-        # zero otherwise
-        empty = tf.zeros_like(greater_distances, dtype=tf.bool)
-        semi_hard_mask = tf.where(greater_distances, negative_mask, empty)
+        # combine greater_distances with negative mask: keep negative
+        # value if greater, otherwise set to value from easy mask.
+        _, max_neg_idxs = masked_max(distances, negative_mask)
+        easy_mask = semi_hard_easy_mask(distances, max_neg_idxs)
+        semi_hard_mask = tf.where(greater_distances, negative_mask, easy_mask)
 
         # find the  minimal distance between negative labels above threshold
         negative_distances, neg_idxs = masked_min(distances, semi_hard_mask)
@@ -108,11 +112,38 @@ def negative_distances(
     return negative_distances, neg_idxs
 
 
+def semi_hard_easy_mask(
+    distances: FloatTensor,
+    max_neg_idxs: IntTensor,
+) -> BoolTensor:
+    """Compute the fallback easy mask for semi-hard mining.
+
+    Find the negative label with the maximal distance that is less than or
+    equal to the maximal positive distance. This is used in the semi-hard
+    mining for the case when no negative label is found that is greater
+    than the maximal positive distance.
+    """
+    empty = tf.zeros_like(distances, dtype=tf.bool)
+    updates = tf.ones(tf.shape(max_neg_idxs)[0], dtype=tf.bool)
+    # tf.tensor_scatter_nd_update requires both the row and col idxs.
+    # here we use a range for the row idxs and take the max_neg_idxs as the cols.
+    row_idxs = tf.range(tf.shape(max_neg_idxs)[0])
+    col_idxs = tf.cast(max_neg_idxs, dtype=row_idxs.dtype)
+    indicies = tf.concat(
+        (tf.expand_dims(row_idxs, axis=-1), tf.expand_dims(col_idxs, axis=-1)),
+        axis=1,
+    )
+
+    # easy mask is a boolean tensor because we cast empty and updates to bool.
+    easy_mask: BoolTensor = tf.tensor_scatter_nd_update(empty, indicies, updates)
+
+    return easy_mask
+
+
 def compute_loss(
     positive_distances: FloatTensor,
     negative_distances: FloatTensor,
-    soft_margin: bool,
-    margin: float,
+    margin: float | None,
 ) -> Any:
     """Compute the final loss.
 
@@ -121,18 +152,15 @@ def compute_loss(
 
         negative_distances: An [n,1] FloatTensor of negative distances.
 
-        soft_margin: [description]. Defaults to False.
-
-        margin: [description]. Defaults to 1.0.
+        margin: [description]. Use soft margin if None otherwise use explicit margin.
 
     Returns:
         An [n,1] FloatTensor containing the loss for each example.
     """
-
     loss = tf.math.subtract(positive_distances, negative_distances)
 
-    if soft_margin:
-        loss = tf.reduce_logsumexp(loss)
+    if margin is None:
+        loss = logsumexp(loss, tf.ones_like(loss))
     else:
         loss = tf.math.add(loss, margin)
         loss = tf.maximum(loss, 0.0)  # numeric stability
