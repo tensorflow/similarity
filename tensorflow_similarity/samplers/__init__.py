@@ -31,6 +31,7 @@ the dataset.
 """
 from .memory_samplers import MultiShotMemorySampler  # noqa
 from .memory_samplers import SingleShotMemorySampler  # noqa
+from .file_samplers import MultiShotFileSampler  # noqa
 from .tfdataset_samplers import TFDatasetMultiShotMemorySampler  # noqa
 from .tfrecords_samplers import TFRecordDatasetSampler  # noqa
 from .utils import select_examples  # noqa
