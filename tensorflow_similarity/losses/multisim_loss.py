@@ -47,43 +47,33 @@ def multisimilarity_loss(
 
     Args:
         query_labels: labels associated with the query embed.
-
         query_embeddings: Embedded query examples.
-
         key_labels: labels associated with the key embed.
-
         key_embeddings: Embedded key examples.
-
         distance: Which distance function to use to compute the pairwise.
-
-        remove_diagonal: Bool. If True, will set diagonal to False in positive pair mask
-
+        remove_diagonal: Bool. If True, will set diagonal to False in positive
+            pair mask
         alpha: The exponential weight for the positive pairs. Increasing alpha
-        makes the logsumexp softmax closer to the max positive pair distance,
-        while decreasing it makes it closer to max(P) + log(batch_size).
-
+            makes the logsumexp softmax closer to the max positive pair distance,
+            while decreasing it makes it closer to max(P) + log(batch_size).
         beta: The exponential weight for the negative pairs. Increasing beta
-        makes the logsumexp softmax closer to the max negative pair distance,
-        while decreasing it makes the softmax closer to
-        max(N) + log(batch_size).
-
+            makes the logsumexp softmax closer to the max negative pair distance,
+            while decreasing it makes the softmax closer to
+            max(N) + log(batch_size).
         epsilon: Used to remove easy positive and negative pairs. We only keep
-        positives that we greater than the (smallest negative pair - epsilon)
-        and we only keep negatives that are less than the
-        (largest positive pair + epsilon).
-
+            positives that we greater than the (smallest negative pair - epsilon)
+            and we only keep negatives that are less than the
+            (largest positive pair + epsilon).
         lmda: Used to weight the distance. Below this distance, negatives are
-        up weighted and positives are down weighted. Similarly, above this
-        distance negatives are down weighted and positive are up weighted.
-
+            up weighted and positives are down weighted. Similarly, above this
+            distance negatives are down weighted and positive are up weighted.
         center: This represents the expected distance value and will be used
-        to center the values in the pairwise distance matrix. This is used
-        when weighting the positive and negative examples, with the hardest
-        examples receiving an up weight and the easiest examples receiving a
-        down weight. This should 1 for cosine distances which we expect to
-        be between [0,2]. The value will depend on the data for L2 and L1
-        distances.
-
+            to center the values in the pairwise distance matrix. This is used
+            when weighting the positive and negative examples, with the hardest
+            examples receiving an up weight and the easiest examples receiving a
+            down weight. This should 1 for cosine distances which we expect to
+            be between [0,2]. The value will depend on the data for L2 and L1
+            distances.
 
     Returns:
         Loss: The loss value for the current batch.
@@ -186,37 +176,37 @@ class MultiSimilarityLoss(MetricLoss):
 
         Args:
             distance: Which distance function to use to compute the pairwise
-            distances between embeddings. Defaults to 'cosine'.
+                distances between embeddings. Defaults to 'cosine'.
 
             alpha: The exponential weight for the positive pairs. Increasing
-            alpha makes the logsumexp softmax closer to the max positive pair
-            distance, while decreasing it makes it closer to
-            max(P) + log(batch_size).
+                alpha makes the logsumexp softmax closer to the max positive
+                pair distance, while decreasing it makes it closer to
+                max(P) + log(batch_size).
 
             beta: The exponential weight for the negative pairs. Increasing
-            beta makes the logsumexp softmax closer to the max negative pair
-            distance, while decreasing it makes the softmax closer to
-            max(N) + log(batch_size).
+                beta makes the logsumexp softmax closer to the max negative
+                pair distance, while decreasing it makes the softmax closer
+                to max(N) + log(batch_size).
 
             epsilon: Used to remove easy positive and negative pairs. We only
-            keep positives that we greater than the (smallest negative pair -
-            epsilon) and we only keep negatives that are less than the
-            (largest positive pair + epsilon).
+                keep positives that we greater than the (smallest negative
+                pair - epsilon) and we only keep negatives that are less than
+                the (largest positive pair + epsilon).
 
             lmda: Used to weight the distance. Below this distance, negatives
-            are up weighted and positives are down weighted. Similarly, above
-            this distance negatives are down weighted and positive are up
-            weighted.
+                are up weighted and positives are down weighted. Similarly,
+                above this distance negatives are down weighted and positive
+                are up weighted.
 
             center: This represents the expected distance value and will be used
-            to center the values in the pairwise distance matrix. This is used
-            when weighting the positive and negative examples, with the hardest
-            examples receiving an up weight and the easiest examples receiving a
-            down weight. This should 1 for cosine distances which we expect to
-            be between [0,2]. The value will depend on the data for L2 and L1
-            distances.
+                to center the values in the pairwise distance matrix. This is
+                used when weighting the positive and negative examples, with the
+                hardest examples receiving an up weight and the easiest examples
+                receiving a down weight. This should 1 for cosine distances which
+                we expect to be between [0,2]. The value will depend on the data
+                for L2 and L1 distances.
 
-            name: Loss name. Defaults to MultiSimilarityLoss.
+            name: Loss name. Defaults to 'MultiSimilarityLoss'.
         """
 
         # distance canonicalization

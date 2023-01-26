@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import random
 from collections import defaultdict
-from collections.abc import Sequence, Callable
+from collections.abc import Callable, Sequence
 
 import numpy as np
 import tensorflow as tf
@@ -213,10 +213,7 @@ class MultiShotMemorySampler(Sampler):
         Returns:
             A Tuple of FloatTensor and IntTensor
         """
-        slice_x = [
-            self.load_example_fn(q)
-            for q in self._x[begin : begin + size]
-        ]
+        slice_x = [self.load_example_fn(q) for q in self._x[begin : begin + size]]
         slice_y = self._y[begin : begin + size]
 
         return tf.convert_to_tensor(slice_x), tf.convert_to_tensor(slice_y)
