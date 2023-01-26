@@ -3,7 +3,6 @@ import re
 import tempfile
 
 import numpy as np
-
 import pytest
 import tensorflow as tf
 
@@ -25,14 +24,9 @@ def test_multi_shot_file_sampler(example_per_class):
     can handle when elements per class is either less than or greater than the
     total count of elements in the class.
     """
-    filenames = ['1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg']
-    filepaths = [
-        _create_random_image(filename) for filename in filenames
-    ]
-    images = [
-        np.array(tf.keras.utils.load_img(path), dtype=np.float32) / 255
-        for path in filepaths
-    ]
+    filenames = ["1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg", "6.jpg"]
+    filepaths = [_create_random_image(filename) for filename in filenames]
+    images = [np.array(tf.keras.utils.load_img(path), dtype=np.float32) / 255 for path in filepaths]
 
     y = tf.constant([1, 2, 3, 1, 2, 3])
     x = tf.constant(filepaths)
@@ -55,32 +49,18 @@ def test_multi_shot_file_sampler(example_per_class):
 
     for x, y in zip(batch_x, batch_y):
         if y == 1:
-            assert (
-                np.isclose(x.numpy(), images[0], atol=.1).all() or
-                np.isclose(x.numpy(), images[3], atol=.1).all()
-            )
+            assert np.isclose(x.numpy(), images[0], atol=0.1).all() or np.isclose(x.numpy(), images[3], atol=0.1).all()
         elif y == 2:
-            assert (
-                np.isclose(x.numpy(), images[1], atol=.1).all() or
-                np.isclose(x.numpy(), images[4], atol=.1).all()
-            )
+            assert np.isclose(x.numpy(), images[1], atol=0.1).all() or np.isclose(x.numpy(), images[4], atol=0.1).all()
         elif y == 3:
-            assert (
-                np.isclose(x.numpy(), images[2], atol=.1).all() or
-                np.isclose(x.numpy(), images[5], atol=.1).all()
-            )
+            assert np.isclose(x.numpy(), images[2], atol=0.1).all() or np.isclose(x.numpy(), images[5], atol=0.1).all()
 
 
 def test_msfs_get_slice():
     """Test the multi shot file sampler get_slice method."""
-    filenames = ['1.jpg', '2.jpg', '3.jpg', '4.jpg']
-    filepaths = [
-        _create_random_image(filename) for filename in filenames
-    ]
-    images = [
-        np.array(tf.keras.utils.load_img(path), dtype=np.float32) / 255
-        for path in filepaths
-    ]
+    filenames = ["1.jpg", "2.jpg", "3.jpg", "4.jpg"]
+    filepaths = [_create_random_image(filename) for filename in filenames]
+    images = [np.array(tf.keras.utils.load_img(path), dtype=np.float32) / 255 for path in filepaths]
 
     y = tf.constant(range(4))
     x = tf.constant(filepaths)
@@ -94,8 +74,8 @@ def test_msfs_get_slice():
     assert slice_x.shape == (2, 32, 32, 3)
     assert slice_y.shape == (2,)
 
-    assert np.isclose(slice_x[0], images[1], atol=.1).all()
-    assert np.isclose(slice_x[1], images[2], atol=.1).all()
+    assert np.isclose(slice_x[0], images[1], atol=0.1).all()
+    assert np.isclose(slice_x[1], images[2], atol=0.1).all()
 
     assert slice_y[0] == 1
     assert slice_y[1] == 2
@@ -103,10 +83,8 @@ def test_msfs_get_slice():
 
 def test_msms_properties():
     """Test the multi shot file sampler num_examples and shape"""
-    filenames = ['1.jpg', '2.jpg', '3.jpg', '4.jpg']
-    filepaths = [
-        _create_random_image(filename, (128, 96)) for filename in filenames
-    ]
+    filenames = ["1.jpg", "2.jpg", "3.jpg", "4.jpg"]
+    filepaths = [_create_random_image(filename, (128, 96)) for filename in filenames]
     y = tf.constant(range(4))
     x = tf.constant(filepaths)
 
@@ -118,10 +96,8 @@ def test_msms_properties():
 
 def test_small_class_size(capsys):
     """Test examples_per_class is > the number of class examples."""
-    filenames = ['1.jpg', '2.jpg', '3.jpg', '4.jpg']
-    filepaths = [
-        _create_random_image(filename) for filename in filenames
-    ]
+    filenames = ["1.jpg", "2.jpg", "3.jpg", "4.jpg"]
+    filepaths = [_create_random_image(filename) for filename in filenames]
 
     y = tf.constant([1, 1, 1, 2])
     x = tf.constant(filepaths)
