@@ -66,7 +66,7 @@ def confusion_matrix(
         y_true = tf.cast(y_true, dtype="int32")
 
         cm = tf.math.confusion_matrix(y_true, y_pred)
-        cm = tf.cast(cm, dtype="float")
+        cm = tf.cast(cm, dtype=tf.keras.backend.floatx())
         accuracy = tf.linalg.trace(cm) / tf.math.reduce_sum(cm)
         misclass = 1 - accuracy
 

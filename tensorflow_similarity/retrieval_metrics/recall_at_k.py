@@ -81,7 +81,7 @@ class RecallAtK(RetrievalMetric):
         k_slice = match_mask[:, start_k : start_k + self.k]
 
         match_indicator = tf.math.reduce_any(k_slice, axis=1)
-        match_indicator = tf.cast(match_indicator, dtype="float")
+        match_indicator = tf.cast(match_indicator, dtype=tf.keras.backend.floatx())
 
         if self.average == "micro":
             recall_at_k = tf.math.reduce_mean(match_indicator)
