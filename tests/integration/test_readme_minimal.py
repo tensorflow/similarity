@@ -2,6 +2,7 @@
 import os
 
 import pytest
+import tensorflow as tf
 from tensorflow.keras import layers
 
 from tensorflow_similarity.layers import MetricEmbedding
@@ -10,8 +11,12 @@ from tensorflow_similarity.models import SimilarityModel
 from tensorflow_similarity.samplers import TFDatasetMultiShotMemorySampler
 
 
-def test_readme_minimal():
+@pytest.mark.parametrize("precision", [("float16"), ("float32"), ("mixed_float16")])
+def test_readme_minimal(precision):
     """This should be nearly identical to the README code."""
+    policy = tf.keras.mixed_precision.Policy(precision)
+    tf.keras.mixed_precision.set_global_policy(policy)
+
     # Data sampler that generates balanced batches from MNIST dataset
     sampler = TFDatasetMultiShotMemorySampler(dataset_name="mnist", classes_per_batch=10)
 
@@ -51,8 +56,12 @@ def readme_path(request):
     return os.path.join(test_path, "..", "..", "README.md")
 
 
-def test_readme_text_directly(readme_path):
+@pytest.mark.parametrize("precision", [("float16"), ("float32"), ("mixed_float16")])
+def test_readme_text_directly(readme_path, precision):
     """Quick and dirty test of the README.md code snippets."""
+    policy = tf.keras.mixed_precision.Policy(precision)
+    tf.keras.mixed_precision.set_global_policy(policy)
+
     code = []
     code_block = False
 

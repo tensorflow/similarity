@@ -140,7 +140,7 @@ class ClassificationMatch(ABC):
         match_mask = tf.math.equal(d_labels, query_labels)
 
         # A 2D BoolTensor [len(lookup_distance), len(self.distance_thresholds)]
-        distance_mask = tf.math.less_equal(d_dist, self.distance_thresholds)
+        distance_mask = tf.math.less_equal(d_dist, tf.cast(self.distance_thresholds, dtype=d_dist.dtype))
 
         return match_mask, distance_mask
 

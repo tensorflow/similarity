@@ -125,7 +125,7 @@ class DistanceGapMetric(Metric):
     def update_state(self, labels: IntTensor, embeddings: FloatTensor, sample_weight: FloatTensor):
         max_pos = self.max_pos_fn(labels, embeddings, sample_weight)
         min_neg = self.min_neg_fn(labels, embeddings, sample_weight)
-        self.gap.assign(tf.abs(min_neg - max_pos))
+        self.gap.assign(tf.cast(tf.abs(min_neg - max_pos), tf.keras.backend.floatx()))
 
     def result(self) -> tf.Variable:
         return self.gap

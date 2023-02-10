@@ -6,6 +6,16 @@ from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.models import SimilarityModel
 
+NUM_CLASSES = 8
+REPS = 4
+EXAMPLES_PER_CLASS = 64
+CLASS_PER_BATCH = NUM_CLASSES
+BATCH_PER_EPOCH = 500
+BATCH_SIZE = 16
+K = 5
+NUM_MATCHES = 3
+INDEX_HEAD = None  # default
+
 
 def generate_dataset(num_classes, num_examples_per_class, reps=4, outputs=1):
     """Generate a dummy datset
@@ -37,21 +47,14 @@ def generate_dataset(num_classes, num_examples_per_class, reps=4, outputs=1):
             ny.append(y)
         y = ny
 
-    return tf.constant(x, dtype="float32"), y
+    return tf.constant(x, dtype=tf.keras.backend.floatx()), y
 
 
-NUM_CLASSES = 8
-REPS = 4
-EXAMPLES_PER_CLASS = 64
-CLASS_PER_BATCH = NUM_CLASSES
-BATCH_PER_EPOCH = 500
-BATCH_SIZE = 16
-K = 5
-NUM_MATCHES = 3
-INDEX_HEAD = None  # default
+@pytest.mark.parametrize("precision", [("float16"), ("float32"), ("mixed_float16")])
+def test_default_multi_output(precision):
+    policy = tf.keras.mixed_precision.Policy(precision)
+    tf.keras.mixed_precision.set_global_policy(policy)
 
-
-def test_default_multi_output():
     x, y = generate_dataset(NUM_CLASSES, EXAMPLES_PER_CLASS, outputs=2)
 
     # model
@@ -79,7 +82,11 @@ def test_default_multi_output():
     model.single_lookup(x[0])
 
 
-def test_specified_multi_output():
+@pytest.mark.parametrize("precision", [("float16"), ("float32"), ("mixed_float16")])
+def test_specified_multi_output(precision):
+    policy = tf.keras.mixed_precision.Policy(precision)
+    tf.keras.mixed_precision.set_global_policy(policy)
+
     EMBEDDING_OUTPUT = 1
     x, y = generate_dataset(NUM_CLASSES, EXAMPLES_PER_CLASS, outputs=2)
 
