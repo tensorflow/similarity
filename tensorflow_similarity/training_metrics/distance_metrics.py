@@ -60,7 +60,7 @@ class DistanceMetric(Metric):
         self.aggregate = aggregate
 
         # result variable
-        self.aggregated_distances = tf.Variable(0, dtype="float32")
+        self.aggregated_distances = tf.Variable(0, dtype=tf.keras.backend.floatx())
 
     def update_state(self, labels: IntTensor, embeddings: FloatTensor, sample_weight: FloatTensor) -> None:
 
@@ -95,7 +95,7 @@ class DistanceMetric(Metric):
         self.aggregated_distances = aggregated_distances
 
     def reset_state(self) -> None:
-        self.aggregated_distances = tf.Variable(0, dtype="float32")
+        self.aggregated_distances = tf.Variable(0, dtype=tf.keras.backend.floatx())
 
     def result(self) -> tf.Variable:
         return self.aggregated_distances
@@ -120,12 +120,12 @@ class DistanceGapMetric(Metric):
         self.distance = distance
         self.max_pos_fn = DistanceMetric(distance, aggregate="max")
         self.min_neg_fn = DistanceMetric(distance, aggregate="min", anchor="negative")
-        self.gap = tf.Variable(0, dtype="float32")
+        self.gap = tf.Variable(0, dtype=tf.keras.backend.floatx())
 
     def update_state(self, labels: IntTensor, embeddings: FloatTensor, sample_weight: FloatTensor):
         max_pos = self.max_pos_fn(labels, embeddings, sample_weight)
         min_neg = self.min_neg_fn(labels, embeddings, sample_weight)
-        self.gap.assign(tf.abs(min_neg - max_pos))
+        self.gap.assign(tf.cast(tf.abs(min_neg - max_pos), tf.keras.backend.floatx()))
 
     def result(self) -> tf.Variable:
         return self.gap

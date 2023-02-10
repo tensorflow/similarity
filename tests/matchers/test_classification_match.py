@@ -30,14 +30,13 @@ def test_compile():
     cm = ConcreteClassificationMatch(name="foo", canonical_name="bar")
 
     # Pass distance_thresholds as a 1D tensor.
-    distance_thresholds = tf.constant([1, 2, 3, 4, 5, 6, 7])
+    distance_thresholds = tf.constant([1, 2, 3, 4, 5, 6, 7], dtype=tf.float32)
     cm.compile(distance_thresholds=distance_thresholds)
 
-    expected_dt = tf.cast(distance_thresholds, dtype="float32")
     assert cm.name == "foo"
     assert cm.canonical_name == "bar"
-    assert tf.math.reduce_all(tf.shape(cm.distance_thresholds) == tf.shape(expected_dt))
-    assert tf.math.reduce_all(tf.math.equal(cm.distance_thresholds, expected_dt))
+    assert tf.math.reduce_all(tf.shape(cm.distance_thresholds) == tf.shape(distance_thresholds))
+    assert tf.math.reduce_all(tf.math.equal(cm.distance_thresholds, distance_thresholds))
 
 
 def test_compute_match_indicators():

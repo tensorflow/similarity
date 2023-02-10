@@ -106,14 +106,14 @@ class VicReg(tf.keras.losses.Loss):
     def cov_loss_each(self, z, batch_size):
         # cross-correlation matrix axa
         c = tf.matmul(z, z, transpose_a=True)
-        c = c / tf.cast(batch_size - 1, dtype="float32")
+        c = c / tf.cast(batch_size - 1, dtype=c.dtype)
 
         num_features = tf.shape(c)[0]
 
         off_diag_c = self.off_diagonal(c)
         off_diag_c = tf.math.pow(off_diag_c, 2)
 
-        off_diag_c = tf.math.reduce_sum(off_diag_c) / tf.cast(num_features, tf.float32)
+        off_diag_c = tf.math.reduce_sum(off_diag_c) / tf.cast(num_features, dtype=c.dtype)
 
         return off_diag_c
 

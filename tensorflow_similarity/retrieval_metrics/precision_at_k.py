@@ -149,7 +149,7 @@ class PrecisionAtK(RetrievalMetric):
         if self.drop_closest_lookup:
             start_k = 1
 
-        k_slice = tf.cast(match_mask[:, start_k : self.k], dtype="float")
+        k_slice = tf.cast(match_mask[:, start_k : self.k], dtype=tf.keras.backend.floatx())
         matches = self._get_matches(k_slice)
 
         class_count_table = self._generate_class_count_table(class_labels, query_labels.dtype)
@@ -162,7 +162,7 @@ class PrecisionAtK(RetrievalMetric):
             per_example = tf.map_fn(
                 lambda x: tf.math.divide_no_nan(
                     tf.math.reduce_sum(x[0][: x[1][0]]),
-                    tf.cast(x[1], dtype="float"),
+                    tf.cast(x[1], dtype=tf.keras.backend.floatx()),
                 ),
                 elems,
                 fn_output_signature="float",
@@ -170,7 +170,7 @@ class PrecisionAtK(RetrievalMetric):
         else:
             per_example = tf.math.divide_no_nan(
                 tf.math.reduce_sum(matches, axis=1),
-                tf.cast(class_counts, dtype="float"),
+                tf.cast(class_counts, dtype=tf.keras.backend.floatx()),
             )
 
         if self.average == "micro":

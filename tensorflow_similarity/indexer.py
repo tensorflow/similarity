@@ -484,11 +484,11 @@ class Indexer:
         query_labels = tf.convert_to_tensor(np.array(target_labels))
 
         # TODO(ovallis): The float type should be derived from the model.
-        lookup_distances = unpack_lookup_distances(lookups, dtype="float32")
+        lookup_distances = unpack_lookup_distances(lookups, dtype=tf.keras.backend.floatx())
         lookup_labels = unpack_lookup_labels(lookups, dtype=query_labels.dtype)
         thresholds: FloatTensor = tf.cast(
             tf.convert_to_tensor(distance_thresholds),
-            dtype=lookup_distances.dtype,
+            dtype=tf.keras.backend.floatx(),
         )
 
         results = self.evaluator.evaluate_classification(
@@ -647,7 +647,7 @@ class Indexer:
 
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
-        lookup_distances = unpack_lookup_distances(lookups, dtype=predictions.dtype)
+        lookup_distances = unpack_lookup_distances(lookups, dtype=tf.keras.backend.floatx())
         # TODO(ovallis): The int type should be derived from the model.
         lookup_labels = unpack_lookup_labels(lookups, dtype="int32")
 
