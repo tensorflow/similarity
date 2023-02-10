@@ -113,6 +113,9 @@ def test_specified_multi_output(precision):
 
 
 def test_invalid_output_idx():
+    policy = tf.keras.mixed_precision.Policy("float32")
+    tf.keras.mixed_precision.set_global_policy(policy)
+
     inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS,))
     # dont use x as variable
     m = tf.keras.layers.Dense(8, activation="relu")(inputs)
