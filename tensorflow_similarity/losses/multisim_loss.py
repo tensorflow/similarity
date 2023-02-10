@@ -118,9 +118,9 @@ def multisimilarity_loss(
     )
 
     # Cast masks as floats to support multiply
-    valid_anchors = tf.cast(valid_anchors, dtype="float32")
-    pos_sim_p_mask_f32 = tf.cast(pos_sim_p_mask, dtype="float32")
-    neg_sim_p_mask_f32 = tf.cast(neg_sim_p_mask, dtype="float32")
+    valid_anchors = tf.cast(valid_anchors, dtype=pairwise_distances.dtype)
+    pos_sim_p_mask = tf.cast(pos_sim_p_mask, dtype=pairwise_distances.dtype)
+    neg_sim_p_mask = tf.cast(neg_sim_p_mask, dtype=pairwise_distances.dtype)
 
     # [Weight the remaining pairs using Similarity-S and Similarity-N]
     shifted_distances = pairwise_distances + lmda - center
@@ -130,13 +130,11 @@ def multisimilarity_loss(
     # [compute loss]
 
     # Positive pairs with a distance above 0 will be up weighted.
-    p_loss = logsumexp(pos_dists, pos_sim_p_mask_f32)
-    # p_loss = tf.math.log1p(tf.math.reduce_sum(tf.exp(pos_dists)*pos_sim_p_mask_f32, axis=1))
+    p_loss = logsumexp(pos_dists, pos_sim_p_mask)
     p_loss = p_loss / alpha
 
     # Negative pairs with a distance below 0 will be up weighted.
-    n_loss = logsumexp(neg_dists, neg_sim_p_mask_f32)
-    # n_loss = tf.math.log1p(tf.math.reduce_sum(tf.exp(neg_dists)*neg_sim_p_mask_f32, axis=1))
+    n_loss = logsumexp(neg_dists, neg_sim_p_mask)
     n_loss = n_loss / beta
 
     # Remove any anchors that have empty neg or pos pairs.

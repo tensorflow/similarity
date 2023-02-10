@@ -54,7 +54,7 @@ def soft_nn_loss(
     """
 
     batch_size = tf.size(query_labels)
-    eps = 1e-9
+    eps = tf.cast(1e-9, dtype=query_embeddings.dtype)
 
     pairwise_dist = distance(query_embeddings, key_embeddings)
     pairwise_dist = pairwise_dist / temperature
@@ -62,7 +62,7 @@ def soft_nn_loss(
 
     # Mask out diagonal entries
     diag = tf.linalg.diag(tf.ones(batch_size, dtype=tf.bool))
-    diag_mask = tf.cast(tf.logical_not(diag), dtype=tf.float32)
+    diag_mask = tf.cast(tf.logical_not(diag), dtype=query_embeddings.dtype)
     negexpd = tf.math.multiply(negexpd, diag_mask)
 
     # creating mask to sample same class neighboorhood
@@ -72,7 +72,7 @@ def soft_nn_loss(
         batch_size=batch_size,
         remove_diagonal=remove_diagonal,
     )
-    pos_mask = tf.cast(pos_mask, dtype=tf.float32)
+    pos_mask = tf.cast(pos_mask, dtype=query_embeddings.dtype)
 
     # all class neighborhood
     alcn = tf.reduce_sum(negexpd, axis=1)
@@ -82,7 +82,7 @@ def soft_nn_loss(
 
     # exclude examples with unique class from loss calculation
     excl = tf.math.not_equal(tf.reduce_sum(pos_mask, axis=1), tf.zeros(batch_size))
-    excl = tf.cast(excl, tf.float32)
+    excl = tf.cast(excl, dtype=query_embeddings.dtype)
 
     loss = tf.math.divide(sacn, alcn)
     loss = -tf.multiply(tf.math.log(eps + loss), excl)

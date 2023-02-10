@@ -28,12 +28,12 @@ from tensorflow_similarity.types import FloatTensor
 
 
 def negative_cosine_sim(sim: FloatTensor) -> FloatTensor:
-    loss: FloatTensor = tf.constant([-1.0]) * sim
+    loss: FloatTensor = tf.math.multiply(tf.constant(-1.0, dtype=sim.dtype), sim)
     return loss
 
 
 def cosine_distance(sim: FloatTensor) -> FloatTensor:
-    loss: FloatTensor = tf.constant([1.0]) - sim
+    loss: FloatTensor = tf.math.subtract(tf.constant(1.0, dtype=sim.dtype), sim)
     return loss
 
 

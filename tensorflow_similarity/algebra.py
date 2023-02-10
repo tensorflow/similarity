@@ -34,6 +34,7 @@ def masked_max(distances: FloatTensor, mask: BoolTensor, dim: int = 1) -> tuple[
       for each example.
     """
     # Convert to dbl to avoid precision error in offset
+    distance_dtype = distances.dtype
     distances = tf.cast(distances, dtype=tf.float64)
     mask = tf.cast(mask, dtype=tf.float64)
 
@@ -41,7 +42,7 @@ def masked_max(distances: FloatTensor, mask: BoolTensor, dim: int = 1) -> tuple[
     masked_max = tf.math.multiply(distances - axis_min, mask)
     arg_max = tf.math.argmax(masked_max, dim)
     masked_max = tf.math.reduce_max(masked_max, dim, keepdims=True) + axis_min
-    return tf.cast(masked_max, dtype=tf.float32), arg_max
+    return tf.cast(masked_max, dtype=distance_dtype), arg_max
 
 
 def masked_min(distances: FloatTensor, mask: BoolTensor, dim: int = 1) -> tuple[FloatTensor, FloatTensor]:
@@ -57,6 +58,7 @@ def masked_min(distances: FloatTensor, mask: BoolTensor, dim: int = 1) -> tuple[
       for each example.
     """
     # Convert to dbl to avoid precision error in offset
+    distance_dtype = distances.dtype
     distances = tf.cast(distances, dtype=tf.float64)
     mask = tf.cast(mask, dtype=tf.float64)
 
@@ -64,7 +66,7 @@ def masked_min(distances: FloatTensor, mask: BoolTensor, dim: int = 1) -> tuple[
     masked_min = tf.math.multiply(distances - axis_max, mask)
     arg_min = tf.math.argmin(masked_min, dim)
     masked_min = tf.math.reduce_min(masked_min, dim, keepdims=True) + axis_max
-    return tf.cast(masked_min, dtype=tf.float32), arg_min
+    return tf.cast(masked_min, dtype=distance_dtype), arg_min
 
 
 def build_masks(

@@ -80,7 +80,7 @@ class Barlow(tf.keras.losses.Loss):
 
         # compute pairwise
         c = tf.matmul(za, zb, transpose_a=True)
-        c = c / tf.cast(batch_size, dtype="float32")
+        c = c / tf.cast(batch_size, dtype=c.dtype)
 
         on_diag = 1.0 - tf.linalg.diag_part(c)
         on_diag = tf.math.pow(on_diag, 2)

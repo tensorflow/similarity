@@ -740,7 +740,7 @@ class SimilarityModel(tf.keras.Model):
                     k=k,
                 )
             )
-            res["distance"] = tf.constant([distance_threshold])
+            res["distance"] = tf.constant([distance_threshold], dtype=tf.keras.backend.floatx())
             res["name"] = cp_name
             results[cp_name] = res
             if verbose:
