@@ -35,6 +35,7 @@ from tensorflow_similarity.classification_metrics import (  # noqa
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.evaluators.evaluator import Evaluator
 from tensorflow_similarity.indexer import Indexer
+from tensorflow_similarity.layers import ActivationStdLoggingLayer
 from tensorflow_similarity.losses import MetricLoss
 from tensorflow_similarity.matchers import ClassificationMatch
 from tensorflow_similarity.retrieval_metrics import RetrievalMetric
@@ -51,20 +52,82 @@ from tensorflow_similarity.types import (
 )
 
 
+def get_projector(input_dim, dim=512, activation="relu", num_layers: int = 3):
+    inputs = tf.keras.layers.Input((input_dim,), name="projector_input")
+    x = inputs
+
+    for i in range(num_layers - 1):
+        x = tf.keras.layers.Dense(
+            dim,
+            use_bias=False,
+            kernel_initializer=tf.keras.initializers.LecunUniform(),
+            name=f"projector_layer_{i}",
+        )(x)
+        x = tf.keras.layers.BatchNormalization(epsilon=1.001e-5, name=f"batch_normalization_{i}")(x)
+        x = tf.keras.layers.Activation(activation, name=f"{activation}_activation_{i}")(x)
+    x = tf.keras.layers.Dense(
+        dim,
+        use_bias=False,
+        kernel_initializer=tf.keras.initializers.LecunUniform(),
+        name="projector_output",
+    )(x)
+    x = tf.keras.layers.BatchNormalization(
+        epsilon=1.001e-5,
+        center=False,  # Page:5, Paragraph:2 of SimSiam paper
+        scale=False,  # Page:5, Paragraph:2 of SimSiam paper
+        name="batch_normalization_ouput",
+    )(x)
+    # Metric Logging layer. Monitors the std of the layer activations.
+    # Degnerate solutions colapse to 0 while valid solutions will move
+    # towards something like 0.0220. The actual number will depend on the layer size.
+    o = ActivationStdLoggingLayer(name="proj_std")(x)
+    projector = tf.keras.Model(inputs, o, name="projector")
+    return projector
+
+
+def get_predictor(input_dim, hidden_dim=512, activation="relu"):
+    inputs = tf.keras.layers.Input(shape=(input_dim,), name="predictor_input")
+    x = inputs
+
+    x = tf.keras.layers.Dense(
+        hidden_dim,
+        use_bias=False,
+        kernel_initializer=tf.keras.initializers.LecunUniform(),
+        name="predictor_layer_0",
+    )(x)
+    x = tf.keras.layers.BatchNormalization(epsilon=1.001e-5, name="batch_normalization_0")(x)
+    x = tf.keras.layers.Activation(activation, name=f"{activation}_activation_0")(x)
+
+    x = tf.keras.layers.Dense(
+        input_dim,
+        kernel_initializer=tf.keras.initializers.LecunUniform(),
+        name="predictor_output",
+    )(x)
+    # Metric Logging layer. Monitors the std of the layer activations.
+    # Degnerate solutions colapse to 0 while valid solutions will move
+    # towards something like 0.0220. The actual number will depend on the layer size.
+    o = ActivationStdLoggingLayer(name="pred_std")(x)
+    predictor = tf.keras.Model(inputs, o, name="predictor")
+    return predictor
+
+
 def create_contrastive_model(
     *args,
     backbone: tf.keras.Model,
-    projector: tf.keras.Model,
+    projector: tf.keras.Model | None = None,
     predictor: tf.keras.Model | None = None,
     algorithm: str = "simsiam",
     **kwargs,
 ) -> ContrastiveModel:
     """Create a contrastive model."""
+    if projector is None:
+        projector = get_projector(input_dim=backbone.output_shape[-1], num_layers=2)
+
     input_shape = backbone.input_shape[1:]
     inputs = tf.keras.layers.Input(shape=input_shape, name="main_model_input")
     if algorithm == "simsiam":
         if predictor is None:
-            raise ValueError("The predictor should be specified when using the simsiam algorithm.")
+            predictor = get_predictor(input_dim=projector.output_shape[-1])
         outputs = predictor(projector(backbone(inputs)))
     elif algorithm in ("simclr", "barlow"):
         outputs = projector(backbone(inputs))
