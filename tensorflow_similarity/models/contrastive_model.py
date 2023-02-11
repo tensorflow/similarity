@@ -99,13 +99,11 @@ class ContrastiveModel(tf.keras.Model):
         self.projector = projector
         self.predictor = predictor
 
-        self.outputs = [self.backbone.output]
-        self.output_names = ["backbone_output"]
         self.algorithm = algorithm
 
         self._create_loss_trackers()
 
-        self.supported_algorithms = ("simsiam", "simclr", "barlow")
+        self.supported_algorithms = ("simsiam", "simclr", "barlow", "vicreg")
 
         if self.algorithm not in self.supported_algorithms:
             raise ValueError(
@@ -123,7 +121,6 @@ class ContrastiveModel(tf.keras.Model):
         run_eagerly: bool = False,
         steps_per_execution: int = 1,
         distance: Distance | str = "cosine",
-        embedding_output: int | None = None,
         kv_store: Store | str = "memory",
         search: Search | str = "nmslib",
         evaluator: Evaluator | str = "memory",
@@ -159,15 +156,6 @@ class ContrastiveModel(tf.keras.Model):
 
               See [Evaluation Metrics](../eval_metrics.md) for a list of available
               metrics.
-
-              For multi-output models you can specify different metrics for
-              different outputs by passing a dictionary, such as
-              `metrics={'similarity': 'min_neg_gap', 'other': ['accuracy',
-              'mse']}`.  You can also pass a list (len = len(outputs)) of lists of
-              metrics such as `metrics=[['min_neg_gap'], ['accuracy', 'mse']]` or
-              `metrics=['min_neg_gap', ['accuracy', 'mse']]`. For outputs which
-              are not related to metrics learning, you can use any of the standard
-              `tf.keras.metrics`.
 
             loss_weights: Optional list or dictionary specifying scalar
               coefficients (Python floats) to weight the loss contributions of
@@ -207,12 +195,6 @@ class ContrastiveModel(tf.keras.Model):
             evaluator: What type of `Evaluator()` to use to evaluate index
               performance. Defaults to in-memory one.
 
-            embedding_output: Which model output head predicts the embeddings
-            that should be indexed. Defaults to None which is for single output
-            model. For multi-head model, the callee, usually the
-            `SimilarityModel()` class is responsible for passing the correct
-            one.
-
             stat_buffer_size: Size of the sliding windows buffer used to compute
               index performance. Defaults to 1000.
 
@@ -228,7 +210,6 @@ class ContrastiveModel(tf.keras.Model):
             search=search,
             kv_store=kv_store,
             evaluator=evaluator,
-            embedding_output=embedding_output,
             stat_buffer_size=stat_buffer_size,
         )
 
@@ -358,7 +339,7 @@ class ContrastiveModel(tf.keras.Model):
             l2 = self.compiled_loss(tf.stop_gradient(z2), p1)
             loss = l1 + l2
             pred1, pred2 = p1, p2
-        elif self.algorithm in ["simclr", "barlow"]:
+        elif self.algorithm in ("simclr", "barlow", "vicreg"):
             loss = self.compiled_loss(z1, z2)
             pred1, pred2 = z1, z2
 
@@ -436,7 +417,6 @@ class ContrastiveModel(tf.keras.Model):
         search: Search | str = "nmslib",
         kv_store: Store | str = "memory",
         evaluator: Evaluator | str = "memory",
-        embedding_output: int | None = None,
         stat_buffer_size: int = 1000,
     ) -> None:
         """Create the model index to make embeddings searchable via KNN.
@@ -460,43 +440,19 @@ class ContrastiveModel(tf.keras.Model):
             evaluator: What type of `Evaluator()` to use to evaluate index
             performance. Defaults to in-memory one.
 
-            embedding_output: Which model output head predicts the embeddings
-            that should be indexed. Defaults to None which is for single output
-            model. For multi-head model, the callee, usually the
-            `SimilarityModel()` class is responsible for passing the correct
-            one.
-
             stat_buffer_size: Size of the sliding windows buffer used to compute
             index performance. Defaults to 1000.
 
         Raises:
             ValueError: Invalid search framework or key value store.
         """
-        # check if we we need to set the embedding head
-        num_outputs = len(self.output_names)
-        if embedding_output is not None and embedding_output > num_outputs:
-            raise ValueError("Embedding_output value exceed number of model outputs")
-
-        if embedding_output is None and num_outputs > 1:
-            print(
-                "Embedding output set to be model output 0. ",
-                "Use the embedding_output arg to override this.",
-            )
-            embedding_output = 0
-
-        # fetch embedding size as some ANN libs requires it for init
-        if num_outputs > 1 and embedding_output is not None:
-            self.embedding_size = self.outputs[embedding_output].shape[1]
-        else:
-            self.embedding_size = self.outputs[0].shape[1]
-
         self._index = Indexer(
-            embedding_size=self.embedding_size,
+            embedding_size=self.predictor.output_shape[-1],
             distance=distance,
             search=search,
             kv_store=kv_store,
             evaluator=evaluator,
-            embedding_output=embedding_output,
+            embedding_output=0,
             stat_buffer_size=stat_buffer_size,
         )
 
