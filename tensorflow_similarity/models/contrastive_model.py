@@ -125,14 +125,17 @@ def create_contrastive_model(
 
     input_shape = backbone.input_shape[1:]
     inputs = tf.keras.layers.Input(shape=input_shape, name="main_model_input")
+    projector_features = projector(backbone(inputs))
     if algorithm == "simsiam":
         if predictor is None:
             predictor = get_predictor(input_dim=projector.output_shape[-1])
-        outputs = predictor(projector(backbone(inputs)))
-    elif algorithm in ("simclr", "barlow"):
-        outputs = projector(backbone(inputs))
+        predictor_features = predictor(projector_features)
     else:
-        raise ValueError(f"Unknown algorithm: {algorithm}")
+        predictor_features = None
+
+    outputs = [projector_features]
+    if predictor_features is not None:
+        outputs.append(predictor_features)
 
     return ContrastiveModel(
         *args,
@@ -458,7 +461,6 @@ class ContrastiveModel(tf.keras.Model):
             workers,
             use_multiprocessing,
         )
-
         x = self.projector.predict(
             x,
             batch_size,
@@ -515,7 +517,7 @@ class ContrastiveModel(tf.keras.Model):
             search=search,
             kv_store=kv_store,
             evaluator=evaluator,
-            embedding_output=0,
+            embedding_output=None,
             stat_buffer_size=stat_buffer_size,
         )
 
