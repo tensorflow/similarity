@@ -512,7 +512,7 @@ class ContrastiveModel(tf.keras.Model):
             ValueError: Invalid search framework or key value store.
         """
         self._index = Indexer(
-            embedding_size=self.predictor.output_shape[-1],
+            embedding_size=self.projector.output_shape[-1],
             distance=distance,
             search=search,
             kv_store=kv_store,
