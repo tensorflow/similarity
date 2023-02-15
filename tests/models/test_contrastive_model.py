@@ -13,6 +13,7 @@
 # limitations under the License.
 import tensorflow as tf
 
+from tensorflow_similarity.layers import ActivationStdLoggingLayer
 from tensorflow_similarity.losses import SimSiamLoss
 from tensorflow_similarity.models import ContrastiveModel, create_contrastive_model
 
@@ -32,24 +33,8 @@ class ContrastiveModelTest(tf.test.TestCase):
             outputs=backbone_output,
         )
 
-        projector_input = tf.keras.layers.Input(shape=(4,))
-        projector_output = tf.keras.layers.Dense(4)(projector_input)
-        projector = tf.keras.Model(
-            inputs=projector_input,
-            outputs=projector_output,
-        )
-
-        predictor_input = tf.keras.layers.Input(shape=(4,))
-        predictor_output = tf.keras.layers.Dense(4)(predictor_input)
-        predictor = tf.keras.Model(
-            inputs=predictor_input,
-            outputs=predictor_output,
-        )
-
         model = create_contrastive_model(
             backbone=backbone,
-            projector=projector,
-            predictor=predictor,
             algorithm="simsiam",
         )
         opt = tf.keras.optimizers.RMSprop(learning_rate=0.5)
@@ -72,7 +57,10 @@ class ContrastiveModelTest(tf.test.TestCase):
         # with tf.distribute.MirroredStrategy().scope():
         loaded_model = tf.keras.models.load_model(
             out_dir,
-            custom_objects={"ContrastiveModel": ContrastiveModel},
+            custom_objects={
+                "ContrastiveModel": ContrastiveModel,
+                "ActivationStdLoggingLayer": ActivationStdLoggingLayer,
+            },
         )
 
         pred = loaded_model.predict(x)
@@ -81,11 +69,11 @@ class ContrastiveModelTest(tf.test.TestCase):
         self.assertEqual(loaded_model.optimizer.lr, 0.5)
         self.assertAllEqual(loaded_model.backbone.input_shape, (None, 3))
         self.assertAllEqual(loaded_model.backbone.output_shape, (None, 4))
-        self.assertAllEqual(loaded_model.predictor.input_shape, (None, 4))
-        self.assertAllEqual(loaded_model.predictor.output_shape, (None, 4))
         self.assertAllEqual(loaded_model.projector.input_shape, (None, 4))
-        self.assertAllEqual(loaded_model.projector.output_shape, (None, 4))
-        self.assertAllEqual(pred.shape, (2, 4))
+        self.assertAllEqual(loaded_model.projector.output_shape, (None, 512))
+        self.assertAllEqual(loaded_model.predictor.input_shape, (None, 512))
+        self.assertAllEqual(loaded_model.predictor.output_shape, (None, 512))
+        self.assertAllEqual(pred.shape, (2, 512))
         self.assertAllEqual(model.predict(x), pred)
 
 
