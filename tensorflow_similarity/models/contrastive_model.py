@@ -51,6 +51,9 @@ from tensorflow_similarity.types import (
     Tensor,
 )
 
+# Value based on implementation from original papers.
+BN_EPSILON = 1.001e-5
+
 
 def get_projector(input_dim, dim=512, activation="relu", num_layers: int = 3):
     inputs = tf.keras.layers.Input((input_dim,), name="projector_input")
@@ -63,7 +66,7 @@ def get_projector(input_dim, dim=512, activation="relu", num_layers: int = 3):
             kernel_initializer=tf.keras.initializers.LecunUniform(),
             name=f"projector_layer_{i}",
         )(x)
-        x = tf.keras.layers.BatchNormalization(epsilon=1.001e-5, name=f"batch_normalization_{i}")(x)
+        x = tf.keras.layers.BatchNormalization(epsilon=BN_EPSILON, name=f"batch_normalization_{i}")(x)
         x = tf.keras.layers.Activation(activation, name=f"{activation}_activation_{i}")(x)
     x = tf.keras.layers.Dense(
         dim,
@@ -72,7 +75,7 @@ def get_projector(input_dim, dim=512, activation="relu", num_layers: int = 3):
         name="projector_output",
     )(x)
     x = tf.keras.layers.BatchNormalization(
-        epsilon=1.001e-5,
+        epsilon=BN_EPSILON,
         center=False,  # Page:5, Paragraph:2 of SimSiam paper
         scale=False,  # Page:5, Paragraph:2 of SimSiam paper
         name="batch_normalization_ouput",
@@ -80,8 +83,8 @@ def get_projector(input_dim, dim=512, activation="relu", num_layers: int = 3):
     # Metric Logging layer. Monitors the std of the layer activations.
     # Degnerate solutions colapse to 0 while valid solutions will move
     # towards something like 0.0220. The actual number will depend on the layer size.
-    o = ActivationStdLoggingLayer(name="proj_std")(x)
-    projector = tf.keras.Model(inputs, o, name="projector")
+    outputs = ActivationStdLoggingLayer(name="proj_std")(x)
+    projector = tf.keras.Model(inputs, outputs, name="projector")
     return projector
 
 
@@ -95,7 +98,7 @@ def get_predictor(input_dim, hidden_dim=512, activation="relu"):
         kernel_initializer=tf.keras.initializers.LecunUniform(),
         name="predictor_layer_0",
     )(x)
-    x = tf.keras.layers.BatchNormalization(epsilon=1.001e-5, name="batch_normalization_0")(x)
+    x = tf.keras.layers.BatchNormalization(epsilon=BN_EPSILON, name="batch_normalization_0")(x)
     x = tf.keras.layers.Activation(activation, name=f"{activation}_activation_0")(x)
 
     x = tf.keras.layers.Dense(
@@ -106,8 +109,8 @@ def get_predictor(input_dim, hidden_dim=512, activation="relu"):
     # Metric Logging layer. Monitors the std of the layer activations.
     # Degnerate solutions colapse to 0 while valid solutions will move
     # towards something like 0.0220. The actual number will depend on the layer size.
-    o = ActivationStdLoggingLayer(name="pred_std")(x)
-    predictor = tf.keras.Model(inputs, o, name="predictor")
+    outputs = ActivationStdLoggingLayer(name="pred_std")(x)
+    predictor = tf.keras.Model(inputs, outputs, name="predictor")
     return predictor
 
 
