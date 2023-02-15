@@ -483,7 +483,6 @@ class Indexer:
         # convert_to_tensor is called on a list.
         query_labels = tf.convert_to_tensor(np.array(target_labels))
 
-        # TODO(ovallis): The float type should be derived from the model.
         lookup_distances = unpack_lookup_distances(lookups, dtype=tf.keras.backend.floatx())
         lookup_labels = unpack_lookup_labels(lookups, dtype=query_labels.dtype)
         thresholds: FloatTensor = tf.cast(

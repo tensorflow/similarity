@@ -35,6 +35,7 @@ from tensorflow_similarity.classification_metrics import (  # noqa
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.evaluators.evaluator import Evaluator
 from tensorflow_similarity.indexer import Indexer
+from tensorflow_similarity.layers import ActivationStdLoggingLayer
 from tensorflow_similarity.losses import MetricLoss
 from tensorflow_similarity.matchers import ClassificationMatch
 from tensorflow_similarity.retrieval_metrics import RetrievalMetric
@@ -50,26 +51,94 @@ from tensorflow_similarity.types import (
     Tensor,
 )
 
+# Value based on implementation from original papers.
+BN_EPSILON = 1.001e-5
+
+
+def get_projector(input_dim, dim=512, activation="relu", num_layers: int = 3):
+    inputs = tf.keras.layers.Input((input_dim,), name="projector_input")
+    x = inputs
+
+    for i in range(num_layers - 1):
+        x = tf.keras.layers.Dense(
+            dim,
+            use_bias=False,
+            kernel_initializer=tf.keras.initializers.LecunUniform(),
+            name=f"projector_layer_{i}",
+        )(x)
+        x = tf.keras.layers.BatchNormalization(epsilon=BN_EPSILON, name=f"batch_normalization_{i}")(x)
+        x = tf.keras.layers.Activation(activation, name=f"{activation}_activation_{i}")(x)
+    x = tf.keras.layers.Dense(
+        dim,
+        use_bias=False,
+        kernel_initializer=tf.keras.initializers.LecunUniform(),
+        name="projector_output",
+    )(x)
+    x = tf.keras.layers.BatchNormalization(
+        epsilon=BN_EPSILON,
+        center=False,  # Page:5, Paragraph:2 of SimSiam paper
+        scale=False,  # Page:5, Paragraph:2 of SimSiam paper
+        name="batch_normalization_ouput",
+    )(x)
+    # Metric Logging layer. Monitors the std of the layer activations.
+    # Degnerate solutions colapse to 0 while valid solutions will move
+    # towards something like 0.0220. The actual number will depend on the layer size.
+    outputs = ActivationStdLoggingLayer(name="proj_std")(x)
+    projector = tf.keras.Model(inputs, outputs, name="projector")
+    return projector
+
+
+def get_predictor(input_dim, hidden_dim=512, activation="relu"):
+    inputs = tf.keras.layers.Input(shape=(input_dim,), name="predictor_input")
+    x = inputs
+
+    x = tf.keras.layers.Dense(
+        hidden_dim,
+        use_bias=False,
+        kernel_initializer=tf.keras.initializers.LecunUniform(),
+        name="predictor_layer_0",
+    )(x)
+    x = tf.keras.layers.BatchNormalization(epsilon=BN_EPSILON, name="batch_normalization_0")(x)
+    x = tf.keras.layers.Activation(activation, name=f"{activation}_activation_0")(x)
+
+    x = tf.keras.layers.Dense(
+        input_dim,
+        kernel_initializer=tf.keras.initializers.LecunUniform(),
+        name="predictor_output",
+    )(x)
+    # Metric Logging layer. Monitors the std of the layer activations.
+    # Degnerate solutions colapse to 0 while valid solutions will move
+    # towards something like 0.0220. The actual number will depend on the layer size.
+    outputs = ActivationStdLoggingLayer(name="pred_std")(x)
+    predictor = tf.keras.Model(inputs, outputs, name="predictor")
+    return predictor
+
 
 def create_contrastive_model(
     *args,
     backbone: tf.keras.Model,
-    projector: tf.keras.Model,
+    projector: tf.keras.Model | None = None,
     predictor: tf.keras.Model | None = None,
     algorithm: str = "simsiam",
     **kwargs,
 ) -> ContrastiveModel:
     """Create a contrastive model."""
+    if projector is None:
+        projector = get_projector(input_dim=backbone.output_shape[-1], num_layers=2)
+
     input_shape = backbone.input_shape[1:]
     inputs = tf.keras.layers.Input(shape=input_shape, name="main_model_input")
+    projector_features = projector(backbone(inputs))
     if algorithm == "simsiam":
         if predictor is None:
-            raise ValueError("The predictor should be specified when using the simsiam algorithm.")
-        outputs = predictor(projector(backbone(inputs)))
-    elif algorithm in ("simclr", "barlow"):
-        outputs = projector(backbone(inputs))
+            predictor = get_predictor(input_dim=projector.output_shape[-1])
+        predictor_features = predictor(projector_features)
     else:
-        raise ValueError(f"Unknown algorithm: {algorithm}")
+        predictor_features = None
+
+    outputs = [projector_features]
+    if predictor_features is not None:
+        outputs.append(predictor_features)
 
     return ContrastiveModel(
         *args,
@@ -99,13 +168,11 @@ class ContrastiveModel(tf.keras.Model):
         self.projector = projector
         self.predictor = predictor
 
-        self.outputs = [self.backbone.output]
-        self.output_names = ["backbone_output"]
         self.algorithm = algorithm
 
         self._create_loss_trackers()
 
-        self.supported_algorithms = ("simsiam", "simclr", "barlow")
+        self.supported_algorithms = ("simsiam", "simclr", "barlow", "vicreg")
 
         if self.algorithm not in self.supported_algorithms:
             raise ValueError(
@@ -123,7 +190,6 @@ class ContrastiveModel(tf.keras.Model):
         run_eagerly: bool = False,
         steps_per_execution: int = 1,
         distance: Distance | str = "cosine",
-        embedding_output: int | None = None,
         kv_store: Store | str = "memory",
         search: Search | str = "nmslib",
         evaluator: Evaluator | str = "memory",
@@ -159,15 +225,6 @@ class ContrastiveModel(tf.keras.Model):
 
               See [Evaluation Metrics](../eval_metrics.md) for a list of available
               metrics.
-
-              For multi-output models you can specify different metrics for
-              different outputs by passing a dictionary, such as
-              `metrics={'similarity': 'min_neg_gap', 'other': ['accuracy',
-              'mse']}`.  You can also pass a list (len = len(outputs)) of lists of
-              metrics such as `metrics=[['min_neg_gap'], ['accuracy', 'mse']]` or
-              `metrics=['min_neg_gap', ['accuracy', 'mse']]`. For outputs which
-              are not related to metrics learning, you can use any of the standard
-              `tf.keras.metrics`.
 
             loss_weights: Optional list or dictionary specifying scalar
               coefficients (Python floats) to weight the loss contributions of
@@ -207,12 +264,6 @@ class ContrastiveModel(tf.keras.Model):
             evaluator: What type of `Evaluator()` to use to evaluate index
               performance. Defaults to in-memory one.
 
-            embedding_output: Which model output head predicts the embeddings
-            that should be indexed. Defaults to None which is for single output
-            model. For multi-head model, the callee, usually the
-            `SimilarityModel()` class is responsible for passing the correct
-            one.
-
             stat_buffer_size: Size of the sliding windows buffer used to compute
               index performance. Defaults to 1000.
 
@@ -228,7 +279,6 @@ class ContrastiveModel(tf.keras.Model):
             search=search,
             kv_store=kv_store,
             evaluator=evaluator,
-            embedding_output=embedding_output,
             stat_buffer_size=stat_buffer_size,
         )
 
@@ -358,7 +408,7 @@ class ContrastiveModel(tf.keras.Model):
             l2 = self.compiled_loss(tf.stop_gradient(z2), p1)
             loss = l1 + l2
             pred1, pred2 = p1, p2
-        elif self.algorithm in ["simclr", "barlow"]:
+        elif self.algorithm in ("simclr", "barlow", "vicreg"):
             loss = self.compiled_loss(z1, z2)
             pred1, pred2 = z1, z2
 
@@ -414,7 +464,6 @@ class ContrastiveModel(tf.keras.Model):
             workers,
             use_multiprocessing,
         )
-
         x = self.projector.predict(
             x,
             batch_size,
@@ -436,7 +485,6 @@ class ContrastiveModel(tf.keras.Model):
         search: Search | str = "nmslib",
         kv_store: Store | str = "memory",
         evaluator: Evaluator | str = "memory",
-        embedding_output: int | None = None,
         stat_buffer_size: int = 1000,
     ) -> None:
         """Create the model index to make embeddings searchable via KNN.
@@ -460,43 +508,19 @@ class ContrastiveModel(tf.keras.Model):
             evaluator: What type of `Evaluator()` to use to evaluate index
             performance. Defaults to in-memory one.
 
-            embedding_output: Which model output head predicts the embeddings
-            that should be indexed. Defaults to None which is for single output
-            model. For multi-head model, the callee, usually the
-            `SimilarityModel()` class is responsible for passing the correct
-            one.
-
             stat_buffer_size: Size of the sliding windows buffer used to compute
             index performance. Defaults to 1000.
 
         Raises:
             ValueError: Invalid search framework or key value store.
         """
-        # check if we we need to set the embedding head
-        num_outputs = len(self.output_names)
-        if embedding_output is not None and embedding_output > num_outputs:
-            raise ValueError("Embedding_output value exceed number of model outputs")
-
-        if embedding_output is None and num_outputs > 1:
-            print(
-                "Embedding output set to be model output 0. ",
-                "Use the embedding_output arg to override this.",
-            )
-            embedding_output = 0
-
-        # fetch embedding size as some ANN libs requires it for init
-        if num_outputs > 1 and embedding_output is not None:
-            self.embedding_size = self.outputs[embedding_output].shape[1]
-        else:
-            self.embedding_size = self.outputs[0].shape[1]
-
         self._index = Indexer(
-            embedding_size=self.embedding_size,
+            embedding_size=self.projector.output_shape[-1],
             distance=distance,
             search=search,
             kv_store=kv_store,
             evaluator=evaluator,
-            embedding_output=embedding_output,
+            embedding_output=None,
             stat_buffer_size=stat_buffer_size,
         )
 
