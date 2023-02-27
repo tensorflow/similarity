@@ -4,7 +4,6 @@ from collections.abc import Sequence
 from .search import Search
 from tensorflow_similarity.distances import Distance
 from tensorflow_similarity.types import FloatTensor
-from pathlib import Path
 from typing import Any
 import numpy as np
 import tensorflow as tf
@@ -147,6 +146,7 @@ class LinearSearch(Search):
         """
         with open(self.__make_file_path(path), "wb") as f:
             pickle.dump((self.db, self.ids), f)
+        self.__save_config(path)
 
     def load(self, path: str):
         """load index on disk
@@ -162,7 +162,7 @@ class LinearSearch(Search):
     def __make_config_path(self, path):
         return path / "config.json"
 
-    def __save_config(self):
+    def __save_config(self, path):
         with open(self.__make_config_file_path(path), "wt") as f:
             json.dump(self.get_config(), f)
 

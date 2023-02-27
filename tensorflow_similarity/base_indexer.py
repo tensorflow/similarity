@@ -1,15 +1,14 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import tensorflow as tf
-from .types import CalibrationResults, FloatTensor, Lookup, PandasDataFrame, Tensor
+from .types import CalibrationResults, FloatTensor, Lookup, Tensor
 from collections.abc import Mapping, MutableMapping, Sequence
 from .retrieval_metrics import RetrievalMetric
-from .distances import Distance, distance_canonicalizer
-from .evaluators import Evaluator, MemoryEvaluator
+from .distances import distance_canonicalizer
 from .matchers import ClassificationMatch, make_classification_matcher
-from .retrieval_metrics import RetrievalMetric
 from .utils import unpack_lookup_distances, unpack_lookup_labels
-from collections import defaultdict, deque
+from collections import defaultdict
+from tqdm.auto import tqdm
 
 
 from .classification_metrics import (
@@ -17,7 +16,6 @@ from .classification_metrics import (
     F1Score,
     make_classification_metric,
 )
-from .matchers import ClassificationMatch, make_classification_matcher
 from tabulate import tabulate
 
 

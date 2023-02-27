@@ -18,17 +18,13 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict, deque
-from collections.abc import Mapping, MutableMapping, Sequence
 from pathlib import Path
 from time import time
 from .base_indexer import BaseIndexer
 from typing import (
     DefaultDict,
     Deque,
-    Dict,
     List,
-    Mapping,
-    MutableMapping,
     Optional,
     Sequence,
     Union,
@@ -40,20 +36,16 @@ from tabulate import tabulate
 from tqdm.auto import tqdm
 
 from .classification_metrics import (
-    ClassificationMetric,
     F1Score,
     make_classification_metric,
 )
 
 # internal
-from .distances import Distance, distance_canonicalizer
+from .distances import Distance
 from .evaluators import Evaluator, MemoryEvaluator
-from .matchers import ClassificationMatch, make_classification_matcher
-from .retrieval_metrics import RetrievalMetric
-from .search import NMSLibSearch, Search, make_search
+from .search import NMSLibSearch, Search, make_search, LinearSearch
 from .stores import MemoryStore, Store
-from .types import CalibrationResults, FloatTensor, Lookup, PandasDataFrame, Tensor
-from .utils import unpack_lookup_distances, unpack_lookup_labels
+from .types import FloatTensor, Lookup, PandasDataFrame, Tensor
 
 
 class Indexer(BaseIndexer):
@@ -134,7 +126,7 @@ class Indexer(BaseIndexer):
         if self.search_type == "nmslib":
             self.search: Search = NMSLibSearch(distance=self.distance, dim=self.embedding_size)
         elif self.search_type == "linear":
-            self.search = LinearSearch(distance=self.distance, dim=embedding_size)
+            self.search = LinearSearch(distance=self.distance, dim=self.embedding_size)
         elif isinstance(self.search_type, Search):
             self.search = self.search_type
         else:
@@ -157,8 +149,8 @@ class Indexer(BaseIndexer):
             raise ValueError("You need to either supply a know evaluator name " "or an Evaluator() object")
 
         # stats
-        self._stats: defaultdict[str, int] = defaultdict(int)
-        self._lookup_timings_buffer: deque[float] = deque([], maxlen=self.stat_buffer_size)
+        self._stats: DefaultDict[str, int] = defaultdict(int)
+        self._lookup_timings_buffer: Deque[float] = deque([], maxlen=self.stat_buffer_size)
 
         # calibration data
         self.is_calibrated = False
@@ -206,7 +198,7 @@ class Indexer(BaseIndexer):
             embeddings = predictions
         return embeddings
 
-    def _cast_label(self, label: int | None) -> int | None:
+    def _cast_label(self, label: Optional[int]) -> Optional[int]:
         if label is not None:
             label = int(label)
         return label
@@ -214,7 +206,7 @@ class Indexer(BaseIndexer):
     def add(
         self,
         prediction: FloatTensor,
-        label: int | None = None,
+        label: Optional[int] = None,
         data: Tensor = None,
         build: bool = True,
         verbose: int = 1,
@@ -251,8 +243,8 @@ class Indexer(BaseIndexer):
     def batch_add(
         self,
         predictions: FloatTensor,
-        labels: Sequence[int] | None = None,
-        data: Tensor | None = None,
+        labels: Optional[Sequence[int]] = None,
+        data: Optional[Tensor] = None,
         build: bool = True,
         verbose: int = 1,
     ):
@@ -282,7 +274,7 @@ class Indexer(BaseIndexer):
         idxs = self.kv_store.batch_add(embeddings, labels, data)
         self.search.batch_add(embeddings, idxs, build=build, verbose=verbose)
 
-    def single_lookup(self, prediction: FloatTensor, k: int = 5) -> list[Lookup]:
+    def single_lookup(self, prediction: FloatTensor, k: int = 5) -> List[Lookup]:
         """Find the k closest matches of a given embedding
 
         Args:
@@ -317,7 +309,7 @@ class Indexer(BaseIndexer):
         self._stats["num_lookups"] += 1
         return lookups
 
-    def batch_lookup(self, predictions: FloatTensor, k: int = 5, verbose: int = 1) -> list[list[Lookup]]:
+    def batch_lookup(self, predictions: FloatTensor, k: int = 5, verbose: int = 1) -> List[List[Lookup]]:
 
         """Find the k closest matches for a set of embeddings
 

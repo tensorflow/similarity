@@ -1,6 +1,6 @@
 """The module to handle FAISS search."""
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from termcolor import cprint
 from .search import Search
 import faiss
@@ -121,8 +121,8 @@ class FaissSearch(Search):
 
         if self.normalize:
             faiss.normalize_L2(embeddings)
-        D, I = self.index.search(embeddings, k)
-        return I, D
+        sims, indices = self.index.search(embeddings, k)
+        return indices, sims
 
     def lookup(self, embedding: FloatTensor, k: int = 5) -> tuple[list[int], list[float]]:
         """Find embedding K nearest neighboors embeddings.
@@ -134,8 +134,8 @@ class FaissSearch(Search):
         int_embedding = np.array([embedding], dtype=np.float32)
         if self.normalize:
             faiss.normalize_L2(int_embedding)
-        D, I = self.index.search(int_embedding, k)
-        return I[0], D[0]
+        sims, indices = self.index.search(int_embedding, k)
+        return indices[0], sims[0]
 
     def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, **kwargs):
         """Add a single embedding to the search index.

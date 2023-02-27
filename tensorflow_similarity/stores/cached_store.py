@@ -13,13 +13,9 @@
 # limitations under the License.
 from __future__ import annotations
 
-import io
 from collections.abc import Sequence
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
-import tensorflow as tf
 import pickle
 import shutil
 import dbm
@@ -205,7 +201,7 @@ class CachedStore(Store):
         self.__load_config(path)
         num_shards = int(math.ceil(self.num_items / self.shard_size))
         self.path = path
-        for i in range(self.num_items):
+        for i in range(num_shards):
             self.__add_new_shard()
         return self.size()
 
