@@ -29,3 +29,5 @@ via the `to_pandas()` method.
 
 from .memory_store import MemoryStore  # noqa
 from .store import Store  # noqa
+from .cached_store import CachedStore  # noqa
+from .redis_store import RedisStore  # noqa
