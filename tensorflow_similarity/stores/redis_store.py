@@ -31,7 +31,7 @@ class RedisStore(Store):
         self.port = port
         self.db = db
         self.__connect()
-    
+
     def add(
         self,
         embedding: FloatTensor,
@@ -53,9 +53,9 @@ class RedisStore(Store):
         num_items = self.__conn.incr("num_items")
         idx = num_items - 1
         self.__conn.set(idx, (embedding, label, data))
-        
+
         return idx
-    
+
     def get_num_items(self):
         return self.__conn.get("num_items") or 0
 
@@ -86,7 +86,7 @@ class RedisStore(Store):
             rec_data = None if data is None else data[i]
             idx = self.add(embedding, label, rec_data)
             idxs.append(idx)
-            
+
         return idxs
 
     def get(self, idx: int) -> tuple[FloatTensor, int | None, Tensor | None]:
@@ -125,17 +125,17 @@ class RedisStore(Store):
         return self.get_num_items()
 
     def __make_config_file_path(self, path):
-      return path / "config.json"
-    
+        return path / "config.json"
+
     def __save_config(self, path):
         with open(self.__make_config_file_path(path), "wt") as f:
             json.dump(self.get_config(), f)
-            
+
     def __set_config(self, host, port, db):
         self.host = host
         self.port = port
         self.db = db
-            
+
     def __connect(self):
         self.__conn = redis.Redis(host=self.host, port=self.port, db=self.db)
 
@@ -156,13 +156,8 @@ class RedisStore(Store):
         self.__save_config(path)
 
     def get_config(self):
-        return {
-            "host": self.host,
-            "port": self.port,
-            "db": self.db,
-            "num_items": self.get_num_items()
-        }
-  
+        return {"host": self.host, "port": self.port, "db": self.db, "num_items": self.get_num_items()}
+
     def load(self, path: str) -> int:
         """load index on disk
 
@@ -177,7 +172,7 @@ class RedisStore(Store):
 
     def to_data_frame(self, num_records: int = 0) -> PandasDataFrame:
         """Export data as a Pandas dataframe.
-        
+
         Cached store does not fit in memory, therefore we do not implement this.
 
         Args:

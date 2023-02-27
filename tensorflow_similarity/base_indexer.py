@@ -21,10 +21,8 @@ from .matchers import ClassificationMatch, make_classification_matcher
 from tabulate import tabulate
 
 
-
 class BaseIndexer(ABC):
-    def __init__(self, distance, embedding_output, embedding_size, evaluator,
-                 stat_buffer_size):
+    def __init__(self, distance, embedding_output, embedding_size, evaluator, stat_buffer_size):
         distance = distance_canonicalizer(distance)
         self.distance = distance  # needed for save()/load()
         self.embedding_output = embedding_output
@@ -44,7 +42,7 @@ class BaseIndexer(ABC):
         self.calibration_thresholds: Mapping[str, np.ndarray] = {}
 
         return
-        
+
     # evaluation related functions
     def evaluate_retrieval(
         self,
@@ -348,33 +346,33 @@ class BaseIndexer(ABC):
 
     @abstractmethod
     def add(
-      self,
+        self,
         prediction: FloatTensor,
         label: int | None = None,
         data: Tensor = None,
         build: bool = True,
         verbose: int = 1,
     ):
-      """Add a single embedding to the indexer
+        """Add a single embedding to the indexer
 
-      Args:
-          prediction: TF similarity model prediction, may be a multi-headed
-          output.
+        Args:
+            prediction: TF similarity model prediction, may be a multi-headed
+            output.
 
-          label: Label(s) associated with the
-          embedding. Defaults to None.
+            label: Label(s) associated with the
+            embedding. Defaults to None.
 
-          data: Input data associated with
-          the embedding. Defaults to None.
+            data: Input data associated with
+            the embedding. Defaults to None.
 
-          build: Rebuild the index after insertion.
-          Defaults to True. Set it to false if you would like to add
-          multiples batches/points and build it manually once after.
+            build: Rebuild the index after insertion.
+            Defaults to True. Set it to false if you would like to add
+            multiples batches/points and build it manually once after.
 
-          verbose: Display progress if set to 1.
-          Defaults to 1.
-      """
-      
+            verbose: Display progress if set to 1.
+            Defaults to 1.
+        """
+
     @abstractmethod
     def batch_add(
         self,
@@ -384,22 +382,22 @@ class BaseIndexer(ABC):
         build: bool = True,
         verbose: int = 1,
     ):
-      """Add a batch of embeddings to the indexer
+        """Add a batch of embeddings to the indexer
 
-      Args:
-          predictions: TF similarity model predictions, may be a multi-headed
-          output.
+        Args:
+            predictions: TF similarity model predictions, may be a multi-headed
+            output.
 
-          labels: label(s) associated with the embedding. Defaults to None.
+            labels: label(s) associated with the embedding. Defaults to None.
 
-          datas: input data associated with the embedding. Defaults to None.
+            datas: input data associated with the embedding. Defaults to None.
 
-          build: Rebuild the index after insertion.
-          Defaults to True. Set it to false if you would like to add
-          multiples batches/points and build it manually once after.
+            build: Rebuild the index after insertion.
+            Defaults to True. Set it to false if you would like to add
+            multiples batches/points and build it manually once after.
 
-          verbose: Display progress if set to 1. Defaults to 1.
-      """   
+            verbose: Display progress if set to 1. Defaults to 1.
+        """
 
     @abstractmethod
     def single_lookup(self, prediction: FloatTensor, k: int = 5) -> list[Lookup]:
@@ -414,8 +412,7 @@ class BaseIndexer(ABC):
             list of the k nearest neighbors info:
             list[Lookup]
         """
- 
-        
+
     @abstractmethod
     def batch_lookup(self, predictions: FloatTensor, k: int = 5, verbose: int = 1) -> list[list[Lookup]]:
 
