@@ -116,8 +116,7 @@ class Indexer(BaseIndexer):
         Raises:
             ValueError: Invalid search framework or key value store.
         """
-        super().__init__(distance, embedding_output, embedding_size, evaluator,
-                 stat_buffer_size)
+        super().__init__(distance, embedding_output, embedding_size, evaluator, stat_buffer_size)
         # internal structure naming
         # FIXME support custom objects
         self.search_type = search

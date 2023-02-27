@@ -41,20 +41,20 @@ class CachedStore(Store):
         self.shard_size = shard_size
         self.num_items: int = 0
         self.path: str = "."
-    
+
     def __get_shard_file_path(self, shard_no):
-        return f'{self.path}/cache{shard_no}'
-        
+        return f"{self.path}/cache{shard_no}"
+
     def __make_new_shard(self, shard_no: int):
-        return dbm.open(self.__get_shard_file_path(shard_no), 'c')
-        
+        return dbm.open(self.__get_shard_file_path(shard_no), "c")
+
     def __add_new_shard(self):
-      shard_no = len(self.db)
-      self.db.append(self.__make_new_shard(shard_no))
+        shard_no = len(self.db)
+        self.db.append(self.__make_new_shard(shard_no))
 
     def __reopen_all_shards(self):
         for shard_no in range(len(self.db)):
-          self.db[shard_no] = self.__make_new_shard(shard_no)
+            self.db[shard_no] = self.__make_new_shard(shard_no)
 
     def add(
         self,
@@ -110,10 +110,10 @@ class CachedStore(Store):
             rec_data = None if data is None else data[i]
             shard_no = idx // self.shard_size
             if len(self.db) <= shard_no:
-              self.__add_new_shard()
+                self.__add_new_shard()
             self.db[shard_no][str(idx)] = pickle.dumps((embedding, label, rec_data))
             idxs.append(idx)
-            
+
         return idxs
 
     def get(self, idx: int) -> tuple[FloatTensor, int | None, Tensor | None]:
@@ -156,22 +156,22 @@ class CachedStore(Store):
     def __close_all_shards(self):
         for shard in self.db:
             shard.close()
-  
+
     def __copy_shards(self, path):
         for shard_no in range(len(self.db)):
-          shutil.copy(Path(self.__get_shard_file_path(shard_no)).with_suffix('.db'), path)
-    
+            shutil.copy(Path(self.__get_shard_file_path(shard_no)).with_suffix(".db"), path)
+
     def __make_config_file_path(self, path):
-      return path / "config.json"
-    
+        return path / "config.json"
+
     def __save_config(self, path):
         with open(self.__make_config_file_path(path), "wt") as f:
             json.dump(self.get_config(), f)
-            
+
     def __set_config(self, num_items, shard_size):
         self.num_items = num_items
         self.shard_size = shard_size
-            
+
     def __load_config(self, path):
         with open(self.__make_config_file_path(path), "rt") as f:
             self.__set_config(**json.load(f))
@@ -191,11 +191,8 @@ class CachedStore(Store):
         self.__reopen_all_shards()
 
     def get_config(self):
-        return {
-            "shard_size": self.shard_size,
-            "num_items": self.num_items
-        }
-  
+        return {"shard_size": self.shard_size, "num_items": self.num_items}
+
     def load(self, path: str) -> int:
         """load index on disk
 
@@ -214,7 +211,7 @@ class CachedStore(Store):
 
     def to_data_frame(self, num_records: int = 0) -> PandasDataFrame:
         """Export data as a Pandas dataframe.
-        
+
         Cached store does not fit in memory, therefore we do not implement this.
 
         Args:
