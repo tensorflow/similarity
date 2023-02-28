@@ -72,7 +72,6 @@ setup(
         "dev": [
             "flake8",
             "black",
-            "faiss",
             "faiss-gpu",
             "pre-commit",
             "isort",
