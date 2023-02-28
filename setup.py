@@ -72,6 +72,8 @@ setup(
         "dev": [
             "flake8",
             "black",
+            "faiss",
+            "faiss-gpu",
             "pre-commit",
             "isort",
             "mkdocs",
@@ -81,6 +83,7 @@ setup(
             "mypy<=0.982",
             "pytest",
             "pytype",
+            "redis",
             "setuptools",
             "types-termcolor",
             "twine",
