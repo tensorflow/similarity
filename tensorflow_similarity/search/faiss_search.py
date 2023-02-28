@@ -1,5 +1,7 @@
 """The module to handle FAISS search."""
 
+from __future__ import annotations
+
 from collections.abc import Sequence
 from termcolor import cprint
 from .search import Search

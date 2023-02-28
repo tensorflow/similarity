@@ -1,5 +1,7 @@
 """The module to handle Linear search."""
 
+from __future__ import annotations
+
 from collections.abc import Sequence
 from .search import Search
 from tensorflow_similarity.distances import Distance
