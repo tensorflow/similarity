@@ -1,10 +1,12 @@
+import os
+
 import numpy as np
 
 from tensorflow_similarity.stores import CachedStore
 
 
-def build_store(records):
-    kv_store = CachedStore()
+def build_store(records, path):
+    kv_store = CachedStore(path=path)
     idxs = []
     for r in records:
         idx = kv_store.add(r[0], r[1], r[2])
@@ -12,10 +14,10 @@ def build_store(records):
     return kv_store, idxs
 
 
-def test_cached_store_and_retrieve():
+def test_cached_store_and_retrieve(tmp_path):
     records = [[[0.1, 0.2], 1, [0, 0, 0]], [[0.2, 0.3], 2, [0, 0, 0]]]
 
-    kv_store, idxs = build_store(records)
+    kv_store, idxs = build_store(records, tmp_path)
 
     # check index numbering
     for gt, idx in enumerate(idxs):
@@ -33,12 +35,12 @@ def test_cached_store_and_retrieve():
         assert dt == records[idx][2]
 
 
-def test_batch_add():
+def test_batch_add(tmp_path):
     embs = np.array([[0.1, 0.2], [0.2, 0.3]])
     lbls = np.array([1, 2])
     data = np.array([[0, 0, 0], [1, 1, 1]])
 
-    kv_store = CachedStore()
+    kv_store = CachedStore(path=tmp_path)
     idxs = kv_store.batch_add(embs, lbls, data)
     for idx in idxs:
         emb, lbl, dt = kv_store.get(idx)
@@ -50,13 +52,18 @@ def test_batch_add():
 def test_save_and_reload(tmp_path):
     records = [[[0.1, 0.2], 1, [0, 0, 0]], [[0.2, 0.3], 2, [0, 0, 0]]]
 
-    kv_store, idxs = build_store(records)
-    kv_store.save(tmp_path)
+    save_path = tmp_path / "save"
+    os.mkdir(save_path)
+    obj_path = tmp_path / "obj"
+    os.mkdir(obj_path)
+
+    kv_store, idxs = build_store(records, obj_path)
+    kv_store.save(save_path)
 
     # reload
     reloaded_store = CachedStore()
-    print(f"loading from {tmp_path}")
-    reloaded_store.load(tmp_path)
+    print(f"loading from {save_path}")
+    reloaded_store.load(save_path)
 
     assert reloaded_store.size() == 2
 
