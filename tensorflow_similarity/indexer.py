@@ -20,30 +20,20 @@ import json
 from collections import defaultdict, deque
 from pathlib import Path
 from time import time
-from .base_indexer import BaseIndexer
-from typing import (
-    DefaultDict,
-    Deque,
-    List,
-    Optional,
-    Sequence,
-    Union,
-)
+from typing import DefaultDict, Deque, List, Optional, Sequence, Union
 
 import numpy as np
 import tensorflow as tf
 from tabulate import tabulate
 from tqdm.auto import tqdm
 
-from .classification_metrics import (
-    F1Score,
-    make_classification_metric,
-)
+from .base_indexer import BaseIndexer
+from .classification_metrics import F1Score, make_classification_metric
 
 # internal
 from .distances import Distance
 from .evaluators import Evaluator, MemoryEvaluator
-from .search import NMSLibSearch, Search, make_search, LinearSearch
+from .search import LinearSearch, NMSLibSearch, Search, make_search
 from .stores import MemoryStore, Store
 from .types import FloatTensor, Lookup, PandasDataFrame, Tensor
 
