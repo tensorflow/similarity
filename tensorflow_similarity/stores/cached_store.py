@@ -21,6 +21,7 @@ import shutil
 import dbm
 import json
 import math
+import pandas as pd
 
 from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 
@@ -215,7 +216,9 @@ class CachedStore(Store):
             Defaults to 0 (unlimited).
 
         Returns:
-            None
+            Empty DataFrame
         """
 
-        return None
+        # forcing type from Any to PandasFrame
+        df: PandasDataFrame = pd.DataFrame()
+        return df

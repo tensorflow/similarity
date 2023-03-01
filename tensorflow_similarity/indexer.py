@@ -140,14 +140,6 @@ class Indexer(BaseIndexer):
         else:
             raise ValueError("You need to either supply a know key value " "store name or a Store() object")
 
-        # code used to evaluate indexer performance
-        if self.evaluator_type == "memory":
-            self.evaluator: Evaluator = MemoryEvaluator()
-        elif isinstance(self.evaluator_type, Evaluator):
-            self.evaluator = self.evaluator_type
-        else:
-            raise ValueError("You need to either supply a know evaluator name " "or an Evaluator() object")
-
         # stats
         self._stats: DefaultDict[str, int] = defaultdict(int)
         self._lookup_timings_buffer: Deque[float] = deque([], maxlen=self.stat_buffer_size)

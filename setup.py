@@ -84,6 +84,7 @@ setup(
             "pytype",
             "redis",
             "setuptools",
+            "types-redis",
             "types-termcolor",
             "twine",
             "types-tabulate",
