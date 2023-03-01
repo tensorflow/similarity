@@ -13,16 +13,16 @@
 # limitations under the License.
 from __future__ import annotations
 
+import json
+import pickle
 from collections.abc import Sequence
 
-import json
 import pandas as pd
-import pickle
 import redis
 
-from .store import Store
-
 from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
+
+from .store import Store
 
 
 class RedisStore(Store):
@@ -102,8 +102,9 @@ class RedisStore(Store):
             record associated with the requested id.
         """
 
-        ret = pickle.loads(self.__conn.get(idx))
-        return ret[0], ret[1], ret[2]
+        ret_bytes: bytes = self.__conn.get(idx)
+        ret: tuple = pickle.loads(ret_bytes)
+        return (ret[0], ret[1], ret[2])
 
     def batch_get(self, idxs: Sequence[int]) -> tuple[list[FloatTensor], list[int | None], list[Tensor | None]]:
         """Get embedding records from the key value store.

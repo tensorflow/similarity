@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
+import json
+import pickle
 from collections.abc import Sequence
-from .search import Search
-from tensorflow_similarity.distances import Distance
-from tensorflow_similarity.types import FloatTensor
 from typing import Any, List
+
 import numpy as np
 import tensorflow as tf
-import pickle
-import json
 from termcolor import cprint
+
+from tensorflow_similarity.distances import Distance
+from tensorflow_similarity.types import FloatTensor
+
+from .search import Search
 
 INITIAL_DB_SIZE = 10000
 DB_SIZE_STEPS = 10000
@@ -165,7 +168,7 @@ class LinearSearch(Search):
         return path / "config.json"
 
     def __save_config(self, path):
-        with open(self.__make_config_file_path(path), "wt") as f:
+        with open(self.__make_config_path(path), "wt") as f:
             json.dump(self.get_config(), f)
 
     def get_config(self) -> dict[str, Any]:

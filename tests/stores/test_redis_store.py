@@ -1,7 +1,8 @@
-from unittest.mock import MagicMock
-from unittest.mock import patch
+import pickle
+from unittest.mock import MagicMock, patch
 
 import numpy as np
+
 from tensorflow_similarity.stores import RedisStore
 
 
@@ -17,7 +18,8 @@ def build_store(records):
 @patch("redis.Redis", return_value=MagicMock())
 def test_store_and_retrieve(mock_redis):
     records = [[[0.1, 0.2], 1, [0, 0, 0]], [[0.2, 0.3], 2, [0, 0, 0]]]
-    mock_redis.return_value.get.side_effect = records
+    serialized_records = [pickle.dumps(x) for x in records]
+    mock_redis.return_value.get.side_effect = serialized_records
     mock_redis.return_value.incr.side_effect = [1, 2, 3, 4, 5]
 
     kv_store, idxs = build_store(records)
@@ -41,7 +43,10 @@ def test_batch_add(mock_redis):
     lbls = np.array([1, 2])
     data = np.array([[0, 0, 0], [1, 1, 1]])
 
-    mock_redis.return_value.get.side_effect = [[embs[i], lbls[i], data[i]] for i in range(2)]
+    records = [[embs[i], lbls[i], data[i]] for i in range(2)]
+
+    serialized_records = [pickle.dumps(r) for r in records]
+    mock_redis.return_value.get.side_effect = serialized_records
     mock_redis.return_value.incr.side_effect = [1, 2, 3, 4, 5]
 
     kv_store = RedisStore()

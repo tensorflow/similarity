@@ -98,4 +98,5 @@ def test_running_larger_batches():
         last_idx += index_size
         search_index.batch_add(embs, idxs)
     found_idxs, found_dists = search_index.batch_lookup(targets, 2)
-    assert found_idxs.shape == (10, 2)
+    assert len(found_idxs) == 10
+    assert len(found_idxs[0]) == 2
