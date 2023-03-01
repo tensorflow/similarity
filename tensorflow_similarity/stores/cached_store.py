@@ -30,13 +30,13 @@ from .store import Store
 class CachedStore(Store):
     """Efficient cached dataset store"""
 
-    def __init__(self, shard_size=1000000) -> None:
+    def __init__(self, shard_size=1000000, path=".") -> None:
         # We are using a native python cached dictionary
         # db[id] = pickle((embedding, label, data))
         self.db: list[dict[str, str]] = []
         self.shard_size = shard_size
         self.num_items: int = 0
-        self.path: str = "."
+        self.path: str = path
 
     def __get_shard_file_path(self, shard_no):
         return f"{self.path}/cache{shard_no}"
