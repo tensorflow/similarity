@@ -13,7 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-import dbm
+import dbm.dumb
 import json
 import math
 import pickle
@@ -43,7 +43,7 @@ class CachedStore(Store):
         return f"{self.path}/cache{shard_no}"
 
     def __make_new_shard(self, shard_no: int):
-        return dbm.ndbm.open(self.__get_shard_file_path(shard_no), "c")
+        return dbm.dumb.open(self.__get_shard_file_path(shard_no), "c")
 
     def __add_new_shard(self):
         shard_no = len(self.db)
@@ -156,7 +156,9 @@ class CachedStore(Store):
 
     def __copy_shards(self, path):
         for shard_no in range(len(self.db)):
-            shutil.copy(Path(self.__get_shard_file_path(shard_no)).with_suffix(".db"), path)
+            shutil.copy(Path(self.__get_shard_file_path(shard_no)).with_suffix(".bak"), path)
+            shutil.copy(Path(self.__get_shard_file_path(shard_no)).with_suffix(".dat"), path)
+            shutil.copy(Path(self.__get_shard_file_path(shard_no)).with_suffix(".dir"), path)
 
     def __make_config_file_path(self, path):
         return path / "config.json"
