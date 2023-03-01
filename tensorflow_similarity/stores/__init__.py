@@ -27,7 +27,7 @@ a [Pandas Dataframe](https://pandas.pydata.org/pandas-docs/stable/reference/api/
 via the `to_pandas()` method.
 """
 
-from .memory_store import MemoryStore  # noqa
-from .store import Store  # noqa
 from .cached_store import CachedStore  # noqa
+from .memory_store import MemoryStore  # noqa
 from .redis_store import RedisStore  # noqa
+from .store import Store  # noqa

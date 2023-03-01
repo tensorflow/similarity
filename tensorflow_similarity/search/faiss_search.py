@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from termcolor import cprint
-from .search import Search
-import faiss
-import numpy as np
-from tensorflow_similarity.distances import Distance
-from tensorflow_similarity.types import FloatTensor
 from pathlib import Path
 from typing import Any
+
+import faiss
+import numpy as np
+from termcolor import cprint
+
+from tensorflow_similarity.distances import Distance
+from tensorflow_similarity.types import FloatTensor
+
+from .search import Search
 
 
 class FaissSearch(Search):
