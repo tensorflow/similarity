@@ -1,24 +1,24 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections import defaultdict
+from collections.abc import Mapping, MutableMapping, Sequence
+
 import numpy as np
 import tensorflow as tf
-from .types import CalibrationResults, FloatTensor, Lookup, Tensor
-from collections.abc import Mapping, MutableMapping, Sequence
-from .retrieval_metrics import RetrievalMetric
-from .distances import distance_canonicalizer
-from .matchers import ClassificationMatch, make_classification_matcher
-from .utils import unpack_lookup_distances, unpack_lookup_labels
-from collections import defaultdict
+from tabulate import tabulate
 from tqdm.auto import tqdm
-
 
 from .classification_metrics import (
     ClassificationMetric,
     F1Score,
     make_classification_metric,
 )
-from tabulate import tabulate
+from .distances import distance_canonicalizer
+from .matchers import ClassificationMatch, make_classification_matcher
+from .retrieval_metrics import RetrievalMetric
+from .types import CalibrationResults, FloatTensor, Lookup, Tensor
+from .utils import unpack_lookup_distances, unpack_lookup_labels
 
 
 class BaseIndexer(ABC):
@@ -31,8 +31,6 @@ class BaseIndexer(ABC):
         # internal structure naming
         # FIXME support custom objects
         self.evaluator_type = evaluator
-        
-        self.evaluator: Optional[Evaluator] = None
 
         # code used to evaluate indexer performance
         if self.evaluator_type == "memory":
@@ -102,7 +100,7 @@ class BaseIndexer(ABC):
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
         # Evaluate them
-        eval_ret : dict[str, np.ndarray] = self.evaluator.evaluate_retrieval(
+        eval_ret: dict[str, np.ndarray] = self.evaluator.evaluate_retrieval(
             retrieval_metrics=retrieval_metrics,
             target_labels=target_labels,
             lookups=lookups,
@@ -165,7 +163,7 @@ class BaseIndexer(ABC):
             dtype=lookup_distances.dtype,
         )
 
-        results : dict[str, np.ndarray] = self.evaluator.evaluate_classification(
+        results: dict[str, np.ndarray] = self.evaluator.evaluate_classification(
             query_labels=query_labels,
             lookup_labels=lookup_labels,
             lookup_distances=lookup_distances,
@@ -240,7 +238,7 @@ class BaseIndexer(ABC):
         combined_metrics: list[ClassificationMetric] = [make_classification_metric(m) for m in extra_metrics]
 
         # running calibration
-        calibration_results : CalibrationResults = self.evaluator.calibrate(
+        calibration_results: CalibrationResults = self.evaluator.calibrate(
             target_labels=target_labels,
             lookups=lookups,
             thresholds_targets=thresholds_targets,
