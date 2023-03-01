@@ -16,6 +16,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import json
+import pandas as pd
+import pickle
 import redis
 
 from .store import Store
@@ -51,14 +53,14 @@ class RedisStore(Store):
         Returns:
             Associated record id.
         """
-        num_items = self.__conn.incr("num_items")
+        num_items = int(self.__conn.incr("num_items"))
         idx = num_items - 1
-        self.__conn.set(idx, (embedding, label, data))
+        self.__conn.set(idx, pickle.dumps((embedding, label, data)))
 
         return idx
 
-    def get_num_items(self):
-        return self.__conn.get("num_items") or 0
+    def get_num_items(self) -> int:
+        return int(self.__conn.get("num_items")) or 0
 
     def batch_add(
         self,
@@ -100,7 +102,8 @@ class RedisStore(Store):
             record associated with the requested id.
         """
 
-        return self.__conn.get(str(idx))
+        ret = pickle.loads(self.__conn.get(idx))
+        return ret[0], ret[1], ret[2]
 
     def batch_get(self, idxs: Sequence[int]) -> tuple[list[FloatTensor], list[int | None], list[Tensor | None]]:
         """Get embedding records from the key value store.
@@ -181,7 +184,8 @@ class RedisStore(Store):
             Defaults to 0 (unlimited).
 
         Returns:
-            None
+            Empty DataFrame
         """
-
-        return None
+        # forcing type from Any to PandasFrame
+        df: PandasDataFrame = pd.DataFrame()
+        return df

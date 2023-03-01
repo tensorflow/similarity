@@ -31,6 +31,16 @@ class BaseIndexer(ABC):
         # internal structure naming
         # FIXME support custom objects
         self.evaluator_type = evaluator
+        
+        self.evaluator: Optional[Evaluator] = None
+
+        # code used to evaluate indexer performance
+        if self.evaluator_type == "memory":
+            self.evaluator: Evaluator = MemoryEvaluator()
+        elif isinstance(self.evaluator_type, Evaluator):
+            self.evaluator: Evaluator = self.evaluator_type
+        else:
+            raise ValueError("You need to either supply a know evaluator name " "or an Evaluator() object")
 
         # stats configuration
         self.stat_buffer_size = stat_buffer_size
@@ -92,11 +102,12 @@ class BaseIndexer(ABC):
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
         # Evaluate them
-        return self.evaluator.evaluate_retrieval(
+        eval_ret : dict[str, np.ndarray] = self.evaluator.evaluate_retrieval(
             retrieval_metrics=retrieval_metrics,
             target_labels=target_labels,
             lookups=lookups,
         )
+        return eval_ret
 
     def evaluate_classification(
         self,
@@ -154,7 +165,7 @@ class BaseIndexer(ABC):
             dtype=lookup_distances.dtype,
         )
 
-        results = self.evaluator.evaluate_classification(
+        results : dict[str, np.ndarray] = self.evaluator.evaluate_classification(
             query_labels=query_labels,
             lookup_labels=lookup_labels,
             lookup_distances=lookup_distances,
@@ -229,7 +240,7 @@ class BaseIndexer(ABC):
         combined_metrics: list[ClassificationMetric] = [make_classification_metric(m) for m in extra_metrics]
 
         # running calibration
-        calibration_results = self.evaluator.calibrate(
+        calibration_results : CalibrationResults = self.evaluator.calibrate(
             target_labels=target_labels,
             lookups=lookups,
             thresholds_targets=thresholds_targets,

@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from .search import Search
 from tensorflow_similarity.distances import Distance
 from tensorflow_similarity.types import FloatTensor
-from typing import Any
+from typing import Any, List
 import numpy as np
 import tensorflow as tf
 import pickle
@@ -52,7 +52,7 @@ class LinearSearch(Search):
             ]
             cprint("\n".join(t_msg) + "\n", "green")
         self.db = np.empty((INITIAL_DB_SIZE, dim), dtype=np.float32)
-        self.ids = []
+        self.ids: List[int] = []
 
     def is_built(self):
         return True
@@ -73,7 +73,7 @@ class LinearSearch(Search):
         sims = tf.matmul(normalized_query, tf.transpose(self.db[:items]))
         similarity, id_idxs = tf.math.top_k(sims, k)
         ids_array = np.array(self.ids)
-        return np.array([ids_array[x.numpy()] for x in id_idxs]), similarity
+        return list(np.array([ids_array[x.numpy()] for x in id_idxs])), list(similarity)
 
     def lookup(self, embedding: FloatTensor, k: int = 5) -> tuple[list[int], list[float]]:
         """Find embedding K nearest neighboors embeddings.
@@ -87,7 +87,7 @@ class LinearSearch(Search):
         sims = tf.matmul(normalized_query, tf.transpose(self.db[:items]))
         similarity, id_idxs = tf.math.top_k(sims, k)
         ids_array = np.array(self.ids)
-        return np.array(ids_array[id_idxs[0].numpy()]), similarity[0]
+        return list(np.array(ids_array[id_idxs[0].numpy()])), list(similarity[0])
 
     def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, **kwargs):
         """Add a single embedding to the search index.

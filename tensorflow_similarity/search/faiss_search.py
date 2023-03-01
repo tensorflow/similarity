@@ -60,7 +60,6 @@ class FaissSearch(Search):
                 f"|  - nlist:        {self.nlist}",
                 f"|  - nprobe:       {self.nprobe}",
                 f"|  - normalize:    {self.normalize}",
-                f"|  - query_params: {self.query_params}",
             ]
             cprint("\n".join(t_msg) + "\n", "green")
 
