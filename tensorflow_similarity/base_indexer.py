@@ -15,6 +15,7 @@ from .classification_metrics import (
     make_classification_metric,
 )
 from .distances import distance_canonicalizer
+from .evaluators import Evaluator, MemoryEvaluator
 from .matchers import ClassificationMatch, make_classification_matcher
 from .retrieval_metrics import RetrievalMetric
 from .types import CalibrationResults, FloatTensor, Lookup, Tensor
