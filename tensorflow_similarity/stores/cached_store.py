@@ -13,9 +13,10 @@
 # limitations under the License.
 from __future__ import annotations
 
+import dbm
 import json
 import math
-import shelve
+import pickle
 import shutil
 from collections.abc import Sequence
 from pathlib import Path
@@ -42,7 +43,7 @@ class CachedStore(Store):
         return f"{self.path}/cache{shard_no}"
 
     def __make_new_shard(self, shard_no: int):
-        return shelve.open(self.__get_shard_file_path(shard_no), "c")
+        return dbm.ndbm.open(self.__get_shard_file_path(shard_no), "c")
 
     def __add_new_shard(self):
         shard_no = len(self.db)
@@ -74,7 +75,7 @@ class CachedStore(Store):
         shard_no = idx // self.shard_size
         if len(self.db) <= shard_no:
             self.__add_new_shard()
-        self.db[shard_no][str(idx)] = (embedding, label, data)
+        self.db[shard_no][str(idx)] = pickle.dumps((embedding, label, data))
         self.num_items += 1
         return idx
 
@@ -107,7 +108,7 @@ class CachedStore(Store):
             shard_no = idx // self.shard_size
             if len(self.db) <= shard_no:
                 self.__add_new_shard()
-            self.db[shard_no][str(idx)] = (embedding, label, rec_data)
+            self.db[shard_no][str(idx)] = pickle.dumps((embedding, label, rec_data))
             idxs.append(idx)
 
         return idxs
@@ -123,7 +124,7 @@ class CachedStore(Store):
         """
 
         shard_no = idx // self.shard_size
-        embedding, label, data = self.db[shard_no][str(idx)]
+        embedding, label, data = pickle.loads(self.db[shard_no][str(idx)])
         return embedding, label, data
 
     def batch_get(self, idxs: Sequence[int]) -> tuple[list[FloatTensor], list[int | None], list[Tensor | None]]:
