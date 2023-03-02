@@ -1,4 +1,3 @@
-import logging
 import os
 
 import numpy as np
@@ -59,7 +58,6 @@ def test_save_and_reload(tmp_path):
     os.mkdir(obj_path)
 
     kv_store, idxs = build_store(records, obj_path)
-    logging.info(f"obj_path={os.listdir(obj_path)}\nsave_path={os.listdir(save_path)}")
     kv_store.save(save_path)
 
     # reload
