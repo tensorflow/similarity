@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import pickle
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any, List
 
 import numpy as np
@@ -141,7 +142,7 @@ class LinearSearch(Search):
         self.db[items : items + len(embeddings)] = int_embeddings
 
     def __make_file_path(self, path):
-        return path / "index.pickle"
+        return Path(path) / "index.pickle"
 
     def save(self, path: str):
         """Serializes the index data on disk
@@ -165,7 +166,7 @@ class LinearSearch(Search):
         self.ids = data[1]
 
     def __make_config_path(self, path):
-        return path / "config.json"
+        return Path(path) / "config.json"
 
     def __save_config(self, path):
         with open(self.__make_config_path(path), "wt") as f:
