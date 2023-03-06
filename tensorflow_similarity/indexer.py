@@ -34,7 +34,7 @@ from .classification_metrics import F1Score, make_classification_metric
 from .distances import Distance
 from .evaluators import Evaluator, MemoryEvaluator
 from .search import LinearSearch, NMSLibSearch, Search, make_search
-from .stores import MemoryStore, Store
+from .stores import MemoryStore, Store, make_store
 from .types import FloatTensor, Lookup, PandasDataFrame, Tensor
 
 
@@ -381,6 +381,7 @@ class Indexer(BaseIndexer):
             "embedding_output": self.embedding_output,
             "embedding_size": self.embedding_size,
             "kv_store": self.kv_store_type,
+            "kv_store_config": self.kv_store.get_config(),
             "evaluator": self.evaluator_type,
             "search_config": self.search.get_config(),
             "stat_buffer_size": self.stat_buffer_size,
@@ -416,6 +417,7 @@ class Indexer(BaseIndexer):
         metadata = tf.keras.backend.eval(metadata)
         md = json.loads(metadata)
         search = make_search(md["search_config"])
+        kv_store = make_store(md["kv_store_config"])
         index = Indexer(
             distance=md["distance"],
             embedding_size=md["embedding_size"],

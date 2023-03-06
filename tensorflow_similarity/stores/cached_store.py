@@ -167,7 +167,7 @@ class CachedStore(Store):
         with open(self.__make_config_file_path(path), "wt") as f:
             json.dump(self.get_config(), f)
 
-    def __set_config(self, num_items, shard_size):
+    def __set_config(self, num_items, shard_size, **kw_args):
         self.num_items = num_items
         self.shard_size = shard_size
 
@@ -190,7 +190,9 @@ class CachedStore(Store):
         self.__reopen_all_shards()
 
     def get_config(self):
-        return {"shard_size": self.shard_size, "num_items": self.num_items}
+        config = {"shard_size": self.shard_size, "num_items": self.num_items}
+        base_config = super().get_config()
+        return {**base_config, **config}
 
     def load(self, path: str) -> int:
         """load index on disk

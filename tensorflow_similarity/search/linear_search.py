@@ -183,4 +183,5 @@ class LinearSearch(Search):
             "dim": self.dim,
         }
 
-        return config
+        base_config = super().get_config()
+        return {**base_config, **config}

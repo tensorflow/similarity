@@ -31,3 +31,4 @@ from .cached_store import CachedStore  # noqa
 from .memory_store import MemoryStore  # noqa
 from .redis_store import RedisStore  # noqa
 from .store import Store  # noqa
+from .utils import make_store  # noqa

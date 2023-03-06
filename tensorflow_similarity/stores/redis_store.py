@@ -137,7 +137,7 @@ class RedisStore(Store):
         with open(self.__make_config_file_path(path), "wt") as f:
             json.dump(self.get_config(), f)
 
-    def __set_config(self, host, port, db):
+    def __set_config(self, host, port, db, **kw_args):
         self.host = host
         self.port = port
         self.db = db
@@ -162,7 +162,9 @@ class RedisStore(Store):
         self.__save_config(path)
 
     def get_config(self):
-        return {"host": self.host, "port": self.port, "db": self.db, "num_items": self.get_num_items()}
+        config = {"host": self.host, "port": self.port, "db": self.db, "num_items": self.get_num_items()}
+        base_config = super().get_config()
+        return {**base_config, **config}
 
     def load(self, path: str) -> int:
         """load index on disk

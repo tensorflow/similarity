@@ -221,5 +221,5 @@ class FaissSearch(Search):
             "name": self.name,
             "canonical_name": self.__class__.__name__,
         }
-
-        return config
+        base_config = super().get_config()
+        return {**base_config, **config}
