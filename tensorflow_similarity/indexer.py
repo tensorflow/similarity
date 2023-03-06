@@ -102,7 +102,11 @@ class Indexer(BaseIndexer):
         # internal structure naming
         # FIXME support custom objects
         self.search_type = search if isinstance(search, str) else type(search).__name__
+        if isinstance(search, Search):
+            self.search = search
         self.kv_store_type = kv_store if isinstance(kv_store, str) else type(kv_store).__name__
+        if isinstance(kv_store, Store):
+            self.kv_store = kv_store
         # initialize internal structures
         self._init_structures()
 
@@ -117,9 +121,8 @@ class Indexer(BaseIndexer):
             self.search: Search = NMSLibSearch(distance=self.distance, dim=self.embedding_size)
         elif self.search_type == "linear":
             self.search = LinearSearch(distance=self.distance, dim=self.embedding_size)
-        elif isinstance(self.search_type, Search):
-            self.search = self.search_type
-        else:
+        elif not isinstance(self.search, Search):
+            # self.search should have been already initialized
             raise ValueError("You need to either supply a known search " "framework name or a Search() object")
 
         # mapper from id to record data
@@ -127,7 +130,8 @@ class Indexer(BaseIndexer):
             self.kv_store: Store = MemoryStore()
         elif isinstance(self.kv_store_type, Store):
             self.kv_store = self.kv_store_type
-        else:
+        elif not isinstance(self.kv_store, Store):
+            # self.kv_store should have been already initialized
             raise ValueError("You need to either supply a know key value " "store name or a Store() object")
 
         # stats
