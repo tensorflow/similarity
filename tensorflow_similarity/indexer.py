@@ -101,8 +101,8 @@ class Indexer(BaseIndexer):
         super().__init__(distance, embedding_output, embedding_size, evaluator, stat_buffer_size)
         # internal structure naming
         # FIXME support custom objects
-        self.search_type = search
-        self.kv_store_type = kv_store
+        self.search_type = search if isinstance(search, str) else type(search).__name__
+        self.kv_store_type = kv_store if isinstance(kv_store, str) else type(kv_store).__name__
         # initialize internal structures
         self._init_structures()
 
