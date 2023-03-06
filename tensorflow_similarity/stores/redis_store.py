@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import pickle
 from collections.abc import Sequence
+from pathlib import Path
 
 import pandas as pd
 import redis
@@ -130,7 +131,7 @@ class RedisStore(Store):
         return self.get_num_items()
 
     def __make_config_file_path(self, path):
-        return path / "config.json"
+        return Path(path) / "config.json"
 
     def __save_config(self, path):
         with open(self.__make_config_file_path(path), "wt") as f:

@@ -161,7 +161,7 @@ class CachedStore(Store):
             shutil.copy(Path(self.__get_shard_file_path(shard_no)).with_suffix(".dir"), path)
 
     def __make_config_file_path(self, path):
-        return path / "config.json"
+        return Path(path) / "config.json"
 
     def __save_config(self, path):
         with open(self.__make_config_file_path(path), "wt") as f:
