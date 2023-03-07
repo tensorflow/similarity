@@ -180,7 +180,7 @@ class FaissSearch(Search):
         if self.algo != "flat":
             # flat does not accept indexes as parameters and assumes incremental
             # indexes
-            self.index.add_with_ids(embeddings, idxs)
+            self.index.add_with_ids(embeddings, np.array(idxs))
         else:
             self.index.add(embeddings)
 

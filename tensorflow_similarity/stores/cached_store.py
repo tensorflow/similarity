@@ -31,12 +31,12 @@ from .store import Store
 class CachedStore(Store):
     """Efficient cached dataset store"""
 
-    def __init__(self, shard_size=1000000, path=".", **kw_args) -> None:
+    def __init__(self, shard_size=1000000, path=".", num_items=0, **kw_args) -> None:
         # We are using a native python cached dictionary
         # db[id] = pickle((embedding, label, data))
         self.db: list[dict[str, str]] = []
         self.shard_size = shard_size
-        self.num_items: int = 0
+        self.num_items: int = num_items
         self.path: str = path
 
     def __get_shard_file_path(self, shard_no):
@@ -110,6 +110,7 @@ class CachedStore(Store):
                 self.__add_new_shard()
             self.db[shard_no][str(idx)] = pickle.dumps((embedding, label, rec_data))
             idxs.append(idx)
+        self.num_items += len(embeddings)
 
         return idxs
 
@@ -173,7 +174,8 @@ class CachedStore(Store):
 
     def __load_config(self, path):
         with open(self.__make_config_file_path(path), "rt") as f:
-            self.__set_config(**json.load(f))
+            config = json.load(f)
+            self.__set_config(**config)
 
     def save(self, path: str, compression: bool = True) -> None:
         """Serializes index on disk.
