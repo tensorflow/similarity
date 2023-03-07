@@ -31,7 +31,7 @@ from .store import Store
 class CachedStore(Store):
     """Efficient cached dataset store"""
 
-    def __init__(self, shard_size=1000000, path=".") -> None:
+    def __init__(self, shard_size=1000000, path=".", **kw_args) -> None:
         # We are using a native python cached dictionary
         # db[id] = pickle((embedding, label, data))
         self.db: list[dict[str, str]] = []
