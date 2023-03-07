@@ -399,8 +399,8 @@ class Indexer(BaseIndexer):
 
         os.mkdir(Path(path) / "store")
         os.mkdir(Path(path) / "search")
-        self.kv_store.save(Path(path) / "store", compression=compression)
-        self.search.save(Path(path) / "search")
+        self.kv_store.save(str(Path(path) / "store"), compression=compression)
+        self.search.save(str(Path(path) / "search"))
 
     @staticmethod
     def load(path: str | Path, verbose: int = 1):
@@ -435,12 +435,12 @@ class Indexer(BaseIndexer):
         # reload the key value store
         if verbose:
             print("Loading index data")
-        index.kv_store.load(Path(path) / "store")
+        index.kv_store.load(str(Path(path) / "store"))
 
         # rebuild the index
         if verbose:
             print("Loading search index")
-        index.search.load(Path(path) / "search")
+        index.search.load(str(Path(path) / "search"))
 
         # reload calibration data if any
         index.is_calibrated = md["is_calibrated"]
