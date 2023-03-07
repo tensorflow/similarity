@@ -34,6 +34,7 @@ class FaissSearch(Search):
         nlist=1024,
         nprobe=1,
         normalize=True,
+        **kw_args,
     ):
         """Initiate FAISS indexer
 

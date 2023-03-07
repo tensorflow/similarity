@@ -29,7 +29,7 @@ from .store import Store
 class MemoryStore(Store):
     """Efficient in-memory dataset store"""
 
-    def __init__(self) -> None:
+    def __init__(self, **kw_args) -> None:
         # We are using a native python array in memory for its row speed.
         # Serialization / export relies on Arrow.
         self.labels: list[int | None] = []

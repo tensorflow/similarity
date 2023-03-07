@@ -27,13 +27,7 @@ class LinearSearch(Search):
     It implements the Search interface.
     """
 
-    def __init__(
-        self,
-        distance: Distance | str,
-        dim: int,
-        verbose: int = 0,
-        name: str | None = None,
-    ):
+    def __init__(self, distance: Distance | str, dim: int, verbose: int = 0, name: str | None = None, **kw_args):
         """Initiate Linear indexer.
 
         Args:

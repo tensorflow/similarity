@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
+from typing import Any
 
 from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 
