@@ -17,6 +17,7 @@ sub-linear search"""
 from __future__ import annotations
 
 import json
+import os
 from collections import defaultdict, deque
 from pathlib import Path
 from time import time
@@ -193,6 +194,9 @@ class Indexer(BaseIndexer):
         if label is not None:
             label = int(label)
         return label
+
+    def build_index(self, samples, **kwargss):
+        self.search.build_index(samples)
 
     def add(
         self,
@@ -393,8 +397,10 @@ class Indexer(BaseIndexer):
         metadata_fname = self.__make_metadata_fname(path)
         tf.io.write_file(metadata_fname, json.dumps(metadata))
 
-        self.kv_store.save(path, compression=compression)
-        self.search.save(path)
+        os.mkdir(Path(path) / "store")
+        os.mkdir(Path(path) / "search")
+        self.kv_store.save(Path(path) / "store", compression=compression)
+        self.search.save(Path(path) / "search")
 
     @staticmethod
     def load(path: str | Path, verbose: int = 1):
@@ -420,7 +426,7 @@ class Indexer(BaseIndexer):
             distance=md["distance"],
             embedding_size=md["embedding_size"],
             embedding_output=md["embedding_output"],
-            kv_store=md["kv_store"],
+            kv_store=kv_store,
             evaluator=md["evaluator"],
             search=search,
             stat_buffer_size=md["stat_buffer_size"],
@@ -429,12 +435,12 @@ class Indexer(BaseIndexer):
         # reload the key value store
         if verbose:
             print("Loading index data")
-        index.kv_store.load(path)
+        index.kv_store.load(Path(path) / "store")
 
         # rebuild the index
         if verbose:
             print("Loading search index")
-        index.search.load(path)
+        index.search.load(Path(path) / "search")
 
         # reload calibration data if any
         index.is_calibrated = md["is_calibrated"]
