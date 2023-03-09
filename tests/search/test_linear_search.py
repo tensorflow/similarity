@@ -17,6 +17,34 @@ def test_index_match():
     assert list(idxs) == [0, 1]
 
 
+def test_index_match_l1():
+    target = np.array([1, 1, 2], dtype="float32")
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
+
+    search_index = LinearSearch("l1", 3)
+    search_index.add(embs[0], 0)
+    search_index.add(embs[1], 1)
+
+    idxs, embs = search_index.lookup(target, k=2)
+
+    assert len(embs) == 2
+    assert list(idxs) == [1, 0]
+
+
+def test_index_match_l2():
+    target = np.array([1, 1, 2], dtype="float32")
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
+
+    search_index = LinearSearch("l2", 3)
+    search_index.add(embs[0], 0)
+    search_index.add(embs[1], 1)
+
+    idxs, embs = search_index.lookup(target, k=2)
+
+    assert len(embs) == 2
+    assert list(idxs) == [0, 1]
+
+
 def test_index_save(tmp_path):
     target = np.array([1, 1, 2], dtype="float32")
     embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
