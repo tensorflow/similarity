@@ -66,12 +66,38 @@ class LinearSearch(Search):
             k: Number of nearest neighboors embedding to lookup. Defaults to 5.
         """
 
-        normalized_query = tf.math.l2_normalize(embeddings, axis=1)
         items = len(self.ids)
-        sims = tf.matmul(normalized_query, tf.transpose(self.db[:items]))
-        similarity, id_idxs = tf.math.top_k(sims, k)
-        ids_array = np.array(self.ids)
-        return list(np.array([ids_array[x.numpy()] for x in id_idxs])), list(similarity)
+        if self.distance.name == "cosine":
+            normalized_query = tf.math.l2_normalize(embeddings, axis=1)
+            sims = tf.matmul(normalized_query, tf.transpose(self.db[:items]))
+            similarity, id_idxs = tf.math.top_k(sims, k)
+            ids_array = np.array(self.ids)
+            return list(np.array([ids_array[x.numpy()] for x in id_idxs])), list(similarity)
+        elif self.distance.name in ("euclidean", "squared_euclidean"):
+            normalized_query = tf.math.l2_normalize(embeddings, axis=1)
+            items = len(self.ids)
+            assert (
+                normalized_query.shape.as_list()[-1] == self.db.shape[-1]
+            ), "the last dimension should have the same size"
+            query_norms = tf.reduce_sum(tf.square(normalized_query), axis=1)
+            query_norms = tf.reshape(query_norms, [-1, 1])  # Only one column per row
+
+            db_norms = tf.reduce_sum(tf.square(self.db[:items]), axis=1)
+            db_norms = tf.reshape(db_norms, [-1, 1])  # Only one column per row
+
+            dists = query_norms - 2 * tf.matmul(normalized_query, tf.transpose(self.db[:items])) + db_norms
+            dists, id_idxs = tf.math.top_k(-dists, k)
+            dists = -dists
+            ids_array = np.array(self.ids)
+            return list(np.array([ids_array[x.numpy()] for x in id_idxs])), list(dists)
+        elif self.distance.name == "manhattan":
+            dists = tf.reduce_sum(tf.abs(tf.subtract(self.db[:items], tf.expand_dims(embeddings, 1))), axis=2)
+            dists, id_idxs = tf.math.top_k(-dists, k)
+            dists = -dists
+            ids_array = np.array(self.ids)
+            return list(np.array([ids_array[x.numpy()] for x in id_idxs])), list(dists)
+        else:
+            raise ValueError("Unsupported metric space")
 
     def lookup(self, embedding: FloatTensor, k: int = 5) -> tuple[list[int], list[float]]:
         """Find embedding K nearest neighboors embeddings.
@@ -80,12 +106,9 @@ class LinearSearch(Search):
             embedding: Query embedding as predicted by the model.
             k: Number of nearest neighboors embedding to lookup. Defaults to 5.
         """
-        normalized_query = tf.math.l2_normalize(np.array([embedding], dtype=np.float32), axis=1)
-        items = len(self.ids)
-        sims = tf.matmul(normalized_query, tf.transpose(self.db[:items]))
-        similarity, id_idxs = tf.math.top_k(sims, k)
-        ids_array = np.array(self.ids)
-        return list(np.array(ids_array[id_idxs[0].numpy()])), list(similarity[0])
+        embeddings: FloatTensor = tf.convert_to_tensor([embedding], dtype=np.float32)
+        idxs, dists = self.batch_lookup(embeddings, k=k)
+        return idxs[0], dists[0]
 
     def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, **kwargs):
         """Add a single embedding to the search index.
