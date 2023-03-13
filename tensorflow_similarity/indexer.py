@@ -102,7 +102,7 @@ class Indexer(BaseIndexer):
         super().__init__(distance, embedding_output, embedding_size, evaluator, stat_buffer_size)
         # internal structure naming
         # FIXME support custom objects
-        self.search_type = search if isinstance(search, str) else type(search).__name__
+        self.search_type = search if isinstance(search, str) else type(search).name
         if isinstance(search, Search):
             self.search: Search = search
         self.kv_store_type = kv_store if isinstance(kv_store, str) else type(kv_store).__name__
@@ -122,7 +122,7 @@ class Indexer(BaseIndexer):
             self.search = NMSLibSearch(distance=self.distance, dim=self.embedding_size)
         elif self.search_type == "linear":
             self.search = LinearSearch(distance=self.distance, dim=self.embedding_size)
-        elif not isinstance(self.search, Search):
+        elif not hasattr(self, "search") or not isinstance(self.search, Search):
             # self.search should have been already initialized
             raise ValueError("You need to either supply a known search " "framework name or a Search() object")
 
@@ -131,14 +131,9 @@ class Indexer(BaseIndexer):
             self.kv_store = MemoryStore()
         elif isinstance(self.kv_store_type, Store):
             self.kv_store = self.kv_store_type
-        elif not isinstance(self.kv_store, Store):
+        elif not hasattr(self, "search") or not isinstance(self.kv_store, Store):
             # self.kv_store should have been already initialized
             raise ValueError("You need to either supply a know key value " "store name or a Store() object")
-
-        if not self.search:
-            raise ValueError("search not initialized")
-        if not self.kv_store:
-            raise ValueError("kv_store not initialized")
 
         # stats
         self._stats: DefaultDict[str, int] = defaultdict(int)

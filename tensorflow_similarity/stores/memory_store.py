@@ -207,6 +207,3 @@ class MemoryStore(Store):
         # forcing type from Any to PandasFrame
         df: PandasDataFrame = pd.DataFrame.from_dict(data)
         return df
-
-    def get_config(self):
-        return super().get_config()
