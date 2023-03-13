@@ -31,7 +31,7 @@ from .store import Store
 class CachedStore(Store):
     """Efficient cached dataset store"""
 
-    def __init__(self, shard_size=1000000, path=".", num_items=0, **kw_args) -> None:
+    def __init__(self, shard_size: int = 1000000, path: str = ".", num_items: int = 0, **kw_args) -> None:
         # We are using a native python cached dictionary
         # db[id] = pickle((embedding, label, data))
         self.db: list[dict[str, str]] = []
@@ -53,6 +53,9 @@ class CachedStore(Store):
         for shard_no in range(len(self.db)):
             self.db[shard_no] = self.__make_new_shard(shard_no)
 
+    def __get_shard_no(self, idx: int) -> int:
+        return idx // self.shard_size
+
     def add(
         self,
         embedding: FloatTensor,
@@ -72,7 +75,7 @@ class CachedStore(Store):
             Associated record id.
         """
         idx = self.num_items
-        shard_no = idx // self.shard_size
+        shard_no = self.__get_shard_no(idx)
         if len(self.db) <= shard_no:
             self.__add_new_shard()
         self.db[shard_no][str(idx)] = pickle.dumps((embedding, label, data))
@@ -105,7 +108,7 @@ class CachedStore(Store):
             idx = i + self.num_items
             label = None if labels is None else labels[i]
             rec_data = None if data is None else data[i]
-            shard_no = idx // self.shard_size
+            shard_no = self.__get_shard_no(idx)
             if len(self.db) <= shard_no:
                 self.__add_new_shard()
             self.db[shard_no][str(idx)] = pickle.dumps((embedding, label, rec_data))
@@ -124,7 +127,7 @@ class CachedStore(Store):
             record associated with the requested id.
         """
 
-        shard_no = idx // self.shard_size
+        shard_no = self.__get_shard_no(idx)
         embedding, label, data = pickle.loads(self.db[shard_no][str(idx)])
         return embedding, label, data
 

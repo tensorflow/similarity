@@ -23,14 +23,20 @@ from .utils import unpack_lookup_distances, unpack_lookup_labels
 
 
 class BaseIndexer(ABC):
-    def __init__(self, distance, embedding_output, embedding_size, evaluator, stat_buffer_size):
+    def __init__(
+        self,
+        distance: Union[Distance, str],
+        embedding_output: int,
+        embedding_size: int,
+        evaluator: Union[Evaluator, str],
+        stat_buffer_size: int,
+    ) -> None:
         distance = distance_canonicalizer(distance)
         self.distance = distance  # needed for save()/load()
         self.embedding_output = embedding_output
         self.embedding_size = embedding_size
 
         # internal structure naming
-        # FIXME support custom objects
         self.evaluator_type = evaluator
 
         # code used to evaluate indexer performance
@@ -157,11 +163,11 @@ class BaseIndexer(ABC):
         query_labels = tf.convert_to_tensor(np.array(target_labels))
 
         # TODO(ovallis): The float type should be derived from the model.
-        lookup_distances = unpack_lookup_distances(lookups, dtype="float32")
+        lookup_distances = unpack_lookup_distances(lookups, dtype=tf.keras.backend.floatx())
         lookup_labels = unpack_lookup_labels(lookups, dtype=query_labels.dtype)
         thresholds: FloatTensor = tf.cast(
             tf.convert_to_tensor(distance_thresholds),
-            dtype=lookup_distances.dtype,
+            dtype=tf.keras.backend.floatx(),
         )
 
         results: dict[str, np.ndarray] = self.evaluator.evaluate_classification(
