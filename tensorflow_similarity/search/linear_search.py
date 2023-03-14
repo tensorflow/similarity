@@ -49,7 +49,7 @@ class LinearSearch(Search):
                 f"|  - name:           {self.name}",
             ]
             cprint("\n".join(t_msg) + "\n", "green")
-        self.db = np.empty((INITIAL_DB_SIZE, dim), dtype=np.float32)
+        self.db: List[FloatTensor] = []
         self.ids: List[int] = []
 
     def is_built(self):
@@ -73,7 +73,8 @@ class LinearSearch(Search):
             query = tf.math.l2_normalize(embeddings, axis=1)
         else:
             query = embeddings
-        sims = self.distance(query, self.db[:items])
+        db_tensor = tf.convert_to_tensor(self.db)
+        sims = self.distance(query, db_tensor)
         similarity, id_idxs = tf.math.top_k(sims, k)
         id_idxs = id_idxs.numpy()
         ids_array = np.array(self.ids)
@@ -90,7 +91,7 @@ class LinearSearch(Search):
         idxs, dists = self.batch_lookup(embeddings, k=k, normalize=normalize)
         return idxs[0], dists[0]
 
-    def add(self, embedding: FloatTensor, idx: int, normalize: bool = True, verbose: int = 1, **kwargs):
+    def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, normalize: bool = True, **kwargs):
         """Add a single embedding to the search index.
 
         Args:
@@ -100,14 +101,8 @@ class LinearSearch(Search):
         """
         if normalize:
             embedding = tf.math.l2_normalize(np.array([embedding], dtype=tf.keras.backend.floatx()), axis=1)
-        items = len(self.ids)
-        if items + 1 > self.db.shape[0]:
-            # it's full
-            new_db = np.empty((len(self.ids) + DB_SIZE_STEPS, self.dim), dtype=np.float32)
-            new_db[:items] = self.db
-            self.db = new_db
         self.ids.append(idx)
-        self.db[items] = embedding
+        self.db.append(embedding)
 
     def batch_add(
         self,
@@ -128,17 +123,8 @@ class LinearSearch(Search):
         """
         if normalize:
             embeddings = tf.math.l2_normalize(embeddings, axis=1)
-        items = len(self.ids)
-        if items + len(embeddings) > self.db.shape[0]:
-            # it's full
-            new_db = np.empty(
-                (((items + len(embeddings) + DB_SIZE_STEPS) // DB_SIZE_STEPS) * DB_SIZE_STEPS, self.dim),
-                dtype=np.float32,
-            )
-            new_db[:items] = self.db
-            self.db = new_db
         self.ids.extend(idxs)
-        self.db[items : items + len(embeddings)] = embeddings
+        self.db.extend(embeddings)
 
     def __make_file_path(self, path):
         return Path(path) / "index.pickle"
