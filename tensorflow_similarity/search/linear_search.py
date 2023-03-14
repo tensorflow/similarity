@@ -58,7 +58,9 @@ class LinearSearch(Search):
     def needs_building(self):
         return False
 
-    def batch_lookup(self, embeddings: FloatTensor, k: int = 5) -> tuple[list[list[int]], list[list[float]]]:
+    def batch_lookup(
+        self, embeddings: FloatTensor, k: int = 5, normalize: bool = True
+    ) -> tuple[list[list[int]], list[list[float]]]:
         """Find embeddings K nearest neighboors embeddings.
 
         Args:
@@ -67,39 +69,17 @@ class LinearSearch(Search):
         """
 
         items = len(self.ids)
-        if self.distance.name == "cosine":
-            normalized_query = tf.math.l2_normalize(embeddings, axis=1)
-            sims = tf.matmul(normalized_query, tf.transpose(self.db[:items]))
-            similarity, id_idxs = tf.math.top_k(sims, k)
-            ids_array = np.array(self.ids)
-            return list(np.array([ids_array[x.numpy()] for x in id_idxs])), list(similarity)
-        elif self.distance.name in ("euclidean", "squared_euclidean"):
-            normalized_query = tf.math.l2_normalize(embeddings, axis=1)
-            items = len(self.ids)
-            assert (
-                normalized_query.shape.as_list()[-1] == self.db.shape[-1]
-            ), "the last dimension should have the same size"
-            query_norms = tf.reduce_sum(tf.square(normalized_query), axis=1)
-            query_norms = tf.reshape(query_norms, [-1, 1])  # Only one column per row
-
-            db_norms = tf.reduce_sum(tf.square(self.db[:items]), axis=1)
-            db_norms = tf.reshape(db_norms, [-1, 1])  # Only one column per row
-
-            dists = query_norms - 2 * tf.matmul(normalized_query, tf.transpose(self.db[:items])) + db_norms
-            dists, id_idxs = tf.math.top_k(-dists, k)
-            dists = -dists
-            ids_array = np.array(self.ids)
-            return list(np.array([ids_array[x.numpy()] for x in id_idxs])), list(dists)
-        elif self.distance.name == "manhattan":
-            dists = tf.reduce_sum(tf.abs(tf.subtract(self.db[:items], tf.expand_dims(embeddings, 1))), axis=2)
-            dists, id_idxs = tf.math.top_k(-dists, k)
-            dists = -dists
-            ids_array = np.array(self.ids)
-            return list(np.array([ids_array[x.numpy()] for x in id_idxs])), list(dists)
+        if normalize:
+            query = tf.math.l2_normalize(embeddings, axis=1)
         else:
-            raise ValueError("Unsupported metric space")
+            query = embeddings
+        sims = self.distance(query, self.db[:items])
+        similarity, id_idxs = tf.math.top_k(sims, k)
+        id_idxs = id_idxs.numpy()
+        ids_array = np.array(self.ids)
+        return list(np.array([ids_array[x] for x in id_idxs])), list(similarity)
 
-    def lookup(self, embedding: FloatTensor, k: int = 5) -> tuple[list[int], list[float]]:
+    def lookup(self, embedding: FloatTensor, k: int = 5, normalize: bool = True) -> tuple[list[int], list[float]]:
         """Find embedding K nearest neighboors embeddings.
 
         Args:
@@ -107,10 +87,10 @@ class LinearSearch(Search):
             k: Number of nearest neighboors embedding to lookup. Defaults to 5.
         """
         embeddings: FloatTensor = tf.convert_to_tensor([embedding], dtype=np.float32)
-        idxs, dists = self.batch_lookup(embeddings, k=k)
+        idxs, dists = self.batch_lookup(embeddings, k=k, normalize=normalize)
         return idxs[0], dists[0]
 
-    def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, **kwargs):
+    def add(self, embedding: FloatTensor, idx: int, normalize: bool = True, verbose: int = 1, **kwargs):
         """Add a single embedding to the search index.
 
         Args:
@@ -118,7 +98,8 @@ class LinearSearch(Search):
             idx: Embedding id as in the index table. Returned with the embedding to
               allow to lookup the data associated with a given embedding.
         """
-        int_embedding = tf.math.l2_normalize(np.array([embedding], dtype=np.float32), axis=1)
+        if normalize:
+            embedding = tf.math.l2_normalize(np.array([embedding], dtype=tf.keras.backend.floatx()), axis=1)
         items = len(self.ids)
         if items + 1 > self.db.shape[0]:
             # it's full
@@ -126,7 +107,7 @@ class LinearSearch(Search):
             new_db[:items] = self.db
             self.db = new_db
         self.ids.append(idx)
-        self.db[items] = int_embedding
+        self.db[items] = embedding
 
     def batch_add(
         self,
@@ -145,7 +126,8 @@ class LinearSearch(Search):
               embeddings.
             verbose: Be verbose. Defaults to 1.
         """
-        int_embeddings = tf.math.l2_normalize(embeddings, axis=1)
+        if normalize:
+            embeddings = tf.math.l2_normalize(embeddings, axis=1)
         items = len(self.ids)
         if items + len(embeddings) > self.db.shape[0]:
             # it's full
@@ -156,7 +138,7 @@ class LinearSearch(Search):
             new_db[:items] = self.db
             self.db = new_db
         self.ids.extend(idxs)
-        self.db[items : items + len(embeddings)] = int_embeddings
+        self.db[items : items + len(embeddings)] = embeddings
 
     def __make_file_path(self, path):
         return Path(path) / "index.pickle"

@@ -8,10 +8,10 @@ def test_index_match():
     embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
 
     search_index = LinearSearch("cosine", 3)
-    search_index.add(embs[0], 0)
-    search_index.add(embs[1], 1)
+    search_index.add(embs[0], 0, normalize=False)
+    search_index.add(embs[1], 1, normalize=False)
 
-    idxs, embs = search_index.lookup(target, k=2)
+    idxs, embs = search_index.lookup(target, k=2, normalize=False)
 
     assert len(embs) == 2
     assert list(idxs) == [0, 1]
@@ -36,13 +36,13 @@ def test_index_match_l2():
     embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
 
     search_index = LinearSearch("l2", 3)
-    search_index.add(embs[0], 0)
-    search_index.add(embs[1], 1)
+    search_index.add(embs[0], 0, normalize=False)
+    search_index.add(embs[1], 1, normalize=False)
 
-    idxs, embs = search_index.lookup(target, k=2)
+    idxs, embs = search_index.lookup(target, k=2, normalize=False)
 
     assert len(embs) == 2
-    assert list(idxs) == [0, 1]
+    assert list(idxs) == [1, 0]
 
 
 def test_index_save(tmp_path):
@@ -51,10 +51,10 @@ def test_index_save(tmp_path):
     k = 2
 
     search_index = LinearSearch("cosine", 3)
-    search_index.add(embs[0], 0)
-    search_index.add(embs[1], 1)
+    search_index.add(embs[0], 0, normalize=False)
+    search_index.add(embs[1], 1, normalize=False)
 
-    idxs, embs = search_index.lookup(target, k=k)
+    idxs, embs = search_index.lookup(target, k=k, normalize=False)
 
     assert len(embs) == k
     assert list(idxs) == [0, 1]
@@ -64,16 +64,16 @@ def test_index_save(tmp_path):
     search_index2 = LinearSearch("cosine", 3)
     search_index2.load(tmp_path)
 
-    idxs2, embs2 = search_index.lookup(target, k=k)
+    idxs2, embs2 = search_index.lookup(target, k=k, normalize=False)
     assert len(embs2) == k
     assert list(idxs2) == [0, 1]
 
     # add more
     # if the dtype is not passed we get an incompatible type error
-    search_index2.add(np.array([3.0, 3.0, 3.0], dtype="float32"), 3)
-    idxs3, embs3 = search_index2.lookup(target, k=3)
+    search_index2.add(np.array([3.0, 3.0, 3.0], dtype="float32"), 3, normalize=False)
+    idxs3, embs3 = search_index2.lookup(target, k=3, normalize=False)
     assert len(embs3) == 3
-    assert list(idxs3) == [0, 3, 1]
+    assert list(idxs3) == [0, 1, 3]
 
 
 def test_batch_vs_single(tmp_path):
