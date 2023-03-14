@@ -66,7 +66,7 @@ class Indexer(BaseIndexer):
         search: Union[Search, str] = "nmslib",
         kv_store: Union[Store, str] = "memory",
         evaluator: Union[Evaluator, str] = "memory",
-        embedding_output: int = None,
+        embedding_output: Optional[int] = None,
         stat_buffer_size: int = 1000,
     ) -> None:
         """Index embeddings to make them searchable via KNN

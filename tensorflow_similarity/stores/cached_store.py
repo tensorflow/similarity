@@ -34,7 +34,7 @@ class CachedStore(Store):
     def __init__(self, shard_size: int = 1000000, path: str = ".", num_items: int = 0, **kw_args) -> None:
         # We are using a native python cached dictionary
         # db[id] = pickle((embedding, label, data))
-        self.db: list[dict[str, str]] = []
+        self.db: list[dict[str, bytes]] = []
         self.shard_size = shard_size
         self.num_items: int = num_items
         self.path: str = path

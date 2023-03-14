@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Mapping, MutableMapping, Sequence
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import tensorflow as tf
@@ -27,7 +27,7 @@ class BaseIndexer(ABC):
     def __init__(
         self,
         distance: Union[Distance, str],
-        embedding_output: int,
+        embedding_output: Optional[int],
         embedding_size: int,
         evaluator: Union[Evaluator, str],
         stat_buffer_size: int,
@@ -44,7 +44,7 @@ class BaseIndexer(ABC):
         if self.evaluator_type == "memory":
             self.evaluator: Evaluator = MemoryEvaluator()
         elif isinstance(self.evaluator_type, Evaluator):
-            self.evaluator: Evaluator = self.evaluator_type
+            self.evaluator = self.evaluator_type
         else:
             raise ValueError("You need to either supply a know evaluator name " "or an Evaluator() object")
 
