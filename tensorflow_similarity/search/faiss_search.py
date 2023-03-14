@@ -96,27 +96,25 @@ class FaissSearch(Search):
             if distance == "cosine":
                 # this is exact match using cosine/dot-product Distance
                 self.index = faiss.IndexFlatIP(dim)
-            else:
+            elif distance == "l2":
                 # this is exact match using L2 distance
                 self.index = faiss.IndexFlatL2(dim)
+            else:
+                raise ValueError(f"distance {distance} not supported")
 
     def is_built(self):
-        return self.built
+        return self.algo == "flat" or self.index.is_trained
 
-    def needs_building(self):
-        if self.algo == "flat":
-            return False
-        else:
-            return not self.index.is_trained
-
-    def build_index(self, samples, **kwargss):
+    def build_index(self, samples, normalize=True, **kwargss):
         if self.algo == "ivfpq":
-            if self.normalize:
+            if normalize:
                 faiss.normalize_L2(samples)
             self.index.train(samples)  # we must train the index to cluster into cells
             self.built = True
 
-    def batch_lookup(self, embeddings: FloatTensor, k: int = 5) -> tuple[list[list[int]], list[list[float]]]:
+    def batch_lookup(
+        self, embeddings: FloatTensor, k: int = 5, normalize: bool = True
+    ) -> tuple[list[list[int]], list[list[float]]]:
         """Find embeddings K nearest neighboors embeddings.
 
         Args:
@@ -124,12 +122,12 @@ class FaissSearch(Search):
             k: Number of nearest neighboors embedding to lookup. Defaults to 5.
         """
 
-        if self.normalize:
+        if normalize:
             faiss.normalize_L2(embeddings)
         sims, indices = self.index.search(embeddings, k)
         return indices, sims
 
-    def lookup(self, embedding: FloatTensor, k: int = 5) -> tuple[list[int], list[float]]:
+    def lookup(self, embedding: FloatTensor, k: int = 5, normalize: bool = True) -> tuple[list[int], list[float]]:
         """Find embedding K nearest neighboors embeddings.
 
         Args:
@@ -137,12 +135,12 @@ class FaissSearch(Search):
             k: Number of nearest neighboors embedding to lookup. Defaults to 5.
         """
         int_embedding = np.array([embedding], dtype=np.float32)
-        if self.normalize:
+        if normalize:
             faiss.normalize_L2(int_embedding)
         sims, indices = self.index.search(int_embedding, k)
         return indices[0], sims[0]
 
-    def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, **kwargs):
+    def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, normalize: bool = True, **kwargs):
         """Add a single embedding to the search index.
 
         Args:
@@ -151,7 +149,7 @@ class FaissSearch(Search):
               allow to lookup the data associated with a given embedding.
         """
         int_embedding = np.array([embedding], dtype=np.float32)
-        if self.normalize:
+        if normalize:
             faiss.normalize_L2(int_embedding)
         if self.algo != "flat":
             self.index.add_with_ids(int_embedding)
@@ -175,7 +173,7 @@ class FaissSearch(Search):
               embeddings.
             verbose: Be verbose. Defaults to 1.
         """
-        if self.normalize:
+        if normalize:
             faiss.normalize_L2(embeddings)
         if self.algo != "flat":
             # flat does not accept indexes as parameters and assumes incremental

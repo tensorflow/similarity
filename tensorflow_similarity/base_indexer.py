@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Mapping, MutableMapping, Sequence
+from typing import Union
 
 import numpy as np
 import tensorflow as tf
