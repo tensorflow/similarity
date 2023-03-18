@@ -137,7 +137,12 @@ class Indexer:
         if self.search_type == "nmslib":
             self.search: Search = NMSLibSearch(distance=self.distance, dim=self.embedding_size)
         elif isinstance(self.search_type, Search):
-            self.search = self.search_type
+            # TODO: Temporary fix to support resetting custom objects. Currently only supports NMSLibSearch.
+            #       Search class should provide a reset method instead.
+            if type(self.search_type).__name__ != "NMSLibSearch":
+                raise ValueError("Currently NMSLibSearch is the only supported Search object.")
+            search = make_search(self.search_type.get_config())
+            self.search = search
         else:
             raise ValueError("You need to either supply a known search " "framework name or a Search() object")
 
@@ -145,6 +150,7 @@ class Indexer:
         if self.kv_store_type == "memory":
             self.kv_store: Store = MemoryStore()
         elif isinstance(self.kv_store_type, Store):
+            print("WARNING: custom store objects are not currently supported and will not be reset.")
             self.kv_store = self.kv_store_type
         else:
             raise ValueError("You need to either supply a know key value " "store name or a Store() object")
