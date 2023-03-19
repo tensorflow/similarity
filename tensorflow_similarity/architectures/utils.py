@@ -1,7 +1,22 @@
+# Copyright 2021 The TensorFlow Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+from __future__ import annotations
+
 import tensorflow as tf
 
 
-def convert_sync_batchnorm(model):
+def convert_sync_batchnorm(model: tf.keras.Model) -> tf.keras.Model:
     """Replace BatchNormalization layers to SyncBatchNormalization in place.
     WARNINGS:
     * This function is tested only with efficientnet and resnet
@@ -21,7 +36,8 @@ def convert_sync_batchnorm(model):
             layer = tf.keras.layers.experimental.SyncBatchNormalization(**layer.get_config())
 
         if "truediv" in layer.name:
-            # efficeientnet edge case https://github.com/keras-team/keras/blob/v2.9.0/keras/applications/efficientnet.py#L334
+            # efficeientnet edge case
+            # https://github.com/keras-team/keras/blob/v2.9.0/keras/applications/efficientnet.py#L334
             x = layer(x, layer.inbound_nodes[0]._flat_arguments[1])
         else:
             x = layer(x)

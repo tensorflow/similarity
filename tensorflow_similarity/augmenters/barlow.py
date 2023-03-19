@@ -1,6 +1,22 @@
+# Copyright 2020 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+from __future__ import annotations
+
 import os
 from functools import partial
-from typing import Any, List, Optional
+from typing import Any
 
 import tensorflow as tf
 
@@ -87,7 +103,7 @@ class BarlowAugmenter(Augmenter):
         solarize_pixel_min=0,
         solarize_pixel_max=255,
         solarize_thresh=10,
-        num_cpu: Optional[int] = os.cpu_count(),
+        num_cpu: int | None = os.cpu_count(),
     ):
         super().__init__()
         self.num_cpu = num_cpu
@@ -115,7 +131,7 @@ class BarlowAugmenter(Augmenter):
         y: Any = None,
         num_augmentations_per_example: int = 2,
         is_warmup: bool = True,
-    ) -> List[Any]:
+    ) -> list[Any]:
 
         with tf.device("/cpu:0"):
             if y is None:
@@ -161,5 +177,5 @@ class BarlowAugmenter(Augmenter):
         y: Any = None,
         num_augmentations_per_example: int = 2,
         is_warmup: bool = True,
-    ) -> List[Any]:
+    ) -> list[Any]:
         return list(self.augment(x, y))

@@ -1,4 +1,17 @@
-from typing import Tuple
+# Copyright 2021 The TensorFlow Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+from __future__ import annotations
 
 import tensorflow as tf
 
@@ -13,7 +26,7 @@ def _compute_crop_shape(
     image_width: int,
     aspect_ratio: float,
     crop_proportion: float,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Compute aspect ratio-preserving shape for central crop.
 
     The resulting shape retains `crop_proportion` along one side and a
@@ -87,10 +100,10 @@ def distorted_bounding_box_crop(
     image: Tensor,
     bbox: Tensor,
     min_object_covered: float = 0.1,
-    aspect_ratio_range: Tuple[float, float] = (0.75, 1.33),
-    area_range: Tuple[float, float] = (0.05, 1.0),
+    aspect_ratio_range: tuple[float, float] = (0.75, 1.33),
+    area_range: tuple[float, float] = (0.05, 1.0),
     max_attempts: int = 100,
-    scope: bool = None,
+    scope: bool | None = None,
 ) -> Tensor:
     """Generates cropped_image using one of the bboxes randomly distorted.
 
@@ -141,7 +154,7 @@ def crop_and_resize(
     image: Tensor,
     height: int,
     width: int,
-    area_range: Tuple[float, float] = (0.08, 1.0),
+    area_range: tuple[float, float] = (0.08, 1.0),
 ) -> Tensor:
     """Make a random crop and resize it to height `height` and width `width`.
 

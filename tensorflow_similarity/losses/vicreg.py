@@ -15,7 +15,10 @@
     VICReg: Variance-Invariance-Covariance Regularization for Self-Supervised Learning
     https://arxiv.org/abs/2105.04906
 """
-from typing import Any, Callable, Dict, Optional
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any
 
 import tensorflow as tf
 
@@ -36,8 +39,8 @@ class VicReg(tf.keras.losses.Loss):
         mu: float = 25,
         nu: float = 1,
         reduction: Callable = tf.keras.losses.Reduction.NONE,
-        name: Optional[str] = None,
-        **kwargs
+        name: str | None = None,
+        **kwargs,
     ):
         super().__init__(reduction=reduction, name=name, **kwargs)
         self.lambda_ = lambda_
@@ -83,7 +86,7 @@ class VicReg(tf.keras.losses.Loss):
 
         return loss
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         config = {
             "std_const": self.std_const,
             "lambda_": self.lambda_,
@@ -103,14 +106,14 @@ class VicReg(tf.keras.losses.Loss):
     def cov_loss_each(self, z, batch_size):
         # cross-correlation matrix axa
         c = tf.matmul(z, z, transpose_a=True)
-        c = c / tf.cast(batch_size - 1, dtype="float32")
+        c = c / tf.cast(batch_size - 1, dtype=c.dtype)
 
         num_features = tf.shape(c)[0]
 
         off_diag_c = self.off_diagonal(c)
         off_diag_c = tf.math.pow(off_diag_c, 2)
 
-        off_diag_c = tf.math.reduce_sum(off_diag_c) / tf.cast(num_features, tf.float32)
+        off_diag_c = tf.math.reduce_sum(off_diag_c) / tf.cast(num_features, dtype=c.dtype)
 
         return off_diag_c
 

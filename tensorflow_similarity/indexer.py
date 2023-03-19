@@ -14,22 +14,13 @@
 
 """Index the embeddings infered by the model to allow distance based
 sub-linear search"""
+from __future__ import annotations
 
 import json
 from collections import defaultdict, deque
+from collections.abc import Mapping, MutableMapping, Sequence
 from pathlib import Path
 from time import time
-from typing import (
-    DefaultDict,
-    Deque,
-    Dict,
-    List,
-    Mapping,
-    MutableMapping,
-    Optional,
-    Sequence,
-    Union,
-)
 
 import numpy as np
 import tensorflow as tf
@@ -47,7 +38,7 @@ from .distances import Distance, distance_canonicalizer
 from .evaluators import Evaluator, MemoryEvaluator
 from .matchers import ClassificationMatch, make_classification_matcher
 from .retrieval_metrics import RetrievalMetric
-from .search import NMSLibSearch, Search
+from .search import NMSLibSearch, Search, make_search
 from .stores import MemoryStore, Store
 from .types import CalibrationResults, FloatTensor, Lookup, PandasDataFrame, Tensor
 from .utils import unpack_lookup_distances, unpack_lookup_labels
@@ -76,11 +67,11 @@ class Indexer:
     def __init__(
         self,
         embedding_size: int,
-        distance: Union[Distance, str] = "cosine",
-        search: Union[Search, str] = "nmslib",
-        kv_store: Union[Store, str] = "memory",
-        evaluator: Union[Evaluator, str] = "memory",
-        embedding_output: int = None,
+        distance: Distance | str = "cosine",
+        search: Search | str = "nmslib",
+        kv_store: Store | str = "memory",
+        evaluator: Evaluator | str = "memory",
+        embedding_output: int | None = None,
         stat_buffer_size: int = 1000,
     ) -> None:
         """Index embeddings to make them searchable via KNN
@@ -130,7 +121,7 @@ class Indexer:
         # calibration
         self.is_calibrated = False
         self.calibration_metric: ClassificationMetric = F1Score()
-        self.cutpoints: Mapping[str, Mapping[str, Union[float, str]]] = {}
+        self.cutpoints: Mapping[str, Mapping[str, float | str]] = {}
         self.calibration_thresholds: Mapping[str, np.ndarray] = {}
 
         # initialize internal structures
@@ -144,9 +135,14 @@ class Indexer:
         "(re)initialize internal storage structure"
 
         if self.search_type == "nmslib":
-            self.search: Search = NMSLibSearch(distance=self.distance, dims=self.embedding_size)
+            self.search: Search = NMSLibSearch(distance=self.distance, dim=self.embedding_size)
         elif isinstance(self.search_type, Search):
-            self.search = self.search_type
+            # TODO: Temporary fix to support resetting custom objects. Currently only supports NMSLibSearch.
+            #       Search class should provide a reset method instead.
+            if type(self.search_type).__name__ != "NMSLibSearch":
+                raise ValueError("Currently NMSLibSearch is the only supported Search object.")
+            search = make_search(self.search_type.get_config())
+            self.search = search
         else:
             raise ValueError("You need to either supply a known search " "framework name or a Search() object")
 
@@ -154,6 +150,7 @@ class Indexer:
         if self.kv_store_type == "memory":
             self.kv_store: Store = MemoryStore()
         elif isinstance(self.kv_store_type, Store):
+            print("WARNING: custom store objects are not currently supported and will not be reset.")
             self.kv_store = self.kv_store_type
         else:
             raise ValueError("You need to either supply a know key value " "store name or a Store() object")
@@ -167,8 +164,8 @@ class Indexer:
             raise ValueError("You need to either supply a know evaluator name " "or an Evaluator() object")
 
         # stats
-        self._stats: DefaultDict[str, int] = defaultdict(int)
-        self._lookup_timings_buffer: Deque = deque([], maxlen=self.stat_buffer_size)
+        self._stats: defaultdict[str, int] = defaultdict(int)
+        self._lookup_timings_buffer: deque[float] = deque([], maxlen=self.stat_buffer_size)
 
         # calibration data
         self.is_calibrated = False
@@ -216,7 +213,7 @@ class Indexer:
             embeddings = predictions
         return embeddings
 
-    def _cast_label(self, label: Optional[int]) -> Optional[int]:
+    def _cast_label(self, label: int | None) -> int | None:
         if label is not None:
             label = int(label)
         return label
@@ -224,7 +221,7 @@ class Indexer:
     def add(
         self,
         prediction: FloatTensor,
-        label: Optional[int] = None,
+        label: int | None = None,
         data: Tensor = None,
         build: bool = True,
         verbose: int = 1,
@@ -261,8 +258,8 @@ class Indexer:
     def batch_add(
         self,
         predictions: FloatTensor,
-        labels: Optional[Sequence[int]] = None,
-        data: Optional[Tensor] = None,
+        labels: Sequence[int] | None = None,
+        data: Tensor | None = None,
         build: bool = True,
         verbose: int = 1,
     ):
@@ -292,7 +289,7 @@ class Indexer:
         idxs = self.kv_store.batch_add(embeddings, labels, data)
         self.search.batch_add(embeddings, idxs, build=build, verbose=verbose)
 
-    def single_lookup(self, prediction: FloatTensor, k: int = 5) -> List[Lookup]:
+    def single_lookup(self, prediction: FloatTensor, k: int = 5) -> list[Lookup]:
         """Find the k closest matches of a given embedding
 
         Args:
@@ -302,7 +299,7 @@ class Indexer:
             k: Number of nearest neighbors to lookup. Defaults to 5.
         Returns
             list of the k nearest neighbors info:
-            List[Lookup]
+            list[Lookup]
         """
 
         embedding = self._get_embedding(prediction)
@@ -327,7 +324,7 @@ class Indexer:
         self._stats["num_lookups"] += 1
         return lookups
 
-    def batch_lookup(self, predictions: FloatTensor, k: int = 5, verbose: int = 1) -> List[List[Lookup]]:
+    def batch_lookup(self, predictions: FloatTensor, k: int = 5, verbose: int = 1) -> list[list[Lookup]]:
 
         """Find the k closest matches for a set of embeddings
 
@@ -341,7 +338,7 @@ class Indexer:
 
         Returns
             list of list of k nearest neighbors:
-            List[List[Lookup]]
+            list[list[Lookup]]
         """
 
         embeddings = self._get_embeddings(predictions)
@@ -396,7 +393,7 @@ class Indexer:
         target_labels: Sequence[int],
         retrieval_metrics: Sequence[RetrievalMetric],
         verbose: int = 1,
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """Evaluate the quality of the index against a test dataset.
 
         Args:
@@ -406,7 +403,7 @@ class Indexer:
             target_labels: Sequence of the expected labels associated with the
             embedded queries.
 
-            retrieval_metrics: List of
+            retrieval_metrics: list of
             [RetrievalMetric()](retrieval_metrics/overview.md) to compute.
 
             verbose (int, optional): Display results if set to 1 otherwise
@@ -430,6 +427,10 @@ class Indexer:
             if m.k > k:
                 k = m.k
 
+        # Add one more K to handle the case where we drop the closest lookup.
+        # This ensures that we always have enough lookups in the result set.
+        k += 1
+
         # Find NN
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
@@ -444,12 +445,12 @@ class Indexer:
         self,
         predictions: FloatTensor,
         target_labels: Sequence[int],
-        distance_thresholds: Union[Sequence[float], FloatTensor],
-        metrics: Sequence[Union[str, ClassificationMetric]] = ["f1"],
-        matcher: Union[str, ClassificationMatch] = "match_nearest",
+        distance_thresholds: Sequence[float] | FloatTensor,
+        metrics: Sequence[str | ClassificationMetric] = ["f1"],
+        matcher: str | ClassificationMatch = "match_nearest",
         k: int = 1,
         verbose: int = 1,
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """Evaluate the classification performance.
 
         Compute the classification metrics given a set of queries, lookups, and
@@ -480,20 +481,19 @@ class Indexer:
             A Mapping from metric name to the list of values computed for each
             distance threshold.
         """
-        combined_metrics: List[ClassificationMetric] = [make_classification_metric(m) for m in metrics]
+        combined_metrics: list[ClassificationMetric] = [make_classification_metric(m) for m in metrics]
 
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
         # we also convert to np.ndarray first to avoid a slow down if
-        # convert_to_tensor is called on a List.
+        # convert_to_tensor is called on a list.
         query_labels = tf.convert_to_tensor(np.array(target_labels))
 
-        # TODO(ovallis): The float type should be derived from the model.
-        lookup_distances = unpack_lookup_distances(lookups, dtype="float32")
+        lookup_distances = unpack_lookup_distances(lookups, dtype=tf.keras.backend.floatx())
         lookup_labels = unpack_lookup_labels(lookups, dtype=query_labels.dtype)
         thresholds: FloatTensor = tf.cast(
             tf.convert_to_tensor(distance_thresholds),
-            dtype=lookup_distances.dtype,
+            dtype=tf.keras.backend.floatx(),
         )
 
         results = self.evaluator.evaluate_classification(
@@ -513,10 +513,10 @@ class Indexer:
         predictions: FloatTensor,
         target_labels: Sequence[int],
         thresholds_targets: MutableMapping[str, float],
-        calibration_metric: Union[str, ClassificationMetric] = "f1_score",  # noqa
+        calibration_metric: str | ClassificationMetric = "f1_score",  # noqa
         k: int = 1,
-        matcher: Union[str, ClassificationMatch] = "match_nearest",
-        extra_metrics: Sequence[Union[str, ClassificationMetric]] = [
+        matcher: str | ClassificationMatch = "match_nearest",
+        extra_metrics: Sequence[str | ClassificationMetric] = [
             "precision",
             "recall",
         ],  # noqa
@@ -550,7 +550,7 @@ class Indexer:
             less than or equal to the distance threshold.
             Defaults to 'match_nearest'.
 
-            extra_metrics: List of additional
+            extra_metrics: list of additional
             `tf.similarity.classification_metrics.ClassificationMetric()` to
             compute and report. Defaults to ['precision', 'recall'].
 
@@ -568,7 +568,7 @@ class Indexer:
         # making sure our metrics are all ClassificationMetric objects
         calibration_metric = make_classification_metric(calibration_metric)
 
-        combined_metrics: List[ClassificationMetric] = [make_classification_metric(m) for m in extra_metrics]
+        combined_metrics: list[ClassificationMetric] = [make_classification_metric(m) for m in extra_metrics]
 
         # running calibration
         calibration_results = self.evaluator.calibrate(
@@ -610,9 +610,9 @@ class Indexer:
         predictions: FloatTensor,
         no_match_label: int = -1,
         k=1,
-        matcher: Union[str, ClassificationMatch] = "match_nearest",
+        matcher: str | ClassificationMatch = "match_nearest",
         verbose: int = 1,
-    ) -> Dict[str, List[int]]:
+    ) -> dict[str, list[int]]:
         """Match embeddings against the various cutpoints thresholds
 
         Args:
@@ -652,7 +652,7 @@ class Indexer:
 
         lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
 
-        lookup_distances = unpack_lookup_distances(lookups, dtype=predictions.dtype)
+        lookup_distances = unpack_lookup_distances(lookups, dtype=tf.keras.backend.floatx())
         # TODO(ovallis): The int type should be derived from the model.
         lookup_labels = unpack_lookup_labels(lookups, dtype="int32")
 
@@ -662,7 +662,7 @@ class Indexer:
                 desc="matching embeddings",
             )
 
-        matches: DefaultDict[str, List[int]] = defaultdict(list)
+        matches: defaultdict[str, list[int]] = defaultdict(list)
         for cp_name, cp_data in self.cutpoints.items():
             distance_threshold = float(cp_data["distance"])
 
@@ -704,7 +704,7 @@ class Indexer:
             "embedding_size": self.embedding_size,
             "kv_store": self.kv_store_type,
             "evaluator": self.evaluator_type,
-            "search": self.search_type,
+            "search_config": self.search.get_config(),
             "stat_buffer_size": self.stat_buffer_size,
             "is_calibrated": self.is_calibrated,
             "calibration_metric_config": self.calibration_metric.get_config(),
@@ -720,7 +720,7 @@ class Indexer:
         self.search.save(path)
 
     @staticmethod
-    def load(path: Union[str, Path], verbose: int = 1):
+    def load(path: str | Path, verbose: int = 1):
         """Load Index data from a checkpoint and initialize underlying
         structure with the reloaded data.
 
@@ -737,13 +737,14 @@ class Indexer:
         metadata = tf.io.read_file(metadata_fname)
         metadata = tf.keras.backend.eval(metadata)
         md = json.loads(metadata)
+        search = make_search(md["search_config"])
         index = Indexer(
             distance=md["distance"],
             embedding_size=md["embedding_size"],
             embedding_output=md["embedding_output"],
             kv_store=md["kv_store"],
             evaluator=md["evaluator"],
-            search=md["search"],
+            search=search,
             stat_buffer_size=md["stat_buffer_size"],
         )
 

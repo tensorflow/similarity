@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
@@ -41,6 +42,9 @@ class RetrievalMetric(ABC):
         * 'macro': Calculates metrics for each label and takes the unweighted
         mean.
 
+        drop_closest_lookup: If True, remove the closest lookup before computing
+        the metrics. This is used when the query set == indexed set.
+
     `RetrievalMetric` measure the retrieval quality given a query label and the
     labels from the set of lookup results.
     """
@@ -52,17 +56,19 @@ class RetrievalMetric(ABC):
         k: int = 5,
         distance_threshold: float = math.inf,
         average: str = "micro",
+        drop_closest_lookup: bool = False,
     ) -> None:
         self._name = name
         self.canonical_name = canonical_name
         self.k = k
         self.distance_threshold = distance_threshold
         self.average = average
+        self.drop_closest_lookup = drop_closest_lookup
 
     @property
     def name(self) -> str:
         if self.distance_threshold and self.distance_threshold != math.inf:
-            return f"{self._name}@{self.k} : " f"distance_threshold@{self.distance_threshold}"
+            return f"{self._name}@{self.k} : distance_threshold@{self.distance_threshold}"
         else:
             return f"{self._name}@{self.k}"
 

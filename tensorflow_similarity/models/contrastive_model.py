@@ -1,22 +1,23 @@
-import itertools
-import json
-import os
+# Copyright 2021 The TensorFlow Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+from __future__ import annotations
+
 from collections import defaultdict
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from copy import copy
 from pathlib import Path
-from typing import (
-    Callable,
-    DefaultDict,
-    Dict,
-    List,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-)
+from typing import Any
 
 import numpy as np
 import tensorflow as tf
@@ -34,6 +35,7 @@ from tensorflow_similarity.classification_metrics import (  # noqa
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.evaluators.evaluator import Evaluator
 from tensorflow_similarity.indexer import Indexer
+from tensorflow_similarity.layers import ActivationStdLoggingLayer
 from tensorflow_similarity.losses import MetricLoss
 from tensorflow_similarity.matchers import ClassificationMatch
 from tensorflow_similarity.retrieval_metrics import RetrievalMetric
@@ -49,95 +51,128 @@ from tensorflow_similarity.types import (
     Tensor,
 )
 
-
-class NumpyFloatValuesEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.float32):
-            return float(obj)
-        return json.JSONEncoder.default(self, obj)
+# Value based on implementation from original papers.
+BN_EPSILON = 1.001e-5
 
 
-def load_model(filepath):
-    spath = Path(filepath)
-    backbone_path = spath / "backbone"
-    proj_path = spath / "projector"
-    pred_path = spath / "predictor"
-    optw_path = spath / "opt_weights.npy"
-    config_path = spath / "config.json"
+def get_projector(input_dim, dim=512, activation="relu", num_layers: int = 3):
+    inputs = tf.keras.layers.Input((input_dim,), name="projector_input")
+    x = inputs
 
-    backbone = tf.keras.models.load_model(backbone_path)
-    projector = tf.keras.models.load_model(proj_path)
+    for i in range(num_layers - 1):
+        x = tf.keras.layers.Dense(
+            dim,
+            use_bias=False,
+            kernel_initializer=tf.keras.initializers.LecunUniform(),
+            name=f"projector_layer_{i}",
+        )(x)
+        x = tf.keras.layers.BatchNormalization(epsilon=BN_EPSILON, name=f"batch_normalization_{i}")(x)
+        x = tf.keras.layers.Activation(activation, name=f"{activation}_activation_{i}")(x)
+    x = tf.keras.layers.Dense(
+        dim,
+        use_bias=False,
+        kernel_initializer=tf.keras.initializers.LecunUniform(),
+        name="projector_output",
+    )(x)
+    x = tf.keras.layers.BatchNormalization(
+        epsilon=BN_EPSILON,
+        center=False,  # Page:5, Paragraph:2 of SimSiam paper
+        scale=False,  # Page:5, Paragraph:2 of SimSiam paper
+        name="batch_normalization_ouput",
+    )(x)
+    # Metric Logging layer. Monitors the std of the layer activations.
+    # Degnerate solutions colapse to 0 while valid solutions will move
+    # towards something like 0.0220. The actual number will depend on the layer size.
+    outputs = ActivationStdLoggingLayer(name="proj_std")(x)
+    projector = tf.keras.Model(inputs, outputs, name="projector")
+    return projector
 
-    if os.path.isdir(pred_path):
-        predictor = tf.keras.models.load_model(pred_path)
+
+def get_predictor(input_dim, hidden_dim=512, activation="relu"):
+    inputs = tf.keras.layers.Input(shape=(input_dim,), name="predictor_input")
+    x = inputs
+
+    x = tf.keras.layers.Dense(
+        hidden_dim,
+        use_bias=False,
+        kernel_initializer=tf.keras.initializers.LecunUniform(),
+        name="predictor_layer_0",
+    )(x)
+    x = tf.keras.layers.BatchNormalization(epsilon=BN_EPSILON, name="batch_normalization_0")(x)
+    x = tf.keras.layers.Activation(activation, name=f"{activation}_activation_0")(x)
+
+    x = tf.keras.layers.Dense(
+        input_dim,
+        kernel_initializer=tf.keras.initializers.LecunUniform(),
+        name="predictor_output",
+    )(x)
+    # Metric Logging layer. Monitors the std of the layer activations.
+    # Degnerate solutions colapse to 0 while valid solutions will move
+    # towards something like 0.0220. The actual number will depend on the layer size.
+    outputs = ActivationStdLoggingLayer(name="pred_std")(x)
+    predictor = tf.keras.Model(inputs, outputs, name="predictor")
+    return predictor
+
+
+def create_contrastive_model(
+    *args,
+    backbone: tf.keras.Model,
+    projector: tf.keras.Model | None = None,
+    predictor: tf.keras.Model | None = None,
+    algorithm: str = "simsiam",
+    **kwargs,
+) -> ContrastiveModel:
+    """Create a contrastive model."""
+    if projector is None:
+        projector = get_projector(input_dim=backbone.output_shape[-1], num_layers=2)
+
+    input_shape = backbone.input_shape[1:]
+    inputs = tf.keras.layers.Input(shape=input_shape, name="main_model_input")
+    projector_features = projector(backbone(inputs))
+    if algorithm == "simsiam":
+        if predictor is None:
+            predictor = get_predictor(input_dim=projector.output_shape[-1])
+        predictor_features = predictor(projector_features)
     else:
-        predictor = None
+        predictor_features = None
 
-    with open(config_path, "r") as f:
-        config = json.load(f)
-        metadata = json.loads(config)
+    outputs = [projector_features]
+    if predictor_features is not None:
+        outputs.append(predictor_features)
 
-    optimizer = tf.keras.optimizers.deserialize(metadata["optimizer"])
-    opt_weights = np.load(optw_path, allow_pickle=True)
-    loss = tf.keras.losses.deserialize(metadata["loss"])
-    metrics = [tf.keras.metrics.deserialize(m) for m in metadata["metrics"]]
-    algorithm = metadata["algorithm"]
-
-    model = ContrastiveModel(
+    return ContrastiveModel(
+        *args,
         backbone=backbone,
         projector=projector,
         predictor=predictor,
         algorithm=algorithm,
+        inputs=inputs,
+        outputs=outputs,
+        **kwargs,
     )
-
-    model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
-
-    def load_optim_weights():
-        # collect train variables from both the backbone, projector, and projector
-        tvars = model.backbone.trainable_variables
-        tvars = tvars + model.projector.trainable_variables
-        if model.predictor is not None:
-            tvars = tvars + model.predictor.trainable_variables
-
-        # dummy zero gradients
-        zero_grads = [tf.zeros_like(w) for w in tvars]
-        # save current state of variables
-        saved_vars = [tf.identity(w) for w in tvars]
-
-        model.optimizer.apply_gradients(zip(zero_grads, tvars))
-
-        # Reload variables
-        [x.assign(y) for x, y in zip(tvars, saved_vars)]
-
-        model.optimizer.set_weights(opt_weights)
-
-    strategy = tf.distribute.get_strategy()
-    strategy.run(load_optim_weights)
-    return model
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class ContrastiveModel(tf.keras.Model):
     def __init__(
         self,
+        *args,
         backbone: tf.keras.Model,
         projector: tf.keras.Model,
-        predictor: Optional[tf.keras.Model] = None,
+        predictor: tf.keras.Model | None = None,
         algorithm: str = "simsiam",
         **kwargs,
     ) -> None:
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         self.backbone = backbone
         self.projector = projector
         self.predictor = predictor
 
-        self.outputs = [self.backbone.output]
-        self.output_names = ["backbone_output"]
         self.algorithm = algorithm
 
         self._create_loss_trackers()
 
-        self.supported_algorithms = ("simsiam", "simclr", "barlow")
+        self.supported_algorithms = ("simsiam", "simclr", "barlow", "vicreg")
 
         if self.algorithm not in self.supported_algorithms:
             raise ValueError(
@@ -147,18 +182,17 @@ class ContrastiveModel(tf.keras.Model):
 
     def compile(
         self,
-        optimizer: Union[Optimizer, str, Dict, List] = "rmsprop",
-        loss: Optional[Union[Loss, MetricLoss, str, Dict, List]] = None,
-        metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
-        loss_weights: Optional[Union[List, Dict]] = None,
-        weighted_metrics: Optional[Union[Metric, DistanceMetric, str, Dict, List]] = None,  # noqa
+        optimizer: Optimizer | str | Mapping | Sequence = "rmsprop",
+        loss: Loss | MetricLoss | str | Mapping | Sequence | None = None,
+        metrics: Metric | DistanceMetric | str | Mapping | Sequence | None = None,  # noqa
+        loss_weights: Mapping | Sequence | None = None,
+        weighted_metrics: Metric | DistanceMetric | str | Mapping | Sequence | None = None,  # noqa
         run_eagerly: bool = False,
         steps_per_execution: int = 1,
-        distance: Union[Distance, str] = "cosine",
-        embedding_output: Optional[int] = None,
-        kv_store: Union[Store, str] = "memory",
-        search: Union[Search, str] = "nmslib",
-        evaluator: Union[Evaluator, str] = "memory",
+        distance: Distance | str = "cosine",
+        kv_store: Store | str = "memory",
+        search: Search | str = "nmslib",
+        evaluator: Evaluator | str = "memory",
         stat_buffer_size: int = 1000,
         **kwargs,
     ):
@@ -191,15 +225,6 @@ class ContrastiveModel(tf.keras.Model):
 
               See [Evaluation Metrics](../eval_metrics.md) for a list of available
               metrics.
-
-              For multi-output models you can specify different metrics for
-              different outputs by passing a dictionary, such as
-              `metrics={'similarity': 'min_neg_gap', 'other': ['accuracy',
-              'mse']}`.  You can also pass a list (len = len(outputs)) of lists of
-              metrics such as `metrics=[['min_neg_gap'], ['accuracy', 'mse']]` or
-              `metrics=['min_neg_gap', ['accuracy', 'mse']]`. For outputs which
-              are not related to metrics learning, you can use any of the standard
-              `tf.keras.metrics`.
 
             loss_weights: Optional list or dictionary specifying scalar
               coefficients (Python floats) to weight the loss contributions of
@@ -239,12 +264,6 @@ class ContrastiveModel(tf.keras.Model):
             evaluator: What type of `Evaluator()` to use to evaluate index
               performance. Defaults to in-memory one.
 
-            embedding_output: Which model output head predicts the embeddings
-            that should be indexed. Defaults to None which is for single output
-            model. For multi-head model, the callee, usually the
-            `SimilarityModel()` class is responsible for passing the correct
-            one.
-
             stat_buffer_size: Size of the sliding windows buffer used to compute
               index performance. Defaults to 1000.
 
@@ -260,7 +279,6 @@ class ContrastiveModel(tf.keras.Model):
             search=search,
             kv_store=kv_store,
             evaluator=evaluator,
-            embedding_output=embedding_output,
             stat_buffer_size=stat_buffer_size,
         )
 
@@ -293,8 +311,9 @@ class ContrastiveModel(tf.keras.Model):
         # We remove the compiled loss metric because we want to manually track
         # the loss in train_step and test_step.
         base_metrics = [m for m in super().metrics if m.name != "loss"]
-        loss_trackers = self.loss_trackers.values()
-        return itertools.chain(loss_trackers, base_metrics)
+        loss_trackers = list(self.loss_trackers.values())
+        loss_trackers.extend(base_metrics)
+        return loss_trackers
 
     def train_step(self, data):
         view1, view2 = self._parse_views(data)
@@ -389,24 +408,23 @@ class ContrastiveModel(tf.keras.Model):
             l2 = self.compiled_loss(tf.stop_gradient(z2), p1)
             loss = l1 + l2
             pred1, pred2 = p1, p2
-        elif self.algorithm in ["simclr", "barlow"]:
+        elif self.algorithm in ("simclr", "barlow", "vicreg"):
             loss = self.compiled_loss(z1, z2)
             pred1, pred2 = z1, z2
 
         return loss, pred1, pred2, z1, z2
 
-    def _parse_views(self, data: Sequence[FloatTensor]) -> Tuple[FloatTensor, FloatTensor]:
+    def _parse_views(self, data: Sequence[FloatTensor]) -> tuple[FloatTensor, FloatTensor]:
         if len(data) == 2:
-            view1 = data[0]
-            view2 = data[1]
+            view1, view2 = data
         else:
-            view1 = data[0]
-            view2 = data[0]
+            view1 = view2 = data[0]
 
         return view1, view2
 
     # fix TF 2.x < 2.7 bugs when using generator
-    def call(self, inputs):
+    # todo(ovallis): link to original issue.
+    def call(self, inputs, training=None, mask=None):
         return inputs
 
     def summary(self):
@@ -418,119 +436,13 @@ class ContrastiveModel(tf.keras.Model):
             cprint("\n[Predictor]", "magenta")
             self.projector.summary()
 
-    def save(
-        self,
-        filepath: Union[str, Path],
-        save_index: bool = True,
-        compression: bool = True,
-        overwrite: bool = True,
-        include_optimizer: bool = True,
-        save_format: Optional[str] = None,
-        signatures: Optional[Union[Callable, Mapping[str, Callable]]] = None,
-        options: Optional[tf.saved_model.SaveOptions] = None,
-        save_traces: bool = True,
-    ) -> None:
-        """Save Constrative model backbone, projector, and predictor
-
-        Args:
-            filepath: where to save the model.
-            save_index: Save the index content. Defaults to True.
-            compression: Compress index data. Defaults to True.
-            overwrite: Overwrite previous model. Defaults to True.
-            include_optimizer: Save optimizer state. Defaults to True.
-            save_format: Either 'tf' or 'h5', indicating whether to save the
-              model to Tensorflow SavedModel or HDF5. Defaults to 'tf' in
-              TF 2.X, and 'h5' in TF 1.X.
-            signatures: Signatures to save with the SavedModel. Applicable to
-              the 'tf' format only. Please see the signatures argument in
-              tf.saved_model.save for details.
-            options: A `tf.saved_model.SaveOptions` to save with the model.
-              Defaults to None.
-            save_traces (optional): When enabled, the SavedModel will store the
-              function traces for each layer. This can be disabled, so that only
-              the configs of each layer are stored.  Defaults to True. Disabling
-              this will decrease serialization time and reduce file size, but it
-              requires that all custom layers/models implement a get_config()
-              method.
-        """
-        spath = Path(filepath)
-        backbone_path = spath / "backbone"
-        proj_path = spath / "projector"
-        pred_path = spath / "predictor"
-        optw_path = spath / "opt_weights.npy"
-        config_path = spath / "config.json"
-
-        cprint("[Saving backbone model]", "blue")
-        cprint("|-path:%s" % backbone_path, "green")
-        self.backbone.save(
-            backbone_path,
-            overwrite=overwrite,
-            include_optimizer=include_optimizer,
-            save_format=save_format,
-            signatures=signatures,
-            options=options,
-            save_traces=save_traces,
-        )
-
-        cprint("[Saving projector model]", "blue")
-        cprint("|-path:%s" % proj_path, "green")
-        self.projector.save(
-            proj_path,
-            overwrite=overwrite,
-            include_optimizer=include_optimizer,
-            save_format=save_format,
-            signatures=signatures,
-            options=options,
-            save_traces=save_traces,
-        )
-
-        if self.predictor is not None:
-            cprint("[Saving predictor model]", "blue")
-            cprint("|-path:%s" % pred_path, "green")
-            self.predictor.save(
-                pred_path,
-                overwrite=overwrite,
-                include_optimizer=include_optimizer,
-                save_format=save_format,
-                signatures=signatures,
-                options=options,
-                save_traces=save_traces,
-            )
-
-        metadata = {}
-        base_metrics = [m for m in super().metrics if m.name != "loss"]
-        metadata["metrics"] = [tf.keras.metrics.serialize(m) for m in base_metrics]
-        metadata["loss"] = tf.keras.losses.serialize(self.loss)
-        metadata["optimizer"] = tf.keras.optimizers.serialize(self.optimizer)
-        np.save(optw_path, self.optimizer.get_weights())
-
-        with open(config_path, "w") as f:
-            base_config = self.get_config()
-            config = json.dumps({**metadata, **base_config}, cls=NumpyFloatValuesEncoder)
-            json.dump(config, f)
-
-        if hasattr(self, "_index") and self._index and save_index:
-            self.save_index(filepath, compression=compression)
-        else:
-            print("Index not saved as save_index=False")
-
-    def get_config(self):
-        config = {
-            "algorithm": self.algorithm,
-        }
-        return config
-
-    # TODO(ovallis): Overwrite load
-
-    # TODO(ovallis): Overwrite summary to show the whole model.
-
     def predict(
         self,
         x: FloatTensor,
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         verbose: int = 0,
-        steps: Optional[int] = None,
-        callbacks: Optional[tf.keras.callbacks.Callback] = None,
+        steps: int | None = None,
+        callbacks: tf.keras.callbacks.Callback | None = None,
         max_queue_size: int = 10,
         workers: int = 1,
         use_multiprocessing: bool = False,
@@ -552,7 +464,6 @@ class ContrastiveModel(tf.keras.Model):
             workers,
             use_multiprocessing,
         )
-
         x = self.projector.predict(
             x,
             batch_size,
@@ -568,15 +479,12 @@ class ContrastiveModel(tf.keras.Model):
 
         return output
 
-    # TODO (ovallis): Refactor the following indexing code into a MixIn.
-
     def create_index(
         self,
-        distance: Union[Distance, str] = "cosine",
-        search: Union[Search, str] = "nmslib",
-        kv_store: Union[Store, str] = "memory",
-        evaluator: Union[Evaluator, str] = "memory",
-        embedding_output: Optional[int] = None,
+        distance: Distance | str = "cosine",
+        search: Search | str = "nmslib",
+        kv_store: Store | str = "memory",
+        evaluator: Evaluator | str = "memory",
         stat_buffer_size: int = 1000,
     ) -> None:
         """Create the model index to make embeddings searchable via KNN.
@@ -600,51 +508,27 @@ class ContrastiveModel(tf.keras.Model):
             evaluator: What type of `Evaluator()` to use to evaluate index
             performance. Defaults to in-memory one.
 
-            embedding_output: Which model output head predicts the embeddings
-            that should be indexed. Defaults to None which is for single output
-            model. For multi-head model, the callee, usually the
-            `SimilarityModel()` class is responsible for passing the correct
-            one.
-
             stat_buffer_size: Size of the sliding windows buffer used to compute
             index performance. Defaults to 1000.
 
         Raises:
             ValueError: Invalid search framework or key value store.
         """
-        # check if we we need to set the embedding head
-        num_outputs = len(self.output_names)
-        if embedding_output is not None and embedding_output > num_outputs:
-            raise ValueError("Embedding_output value exceed number of model outputs")
-
-        if embedding_output is None and num_outputs > 1:
-            print(
-                "Embedding output set to be model output 0. ",
-                "Use the embedding_output arg to override this.",
-            )
-            embedding_output = 0
-
-        # fetch embedding size as some ANN libs requires it for init
-        if num_outputs > 1 and embedding_output is not None:
-            self.embedding_size = self.outputs[embedding_output].shape[1]
-        else:
-            self.embedding_size = self.outputs[0].shape[1]
-
         self._index = Indexer(
-            embedding_size=self.embedding_size,
+            embedding_size=self.projector.output_shape[-1],
             distance=distance,
             search=search,
             kv_store=kv_store,
             evaluator=evaluator,
-            embedding_output=embedding_output,
+            embedding_output=None,
             stat_buffer_size=stat_buffer_size,
         )
 
     def index(
         self,
         x: Tensor,
-        y: IntTensor = None,
-        data: Optional[Tensor] = None,
+        y: IntTensor | None = None,
+        data: Tensor | None = None,
         build: bool = True,
         verbose: int = 1,
     ):
@@ -684,8 +568,8 @@ class ContrastiveModel(tf.keras.Model):
     def index_single(
         self,
         x: Tensor,
-        y: IntTensor = None,
-        data: Optional[Tensor] = None,
+        y: IntTensor | None = None,
+        data: Tensor | None = None,
         build: bool = True,
         verbose: int = 1,
     ):
@@ -723,7 +607,7 @@ class ContrastiveModel(tf.keras.Model):
             verbose=verbose,
         )
 
-    def lookup(self, x: Tensor, k: int = 5, verbose: int = 1) -> List[List[Lookup]]:
+    def lookup(self, x: Tensor, k: int = 5, verbose: int = 1) -> list[list[Lookup]]:
         """Find the k closest matches in the index for a set of samples.
 
         Args:
@@ -735,12 +619,12 @@ class ContrastiveModel(tf.keras.Model):
 
         Returns
             list of list of k nearest neighboors:
-            List[List[Lookup]]
+            list[list[Lookup]]
         """
         predictions = self.predict(x)
         return self._index.batch_lookup(predictions=predictions, k=k, verbose=verbose)
 
-    def single_lookup(self, x: Tensor, k: int = 5) -> List[Lookup]:
+    def single_lookup(self, x: Tensor, k: int = 5) -> list[Lookup]:
         """Find the k closest matches in the index for a given sample.
 
         Args:
@@ -750,7 +634,7 @@ class ContrastiveModel(tf.keras.Model):
 
         Returns
             list of the k nearest neigboors info:
-            List[Lookup]
+            list[Lookup]
         """
         x = tf.expand_dims(x, axis=0)
         prediction = self.predict(x)
@@ -766,9 +650,9 @@ class ContrastiveModel(tf.keras.Model):
         y: IntTensor,
         thresholds_targets: MutableMapping[str, float] = {},
         k: int = 1,
-        calibration_metric: Union[str, ClassificationMetric] = "f1",
-        matcher: Union[str, ClassificationMatch] = "match_nearest",
-        extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = [
+        calibration_metric: str | ClassificationMetric = "f1",
+        matcher: str | ClassificationMatch = "match_nearest",
+        extra_metrics: MutableSequence[str | ClassificationMetric] = [
             "precision",
             "recall",
         ],  # noqa
@@ -838,7 +722,7 @@ class ContrastiveModel(tf.keras.Model):
         cutpoint="optimal",
         no_match_label=-1,
         k=1,
-        matcher: Union[str, ClassificationMatch] = "match_nearest",
+        matcher: str | ClassificationMatch = "match_nearest",
         verbose=0,
     ):
         """Match a set of examples against the calibrated index
@@ -904,7 +788,7 @@ class ContrastiveModel(tf.keras.Model):
         y: IntTensor,
         retrieval_metrics: Sequence[RetrievalMetric],  # noqa
         verbose: int = 1,
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """Evaluate the quality of the index against a test dataset.
 
         Args:
@@ -956,13 +840,13 @@ class ContrastiveModel(tf.keras.Model):
         x: Tensor,
         y: IntTensor,
         k: int = 1,
-        extra_metrics: MutableSequence[Union[str, ClassificationMetric]] = [
+        extra_metrics: MutableSequence[str | ClassificationMetric] = [
             "precision",
             "recall",
         ],  # noqa
-        matcher: Union[str, ClassificationMatch] = "match_nearest",
+        matcher: str | ClassificationMatch = "match_nearest",
         verbose: int = 1,
-    ) -> DefaultDict[str, Dict[str, Union[str, np.ndarray]]]:
+    ) -> defaultdict[str, dict[str, str | np.ndarray]]:
         """Evaluate model classification matching on a given evaluation dataset.
 
         Args:
@@ -1008,7 +892,7 @@ class ContrastiveModel(tf.keras.Model):
             print("|-Computing embeddings")
         predictions = self.predict(x)
 
-        results: DefaultDict[str, Dict[str, Union[str, np.ndarray]]] = defaultdict(dict)
+        results: defaultdict[str, dict[str, str | np.ndarray]] = defaultdict(dict)
 
         if verbose:
             pb = tqdm(total=len(self._index.cutpoints), desc="Evaluating cutpoints")
@@ -1020,7 +904,7 @@ class ContrastiveModel(tf.keras.Model):
             metrics = copy(extra_metrics)
             metrics.append(metric)
 
-            res: Dict[str, Union[str, np.ndarray]] = {}
+            res: dict[str, str | np.ndarray] = {}
             res.update(
                 self._index.evaluate_classification(
                     predictions,
@@ -1083,6 +967,67 @@ class ContrastiveModel(tf.keras.Model):
         index_path = Path(filepath) / "index"
         self._index.save(index_path, compression=compression)
 
+    def save(
+        self,
+        filepath: str | Path,
+        save_index: bool = True,
+        compression: bool = True,
+        overwrite: bool = True,
+        include_optimizer: bool = True,
+        save_format: str | None = None,
+        signatures: Callable | Mapping[str, Callable] | None = None,
+        options: tf.saved_model.SaveOptions | None = None,
+        save_traces: bool = True,
+    ) -> None:
+        """Save Constrative model backbone, projector, and predictor
+
+        Args:
+            filepath: where to save the model.
+            save_index: Save the index content. Defaults to True.
+            compression: Compress index data. Defaults to True.
+            overwrite: Overwrite previous model. Defaults to True.
+            include_optimizer: Save optimizer state. Defaults to True.
+            save_format: Either 'tf' or 'h5', indicating whether to save the
+              model to Tensorflow SavedModel or HDF5. Defaults to 'tf' in
+              TF 2.X, and 'h5' in TF 1.X.
+            signatures: Signatures to save with the SavedModel. Applicable to
+              the 'tf' format only. Please see the signatures argument in
+              tf.saved_model.save for details.
+            options: A `tf.saved_model.SaveOptions` to save with the model.
+              Defaults to None.
+            save_traces (optional): When enabled, the SavedModel will store the
+              function traces for each layer. This can be disabled, so that only
+              the configs of each layer are stored.  Defaults to True. Disabling
+              this will decrease serialization time and reduce file size, but it
+              requires that all custom layers/models implement a get_config()
+              method.
+        """
+        super().save(
+            filepath,
+            overwrite=overwrite,
+            include_optimizer=include_optimizer,
+            save_format=save_format,
+            signatures=signatures,
+            options=options,
+            save_traces=save_traces,
+        )
+
+        if hasattr(self, "_index") and self._index and save_index:
+            self.save_index(filepath, compression=compression)
+        else:
+            msg = "The index was not saved with the model."
+            if not hasattr(self, "_index"):
+                msg = msg + (
+                    "The model does not currently have an index. To use indexing "
+                    "you must call either model.compile() or model.create_index() "
+                    "and set a valid Distance."
+                )
+
+            if not save_index:
+                msg = msg + " The save_index param is set to False."
+
+            print(msg)
+
     def to_data_frame(self, num_items: int = 0) -> PandasDataFrame:
         """Export data as pandas dataframe
 
@@ -1095,9 +1040,22 @@ class ContrastiveModel(tf.keras.Model):
         """
         return self._index.to_data_frame(num_items=num_items)
 
-    # We don't need from_config as the index is reloaded separatly.
-    # this is kept as a reminder that it was looked into and decided to split
-    # the index reloading instead of overloading this method.
-    # @classmethod
-    # def from_config(cls, config):
-    #     return super().from_config(**config)
+    def get_config(self) -> dict[str, Any]:
+        config = {
+            "backbone": self.backbone,
+            "projector": self.projector,
+            "predictor": self.predictor,
+            "algorithm": self.algorithm,
+        }
+        base_config = super().get_config()
+        return {**base_config, **config}
+
+    @classmethod
+    def from_config(cls, config):
+        if "layers" in config:
+            del config["layers"]
+        if "input_layers" in config:
+            del config["input_layers"]
+        if "output_layers" in config:
+            del config["output_layers"]
+        return create_contrastive_model(**config)

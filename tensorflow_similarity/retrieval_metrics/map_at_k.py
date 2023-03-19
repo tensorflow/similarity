@@ -11,17 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
-from typing import Mapping
+from collections.abc import Mapping
 
 import tensorflow as tf
 
-from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
-
-from .retrieval_metric import RetrievalMetric
+from .precision_at_k import PrecisionAtK
 
 
-class MapAtK(RetrievalMetric):
+class MapAtK(PrecisionAtK):
     r"""Mean Average precision - mAP@K is computed as.
 
     $$
@@ -54,6 +53,12 @@ class MapAtK(RetrievalMetric):
         r: A mapping from class id to the number of examples in the index,
         e.g., r[4] = 10 represents 10 indexed examples from class 4.
 
+        clip_at_r: If True, set precision at K values to 0.0 for all values
+        with rank greater than the count defined in the r mapping, e.g., a
+        result set of 10 values, for a query label with 7 indexed examples,
+        will have the last 3 precision at K values set to 0.0. Use this to
+        compute MAP@R. See section 3.2 of https://arxiv.org/pdf/2003.08505.pdf
+
         name: Name associated with the metric object, e.g., avg_precision@5
 
         canonical_name: The canonical name associated with metric, e.g.,
@@ -68,79 +73,35 @@ class MapAtK(RetrievalMetric):
         queries.
 
         * 'micro': Calculates metrics globally over all queries.
+
+        drop_closest_lookup: If True, remove the closest lookup before computing
+        the metrics. This is used when the query set == indexed set.
     """
 
     def __init__(
         self,
-        r: Mapping[int, int],
+        r: Mapping[int, int] | None = None,
+        clip_at_r: bool = False,
         name: str = "map",
-        k: int = 5,
-        average: str = "micro",
         **kwargs,
     ) -> None:
-        if average == "macro":
+        if kwargs.get("average") == "macro":
             raise ValueError("Mean Average Precision only supports micro averaging.")
 
         if "canonical_name" not in kwargs:
             kwargs["canonical_name"] = "map@k"
 
-        super().__init__(name=name, k=k, average=average, **kwargs)
-        self.r = r
+        super().__init__(r=r, clip_at_r=clip_at_r, name=name, **kwargs)
 
-    def get_config(self):
-        config = {
-            "r": self.r,
-        }
-        base_config = super().get_config()
-        return {**base_config, **config}
+    @property
+    def name(self) -> str:
+        if self.clip_at_r:
+            return f"{self._name}"
 
-    def compute(
-        self,
-        *,  # keyword only arguments see PEP-570
-        query_labels: IntTensor,
-        match_mask: BoolTensor,
-        **kwargs,
-    ) -> FloatTensor:
-        """Compute the metric
+        return super().name
 
-        Args:
-            query_labels: A 1D array of the labels associated with the
-            embedding queries.
-
-            match_mask: A 2D mask where a 1 indicates a match between the
-            jth query and the kth neighbor and a 0 indicates a mismatch.
-
-            **kwargs: Additional compute args
-
-        Returns:
-            A rank 0 tensor containing the metric.
-        """
-        self._check_shape(query_labels, match_mask)
-
-        k_slice = tf.cast(match_mask[:, : self.k], dtype="float")
-        tp = tf.math.cumsum(k_slice, axis=1)
-        p_at_k = tf.math.divide(tp, tf.range(1, self.k + 1, dtype="float"))
-        p_at_k = tf.math.multiply(k_slice, p_at_k)
-
-        if self.average == "micro":
-            table = tf.lookup.StaticHashTable(
-                tf.lookup.KeyValueTensorInitializer(
-                    list(self.r.keys()),
-                    list(self.r.values()),
-                    key_dtype=tf.int32,
-                    value_dtype=tf.int32,
-                ),
-                default_value=-1,
-            )
-            class_counts = table.lookup(query_labels)
-            avg_p_at_k = tf.math.divide(
-                tf.math.reduce_sum(p_at_k, axis=1),
-                tf.cast(class_counts, dtype="float"),
-            )
-
-            avg_p_at_k = tf.math.reduce_mean(avg_p_at_k)
-        else:
-            raise ValueError(f"{self.average} is not a supported average option")
-
-        result: FloatTensor = avg_p_at_k
-        return result
+    def _get_matches(self, x):
+        tp = tf.math.cumsum(x, axis=1)
+        p_at_k = tf.math.divide_no_nan(tp, tf.range(1, x.shape[1] + 1, dtype=tp.dtype))
+        p_at_k = tf.math.multiply(x, p_at_k)
+        return p_at_k

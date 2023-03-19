@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
-from typing import Mapping, Optional, Sequence, Tuple
+from collections.abc import Mapping, Sequence
 
 from matplotlib import pyplot as plt
 
@@ -23,8 +24,8 @@ def viz_neigbors_imgs(
     example: Tensor,
     example_class: int,
     neighbors: Sequence[Lookup],
-    class_mapping: Optional[Mapping[int, str]] = None,
-    fig_size: Tuple[int, int] = (24, 4),
+    class_mapping: Mapping[int, str] | None = None,
+    fig_size: tuple[int, int] = (24, 4),
     cmap: str = "viridis",
     show: bool = True,
 ):

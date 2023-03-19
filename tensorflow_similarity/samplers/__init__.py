@@ -29,6 +29,7 @@ the batch.
 - Support restricting the batches to a subset of the classes present in
 the dataset.
 """
+from .file_samplers import MultiShotFileSampler  # noqa
 from .memory_samplers import MultiShotMemorySampler  # noqa
 from .memory_samplers import SingleShotMemorySampler  # noqa
 from .tfdataset_samplers import TFDatasetMultiShotMemorySampler  # noqa

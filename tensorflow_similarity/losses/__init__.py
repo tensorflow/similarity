@@ -18,6 +18,7 @@ Contrastive learning specialized losses.
 from .barlow import Barlow  # noqa
 from .circle_loss import CircleLoss  # noqa
 from .metric_loss import MetricLoss  # noqa
+from .multinegrank_loss import MultiNegativesRankLoss  # noqa
 from .multisim_loss import MultiSimilarityLoss  # noqa
 from .pn_loss import PNLoss  # noqa
 from .simclr import SimCLRLoss  # noqa
@@ -25,3 +26,4 @@ from .simsiam import SimSiamLoss  # noqa
 from .softnn_loss import SoftNearestNeighborLoss  # noqa
 from .triplet_loss import TripletLoss  # noqa
 from .vicreg import VicReg  # noqa
+from .xbm_loss import XBM  # noqa

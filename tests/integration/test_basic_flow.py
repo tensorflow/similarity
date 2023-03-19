@@ -1,3 +1,4 @@
+import pytest
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 
@@ -31,10 +32,14 @@ def generate_dataset(num_classes, num_examples_per_class, reps=4):
             idx = i + num_classes * rep
             vect[idx] = 1
         x.extend([vect for _ in range(num_examples_per_class)])
-    return tf.constant(x, dtype="float32"), tf.constant(y, dtype="int32")
+    return tf.constant(x, dtype=tf.keras.backend.floatx()), tf.constant(y, dtype="int32")
 
 
-def test_basic_flow(tmp_path):
+@pytest.mark.parametrize("precision", [("float16"), ("float32"), ("mixed_float16")])
+def test_basic_flow(tmp_path, precision):
+    policy = tf.keras.mixed_precision.Policy(precision)
+    tf.keras.mixed_precision.set_global_policy(policy)
+
     NUM_CLASSES = 8
     REPS = 4
     EXAMPLES_PER_CLASS = 64

@@ -11,10 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import random
 from collections import defaultdict
-from typing import Optional, Sequence, Set, Tuple, TypeVar
+from collections.abc import Callable, Sequence
 
 import numpy as np
 import tensorflow as tf
@@ -25,20 +26,19 @@ from tensorflow_similarity.types import FloatTensor, IntTensor
 from .samplers import Augmenter, Sampler
 from .utils import select_examples
 
-T = TypeVar("T", FloatTensor, IntTensor)
-
 
 class MultiShotMemorySampler(Sampler):
     def __init__(
         self,
         x,
         y,
+        load_example_fn: Callable = lambda q: q,
         classes_per_batch: int = 2,
         examples_per_class_per_batch: int = 2,
         steps_per_epoch: int = 1000,
-        class_list: Sequence[int] = None,
-        total_examples_per_class: int = None,
-        augmenter: Optional[Augmenter] = None,
+        class_list: Sequence[int] | None = None,
+        total_examples_per_class: int | None = None,
+        augmenter: Augmenter | None = None,
         warmup: int = -1,
     ):
         """Create a Multishot in memory sampler that ensures that each batch is
@@ -63,9 +63,15 @@ class MultiShotMemorySampler(Sampler):
 
 
         Args:
-            x: examples.
+            x: Examples. It can be anything, like a numpy array or a list
+            of file paths. In order to determine the real examples, each
+            element of `x` is passed through `load_example_fn`.
 
-            y: labels.
+            y: Labels.
+
+            load_example_fn: A function for loading real examples from `x`.
+            It is useful for loading images from their corresponding file path
+            provided in `x` or similar situations. Defaults to `lambda q: q`.
 
             classes_per_batch: Numbers of distinct class to include in a
             single batch
@@ -100,6 +106,8 @@ class MultiShotMemorySampler(Sampler):
             warmup=warmup,
         )
 
+        self.load_example_fn = load_example_fn
+
         # precompute information we need
         if not class_list:
             self.class_list = list(set([int(e) for e in y]))
@@ -114,31 +122,27 @@ class MultiShotMemorySampler(Sampler):
 
         # We only want to warn users once per class if we are sampling with
         # replacement
-        self._small_classes: Set[int] = set()
+        self._small_classes: set[int] = set()
 
         # filter
-        x, y = select_examples(
+        self._x, self._y = select_examples(
             x,
             y,
             class_list=self.class_list,
             num_examples_per_class=total_examples_per_class,
         )
 
-        # assign after potential selection
-        self._x = x
-        self._y = y
-
         # we need to reindex here  as the numbers of samples might have
         # changed due to the filtering
         # In this sampler, contrary to file based one, the pool of examples
         # wont' change so we can optimize by doing this step in the constructor
         self.index_per_class = defaultdict(list)
-        cls = [int(c) for c in y]  # need to cast as  tensor lookup are slowww
-        for idx in tqdm(range(len(x)), desc="indexing classes"):
+        cls = [int(c) for c in self._y]  # need to cast as  tensor lookup are slowww
+        for idx in tqdm(range(len(self._x)), desc="indexing classes"):
             cl = cls[idx]
             self.index_per_class[cl].append(idx)
 
-    def _get_examples(self, batch_id: int, num_classes: int, examples_per_class: int) -> Tuple[FloatTensor, IntTensor]:
+    def _get_examples(self, batch_id: int, num_classes: int, examples_per_class: int) -> tuple[FloatTensor, IntTensor]:
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -185,7 +189,7 @@ class MultiShotMemorySampler(Sampler):
         batch_y = []
         # strip examples if needed. This might happen due to rounding
         for idx in idxs[: self.batch_size]:
-            batch_x.append(self._x[idx])
+            batch_x.append(self.load_example_fn(self._x[idx]))
             batch_y.append(self._y[idx])
 
         return (
@@ -193,7 +197,7 @@ class MultiShotMemorySampler(Sampler):
             tf.convert_to_tensor(np.array(batch_y)),
         )
 
-    def get_slice(self, begin: int = 0, size: int = -1) -> Tuple[FloatTensor, IntTensor]:
+    def get_slice(self, begin: int = 0, size: int = -1) -> tuple[FloatTensor, IntTensor]:
         """Extracts a slice over both the x and y tensors.
 
         This method extracts a slice of size `size` over the first dimension of
@@ -209,19 +213,10 @@ class MultiShotMemorySampler(Sampler):
         Returns:
             A Tuple of FloatTensor and IntTensor
         """
-        slice_x: FloatTensor = self._get_slice(self._x, begin, size)
-        slice_y: IntTensor = self._get_slice(self._y, begin, size)
+        slice_x = [self.load_example_fn(q) for q in self._x[begin : begin + size]]
+        slice_y = self._y[begin : begin + size]
 
-        return slice_x, slice_y
-
-    def _get_slice(self, input_: T, begin: int, size: int) -> T:
-        b = [0] * len(tf.shape(input_))
-        b[0] = begin
-        s = [-1] * len(tf.shape(input_))
-        s[0] = size
-
-        slice_: T = tf.slice(input_, b, s)
-        return slice_
+        return tf.convert_to_tensor(slice_x), tf.convert_to_tensor(slice_y)
 
     @property
     def num_examples(self) -> int:
@@ -229,7 +224,7 @@ class MultiShotMemorySampler(Sampler):
 
     @property
     def example_shape(self):
-        return self._x[0].shape
+        return self.load_example_fn(self._x[0]).shape
 
 
 class SingleShotMemorySampler(Sampler):
@@ -294,7 +289,7 @@ class SingleShotMemorySampler(Sampler):
         self._x = x
         self._y = tf.range(0, self.num_examples, dtype="int32")
 
-    def _get_examples(self, batch_id: int, num_classes: int, examples_per_class: int) -> Tuple[FloatTensor, IntTensor]:
+    def _get_examples(self, batch_id: int, num_classes: int, examples_per_class: int) -> tuple[FloatTensor, IntTensor]:
         """Get the set of examples that would be used to create a single batch.
 
         Notes:
@@ -332,7 +327,7 @@ class SingleShotMemorySampler(Sampler):
 
         return x, y
 
-    def get_slice(self, begin: int = 0, size: int = -1) -> Tuple[FloatTensor, IntTensor]:
+    def get_slice(self, begin: int = 0, size: int = -1) -> tuple[FloatTensor, IntTensor]:
         """Extracts an augmented slice over both the x and y tensors.
 
         This method extracts a slice of size `size` over the first dimension of
@@ -348,8 +343,8 @@ class SingleShotMemorySampler(Sampler):
         Returns:
             A Tuple of FloatTensor and IntTensor
         """
-        slice_x: FloatTensor = self._get_slice(self._x, begin, size)
-        slice_y: IntTensor = self._get_slice(self._y, begin, size)
+        slice_x = tf.convert_to_tensor(self._x[begin : begin + size])
+        slice_y = tf.convert_to_tensor(self._y[begin : begin + size])
         if self.augmenter is not None:
             slice_x, slice_y = self.augmenter(
                 slice_x,
@@ -359,15 +354,6 @@ class SingleShotMemorySampler(Sampler):
             )
 
         return slice_x, slice_y
-
-    def _get_slice(self, input_: T, begin: int, size: int) -> T:
-        b = [0] * len(tf.shape(input_))
-        b[0] = begin
-        s = [-1] * len(tf.shape(input_))
-        s[0] = size
-
-        slice_: T = tf.slice(input_, b, s)
-        return slice_
 
     @property
     def num_examples(self) -> int:
