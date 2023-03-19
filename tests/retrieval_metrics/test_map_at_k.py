@@ -21,6 +21,7 @@ def test_concrete_instance():
         "r": {1: 4, 0: 4},
         "name": "map@5 : distance_threshold@0.1",
         "canonical_name": "map@k",
+        "clip_at_r": False,
         "k": 5,
         "distance_threshold": 0.1,
     }
@@ -49,5 +50,30 @@ def test_compute():
     #     (0.0*False+0.0*False+0.33*True)/10 = 0.03332
     # mapk = (0.667*3 + 0.0332)/4
     expected = tf.constant(0.50833333332)
+
+    np.testing.assert_allclose(mapk, expected)
+
+
+def test_clip_at_r():
+    query_labels = tf.constant([0, 1])
+    match_mask = tf.constant(
+        [
+            [False, False, False, True],
+            [False, False, False, True],
+        ],
+        dtype=bool,
+    )
+    rm = MapAtK(r={0: 4, 1: 3}, k=4, clip_at_r=True)
+
+    mapk = rm.compute(query_labels=query_labels, match_mask=match_mask)
+
+    # mapk should be sum(precision@k*Relevancy_Mask)/R
+    # but here we clip the result set at the r associate with the query label.
+    # class 0 has 1 result set of F,F,F,T with R == 4
+    #     (0.0*False+0.0*False+0.0*False)/3 = 0.0
+    # class 1 has 1 result set of F,F,F,T with R == 3
+    #     (0.0*False+0.0*False+0.0*False+0.25*True)/4 = 0.0625
+    # mapk = (0.0 + 0.0625)/2
+    expected = tf.constant(0.03125)
 
     np.testing.assert_allclose(mapk, expected)

@@ -1,2 +1,4 @@
 [flake8]
+ignore = E203
 exclude = tmp.py, tests/
+max-line-length = 120

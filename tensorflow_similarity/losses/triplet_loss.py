@@ -16,7 +16,9 @@
     FaceNet: A Unified Embedding for Face Recognition and Clustering
     https://arxiv.org/abs/1503.03832
 """
-from typing import Any, Callable, Union
+from __future__ import annotations
+
+from typing import Any
 
 import tensorflow as tf
 
@@ -33,41 +35,33 @@ def triplet_loss(
     query_embeddings: FloatTensor,
     key_labels: IntTensor,
     key_embeddings: FloatTensor,
-    distance: Callable,
+    distance: Distance,
     remove_diagonal: bool = True,
     positive_mining_strategy: str = "hard",
     negative_mining_strategy: str = "semi-hard",
-    soft_margin: bool = False,
-    margin: float = 1.0,
+    margin: float | None = None,
 ) -> Any:
     """Triplet loss computations.
 
     Args:
         query_labels: labels associated with the query embed.
-
         query_embeddings: Embedded query examples.
-
         key_labels: labels associated with the key embed.
-
         key_embeddings: Embedded key examples.
-
         distance: Which distance function to use to compute the pairwise
-        distances between embeddings. Defaults to 'cosine'.
-
-        remove_diagonal: Bool. If True, will set diagonal to False in positive pair mask
-
+            distances between embeddings.
+        remove_diagonal: If True, set the diagonal to False in positive pair
+            mask.
         positive_mining_strategy: What mining strategy to use to select
-        embedding from the same class. Defaults to 'hard'.
-        Available: {'easy', 'hard'}
-
+            embedding from the same class. {'easy', 'hard'}
         negative_mining_strategy: What mining strategy to use for select the
-        embedding from the different class. Defaults to 'semi-hard'.
-        Available: {'hard', 'semi-hard', 'easy'}
-
-        soft_margin: [description]. Defaults to True. Use a soft margin
-        instead of an explicit one.
-
-        margin: Use an explicit value for the margin term. Defaults to 1.0.
+            embedding from the different class. {'hard', 'semi-hard', 'easy'}
+        margin: Defines the target margin between positive and negative pairs,
+            e.g., a margin of 1.0 means that the positive and negative
+            distances should be 1.0 apart. If None, then a soft margin is used.
+            A soft margin can be beneficial to pull together samples from the
+            same class as much as possible. See the paper for more details
+            https://arxiv.org/pdf/1703.07737.pdf. Defaults to None.
 
     Returns:
         Loss: The loss value for the current batch.
@@ -107,7 +101,7 @@ def triplet_loss(
     )
 
     # [Triplet loss computation]
-    triplet_loss = compute_loss(pos_distances, neg_distances, soft_margin, margin)
+    triplet_loss = compute_loss(pos_distances, neg_distances, margin)
 
     return triplet_loss
 
@@ -134,60 +128,47 @@ class TripletLoss(MetricLoss):
 
     def __init__(
         self,
-        distance: Union[Distance, str] = "cosine",
+        distance: Distance | str = "cosine",
         positive_mining_strategy: str = "hard",
         negative_mining_strategy: str = "semi-hard",
-        soft_margin: bool = False,
-        margin: float = 1.0,
+        margin: float | None = None,
         name: str = "TripletLoss",
-        **kwargs
+        **kwargs,
     ):
         """Initializes the TripletLoss.
 
         Args:
-            distance: Which distance function to use to compute
-            the pairwise distances between embeddings. Defaults to 'cosine'.
-
-            positive_mining_strategy: What mining strategy to
-            use to select embedding from the same class. Defaults to 'hard'.
-            available: {'easy', 'hard'}
-
-            negative_mining_strategy: What mining strategy to
-            use for select the embedding from the different class.
-            Defaults to 'semi-hard'. Available: {'hard', 'semi-hard', 'easy'}
-
-            soft_margin: [description]. Defaults to True.
-            Use a soft margin instead of an explicit one.
-
-            margin: Use an explicit value for the margin
-            term. Defaults to 1.0.
-
-            name: Loss name. Defaults to TripletLoss.
+            distance: Which distance function to use to compute the pairwise
+                distances between embeddings.
+            remove_diagonal: If True, set the diagonal to False in positive pair
+                mask.
+            positive_mining_strategy: What mining strategy to use to select
+                embedding from the same class. {'easy', 'hard'}
+            negative_mining_strategy: What mining strategy to use for select the
+                embedding from the different class. {'hard', 'semi-hard', 'easy'}
+            margin: Defines the target margin between positive and negative pairs,
+                e.g., a margin of 1.0 means that the positive and negative
+                distances should be 1.0 apart. If None, then a soft margin is used.
+                A soft margin can be beneficial to pull together samples from the
+                same class as much as possible. See the paper for more details
+                https://arxiv.org/pdf/1703.07737.pdf. Defaults to None.
+            name: Loss name. Defaults to "TripletLoss".
 
         Raises:
             ValueError: Invalid positive mining strategy.
             ValueError: Invalid negative mining strategy.
-            ValueError: Margin value is not used when soft_margin is set
-                        to True.
         """
 
         # distance canonicalization
         distance = distance_canonicalizer(distance)
         self.distance = distance
-        # sanity checks
 
+        # sanity checks
         if positive_mining_strategy not in ["easy", "hard"]:
             raise ValueError("Invalid positive mining strategy")
 
         if negative_mining_strategy not in ["easy", "hard", "semi-hard"]:
             raise ValueError("Invalid negative mining strategy")
-
-        # Ensure users knows its one or the other
-        if margin != 1.0 and soft_margin:
-            raise ValueError(
-                "Margin value is not used when soft_margin is\
-                              set to True"
-            )
 
         super().__init__(
             triplet_loss,
@@ -195,7 +176,6 @@ class TripletLoss(MetricLoss):
             distance=distance,
             positive_mining_strategy=positive_mining_strategy,
             negative_mining_strategy=negative_mining_strategy,
-            soft_margin=soft_margin,
             margin=margin,
-            **kwargs
+            **kwargs,
         )

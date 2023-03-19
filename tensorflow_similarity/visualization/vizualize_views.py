@@ -1,4 +1,4 @@
-from typing import Tuple
+from __future__ import annotations
 
 import tensorflow as tf
 from matplotlib import pyplot as plt
@@ -9,9 +9,9 @@ def visualize_views(
     views: Tensor,
     labels: Tensor = None,
     predictions: Tensor = None,
-    num_imgs: int = None,
+    num_imgs: int | None = None,
     views_per_col: int = 4,
-    fig_size: Tuple[int, int] = (24, 4),
+    fig_size: tuple[int, int] = (24, 4),
     max_pixel_value: float = 1.0,
     min_pixel_value: float = 0.0,
 ):

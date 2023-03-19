@@ -16,4 +16,5 @@ functionalities to make training and serving similarity models quick and easy.
 """
 
 from .contrastive_model import ContrastiveModel  # noqa
+from .contrastive_model import create_contrastive_model  # noqa
 from .similarity_model import SimilarityModel  # noqa

@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import os
-from typing import Callable, List, Optional
+from collections.abc import Callable
 
 import tensorflow as tf
 
@@ -22,11 +23,11 @@ from tensorflow_similarity.types import Tensor
 
 
 class ContrastiveAugmenter(Augmenter):
-    def __init__(self, process: Callable, num_cpu: Optional[int] = os.cpu_count()):
+    def __init__(self, process: Callable, num_cpu: int | None = os.cpu_count()):
         self.process = process
         self.num_cpu = num_cpu
 
-    def augment(self, x: Tensor, y: Tensor, num_views: int, is_warmup: bool) -> List[Tensor]:
+    def augment(self, x: Tensor, y: Tensor, num_views: int, is_warmup: bool) -> list[Tensor]:
         with tf.device("/cpu:0"):
             inputs = tf.stack(x)
 

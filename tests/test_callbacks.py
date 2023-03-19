@@ -3,7 +3,7 @@ import math
 import numpy as np
 import tensorflow as tf
 
-from tensorflow_similarity.callbacks import EvalCallback, SplitValidationLoss
+from tensorflow_similarity.callbacks import EvalCallback
 from tensorflow_similarity.classification_metrics import Recall
 from tensorflow_similarity.evaluators import MemoryEvaluator
 from tensorflow_similarity.models import SimilarityModel
@@ -28,7 +28,7 @@ def test_eval_init_defaults():
     assert tf.math.reduce_all(callback.target_labels == target_labels)
     assert callback.distance == "cosine"
     assert isinstance(callback.evaluator, MemoryEvaluator)
-    assert {"binary_accuracy", "f1score"} == set([m.name for m in callback.metrics])
+    assert {"binary_accuracy"} == set([m.name for m in callback.classification_metrics])
     assert callback.k == 1
     assert tf.math.reduce_all(callback.distance_thresholds == tf.constant([math.inf]))
     assert callback.matcher == "match_nearest"
@@ -69,7 +69,7 @@ def test_eval_init(tmp_path):
     assert tf.math.reduce_all(callback.target_labels == target_labels)
     assert callback.distance == "l2"
     assert isinstance(callback.evaluator, MemoryEvaluator)
-    assert {"recall"} == set([m.name for m in callback.metrics])
+    assert {"recall"} == set([m.name for m in callback.classification_metrics])
     assert callback.k == 11
     assert tf.math.reduce_all(callback.distance_thresholds == distance_thresholds)
     assert callback.matcher == "majority_vote"
@@ -92,6 +92,7 @@ def test_eval_callback(tmp_path):
         targets=targets,
         target_labels=target_labels,
         tb_logdir=str(log_dir),
+        metrics=["binary_accuracy", "f1score"],
     )
 
     # manually set model ^^
@@ -122,7 +123,7 @@ def test_split_val_init_defaults():
     q_unknown = tf.constant([[3.0, 4.0]])
     q_label_unknown = tf.constant([2], dtype="int32")
 
-    callback = SplitValidationLoss(
+    callback = EvalCallback(
         queries=queries,
         query_labels=query_labels,
         targets=targets,
@@ -134,7 +135,7 @@ def test_split_val_init_defaults():
     assert tf.math.reduce_all(callback.target_labels == target_labels)
     assert callback.distance == "cosine"
     assert isinstance(callback.evaluator, MemoryEvaluator)
-    assert {"binary_accuracy", "f1score"} == set([m.name for m in callback.metrics])
+    assert {"binary_accuracy"} == set([m.name for m in callback.classification_metrics])
     assert callback.k == 1
     assert tf.math.reduce_all(callback.distance_thresholds == tf.constant([math.inf]))
     assert callback.matcher == "match_nearest"
@@ -166,7 +167,7 @@ def test_split_val_init(tmp_path):
     if not log_dir.exists():
         log_dir.mkdir(parents=True)
 
-    callback = SplitValidationLoss(
+    callback = EvalCallback(
         queries=queries,
         query_labels=query_labels,
         targets=targets,
@@ -184,7 +185,7 @@ def test_split_val_init(tmp_path):
     assert tf.math.reduce_all(callback.target_labels == target_labels)
     assert callback.distance == "l2"
     assert isinstance(callback.evaluator, MemoryEvaluator)
-    assert {"recall"} == set([m.name for m in callback.metrics])
+    assert {"recall"} == set([m.name for m in callback.classification_metrics])
     assert callback.k == 11
     assert tf.math.reduce_all(callback.distance_thresholds == distance_thresholds)
     assert callback.matcher == "majority_vote"
@@ -207,7 +208,7 @@ def test_split_val_loss_callback(tmp_path):
     if not log_dir.exists():
         log_dir.mkdir(parents=True)
 
-    callback = SplitValidationLoss(
+    callback = EvalCallback(
         queries=queries,
         query_labels=query_labels,
         targets=targets,
@@ -266,7 +267,7 @@ def test_split_val_eval_init(tmp_path):
     assert tf.math.reduce_all(callback.target_labels == target_labels)
     assert callback.distance == "l2"
     assert isinstance(callback.evaluator, MemoryEvaluator)
-    assert {"recall"} == set([m.name for m in callback.metrics])
+    assert {"recall"} == set([m.name for m in callback.classification_metrics])
     assert callback.k == 11
     assert tf.math.reduce_all(callback.distance_thresholds == distance_thresholds)
     assert callback.matcher == "majority_vote"

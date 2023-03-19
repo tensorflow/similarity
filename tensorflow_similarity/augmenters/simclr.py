@@ -14,9 +14,9 @@
 # limitations under the License.
 # ==============================================================================
 """Data preprocessing and augmentation."""
+from __future__ import annotations
 
 import os
-from typing import List, Optional
 
 import tensorflow as tf
 
@@ -106,7 +106,7 @@ class SimCLRAugmenter(Augmenter):
         eval_crop_proportion: float = 0.875,  # imagenet standard
         flip: bool = True,
         version: str = "v2",
-        num_cpu: Optional[int] = os.cpu_count(),
+        num_cpu: int | None = os.cpu_count(),
     ):
 
         self.width = width
@@ -131,7 +131,7 @@ class SimCLRAugmenter(Augmenter):
             self.augment_img = self._eval_augment_img
 
     @tf.function
-    def augment(self, x: Tensor, y: Tensor, num_views: int, is_warmup: bool) -> List[Tensor]:
+    def augment(self, x: Tensor, y: Tensor, num_views: int, is_warmup: bool) -> list[Tensor]:
 
         with tf.device("/cpu:0"):
             inputs = tf.stack(x)

@@ -16,7 +16,9 @@
     FaceNet: A Unified Embedding for Face Recognition and Clustering
     https://arxiv.org/abs/1902.01889
 """
-from typing import Any, Callable, Union
+from __future__ import annotations
+
+from typing import Any
 
 import tensorflow as tf
 
@@ -32,7 +34,7 @@ def soft_nn_loss(
     query_embeddings: FloatTensor,
     key_labels: IntTensor,
     key_embeddings: FloatTensor,
-    distance: Callable,
+    distance: Distance,
     temperature: float,
     remove_diagonal: bool = True,
 ) -> Any:
@@ -44,8 +46,7 @@ def soft_nn_loss(
         key_labels: labels associated with the key embed.
         key_embeddings: Embedded key examples.
         distance: Which distance function to use to compute the pairwise.
-        temperature: Controls relative importance given
-                        to the pair of points.
+        temperature: Controls relative importance given to the pair of points.
         remove_diagonal: Bool. If True, will set diagonal to False in positive pair mask
 
     Returns:
@@ -53,7 +54,7 @@ def soft_nn_loss(
     """
 
     batch_size = tf.size(query_labels)
-    eps = 1e-9
+    eps = tf.cast(1e-9, dtype=query_embeddings.dtype)
 
     pairwise_dist = distance(query_embeddings, key_embeddings)
     pairwise_dist = pairwise_dist / temperature
@@ -61,7 +62,7 @@ def soft_nn_loss(
 
     # Mask out diagonal entries
     diag = tf.linalg.diag(tf.ones(batch_size, dtype=tf.bool))
-    diag_mask = tf.cast(tf.logical_not(diag), dtype=tf.float32)
+    diag_mask = tf.cast(tf.logical_not(diag), dtype=query_embeddings.dtype)
     negexpd = tf.math.multiply(negexpd, diag_mask)
 
     # creating mask to sample same class neighboorhood
@@ -71,7 +72,7 @@ def soft_nn_loss(
         batch_size=batch_size,
         remove_diagonal=remove_diagonal,
     )
-    pos_mask = tf.cast(pos_mask, dtype=tf.float32)
+    pos_mask = tf.cast(pos_mask, dtype=query_embeddings.dtype)
 
     # all class neighborhood
     alcn = tf.reduce_sum(negexpd, axis=1)
@@ -81,7 +82,7 @@ def soft_nn_loss(
 
     # exclude examples with unique class from loss calculation
     excl = tf.math.not_equal(tf.reduce_sum(pos_mask, axis=1), tf.zeros(batch_size))
-    excl = tf.cast(excl, tf.float32)
+    excl = tf.cast(excl, dtype=query_embeddings.dtype)
 
     loss = tf.math.divide(sacn, alcn)
     loss = -tf.multiply(tf.math.log(eps + loss), excl)
@@ -107,10 +108,10 @@ class SoftNearestNeighborLoss(MetricLoss):
 
     def __init__(
         self,
-        distance: Union[Distance, str] = "sql2",
+        distance: Distance | str = "sql2",
         temperature: float = 1,
         name: str = "SoftNearestNeighborLoss",
-        **kwargs
+        **kwargs,
     ):
         """Initializes the SoftNearestNeighborLoss Loss
 
@@ -129,4 +130,10 @@ class SoftNearestNeighborLoss(MetricLoss):
         self.distance = distance
         self.temperature = temperature
 
-        super().__init__(fn=soft_nn_loss, name=name, distance=distance, temperature=temperature, **kwargs)
+        super().__init__(
+            fn=soft_nn_loss,
+            name=name,
+            distance=distance,
+            temperature=temperature,
+            **kwargs,
+        )
