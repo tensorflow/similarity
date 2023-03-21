@@ -119,7 +119,7 @@ class Indexer(BaseIndexer):
         "(re)initialize internal storage structure"
 
         if self.search_type == "nmslib":
-            self.search: Search = NMSLibSearch(distance=self.distance, dim=self.embedding_size)
+            self.search = NMSLibSearch(distance=self.distance, dim=self.embedding_size)
         elif self.search_type == "linear":
             self.search = LinearSearch(distance=self.distance, dim=self.embedding_size)
         elif isinstance(self.search_type, Search):
