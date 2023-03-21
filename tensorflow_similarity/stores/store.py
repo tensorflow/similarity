@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
+from typing import Any
 
 from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 
@@ -115,3 +116,15 @@ class Store(ABC):
         Returns:
             pd.DataFrame: a pandas dataframe.
         """
+
+    def get_config(self) -> dict[str, Any]:
+        """Contains the Store configuration.
+
+        Returns:
+            A Python dict containing the configuration of the Store obj.
+        """
+        config = {
+            "canonical_name": self.__class__.__name__,
+        }
+
+        return config

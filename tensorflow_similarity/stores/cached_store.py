@@ -13,30 +13,48 @@
 # limitations under the License.
 from __future__ import annotations
 
-import io
+import dbm.dumb
+import json
+import math
+import pickle
+import shutil
 from collections.abc import Sequence
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
-import tensorflow as tf
 
 from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 
 from .store import Store
 
 
-class MemoryStore(Store):
-    """Efficient in-memory dataset store"""
+class CachedStore(Store):
+    """Efficient cached dataset store"""
 
-    def __init__(self, **kw_args) -> None:
-        # We are using a native python array in memory for its row speed.
-        # Serialization / export relies on Arrow.
-        self.labels: list[int | None] = []
-        self.embeddings: list[FloatTensor] = []
-        self.data: list[Tensor | None] = []
-        self.num_items: int = 0
-        pass
+    def __init__(self, shard_size: int = 1000000, path: str = ".", num_items: int = 0, **kw_args) -> None:
+        # We are using a native python cached dictionary
+        # db[id] = pickle((embedding, label, data))
+        self.db: list[dict[str, bytes]] = []
+        self.shard_size = shard_size
+        self.num_items: int = num_items
+        self.path: str = path
+
+    def __get_shard_file_path(self, shard_no):
+        return f"{self.path}/cache{shard_no}"
+
+    def __make_new_shard(self, shard_no: int):
+        return dbm.dumb.open(self.__get_shard_file_path(shard_no), "c")
+
+    def __add_new_shard(self):
+        shard_no = len(self.db)
+        self.db.append(self.__make_new_shard(shard_no))
+
+    def __reopen_all_shards(self):
+        for shard_no in range(len(self.db)):
+            self.db[shard_no] = self.__make_new_shard(shard_no)
+
+    def __get_shard_no(self, idx: int) -> int:
+        return idx // self.shard_size
 
     def add(
         self,
@@ -57,9 +75,10 @@ class MemoryStore(Store):
             Associated record id.
         """
         idx = self.num_items
-        self.labels.append(label)
-        self.embeddings.append(embedding)
-        self.data.append(data)
+        shard_no = self.__get_shard_no(idx)
+        if len(self.db) <= shard_no:
+            self.__add_new_shard()
+        self.db[shard_no][str(idx)] = pickle.dumps((embedding, label, data))
         self.num_items += 1
         return idx
 
@@ -85,10 +104,17 @@ class MemoryStore(Store):
             List of associated record id.
         """
         idxs: list[int] = []
-        for idx, embedding in enumerate(embeddings):
-            label = None if labels is None else labels[idx]
-            rec_data = None if data is None else data[idx]
-            idxs.append(self.add(embedding, label, rec_data))
+        for i, embedding in enumerate(embeddings):
+            idx = i + self.num_items
+            label = None if labels is None else labels[i]
+            rec_data = None if data is None else data[i]
+            shard_no = self.__get_shard_no(idx)
+            if len(self.db) <= shard_no:
+                self.__add_new_shard()
+            self.db[shard_no][str(idx)] = pickle.dumps((embedding, label, rec_data))
+            idxs.append(idx)
+        self.num_items += len(embeddings)
+
         return idxs
 
     def get(self, idx: int) -> tuple[FloatTensor, int | None, Tensor | None]:
@@ -101,7 +127,9 @@ class MemoryStore(Store):
             record associated with the requested id.
         """
 
-        return self.embeddings[idx], self.labels[idx], self.data[idx]
+        shard_no = self.__get_shard_no(idx)
+        embedding, label, data = pickle.loads(self.db[shard_no][str(idx)])
+        return embedding, label, data
 
     def batch_get(self, idxs: Sequence[int]) -> tuple[list[FloatTensor], list[int | None], list[Tensor | None]]:
         """Get embedding records from the key value store.
@@ -126,6 +154,32 @@ class MemoryStore(Store):
         "Number of record in the key value store."
         return self.num_items
 
+    def __close_all_shards(self):
+        for shard in self.db:
+            shard.close()
+
+    def __copy_shards(self, path):
+        for shard_no in range(len(self.db)):
+            shutil.copy(Path(self.__get_shard_file_path(shard_no)).with_suffix(".bak"), path)
+            shutil.copy(Path(self.__get_shard_file_path(shard_no)).with_suffix(".dat"), path)
+            shutil.copy(Path(self.__get_shard_file_path(shard_no)).with_suffix(".dir"), path)
+
+    def __make_config_file_path(self, path):
+        return Path(path) / "config.json"
+
+    def __save_config(self, path):
+        with open(self.__make_config_file_path(path), "wt") as f:
+            json.dump(self.get_config(), f)
+
+    def __set_config(self, num_items, shard_size, **kw_args):
+        self.num_items = num_items
+        self.shard_size = shard_size
+
+    def __load_config(self, path):
+        with open(self.__make_config_file_path(path), "rt") as f:
+            config = json.load(f)
+            self.__set_config(**config)
+
     def save(self, path: str, compression: bool = True) -> None:
         """Serializes index on disk.
 
@@ -135,24 +189,15 @@ class MemoryStore(Store):
         """
         # Writing to a buffer to avoid read error in np.savez when using GFile.
         # See: https://github.com/tensorflow/tensorflow/issues/32090
-        io_buffer = io.BytesIO()
-        if compression:
-            np.savez_compressed(
-                io_buffer,
-                embeddings=self.embeddings,
-                labels=np.array(self.labels),
-                data=np.array(self.data),
-            )
-        else:
-            np.savez(
-                io_buffer,
-                embeddings=self.embeddings,
-                labels=np.array(self.labels),
-                data=np.array(self.data),
-            )
+        self.__close_all_shards()
+        self.__copy_shards(path)
+        self.__save_config(path)
+        self.__reopen_all_shards()
 
-        with tf.io.gfile.GFile(self._make_fname(path), "wb+") as f:
-            f.write(io_buffer.getvalue())
+    def get_config(self):
+        config = {"shard_size": self.shard_size, "num_items": self.num_items}
+        base_config = super().get_config()
+        return {**base_config, **config}
 
     def load(self, path: str) -> int:
         """load index on disk
@@ -163,47 +208,26 @@ class MemoryStore(Store):
         Returns:
            Number of records reloaded.
         """
-        fname = self._make_fname(path, check_file_exit=True)
-        with tf.io.gfile.GFile(fname, "rb") as gfp:
-            data = np.load(gfp, allow_pickle=True)
-        self.embeddings = list(data["embeddings"])
-        self.labels = list(data["labels"])
-        self.data = list(data["data"])
-        self.num_items = len(self.embeddings)
-        print("loaded %d records from %s" % (self.size(), path))
+        self.__load_config(path)
+        num_shards = int(math.ceil(self.num_items / self.shard_size))
+        self.path = path
+        for i in range(num_shards):
+            self.__add_new_shard()
         return self.size()
-
-    def _make_fname(self, path: str, check_file_exit: bool = False) -> str:
-        p = Path(path)
-        if not tf.io.gfile.exists(p):
-            raise ValueError("Index path doesn't exist")
-        fname = p / "index.npz"
-
-        # only for loading
-        if check_file_exit and not tf.io.gfile.exists(fname):
-            raise ValueError("Index file not found")
-        return str(fname)
 
     def to_data_frame(self, num_records: int = 0) -> PandasDataFrame:
         """Export data as a Pandas dataframe.
+
+        Cached store does not fit in memory, therefore we do not implement this.
 
         Args:
             num_records: Number of records to export to the dataframe.
             Defaults to 0 (unlimited).
 
         Returns:
-            pd.DataFrame: a pandas dataframe.
+            Empty DataFrame
         """
 
-        if not num_records:
-            num_records = self.num_items
-
-        data = {
-            "embeddings": self.embeddings[:num_records],
-            "data": self.data[:num_records],
-            "lables": self.labels[:num_records],
-        }
-
         # forcing type from Any to PandasFrame
-        df: PandasDataFrame = pd.DataFrame.from_dict(data)
+        df: PandasDataFrame = pd.DataFrame()
         return df
