@@ -15,11 +15,15 @@ from __future__ import annotations
 
 from typing import Any, Type
 
+from .faiss_search import FaissSearch
+from .linear_search import LinearSearch
 from .nmslib_search import NMSLibSearch
 from .search import Search
 
 SEARCH_ALIASES: dict[str, Type[Search]] = {
     "NMSLibSearch": NMSLibSearch,
+    "LinearSearch": LinearSearch,
+    "FaissSearch": FaissSearch,
 }
 
 

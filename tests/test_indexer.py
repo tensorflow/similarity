@@ -2,6 +2,8 @@ import numpy as np
 import tensorflow as tf
 
 from tensorflow_similarity.indexer import Indexer
+from tensorflow_similarity.search import FaissSearch, LinearSearch
+from tensorflow_similarity.stores import CachedStore
 
 from . import DATA_DIR
 
@@ -133,6 +135,43 @@ class IndexerTest(tf.test.TestCase):
     # reload
     indexer2 = Indexer.load(path)
     self.assertEqual(indexer2.size(), 2)
+
+  def test_linear_search_reload(self):
+    "Ensure the save and load of custom search and store work"
+    embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
+    search = LinearSearch("cosine", 3)
+    store = CachedStore()
+
+    indexer = Indexer(3, search=search, kv_store=store)
+    indexer.batch_add(embs, verbose=0)
+    self.assertEqual(indexer.size(),2)
+
+    # save
+    path = self.get_temp_dir()
+    indexer.save(path, compression=False)
+
+    # reload
+    indexer2 = Indexer.load(path)
+    self.assertEqual(indexer2.size(),2)
+
+  def test_faiss_search_reload(self):
+    "Ensure the save and load of Faiss search and store work"
+    embs = np.random.random((1024, 8)).astype(np.float32)
+    search = FaissSearch("cosine", 8, m=4, nlist=2)
+    store = CachedStore()
+
+    indexer = Indexer(8, search=search, kv_store=store)
+    indexer.build_index(embs)
+    indexer.batch_add(embs, verbose=0)
+    self.assertEqual(indexer.size(),1024)
+
+    # save
+    path = self.get_temp_dir()
+    indexer.save(path, compression=False)
+
+    # reload
+    indexer2 = Indexer.load(path)
+    self.assertEqual(indexer2.size(),1024)
 
   def test_index_reset(self):
     prediction = np.array([[1, 1, 2]], dtype="float32")

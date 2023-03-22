@@ -123,11 +123,11 @@ class BNDCG(RetrievalMetric):
 
         start_idx = 1 if self.drop_closest_lookup else 0
         k_slice = tf.math.multiply(
-            tf.cast(match_mask, dtype="float"),
-            tf.cast(dist_mask, dtype="float"),
+            tf.cast(match_mask, dtype=lookup_distances.dtype),
+            tf.cast(dist_mask, dtype=lookup_distances.dtype),
         )[:, start_idx : start_idx + self.k]
 
-        rank = tf.range(1, self.k + 1, dtype="float")
+        rank = tf.range(1, self.k + 1, dtype=lookup_distances.dtype)
         rank_weights = tf.math.divide(tf.math.log1p(rank), tf.math.log(2.0))
 
         # the numerator is simplier here because we are using binary weights

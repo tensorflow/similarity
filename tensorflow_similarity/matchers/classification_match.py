@@ -62,9 +62,9 @@ class ClassificationMatch(ABC):
             is passed.
         """
         if distance_thresholds is None:
-            distance_thresholds = tf.constant([math.inf])
+            distance_thresholds = tf.constant([math.inf], dtype=tf.keras.backend.floatx())
 
-        self.distance_thresholds = tf.sort(tf.cast(distance_thresholds, dtype="float32"))
+        self.distance_thresholds = tf.sort(distance_thresholds)
 
     @abstractmethod
     def derive_match(self, lookup_labels: IntTensor, lookup_distances: FloatTensor) -> tuple[IntTensor, FloatTensor]:
@@ -140,7 +140,7 @@ class ClassificationMatch(ABC):
         match_mask = tf.math.equal(d_labels, query_labels)
 
         # A 2D BoolTensor [len(lookup_distance), len(self.distance_thresholds)]
-        distance_mask = tf.math.less_equal(d_dist, self.distance_thresholds)
+        distance_mask = tf.math.less_equal(d_dist, tf.cast(self.distance_thresholds, dtype=d_dist.dtype))
 
         return match_mask, distance_mask
 
@@ -183,19 +183,19 @@ class ClassificationMatch(ABC):
     def _compute_count(self, label_match: BoolTensor, dist_mask: BoolTensor) -> None:
         _tp = tf.math.logical_and(label_match, dist_mask)
         _tp = tf.math.count_nonzero(_tp, axis=0)
-        self._tp: FloatTensor = tf.cast(_tp, dtype="float")
+        self._tp: FloatTensor = tf.cast(_tp, dtype=tf.keras.backend.floatx())
 
         _fn = tf.math.logical_and(label_match, tf.math.logical_not(dist_mask))
         _fn = tf.math.count_nonzero(_fn, axis=0)
-        self._fn: FloatTensor = tf.cast(_fn, dtype="float")
+        self._fn: FloatTensor = tf.cast(_fn, dtype=tf.keras.backend.floatx())
 
         _fp = tf.math.logical_and(tf.math.logical_not(label_match), dist_mask)
         _fp = tf.math.count_nonzero(_fp, axis=0)
-        self._fp: FloatTensor = tf.cast(_fp, dtype="float")
+        self._fp: FloatTensor = tf.cast(_fp, dtype=tf.keras.backend.floatx())
 
         _tn = tf.math.logical_and(tf.math.logical_not(label_match), tf.math.logical_not(dist_mask))
         _tn = tf.math.count_nonzero(_tn, axis=0)
-        self._tn: FloatTensor = tf.cast(_tn, dtype="float")
+        self._tn: FloatTensor = tf.cast(_tn, dtype=tf.keras.backend.floatx())
 
         self._count = len(label_match)
 

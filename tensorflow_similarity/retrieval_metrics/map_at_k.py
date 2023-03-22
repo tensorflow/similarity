@@ -102,6 +102,6 @@ class MapAtK(PrecisionAtK):
 
     def _get_matches(self, x):
         tp = tf.math.cumsum(x, axis=1)
-        p_at_k = tf.math.divide_no_nan(tp, tf.range(1, x.shape[1] + 1, dtype="float"))
+        p_at_k = tf.math.divide_no_nan(tp, tf.range(1, x.shape[1] + 1, dtype=tp.dtype))
         p_at_k = tf.math.multiply(x, p_at_k)
         return p_at_k
