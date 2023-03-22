@@ -37,6 +37,8 @@ import logging
 # Disable the INFO logging from NMSLIB
 logging.getLogger("nmslib").setLevel(logging.WARNING)
 
+from .faiss_search import FaissSearch  # noqa
+from .linear_search import LinearSearch
 from .nmslib_search import NMSLibSearch  # noqa
 from .search import Search  # noqa
 from .utils import make_search  # noqa

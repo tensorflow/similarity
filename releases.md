@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.17.x] - Additional Loss Functions, Refactors, and Bug Fixes
+
+Thanks to:
+- @yonigottesman 
+- @abhisharsinha 
+- @aminhp
+- @dewball345
+
+### Added
+
+- Contrastive model now provides a create_contrastive_model() function that provides default projector and predictor MLP models.
+- Full support for all nmslib parameters in the nmslib search class. Models now correctly serialize and load custom nmslib configurations.
+- support for MultiShotFileSample to enable passing in a data loader function to read examples from disk.
+- Precision@K to the retrieval metrics. See section 3.2 of https://arxiv.org/pdf/2003.08505.pdf
+- support for retrieval metrics in the metrics callback.
+- support for clipping the retrieval metric at R per class. This masks out any values past the R expected neighbors.
+- Added VicReg Loss to contrastive losses.
+- Add support for passing the same examples for both the query and indexed set when calling retrieval_metrics. Added a new param to each retrieval_metric that enables dropping the nearest neighbor. This is useful if the nearest neighbor exists in the indexed examples.
+- New Notebooks for transfer learning new Clip embeddings and Examples for using Retrieval metrics.
+
+### Changed
+
+- Contrastive model now saves and loads using the standard keras methods.
+- Removed references to multiple output heads in Contrastive model.
+- Update all typing to use standard collections (see pep 585).
+- Start refactoring tests to improve coverage and use TF TestCase
+- Architectures now use syncbatchnorm instead of batchnorm to support distributed training.
+- Refactored image augmentation utilities.
+
+### Fixed
+
+- Contrastive model loading verified to work correctly with TF 2.8 to 2.11
+- SimClr now works correctly with distributed training.
+- Add better support for mixed precision and float16 dtype policies, and cast from local tensor dtypes when possible.
+- Speed up tests and add support for testing python 3.8 and 3.10 cross TF 2.7 and 2.11.
+- Warmup Cosine LR Schedule now correctly reaches the max LR level and the cosine decay begins after reaching the max value.
+- Other small fixes and improvements
+
+
 ## [0.16.x] - Additional Loss Functions, Refactors, and Bug Fixes 
 
 ### Added
