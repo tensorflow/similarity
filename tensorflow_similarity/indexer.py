@@ -34,14 +34,11 @@ from .classification_metrics import (
 )
 
 # internal
-from .distances import Distance, distance_canonicalizer
-from .evaluators import Evaluator, MemoryEvaluator
-from .matchers import ClassificationMatch, make_classification_matcher
-from .retrieval_metrics import RetrievalMetric
-from .search import NMSLibSearch, Search, make_search
-from .stores import MemoryStore, Store
-from .types import CalibrationResults, FloatTensor, Lookup, PandasDataFrame, Tensor
-from .utils import unpack_lookup_distances, unpack_lookup_labels
+from .distances import Distance
+from .evaluators import Evaluator
+from .search import LinearSearch, NMSLibSearch, Search, make_search
+from .stores import MemoryStore, Store, make_store
+from .types import FloatTensor, Lookup, PandasDataFrame, Tensor
 
 
 class Indexer:
