@@ -33,7 +33,7 @@ from .classification_metrics import F1Score, make_classification_metric
 
 # internal
 from .distances import Distance
-from .evaluators import Evaluator, MemoryEvaluator
+from .evaluators import Evaluator
 from .search import LinearSearch, NMSLibSearch, Search, make_search
 from .stores import MemoryStore, Store, make_store
 from .types import FloatTensor, Lookup, PandasDataFrame, Tensor

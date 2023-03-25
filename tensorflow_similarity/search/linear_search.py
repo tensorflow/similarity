@@ -68,7 +68,6 @@ class LinearSearch(Search):
             k: Number of nearest neighboors embedding to lookup. Defaults to 5.
         """
 
-        items = len(self.ids)
         if normalize:
             query = tf.math.l2_normalize(embeddings, axis=1)
         else:
