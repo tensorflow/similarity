@@ -9,14 +9,13 @@ import tensorflow as tf
 
 from tensorflow_similarity.samplers import MultiShotFileSampler
 
-class FileSamplersTest(tf.test.TestCase):
 
+class FileSamplersTest(tf.test.TestCase):
     def _create_random_image(self, filename, size=(32, 32)):
         filepath = os.path.join(tempfile.gettempdir(), filename)
         image = np.random.random(size + (3,)).astype(np.float32)
         tf.keras.utils.save_img(filepath, image)
         return filepath
-
 
     def test_multi_shot_file_sampler(self):
         """Test MultiShotFileSampler with various sizes.
@@ -29,7 +28,7 @@ class FileSamplersTest(tf.test.TestCase):
         filepaths = [self._create_random_image(filename) for filename in filenames]
         examples_per_class = (2, 20)
         images = [np.array(tf.keras.utils.load_img(path), dtype=np.float32) / 255 for path in filepaths]
-        
+
         for example_per_class in examples_per_class:
             y = tf.constant([1, 2, 3, 1, 2, 3])
             x = tf.constant(filepaths)
@@ -53,12 +52,20 @@ class FileSamplersTest(tf.test.TestCase):
 
                 for x, y in zip(batch_x, batch_y):
                     if y == 1:
-                        assert np.isclose(x.numpy(), images[0], atol=0.1).all() or np.isclose(x.numpy(), images[3], atol=0.1).all()
+                        assert (
+                            np.isclose(x.numpy(), images[0], atol=0.1).all()
+                            or np.isclose(x.numpy(), images[3], atol=0.1).all()
+                        )
                     elif y == 2:
-                        assert np.isclose(x.numpy(), images[1], atol=0.1).all() or np.isclose(x.numpy(), images[4], atol=0.1).all()
+                        assert (
+                            np.isclose(x.numpy(), images[1], atol=0.1).all()
+                            or np.isclose(x.numpy(), images[4], atol=0.1).all()
+                        )
                     elif y == 3:
-                        assert np.isclose(x.numpy(), images[2], atol=0.1).all() or np.isclose(x.numpy(), images[5], atol=0.1).all()
-
+                        assert (
+                            np.isclose(x.numpy(), images[2], atol=0.1).all()
+                            or np.isclose(x.numpy(), images[5], atol=0.1).all()
+                        )
 
     def test_msfs_get_slice(self):
         """Test the multi shot file sampler get_slice method."""
@@ -84,7 +91,6 @@ class FileSamplersTest(tf.test.TestCase):
         self.assertEqual(slice_y[0], 1)
         self.assertEqual(slice_y[1], 2)
 
-
     def test_msms_properties(self):
         """Test the multi shot file sampler num_examples and shape"""
         filenames = ["1.jpg", "2.jpg", "3.jpg", "4.jpg"]
@@ -97,7 +103,6 @@ class FileSamplersTest(tf.test.TestCase):
         self.assertEqual(fs_sampler.num_examples, 4)
         self.assertEqual(fs_sampler.example_shape, (128, 96, 3))
 
-
     def test_small_class_size(self):
         """Test examples_per_class is > the number of class examples."""
         filenames = ["1.jpg", "2.jpg", "3.jpg", "4.jpg"]
@@ -106,11 +111,8 @@ class FileSamplersTest(tf.test.TestCase):
         y = tf.constant([1, 1, 1, 2])
         x = tf.constant(filepaths)
 
-
         with self.captureWritesToStream(sys.stdout) as captured:
-            ms_sampler = MultiShotFileSampler(
-                x=x, y=y, classes_per_batch=2, examples_per_class_per_batch=3
-            )
+            ms_sampler = MultiShotFileSampler(x=x, y=y, classes_per_batch=2, examples_per_class_per_batch=3)
             _, batch_y = ms_sampler.generate_batch(0)
             y, _, class_counts = tf.unique_with_counts(batch_y)
 
