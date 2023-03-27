@@ -10,14 +10,18 @@ from tensorflow_similarity.layers import (
     MetricEmbedding,
 )
 
-def input_2d_tensor(): 
-    return tf.constant([
+
+def input_2d_tensor():
+    return tf.constant(
         [
-            [[0.0, 5.0], [0.0, 5.0], [0.0, 5.0]],
-            [[5.0, 10.0], [5.0, 10.0], [5.0, 10.0]],
-            [[10.0, 15.0], [10.0, 15.0], [10.0, 15.0]],
-        ],
-        ])
+            [
+                [[0.0, 5.0], [0.0, 5.0], [0.0, 5.0]],
+                [[5.0, 10.0], [5.0, 10.0], [5.0, 10.0]],
+                [[10.0, 15.0], [10.0, 15.0], [10.0, 15.0]],
+            ],
+        ]
+    )
+
 
 def input_1d_tensor():
     # A (1, 3, 1) Tensor.
@@ -25,24 +29,20 @@ def input_1d_tensor():
     x = tf.reshape(x, [3, 3, 1])
     return x
 
-class LayersTest(tf.test.TestCase):
 
+class LayersTest(tf.test.TestCase):
     def test_generalized_mean_pooling_2d(self):
         result = GeneralizedMeanPooling2D(p=1.0)(input_2d_tensor())
         expected = tf.constant([[5.0, 10.0]])
         self.assertAllClose(result, expected, rtol=1e-06)
 
     def test_generalized_mean_pooling_2d_inf(self):
-        result = GeneralizedMeanPooling2D(p=math.inf, keepdims=True)(
-            input_2d_tensor()
-        )
+        result = GeneralizedMeanPooling2D(p=math.inf, keepdims=True)(input_2d_tensor())
         expected = tf.constant([[[[10.0, 15.0]]]])
         self.assertAllClose(result, expected, rtol=1e-06)
 
     def test_generalized_mean_pooling_2d_neg_inf(self):
-        result = GeneralizedMeanPooling2D(p=-math.inf, keepdims=True)(
-            input_2d_tensor()
-        )
+        result = GeneralizedMeanPooling2D(p=-math.inf, keepdims=True)(input_2d_tensor())
         expected = tf.constant([[[[0.0, 5.0]]]])
         self.assertAllClose(result, expected, rtol=1e-06)
 
@@ -57,9 +57,7 @@ class LayersTest(tf.test.TestCase):
         self.assertAllClose(result, expected, rtol=1e-06)
 
     def test_generalized_mean_pooling_2d_channels_first(self):
-        result = GeneralizedMeanPooling2D(p=1.0, data_format="channels_first")(
-            input_2d_tensor()
-        )
+        result = GeneralizedMeanPooling2D(p=1.0, data_format="channels_first")(input_2d_tensor())
         # With channels first we expect a (1,3) shape.
         expected = tf.constant([[2.5, 7.5, 12.5]])
         self.assertAllClose(result, expected, rtol=1e-06)
@@ -72,24 +70,18 @@ class LayersTest(tf.test.TestCase):
 
     def test_generalized_mean_pooling_2d_compute_shape_keepdims(self):
         input_shape = tf.constant([1, 2, 3, 4])
-        result = GeneralizedMeanPooling2D(keepdims=True).compute_output_shape(
-            input_shape
-        )
+        result = GeneralizedMeanPooling2D(keepdims=True).compute_output_shape(input_shape)
         expected_shape = tf.constant([1, 1, 1, 4])
         self.assertAllClose(result, expected_shape, rtol=1e-06)
 
     def test_generalized_mean_pooling_2d_compute_shape_dataformat(self):
         input_shape = tf.constant([1, 2, 3, 4])
-        result = GeneralizedMeanPooling2D(
-            data_format="channels_first"
-        ).compute_output_shape(input_shape)
+        result = GeneralizedMeanPooling2D(data_format="channels_first").compute_output_shape(input_shape)
         expected_shape = tf.constant([1, 2])
         self.assertAllClose(result, expected_shape, rtol=1e-06)
 
     def test_generalized_mean_pooling_2d_get_config(self):
-        gem = GeneralizedMeanPooling2D(
-            p=3.0, data_format="channels_first", keepdims=True, name="GEM"
-        )
+        gem = GeneralizedMeanPooling2D(p=3.0, data_format="channels_first", keepdims=True, name="GEM")
         config = gem.get_config()
         expected_config = {
             "p": 3.0,
@@ -107,21 +99,13 @@ class LayersTest(tf.test.TestCase):
         self.assertAllClose(result, expected, rtol=1e-06)
 
     def test_generalized_mean_pooling_1d_inf(self):
-        result = GeneralizedMeanPooling1D(p=math.inf, keepdims=True)(
-            input_1d_tensor()
-        )
-        expected = tf.constant(
-            [[[3.0], [3.0], [3.0]], [[6.0], [6.0], [6.0]], [[9.0], [9.0], [9.0]]]
-        )
+        result = GeneralizedMeanPooling1D(p=math.inf, keepdims=True)(input_1d_tensor())
+        expected = tf.constant([[[3.0], [3.0], [3.0]], [[6.0], [6.0], [6.0]], [[9.0], [9.0], [9.0]]])
         self.assertAllClose(result, expected, rtol=1e-06)
 
     def test_generalized_mean_pooling_1d_neg_inf(self):
-        result = GeneralizedMeanPooling1D(p=-math.inf, keepdims=True)(
-            input_1d_tensor()
-        )
-        expected = tf.constant(
-            [[[1.0], [1.0], [1.0]], [[4.0], [4.0], [4.0]], [[7.0], [7.0], [7.0]]]
-        )
+        result = GeneralizedMeanPooling1D(p=-math.inf, keepdims=True)(input_1d_tensor())
+        expected = tf.constant([[[1.0], [1.0], [1.0]], [[4.0], [4.0], [4.0]], [[7.0], [7.0], [7.0]]])
         self.assertAllClose(result, expected, rtol=1e-06)
 
     def test_generalized_mean_pooling_1d_zero(self):
@@ -136,9 +120,7 @@ class LayersTest(tf.test.TestCase):
 
     def test_generalized_mean_pooling_1d_channels_first(self):
         input_tensor = tf.reshape(input_1d_tensor(), [3, 1, 3])
-        result = GeneralizedMeanPooling1D(p=1.0, data_format="channels_first")(
-            input_tensor
-        )
+        result = GeneralizedMeanPooling1D(p=1.0, data_format="channels_first")(input_tensor)
         expected = tf.constant([[2.0], [5.0], [8.0]])
         self.assertAllClose(result, expected, rtol=1e-06)
 
@@ -150,24 +132,18 @@ class LayersTest(tf.test.TestCase):
 
     def test_generalized_mean_pooling_1d_compute_shape_keepdims(self):
         input_shape = tf.constant([1, 2, 3])
-        result = GeneralizedMeanPooling1D(keepdims=True).compute_output_shape(
-            input_shape
-        )
+        result = GeneralizedMeanPooling1D(keepdims=True).compute_output_shape(input_shape)
         expected_shape = tf.constant([1, 1, 3])
         self.assertAllClose(result, expected_shape, rtol=1e-06)
 
     def test_generalized_mean_pooling_1d_compute_shape_dataformat(self):
         input_shape = tf.constant([1, 2, 3])
-        result = GeneralizedMeanPooling1D(
-            data_format="channels_first"
-        ).compute_output_shape(input_shape)
+        result = GeneralizedMeanPooling1D(data_format="channels_first").compute_output_shape(input_shape)
         expected_shape = tf.constant([1, 2])
         self.assertAllClose(result, expected_shape, rtol=1e-06)
 
     def test_generalized_mean_pooling_1d_get_config(self):
-        gem = GeneralizedMeanPooling1D(
-            p=3.0, data_format="channels_first", keepdims=True, name="GEM"
-        )
+        gem = GeneralizedMeanPooling1D(p=3.0, data_format="channels_first", keepdims=True, name="GEM")
         config = gem.get_config()
         expected_config = {
             "p": 3.0,
@@ -181,9 +157,7 @@ class LayersTest(tf.test.TestCase):
 
     def test_metric_embedding(self):
         input_tensor = tf.constant([[4.0, 4.0, 4.0, 4.0], [1.0, 1.0, 1.0, 1.0]])
-        me_layer = MetricEmbedding(
-            4, kernel_initializer=tf.constant_initializer(1.0)
-        )
+        me_layer = MetricEmbedding(4, kernel_initializer=tf.constant_initializer(1.0))
         result = me_layer(input_tensor)
         expected_result = tf.constant([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]])
         self.assertAllClose(result, expected_result, rtol=1e-06)
