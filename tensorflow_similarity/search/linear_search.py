@@ -49,8 +49,7 @@ class LinearSearch(Search):
                 f"|  - name:           {self.name}",
             ]
             cprint("\n".join(t_msg) + "\n", "green")
-        self.db: List[FloatTensor] = []
-        self.ids: List[int] = []
+        self.reset()
 
     def is_built(self):
         return True
@@ -148,6 +147,10 @@ class LinearSearch(Search):
             data = pickle.load(f)
         self.db = data[0]
         self.ids = data[1]
+
+    def reset(self):
+        self.db: List[FloatTensor] = []
+        self.ids: List[int] = []
 
     def __make_config_path(self, path):
         return Path(path) / "config.json"

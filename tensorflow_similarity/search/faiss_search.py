@@ -10,7 +10,7 @@ import faiss
 import numpy as np
 from termcolor import cprint
 
-from tensorflow_similarity.distances import Distance
+from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor
 
 from .search import Search
@@ -66,20 +66,22 @@ class FaissSearch(Search):
                 f"|  - normalize:    {self.normalize}",
             ]
             cprint("\n".join(t_msg) + "\n", "green")
+        self.reset()
 
+    def reset(self):
         if self.algo == "ivfpq":
-            assert dim % m == 0, f"dim={dim}, m={m}"
+            assert self.dim % self.m == 0, f"dim={self.dim}, m={self.m}"
         if self.algo == "ivfpq":
             metric = faiss.METRIC_L2
             prefix = ""
-            if distance == "cosine":
+            if self.distance == distance_canonicalizer("cosine"):
                 prefix = "L2norm,"
                 metric = faiss.METRIC_INNER_PRODUCT
                 # this distance requires both the input and query vectors to be normalized
-            ivf_string = f"IVF{nlist},"
-            pq_string = f"PQ{m}x{nbits}"
+            ivf_string = f"IVF{self.nlist},"
+            pq_string = f"PQ{self.m}x{self.nbits}"
             factory_string = prefix + ivf_string + pq_string
-            self.index = faiss.index_factory(dim, factory_string, metric)
+            self.index = faiss.index_factory(self.dim, factory_string, metric)
             # quantizer = faiss.IndexFlatIP(
             #     dim
             # )  # we keep the same L2 distance flat index
@@ -91,16 +93,16 @@ class FaissSearch(Search):
             #       dim
             #   )  # we keep the same L2 distance flat index
             #   self.index = faiss.IndexIVFPQ(quantizer, dim, nlist, m, nbits)
-            self.index.nprobe = nprobe  # set how many of nearest cells to search
-        elif algo == "flat":
-            if distance == "cosine":
+            self.index.nprobe = self.nprobe  # set how many of nearest cells to search
+        elif self.algo == "flat":
+            if self.distance == distance_canonicalizer("cosine"):
                 # this is exact match using cosine/dot-product Distance
-                self.index = faiss.IndexFlatIP(dim)
-            elif distance == "l2":
+                self.index = faiss.IndexFlatIP(self.dim)
+            elif self.distance == distance_canonicalizer("l2"):
                 # this is exact match using L2 distance
-                self.index = faiss.IndexFlatL2(dim)
+                self.index = faiss.IndexFlatL2(self.dim)
             else:
-                raise ValueError(f"distance {distance} not supported")
+                raise ValueError(f"distance {self.distance} not supported")
 
     def is_built(self):
         return self.algo == "flat" or self.index.is_trained

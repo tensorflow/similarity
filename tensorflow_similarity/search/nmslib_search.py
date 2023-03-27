@@ -57,39 +57,9 @@ class NMSLibSearch(Search):
         self.space_params = space_params
         self.index_params = index_params
         self.query_params = query_params
+        self.verbose = verbose
 
-        # convert to nmslib word
-        if self.distance.name == "cosine":
-            space = "cosinesimil"
-        elif self.distance.name in ("euclidean", "squared_euclidean"):
-            space = "l2"
-        elif self.distance.name == "manhattan":
-            space = "l1"
-        else:
-            raise ValueError("Unsupported metric space")
-
-        if verbose:
-            t_msg = [
-                "\n|-Initialize NMSLib Index",
-                f"|  - space:        {space}",
-                f"|  - method:       {self.method}",
-                f"|  - data_type:    {self.data_type}",
-                f"|  - dist_type:    {self.dtype}",
-                f"|  - space_params: {self.space_params}",
-                f"|  - index_params: {self.index_params}",
-                f"|  - query_params: {self.query_params}",
-            ]
-            cprint("\n".join(t_msg) + "\n", "green")
-
-        self._search_index = nmslib.init(
-            space=space,
-            space_params=self.space_params,
-            method=self.method,
-            data_type=self.data_type,
-            dtype=self.dtype,
-        )
-        self._search_index.createIndex(index_params=self.index_params)
-        self._search_index.setQueryTimeParams(params=self.query_params)
+        self.reset()
 
     def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, build: bool = True, **kwargs):
         """Add an embedding to the index
@@ -212,6 +182,39 @@ class NMSLibSearch(Search):
                     fp.write(gfp.read())
 
             self._search_index.loadIndex(tmpidx, load_data=True)
+
+    def reset(self):
+        if self.distance.name == "cosine":
+            space = "cosinesimil"
+        elif self.distance.name in ("euclidean", "squared_euclidean"):
+            space = "l2"
+        elif self.distance.name == "manhattan":
+            space = "l1"
+        else:
+            raise ValueError("Unsupported metric space")
+
+        if self.verbose:
+            t_msg = [
+                "\n|-Initialize NMSLib Index",
+                f"|  - space:        {space}",
+                f"|  - method:       {self.method}",
+                f"|  - data_type:    {self.data_type}",
+                f"|  - dist_type:    {self.dtype}",
+                f"|  - space_params: {self.space_params}",
+                f"|  - index_params: {self.index_params}",
+                f"|  - query_params: {self.query_params}",
+            ]
+            cprint("\n".join(t_msg) + "\n", "green")
+
+        self._search_index = nmslib.init(
+            space=space,
+            space_params=self.space_params,
+            method=self.method,
+            data_type=self.data_type,
+            dtype=self.dtype,
+        )
+        self._search_index.createIndex(index_params=self.index_params)
+        self._search_index.setQueryTimeParams(params=self.query_params)
 
     def _build(self, verbose=0):
         """Build the index this is need to take into account the new points"""
