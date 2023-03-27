@@ -360,7 +360,7 @@ class SimilarityModel(tf.keras.Model):
         """
 
         if verbose:
-            print("[Indexing {tf.shape(x)} points]")
+            print(f"[Indexing {tf.shape(x)[0]} points]")
             print("|-Computing embeddings")
         with tf.device("/cpu:0"):
             x = tf.convert_to_tensor(np.array(x))
