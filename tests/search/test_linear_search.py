@@ -15,7 +15,8 @@ def test_index_match():
 
     assert len(embs) == 2
     assert list(idxs) == [0, 1]
-    
+
+
 def test_reset():
     target = np.array([1, 2, 3], dtype="float32")
     embs = np.array([[4, 2, 1], [2, 3, 5]], dtype="float32")
@@ -29,7 +30,7 @@ def test_reset():
     assert len(dists) == 2
     print(dists)
     assert list(idxs) == [1, 0]
-    
+
     search_index.reset()
     # switch order
     search_index.add(embs[1], 0, normalize=True)
@@ -38,7 +39,6 @@ def test_reset():
 
     assert len(dists) == 2
     assert list(idxs) == [0, 1]
-    
 
 
 def test_index_match_l1():

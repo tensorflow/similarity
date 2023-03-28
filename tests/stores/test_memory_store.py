@@ -31,7 +31,8 @@ def test_in_memory_store_and_retrieve():
         assert emb == records[idx][0]
         assert lbl == records[idx][1]
         assert dt == records[idx][2]
-        
+
+
 def test_reset():
     records = [[[0.1, 0.2], 1, [0, 0, 0]], [[0.2, 0.3], 2, [0, 0, 0]]]
 
@@ -39,13 +40,14 @@ def test_reset():
 
     # check reference counting
     assert kv_store.size() == 2
-    
+
     kv_store.reset()
     assert kv_store.size() == 0
-    
+
     kv_store.add(records[0][0], records[0][1], records[0][2])
     assert kv_store.size() == 1
-    
+
+
 def test_batch_add():
     embs = np.array([[0.1, 0.2], [0.2, 0.3]])
     lbls = np.array([1, 2])

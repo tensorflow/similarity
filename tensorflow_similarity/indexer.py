@@ -108,15 +108,6 @@ class Indexer(BaseIndexer):
         self.kv_store_type = kv_store if isinstance(kv_store, str) else type(kv_store).__name__
         if isinstance(kv_store, Store):
             self.kv_store: Store = kv_store
-        # initialize internal structures
-        self._init_structures()
-
-    def reset(self) -> None:
-        "Reinitialize the indexer"
-        self._init_structures()
-
-    def _init_structures(self) -> None:
-        "(re)initialize internal storage structure"
 
         if self.search_type == "nmslib":
             self.search = NMSLibSearch(distance=self.distance, dim=self.embedding_size)
@@ -142,6 +133,18 @@ class Indexer(BaseIndexer):
         elif not hasattr(self, "search") or not isinstance(self.kv_store, Store):
             # self.kv_store should have been already initialized
             raise ValueError("You need to either supply a know key value " "store name or a Store() object")
+
+        # initialize internal structures
+        self._init_structures()
+
+    def reset(self) -> None:
+        "Reinitialize the indexer"
+        self.search.reset()
+        self.kv_store.reset()
+        self._init_structures()
+
+    def _init_structures(self) -> None:
+        "(re)initialize internal stats structure"
 
         # stats
         self._stats: DefaultDict[str, int] = defaultdict(int)
