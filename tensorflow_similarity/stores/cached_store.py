@@ -39,6 +39,13 @@ class CachedStore(Store):
         self.num_items: int = num_items
         self.path: str = path
 
+    def reset(self):
+        shard_no = len(self.db)
+        self.db = []
+        self.num_items = 0
+        for i in range(shard_no):
+            self.__delete_shard(i)
+
     def __get_shard_file_path(self, shard_no):
         return f"{self.path}/cache{shard_no}"
 
@@ -48,6 +55,9 @@ class CachedStore(Store):
     def __add_new_shard(self):
         shard_no = len(self.db)
         self.db.append(self.__make_new_shard(shard_no))
+
+    def __delete_shard(self, n):
+        self.__get_shard_file_path(n)
 
     def __reopen_all_shards(self):
         for shard_no in range(len(self.db)):

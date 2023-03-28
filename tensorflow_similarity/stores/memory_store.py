@@ -36,7 +36,12 @@ class MemoryStore(Store):
         self.embeddings: list[FloatTensor] = []
         self.data: list[Tensor | None] = []
         self.num_items: int = 0
-        pass
+
+    def reset(self):
+        self.labels = []
+        self.embeddings = []
+        self.data = []
+        self.num_items = 0
 
     def add(
         self,

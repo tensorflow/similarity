@@ -36,6 +36,9 @@ class RedisStore(Store):
         self.db = db
         self.__connect()
 
+    def reset(self):
+        self.__conn.flushdb()
+
     def add(
         self,
         embedding: FloatTensor,
