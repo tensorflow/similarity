@@ -106,3 +106,25 @@ def test_ivfpq():
         search_index.batch_add(embs, idxs)
     found_idxs, found_dists = search_index.batch_lookup(targets, 2)
     assert found_idxs.shape == (10, 2)
+
+
+def test_reset():
+    target = np.array([1, 2, 3], dtype="float32")
+    embs = np.array([[3, 2, 1], [2, 3, 4]], dtype="float32")
+
+    search_index = FaissSearch("cosine", 3, algo="flat")
+    search_index.add(embs[0], 0)
+    search_index.add(embs[1], 1)
+
+    idxs, out_embs = search_index.lookup(target, k=2)
+    print(f"idxs={idxs}, embs={out_embs}")
+
+    assert len(out_embs) == 2
+    assert list(idxs) == [1, 0]
+    search_index.reset()
+    # only add one
+    search_index.add(embs[0], 0)
+    idxs, out_embs = search_index.lookup(target, k=2)
+    print(f"idxs={idxs}, embs={out_embs}")
+    assert len(out_embs) == 2
+    assert list(idxs) == [0, -1]

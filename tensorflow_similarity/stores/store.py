@@ -117,6 +117,10 @@ class Store(ABC):
             pd.DataFrame: a pandas dataframe.
         """
 
+    @abstractmethod
+    def reset(self) -> None:
+        """Resets the data in the store."""
+
     def get_config(self) -> dict[str, Any]:
         """Contains the Store configuration.
 

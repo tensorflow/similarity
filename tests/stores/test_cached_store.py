@@ -35,6 +35,21 @@ def test_cached_store_and_retrieve(tmp_path):
         assert dt == records[idx][2]
 
 
+def test_reset(tmp_path):
+    records = [[[0.1, 0.2], 1, [0, 0, 0]], [[0.2, 0.3], 2, [0, 0, 0]]]
+
+    kv_store, idxs = build_store(records, tmp_path)
+
+    # check reference counting
+    assert kv_store.size() == 2
+
+    kv_store.reset()
+    assert kv_store.size() == 0
+
+    kv_store.add(records[0][0], records[0][1], records[0][2])
+    assert kv_store.size() == 1
+
+
 def test_batch_add(tmp_path):
     embs = np.array([[0.1, 0.2], [0.2, 0.3]])
     lbls = np.array([1, 2])
