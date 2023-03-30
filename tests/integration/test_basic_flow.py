@@ -6,6 +6,8 @@ from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.models import SimilarityModel
 from tensorflow_similarity.samplers import MultiShotMemorySampler
+from tensorflow_similarity.search import FaissSearch, LinearSearch
+from tensorflow_similarity.stores import CachedStore
 from tensorflow_similarity.training_metrics import dist_gap, max_pos, min_neg
 
 # Set seed to fix flaky tests.
@@ -27,7 +29,7 @@ def generate_dataset(num_classes, num_examples_per_class, reps=4):
     x = []
     for i in range(num_classes):
         y.extend([i] * num_examples_per_class)
-        vect = [0] * num_classes * 4
+        vect = [0] * num_classes * reps
         for rep in range(reps):
             idx = i + num_classes * rep
             vect[idx] = 1
@@ -35,8 +37,11 @@ def generate_dataset(num_classes, num_examples_per_class, reps=4):
     return tf.constant(x, dtype=tf.keras.backend.floatx()), tf.constant(y, dtype="int32")
 
 
-@pytest.mark.parametrize("precision", [("float16"), ("float32"), ("mixed_float16")])
-def test_basic_flow(tmp_path, precision):
+@pytest.mark.parametrize(
+    "precision,search_type,store_type",
+    [("float32", "faiss", "cached"), ("float16", "default", "default"), ("mixed_float16", "default", "cached")],
+)
+def test_basic_flow(tmp_path, precision, search_type, store_type):
     policy = tf.keras.mixed_precision.Policy(precision)
     tf.keras.mixed_precision.set_global_policy(policy)
 
@@ -55,6 +60,18 @@ def test_basic_flow(tmp_path, precision):
     x, y = generate_dataset(NUM_CLASSES, EXAMPLES_PER_CLASS)
     sampler = MultiShotMemorySampler(x, y, classes_per_batch=CLASS_PER_BATCH, steps_per_epoch=STEPS_PER_EPOCH)
 
+    # Search
+    search = None
+    if search_type == "linear":
+        search = LinearSearch()
+    elif search_type == "faiss":
+        search = FaissSearch(distance=distance, dim=4, m=4, nlist=8, nprobe=8)
+
+    # Store
+    kv_store = None
+    if store_type == "cached":
+        kv_store = CachedStore()
+
     # model
     inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS,))
     # dont use x as variable
@@ -72,7 +89,12 @@ def test_basic_flow(tmp_path, precision):
 
     # compile
     metrics = [dist_gap(distance), min_neg(distance), max_pos(distance)]
-    model.compile(optimizer="adam", metrics=metrics, loss=triplet_loss)
+    compile_params = {"optimizer": "adam", "metrics": metrics, "loss": triplet_loss}
+    if search:
+        compile_params["search"] = search
+    if kv_store:
+        compile_params["kv_store"] = kv_store
+    model.compile(**compile_params)
 
     # train
     history = model.fit(sampler, epochs=15)

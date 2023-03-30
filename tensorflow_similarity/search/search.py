@@ -126,3 +126,7 @@ class Search(ABC):
         }
 
         return config
+
+    @abstractmethod
+    def is_built(self):
+        "Returns whether or not the index is built and ready for querying." ""

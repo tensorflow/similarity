@@ -164,6 +164,7 @@ class FaissSearch(Search):
         idxs: Sequence[int],
         verbose: int = 1,
         normalize: bool = True,
+        build: bool = True,
         **kwargs,
     ):
         """Add a batch of embeddings to the search index.
@@ -177,6 +178,9 @@ class FaissSearch(Search):
         """
         if normalize:
             faiss.normalize_L2(embeddings)
+        if build and not self.is_built():
+            print("building Faiss index")
+            self.build_index(samples=embeddings, normalize=normalize)
         if self.algo != "flat":
             # flat does not accept indexes as parameters and assumes incremental
             # indexes

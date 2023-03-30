@@ -83,6 +83,8 @@ class NMSLibSearch(Search):
         self._search_index.addDataPoint(idx, embedding)
         if build:
             self._build(verbose=verbose)
+        else:
+            self.built = False
 
     def batch_add(self, embeddings: FloatTensor, idxs: Sequence[int], verbose: int = 1, build: bool = True, **kwargs):
         """Add a batch of embeddings to the search index.
@@ -109,6 +111,11 @@ class NMSLibSearch(Search):
             if verbose:
                 print("|-Building index.")
             self._build(verbose=verbose)
+        else:
+            self.built = False
+
+    def is_built(self):
+        return self.built
 
     def lookup(self, embedding: FloatTensor, k: int = 5) -> tuple[list[int], list[float]]:
         """Find embedding K nearest neighboors embeddings.
@@ -184,6 +191,7 @@ class NMSLibSearch(Search):
             self._search_index.loadIndex(tmpidx, load_data=True)
 
     def reset(self):
+        self.built: bool = False
         if self.distance.name == "cosine":
             space = "cosinesimil"
         elif self.distance.name in ("euclidean", "squared_euclidean"):
@@ -220,6 +228,7 @@ class NMSLibSearch(Search):
         """Build the index this is need to take into account the new points"""
         show = True if verbose else False
         self._search_index.createIndex(index_params=self.index_params, print_progress=show)
+        self.built = True
 
     def __make_fname(self, path):
         return str(Path(path) / "search_index.bin")
