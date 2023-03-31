@@ -49,8 +49,7 @@ class LinearSearch(Search):
                 f"|  - name:           {self.name}",
             ]
             cprint("\n".join(t_msg) + "\n", "green")
-        self.db: List[FloatTensor] = []
-        self.ids: List[int] = []
+        self.reset()
 
     def is_built(self):
         return True
@@ -73,11 +72,12 @@ class LinearSearch(Search):
         else:
             query = embeddings
         db_tensor = tf.convert_to_tensor(self.db)
-        sims = self.distance(query, db_tensor)
-        similarity, id_idxs = tf.math.top_k(sims, k)
+        dists = self.distance(query, db_tensor)
+        dists, id_idxs = tf.math.top_k(tf.math.negative(dists), k)
+        dists = tf.math.negative(dists)
         id_idxs = id_idxs.numpy()
         ids_array = np.array(self.ids)
-        return list(np.array([ids_array[x] for x in id_idxs])), list(similarity)
+        return list(np.array([ids_array[x] for x in id_idxs])), list(dists)
 
     def lookup(self, embedding: FloatTensor, k: int = 5, normalize: bool = True) -> tuple[list[int], list[float]]:
         """Find embedding K nearest neighboors embeddings.
@@ -99,7 +99,7 @@ class LinearSearch(Search):
               allow to lookup the data associated with a given embedding.
         """
         if normalize:
-            embedding = tf.math.l2_normalize(np.array([embedding], dtype=tf.keras.backend.floatx()), axis=1)
+            embedding = tf.math.l2_normalize(np.array([embedding], dtype=tf.keras.backend.floatx()), axis=1)[0]
         self.ids.append(idx)
         self.db.append(embedding)
 
@@ -148,6 +148,10 @@ class LinearSearch(Search):
             data = pickle.load(f)
         self.db = data[0]
         self.ids = data[1]
+
+    def reset(self):
+        self.db: List[FloatTensor] = []
+        self.ids: List[int] = []
 
     def __make_config_path(self, path):
         return Path(path) / "config.json"
