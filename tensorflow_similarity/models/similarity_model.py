@@ -198,17 +198,17 @@ class SimilarityModel(tf.keras.Model):
         """
         # Fetching the distance used from the first loss if auto
         if distance == "auto":
-            if isinstance(loss, list):
-                metric_loss = loss[0]
+            if loss is None:
+                distance = distance_canonicalizer("cosine")
             else:
-                metric_loss = loss
+                metric_loss = loss[0] if isinstance(loss, list) else loss
 
-            try:
-                distance = metric_loss.distance
-            except AttributeError:
-                msg = "distance='auto' only works if the first loss is a " "metric loss"
+                try:
+                    distance = metric_loss.distance
+                except AttributeError:
+                    msg = "distance='auto' only works if the first loss is a " "metric loss"
+                    raise ValueError(msg)
 
-                raise ValueError(msg)
             print(f"Distance metric automatically set to {distance} use the " "distance arg to override.")
         else:
             distance = distance_canonicalizer(distance)
@@ -265,7 +265,7 @@ class SimilarityModel(tf.keras.Model):
 
     def create_index(
         self,
-        distance: Distance | str = "auto",
+        distance: Distance | str = "cosine",
         search: Search | str = "nmslib",
         kv_store: Store | str = "memory",
         evaluator: Evaluator | str = "memory",
@@ -362,8 +362,6 @@ class SimilarityModel(tf.keras.Model):
         if verbose:
             print(f"[Indexing {tf.shape(x)[0]} points]")
             print("|-Computing embeddings")
-        with tf.device("/cpu:0"):
-            x = tf.convert_to_tensor(np.array(x))
 
         predictions = self.predict(x)
 
@@ -430,8 +428,6 @@ class SimilarityModel(tf.keras.Model):
             list of list of k nearest neighboors:
             list[list[Lookup]]
         """
-        with tf.device("/cpu:0"):
-            x = tf.convert_to_tensor(np.array(x))
         predictions = self.predict(x)
 
         return self._index.batch_lookup(predictions=predictions, k=k, verbose=verbose)
@@ -516,8 +512,6 @@ class SimilarityModel(tf.keras.Model):
             thresholds_targets = {}
 
         # predict
-        with tf.device("/cpu:0"):
-            x = tf.convert_to_tensor(np.array(x))
         predictions = self.predict(x)
 
         # calibrate
@@ -582,8 +576,6 @@ class SimilarityModel(tf.keras.Model):
             raise ValueError("Uncalibrated model: run model.calibration()")
 
         # get predictions
-        with tf.device("/cpu:0"):
-            x = tf.convert_to_tensor(np.array(x))
         predictions = self.predict(x)
 
         # matching
@@ -634,8 +626,6 @@ class SimilarityModel(tf.keras.Model):
         # get embeddings
         if verbose:
             print("|-Computing embeddings")
-        with tf.device("/cpu:0"):
-            x = tf.convert_to_tensor(np.array(x))
         predictions = self.predict(x)
 
         if verbose:
@@ -713,8 +703,6 @@ class SimilarityModel(tf.keras.Model):
         # get embeddings
         if verbose:
             print("|-Computing embeddings")
-        with tf.device("/cpu:0"):
-            x = tf.convert_to_tensor(np.array(x))
         predictions = self.predict(x)
 
         results: defaultdict[str, dict[str, str | np.ndarray]] = defaultdict(dict)
