@@ -126,7 +126,7 @@ class TestTFDataSampler(tf.test.TestCase):
         )
         self.expected_elementspec = (
             tf.TensorSpec(shape=(None, 2), dtype=tf.float32, name=None),
-            tf.TensorSpec(shape=(None, ), dtype=tf.int64, name=None),
+            tf.TensorSpec(shape=(None,), dtype=tf.int64, name=None),
         )
 
     def test_cardinality_is_finite(self):
