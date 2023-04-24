@@ -15,11 +15,10 @@ jobs:
       matrix:
         include:
           - python-version: '3.7'
-            tf-version: '2.7'
+            tf-version: '2.8'
           - python-version: '3.7'
             tf-version: '2.11'
           - python-version: '3.10'
-            # Python 3.10 only supports TF >= 2.8
             tf-version: '2.8'
           - python-version: '3.10'
             tf-version: '2.11'
