@@ -67,6 +67,7 @@ def create_choices_dataset(num_classes: int, examples_per_class: int) -> tf.data
         .shuffle(num_classes)
         .map(lambda z: [[z] * examples_per_class], name="repeat_cid")
         .flat_map(tf.data.Dataset.from_tensor_slices)
+        .repeat()
     )
 
 
@@ -90,9 +91,13 @@ def apply_augmenter_ds(ds: tf.data.Dataset, augmenter: Callable, warmup: int | N
     if warmup is None:
         return ds.map(augmenter, name="augmenter")
 
+    aug_ds = ds.map(augmenter, name="augmenter").skip(warmup)
+
     ds = tf.data.Dataset.choose_from_datasets(
-        [ds, ds.map(augmenter, name="augmenter")],
-        tf.data.Counter().map(lambda x: 0 if x < warmup else 1),
+        [ds, aug_ds],
+        tf.data.Dataset.counter().map(
+            lambda x: tf.cast(0, dtype=tf.dtypes.int64) if x < warmup else tf.cast(1, dtype=tf.dtypes.int64)
+        ),
     )
 
     return ds
