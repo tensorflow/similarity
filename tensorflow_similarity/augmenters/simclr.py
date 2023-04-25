@@ -108,7 +108,6 @@ class SimCLRAugmenter(Augmenter):
         version: str = "v2",
         num_cpu: int | None = os.cpu_count(),
     ):
-
         self.width = width
         self.height = height
         self.is_training = is_training
@@ -132,7 +131,6 @@ class SimCLRAugmenter(Augmenter):
 
     @tf.function
     def augment(self, x: Tensor, y: Tensor, num_views: int, is_warmup: bool) -> list[Tensor]:
-
         with tf.device("/cpu:0"):
             inputs = tf.stack(x)
             inputs = tf.cast(inputs, dtype="float32") / 255.0

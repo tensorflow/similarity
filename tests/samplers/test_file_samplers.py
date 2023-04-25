@@ -140,4 +140,3 @@ class FileSamplersTest(tf.test.TestCase):
         # Subsequent batch should produce the sampler warning.
         match = re.search(expected_msg, captured.contents())
         self.assertIsNone(match)
-
