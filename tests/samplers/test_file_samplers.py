@@ -1,7 +1,7 @@
 import os
 import re
-import tempfile
 import sys
+import tempfile
 
 import numpy as np
 import pytest
