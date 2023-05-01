@@ -9,8 +9,8 @@ class TestCreateGroupedDataset(tf.test.TestCase):
     def setUp(self):
         self.ds = tf.data.Dataset.from_tensor_slices(
             (
-                tf.constant([1, 2, 3, 4, 5, 6, 7, 8], dtype=tf.float32),
-                tf.constant([1, 1, 2, 2, 3, 3, 4, 4], dtype=tf.int64),
+                tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]),
+                tf.constant([1, 1, 2, 2, 3, 3, 4, 4]),
             )
         )
 
@@ -38,6 +38,7 @@ class TestCreateGroupedDataset(tf.test.TestCase):
         self.assertEqual(len(cid_datasets), 4)
 
     def test_datasets_repeat(self):
+        print(self.ds.element_spec)
         cid_datasets = tfds.create_grouped_dataset(self.ds)
         for cid_ds in cid_datasets:
             self.assertTrue(cid_ds.element_spec, self.ds.element_spec)
@@ -121,12 +122,12 @@ class TestTFDataSampler(tf.test.TestCase):
         self.ds = tf.data.Dataset.from_tensor_slices(
             (
                 tf.random.uniform((6, 2), dtype=tf.float32),
-                tf.constant([1, 1, 1, 2, 2, 2], dtype=tf.int64),
+                tf.constant([1, 1, 1, 2, 2, 2], dtype=tf.int32),
             )
         )
-        self.expected_elementspec = (
-            tf.TensorSpec(shape=(None, 2), dtype=tf.float32, name=None),
-            tf.TensorSpec(shape=(None,), dtype=tf.int64, name=None),
+        self.expected_element_spec = (
+            tf.TensorSpec(shape=(None, 2), dtype=tf.float32),
+            tf.TensorSpec(shape=(None,), dtype=tf.int32),
         )
 
     def test_cardinality_is_finite(self):
@@ -144,32 +145,32 @@ class TestTFDataSampler(tf.test.TestCase):
     def test_output_batch_size(self):
         # Test that the output batch size is correct
         out_ds = tfds.TFDataSampler(self.ds)
-        self.assertEqual(out_ds.element_spec, self.expected_elementspec)
+        self.assertEqual(out_ds.element_spec, self.expected_element_spec)
 
     def test_output_classes_per_batch(self):
         # Test that the number of classes per batch is correct
         out_ds = tfds.TFDataSampler(self.ds, classes_per_batch=1)
-        self.assertEqual(out_ds.element_spec, self.expected_elementspec)
+        self.assertEqual(out_ds.element_spec, self.expected_element_spec)
 
     def test_output_examples_per_class_per_batch(self):
         # Test that the number of examples per class per batch is correct
         out_ds = tfds.TFDataSampler(self.ds, examples_per_class_per_batch=1)
-        self.assertEqual(out_ds.element_spec, self.expected_elementspec)
+        self.assertEqual(out_ds.element_spec, self.expected_element_spec)
 
     def test_output_class_list(self):
         # Test that the class list is correctly used
         out_ds = tfds.TFDataSampler(self.ds, class_list=[1])
-        self.assertEqual(out_ds.element_spec, self.expected_elementspec)
+        self.assertEqual(out_ds.element_spec, self.expected_element_spec)
 
     def test_output_total_examples_per_class(self):
         # Test that the total number of examples per class is correctly used
         out_ds = tfds.TFDataSampler(self.ds, total_examples_per_class=2)
-        self.assertEqual(out_ds.element_spec, self.expected_elementspec)
+        self.assertEqual(out_ds.element_spec, self.expected_element_spec)
 
     def test_output_augmenter(self):
         # Test that the augmenter is correctly applied
         out_ds = tfds.TFDataSampler(self.ds, augmenter=lambda x, y: (x * 2, y))
-        self.assertEqual(out_ds.element_spec, self.expected_elementspec)
+        self.assertEqual(out_ds.element_spec, self.expected_element_spec)
 
     def test_output_load_fn(self):
         # TODO(ovallis): Test that the load_fn is correctly applied

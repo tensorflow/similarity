@@ -27,20 +27,22 @@ def create_grouped_dataset(
         A List of `tf.data.Dataset` objects grouped by class id.
     """
     window_size = ds.cardinality().numpy()
+    if class_list is not None:
+        class_list = tf.constant(class_list)
+        ds = ds.filter(lambda x, y, *args: tf.reduce_any(tf.equal(y, class_list)))
+
+    # NOTE: We need to cast the key_func as the group_op expects an int64.
     grouped_by_cid = ds.group_by_window(
-        key_func=lambda x, y, *args: y,
+        key_func=lambda x, y, *args: tf.cast(y, dtype=tf.int64),
         reduce_func=lambda key, ds: ds.batch(window_size),
         window_size=window_size,
     )
 
     cid_datasets = []
-    for elem in grouped_by_cid.as_numpy_iterator():
-        # This assumes that elem has at least (x, y) and that y is a tensor or array_like.
-        if class_list is not None and elem[1][0] not in class_list:
-            continue
-        if total_examples is not None:
-            elem = elem[:total_examples]
+    for elem in grouped_by_cid:
         cid_ds = tf.data.Dataset.from_tensor_slices(elem)
+        if total_examples is not None:
+            cid_ds = cid_ds.take(total_examples)
         if buffer_size is not None:
             cid_ds = cid_ds.shuffle(buffer_size)
         cid_datasets.append(cid_ds.repeat())
@@ -99,8 +101,8 @@ def apply_augmenter_ds(ds: tf.data.Dataset, augmenter: Callable, warmup: int | N
         count_ds = tf.data.experimental.Counter()
 
     ds = tf.data.Dataset.choose_from_datasets(
-        [ds, aug_ds],
-        count_ds.map(lambda x: tf.cast(0, dtype=tf.dtypes.int64) if x < warmup else tf.cast(1, dtype=tf.dtypes.int64)),
+        [ds.take(warmup), aug_ds],
+        count_ds.map(lambda x: tf.cast(0, dtype=tf.int64) if x < warmup else tf.cast(1, dtype=tf.int64)),
     )
 
     return ds
