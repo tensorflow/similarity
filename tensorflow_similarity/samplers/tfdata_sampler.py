@@ -5,9 +5,32 @@ from collections.abc import Callable, Sequence
 import tensorflow as tf
 
 
-def create_grouped_dataset(
+def filter_classes(
     ds: tf.data.Dataset,
     class_list: Sequence[int] | None = None,
+) -> tf.data.Dataset:
+    """
+    Filters a dataset by class id.
+
+    Args:
+        ds: A `tf.data.Dataset` object.
+        class_list: An optional `Sequence` of integers representing the classes
+            to include in the dataset. If `None`, all classes are included.
+
+    Returns:
+        A `tf.data.Dataset` object filtered by class id.
+    """
+
+    if class_list is not None:
+        class_list = tf.constant(class_list)
+        ds = ds.filter(lambda x, y, *args: tf.reduce_any(tf.equal(y, class_list)))
+
+    return ds
+
+
+def create_grouped_dataset(
+    ds: tf.data.Dataset,
+    window_size: int,
     total_examples: int | None = None,
     buffer_size: int | None = None,
 ) -> list[tf.data.Dataset]:
@@ -16,8 +39,7 @@ def create_grouped_dataset(
 
     Args:
         ds: A `tf.data.Dataset` object.
-        class_list: An optional `Sequence` of integers representing the classes
-            to include in the dataset. If `None`, all classes are included.
+        window_size: An integer representing the dataset cardinality.
         total_examples: An integer representing the maximum number of examples
             to include in the dataset. If `None`, all examples are included.
         buffer_size: An optional integer representing the size of the buffer
@@ -26,11 +48,6 @@ def create_grouped_dataset(
     Returns:
         A List of `tf.data.Dataset` objects grouped by class id.
     """
-    window_size = ds.cardinality().numpy()
-    if class_list is not None:
-        class_list = tf.constant(class_list)
-        ds = ds.filter(lambda x, y, *args: tf.reduce_any(tf.equal(y, class_list)))
-
     # NOTE: We need to cast the key_func as the group_op expects an int64.
     grouped_by_cid = ds.group_by_window(
         key_func=lambda x, y, *args: tf.cast(y, dtype=tf.int64),
@@ -148,12 +165,13 @@ def TFDataSampler(
     if ds.cardinality() == tf.data.UNKNOWN_CARDINALITY:
         raise ValueError("Dataset cardinality must be known.")
 
-    grouped_dataset = create_grouped_dataset(ds, class_list, total_examples_per_class)
-    choices_ds = create_choices_dataset(len(grouped_dataset), examples_per_class_per_batch)
-
+    window_size = ds.cardinality().numpy()
     batch_size = examples_per_class_per_batch * classes_per_batch
 
-    ds = tf.data.Dataset.choose_from_datasets(grouped_dataset, choices_ds).repeat().batch(batch_size)
+    ds = filter_classes(ds, class_list)
+    ds = create_grouped_dataset(ds, window_size, total_examples_per_class)
+    choices_ds = create_choices_dataset(len(ds), examples_per_class_per_batch)
+    ds = tf.data.Dataset.choose_from_datasets(ds, choices_ds).repeat().batch(batch_size)
 
     if load_fn is not None:
         ds = ds.map(load_fn, name="load_example_fn")

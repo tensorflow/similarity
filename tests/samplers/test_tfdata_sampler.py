@@ -13,17 +13,14 @@ class TestCreateGroupedDataset(tf.test.TestCase):
                 tf.constant([1, 1, 2, 2, 3, 3, 4, 4]),
             )
         )
+        self.window_size = self.ds.cardinality().numpy()
 
     def test_returns_correct_number_of_datasets(self):
-        cid_datasets = tfds.create_grouped_dataset(self.ds)
+        cid_datasets = tfds.create_grouped_dataset(self.ds, self.window_size)
         self.assertLen(cid_datasets, 4)
 
-    def test_returns_correct_number_of_datasets_with_class_list(self):
-        cid_datasets = tfds.create_grouped_dataset(self.ds, class_list=[1, 2])
-        self.assertLen(cid_datasets, 2)
-
     def test_returns_correct_number_of_datasets_with_total_examples(self):
-        cid_datasets = tfds.create_grouped_dataset(self.ds, total_examples=1)
+        cid_datasets = tfds.create_grouped_dataset(self.ds, self.window_size, total_examples=1)
         self.assertLen(cid_datasets, 4)
 
         # test that each cid dataset has only 1 example that is repeated.
@@ -34,12 +31,12 @@ class TestCreateGroupedDataset(tf.test.TestCase):
             )
 
     def test_returns_correct_number_of_datasets_with_buffer_size(self):
-        cid_datasets = tfds.create_grouped_dataset(self.ds, buffer_size=2)
+        cid_datasets = tfds.create_grouped_dataset(self.ds, self.window_size, buffer_size=2)
         self.assertEqual(len(cid_datasets), 4)
 
     def test_datasets_repeat(self):
         print(self.ds.element_spec)
-        cid_datasets = tfds.create_grouped_dataset(self.ds)
+        cid_datasets = tfds.create_grouped_dataset(self.ds, self.window_size)
         for cid_ds in cid_datasets:
             self.assertTrue(cid_ds.element_spec, self.ds.element_spec)
 
@@ -49,7 +46,7 @@ class TestCreateGroupedDataset(tf.test.TestCase):
             self.assertAllEqual(elements[:2], elements[4:])
 
     def test_datasets_shuffled(self):
-        cid_datasets = tfds.create_grouped_dataset(self.ds, buffer_size=4)
+        cid_datasets = tfds.create_grouped_dataset(self.ds, self.window_size, buffer_size=4)
         # check that including the buffer shuffles the values in each cid_ds.
         for cid_ds in cid_datasets:
             self.assertNotEqual(
