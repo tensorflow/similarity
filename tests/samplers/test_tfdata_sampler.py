@@ -5,6 +5,35 @@ import tensorflow as tf
 from tensorflow_similarity.samplers import tfdata_sampler as tfds
 
 
+class TestFilterClasses(tf.test.TestCase):
+    def setUp(self):
+        self.ds = tf.data.Dataset.from_tensor_slices(
+            (
+                tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]),
+                tf.constant([1, 1, 2, 2, 4, 3, 4, 3]),
+            )
+        )
+        self.classes = {c: 0 for c in range(1, 5)}
+
+    def test_filter_classes(self):
+        ds = tfds.filter_classes(self.ds, [2, 4])
+        for _, label in ds:
+            self.classes[label.numpy()] += 1
+        self.assertAllEqual(self.classes[1], 0)
+        self.assertAllEqual(self.classes[2], 2)
+        self.assertAllEqual(self.classes[3], 0)
+        self.assertAllEqual(self.classes[4], 2)
+
+    def test_filter_empty_class_list(self):
+        ds = tfds.filter_classes(self.ds)
+        for _, label in ds:
+            self.classes[label.numpy()] += 1
+        self.assertAllEqual(self.classes[1], 2)
+        self.assertAllEqual(self.classes[2], 2)
+        self.assertAllEqual(self.classes[3], 2)
+        self.assertAllEqual(self.classes[4], 2)
+
+
 class TestCreateGroupedDataset(tf.test.TestCase):
     def setUp(self):
         self.ds = tf.data.Dataset.from_tensor_slices(
