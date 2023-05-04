@@ -133,7 +133,7 @@ class LiftedStructLoss(MetricLoss):
     with the same labels to be smaller than the minimum negative distances
     between pair of embeddings of different labels.
     Lifted struct loss is designed to learn a similarity metric that preserves structure of the data,
-    whereas triplet loss maximizes the distsance between dissimilar data points and minimizes the distance
+    whereas triplet loss maximizes the distance between dissimilar data points and minimizes the distance
     between similar data points.
     See: https://arxiv.org/abs/1511.06452 for details.
 
