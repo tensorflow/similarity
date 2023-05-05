@@ -90,24 +90,23 @@ def create_choices_dataset(num_classes: int, examples_per_class: int) -> tf.data
     )
 
 
-def apply_augmenter_ds(ds: tf.data.Dataset, augmenter: Callable, warmup: int | None = None) -> tf.data.Dataset:
+def apply_augmenter_ds(ds: tf.data.Dataset, augmenter: Callable, warmup: int = 0) -> tf.data.Dataset:
     """
     Applies an augmenter function to a dataset batch and optionally delays
-    applying the function for `warmup` number of batches.
+    applying the function for `warmup` number of examples.
 
     Args:
         ds: A `tf.data.Dataset` object.
         augmenter: A callable function used to apply data augmentation to
             individual examples within each batch. If `None`, no data
             augmentation is applied.
-        warmup: An optional integer representing the number of batches to wait
-            before applying the data augmentation function. If `None`, no
-            warmup is applied.
+        warmup: An integer representing the number of examples to wait
+            before applying the data augmentation function.
 
     Returns:
         A `tf.data.Dataset` object with the applied augmenter.
     """
-    if warmup is None:
+    if not warmup:
         return ds.map(augmenter, name="augmenter")
 
     aug_ds = ds.map(augmenter, name="augmenter").skip(warmup)
@@ -133,7 +132,7 @@ def TFDataSampler(
     total_examples_per_class: int | None = None,
     augmenter: Callable | None = None,
     load_fn: Callable | None = None,
-    warmup: int | None = None,
+    warmup: int = 0,
 ) -> tf.data.Dataset:
     """
     Returns a `tf.data.Dataset` object that generates batches of examples with
@@ -153,9 +152,11 @@ def TFDataSampler(
             each class will be used.
         augmenter: An optional function to apply data augmentation to each
             example in a batch.
-        load_fn: An optional callable function that loads examples from disk.
-        warmup: An optional integer specifying the number of batches to use for
-            unaugmented warmup. If `None`, no warmup will be used.
+        load_fn: An optional callable function for loading real examples from `x`.
+            It is useful for loading images from their corresponding file path
+            provided in `x` or similar situations.
+        warmup: An integer specifying the number of examples to use for unaugmented
+            warmup.
 
     Returns:
         A `tf.data.Dataset` object representing the balanced dataset for few-shot learning tasks.
@@ -171,14 +172,14 @@ def TFDataSampler(
     ds = filter_classes(ds, class_list)
     ds = create_grouped_dataset(ds, window_size, total_examples_per_class)
     choices_ds = create_choices_dataset(len(ds), examples_per_class_per_batch)
-    ds = tf.data.Dataset.choose_from_datasets(ds, choices_ds).repeat().batch(batch_size)
+    ds = tf.data.Dataset.choose_from_datasets(ds, choices_ds)
 
     if load_fn is not None:
-        ds = ds.map(load_fn, name="load_example_fn")
+        ds = ds.map(load_fn, name="load_fn")
 
     if augmenter is not None:
         ds = apply_augmenter_ds(ds, augmenter, warmup)
 
-    ds = ds.prefetch(tf.data.AUTOTUNE)
+    ds = ds.repeat().batch(batch_size).prefetch(tf.data.AUTOTUNE)
 
     return ds

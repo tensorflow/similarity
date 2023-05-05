@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 import tensorflow as tf
 
 from tensorflow_similarity.samplers import tfdata_sampler as tfds
@@ -19,19 +17,19 @@ class TestFilterClasses(tf.test.TestCase):
         ds = tfds.filter_classes(self.ds, [2, 4])
         for _, label in ds:
             self.classes[label.numpy()] += 1
-        self.assertAllEqual(self.classes[1], 0)
-        self.assertAllEqual(self.classes[2], 2)
-        self.assertAllEqual(self.classes[3], 0)
-        self.assertAllEqual(self.classes[4], 2)
+        self.assertEqual(self.classes[1], 0)
+        self.assertEqual(self.classes[2], 2)
+        self.assertEqual(self.classes[3], 0)
+        self.assertEqual(self.classes[4], 2)
 
     def test_filter_empty_class_list(self):
         ds = tfds.filter_classes(self.ds)
         for _, label in ds:
             self.classes[label.numpy()] += 1
-        self.assertAllEqual(self.classes[1], 2)
-        self.assertAllEqual(self.classes[2], 2)
-        self.assertAllEqual(self.classes[3], 2)
-        self.assertAllEqual(self.classes[4], 2)
+        self.assertEqual(self.classes[1], 2)
+        self.assertEqual(self.classes[2], 2)
+        self.assertEqual(self.classes[3], 2)
+        self.assertEqual(self.classes[4], 2)
 
 
 class TestCreateGroupedDataset(tf.test.TestCase):
@@ -64,7 +62,6 @@ class TestCreateGroupedDataset(tf.test.TestCase):
         self.assertEqual(len(cid_datasets), 4)
 
     def test_datasets_repeat(self):
-        print(self.ds.element_spec)
         cid_datasets = tfds.create_grouped_dataset(self.ds, self.window_size)
         for cid_ds in cid_datasets:
             self.assertTrue(cid_ds.element_spec, self.ds.element_spec)
@@ -85,35 +82,24 @@ class TestCreateGroupedDataset(tf.test.TestCase):
 
 
 class TestCreateChoicesDataset(tf.test.TestCase):
-    def test_sample_without_replacement(self):
-        # Test that each class appears exactly examples_per_class times
+    def setUp(self):
+        self.classes = {c: 0 for c in range(5)}
+
+    def test_choice_values_with_repetition(self):
+        # Test that each class appears exactly examples_per_class * repeat times
         num_classes = 5
-        examples_per_class = 2
-        dataset = tfds.create_choices_dataset(num_classes, examples_per_class)
-        elements = list(dataset.take(num_classes * examples_per_class).as_numpy_iterator())
-        unique_elements = set(elements)
-        self.assertLen(unique_elements, num_classes)
-
-    def test_dataset_values(self):
-        # Test that the dataset only contains values between 0 and num_classes
-        num_classes = 10
-        examples_per_class = 3
-        dataset = tfds.create_choices_dataset(num_classes, examples_per_class)
-        for x in dataset.take(num_classes * examples_per_class).as_numpy_iterator():
-            self.assertGreaterEqual(x, 0)
-            self.assertLess(x, num_classes)
-
-    def test_dataset_repetition(self):
-        # Test that each class appears exactly examples_per_class times
-        num_classes = 4
         examples_per_class = 2
         num_repeats = 2
         dataset = tfds.create_choices_dataset(num_classes, examples_per_class)
-        class_counts = defaultdict(int)
-        for x in dataset.take(num_classes * examples_per_class * num_repeats).as_numpy_iterator():
-            class_counts[x] += 1
-        for count in class_counts.values():
-            self.assertEqual(count, examples_per_class * num_repeats)
+        for label in dataset.take(num_classes * examples_per_class * num_repeats):
+            self.classes[label.numpy()] += 1
+
+        self.assertSetEqual(set(self.classes.keys()), set(range(5)))
+        self.assertEqual(self.classes[0], 4)
+        self.assertEqual(self.classes[1], 4)
+        self.assertEqual(self.classes[2], 4)
+        self.assertEqual(self.classes[3], 4)
+        self.assertEqual(self.classes[4], 4)
 
 
 def dummy_augmenter(x):
@@ -122,37 +108,53 @@ def dummy_augmenter(x):
 
 class TestAugmenter(tf.test.TestCase):
     def setUp(self):
-        self.ds = tf.data.Dataset.range(10).batch(2)
+        self.ds = tf.data.Dataset.range(1, 5)
 
     def test_apply_augmentation_no_warmup(self):
         augmented_ds = tfds.apply_augmenter_ds(self.ds, dummy_augmenter)
 
-        for x in augmented_ds:
-            self.assertListEqual(x.numpy().tolist(), [10, 11])
+        for x in augmented_ds.batch(2).as_numpy_iterator():
+            self.assertAllEqual(x, [11, 12])
             break
 
     def test_apply_augmentation_with_warmup(self):
-        warmup = 1
+        warmup = 2
+        batch_size = 2
         augmented_ds = tfds.apply_augmenter_ds(self.ds, dummy_augmenter, warmup)
 
-        for i, x in enumerate(augmented_ds):
-            if i < warmup:
-                self.assertListEqual(x.numpy().tolist(), [0, 1])
+        for i, x in enumerate(augmented_ds.batch(batch_size).take(2)):
+            if i < warmup // batch_size:
+                self.assertAllEqual(x, tf.constant([1, 2]))
             else:
-                self.assertListEqual(x.numpy().tolist(), [12, 13])
-                break
+                self.assertAllEqual(x, tf.constant([13, 14]))
+
+    def test_apply_augmentation_with_warmup_and_repeats(self):
+        values = {c: 0 for c in [1, 2, 3, 4, 11, 12, 13, 14]}
+        warmup = 2
+        augmented_ds = tfds.apply_augmenter_ds(self.ds.repeat(2), dummy_augmenter, warmup)
+
+        for x in augmented_ds:
+            values[x.numpy()] += 1
+        self.assertEqual(values[1], 1)
+        self.assertEqual(values[2], 1)
+        self.assertEqual(values[3], 0)
+        self.assertEqual(values[4], 0)
+        self.assertEqual(values[11], 1)
+        self.assertEqual(values[12], 1)
+        self.assertEqual(values[13], 2)
+        self.assertEqual(values[14], 2)
 
 
 class TestTFDataSampler(tf.test.TestCase):
     def setUp(self):
         self.ds = tf.data.Dataset.from_tensor_slices(
             (
-                tf.random.uniform((6, 2), dtype=tf.float32),
+                tf.expand_dims(tf.constant([0, 1, 2, 3, 4, 5], dtype=tf.int32), axis=-1),
                 tf.constant([1, 1, 1, 2, 2, 2], dtype=tf.int32),
             )
         )
         self.expected_element_spec = (
-            tf.TensorSpec(shape=(None, 2), dtype=tf.float32),
+            tf.TensorSpec(shape=(None, 1), dtype=tf.int32),
             tf.TensorSpec(shape=(None,), dtype=tf.int32),
         )
 
@@ -170,37 +172,81 @@ class TestTFDataSampler(tf.test.TestCase):
 
     def test_output_batch_size(self):
         # Test that the output batch size is correct
-        out_ds = tfds.TFDataSampler(self.ds)
+        out_ds = tfds.TFDataSampler(self.ds, classes_per_batch=2, examples_per_class_per_batch=2)
         self.assertEqual(out_ds.element_spec, self.expected_element_spec)
+        for _, y in out_ds.take(1):
+            self.assertLen(y, 4)
 
     def test_output_classes_per_batch(self):
         # Test that the number of classes per batch is correct
         out_ds = tfds.TFDataSampler(self.ds, classes_per_batch=1)
         self.assertEqual(out_ds.element_spec, self.expected_element_spec)
+        for _, y in out_ds.take(2):
+            self.assertLen(tf.unique(y).y, 1)
 
     def test_output_examples_per_class_per_batch(self):
         # Test that the number of examples per class per batch is correct
-        out_ds = tfds.TFDataSampler(self.ds, examples_per_class_per_batch=1)
+        out_ds = tfds.TFDataSampler(self.ds, classes_per_batch=2, examples_per_class_per_batch=3)
         self.assertEqual(out_ds.element_spec, self.expected_element_spec)
+        for _, y in out_ds.take(2):
+            self.assertAllEqual(tf.math.bincount(y), [0, 3, 3])
 
     def test_output_class_list(self):
         # Test that the class list is correctly used
         out_ds = tfds.TFDataSampler(self.ds, class_list=[1])
         self.assertEqual(out_ds.element_spec, self.expected_element_spec)
+        for _, y in out_ds.take(4):
+            self.assertAllEqual(tf.unique(y).y, [1])
 
     def test_output_total_examples_per_class(self):
         # Test that the total number of examples per class is correctly used
-        out_ds = tfds.TFDataSampler(self.ds, total_examples_per_class=2)
+        out_ds = tfds.TFDataSampler(self.ds, classes_per_batch=2, total_examples_per_class=2)
         self.assertEqual(out_ds.element_spec, self.expected_element_spec)
+        for x, y in out_ds.take(2):
+            for x_, y_ in zip(x, y):
+                if y_ == 1:
+                    self.assertLessEqual(x_, 2)
+                elif y_ == 2:
+                    self.assertGreater(x_, 2)
+                else:
+                    raise ValueError("Unexpected class")
 
-    def test_output_augmenter(self):
+    def test_output_augmenter_with_warmup_and_repeat(self):
         # Test that the augmenter is correctly applied
-        out_ds = tfds.TFDataSampler(self.ds, augmenter=lambda x, y: (x * 2, y))
+        out_ds = tfds.TFDataSampler(
+            self.ds,
+            classes_per_batch=2,
+            examples_per_class_per_batch=3,
+            augmenter=lambda x, y: (x + 6, y),
+            warmup=6,
+        )
         self.assertEqual(out_ds.element_spec, self.expected_element_spec)
+        values = {c: 0 for c in range(12)}
+        for x, y in out_ds.take(3):
+            for x_ in x:
+                values[x_.numpy()[0]] += 1
+        self.assertEqual(values[1], 1)
+        self.assertEqual(values[2], 1)
+        self.assertEqual(values[3], 1)
+        self.assertEqual(values[4], 1)
+        self.assertEqual(values[5], 1)
+        self.assertEqual(values[6], 2)
+        self.assertEqual(values[7], 2)
+        self.assertEqual(values[8], 2)
+        self.assertEqual(values[9], 2)
+        self.assertEqual(values[10], 2)
+        self.assertEqual(values[11], 2)
 
     def test_output_load_fn(self):
-        # TODO(ovallis): Test that the load_fn is correctly applied
-        pass
+        out_ds = tfds.TFDataSampler(
+            self.ds,
+            classes_per_batch=2,
+            total_examples_per_class=2,
+            load_fn=lambda x, y, *args: ("loaded_img", y, *args),
+        )
+        for x, y in out_ds:
+            self.assertAllEqual(x.numpy(), tf.constant([b"loaded_img"] * 4))
+            break
 
 
 if __name__ == "__main__":
