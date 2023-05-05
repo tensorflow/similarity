@@ -48,7 +48,7 @@ def update_version(rel_path):
 if __name__ == "__main__":
     version_path = "../tensorflow_similarity/__init__.py"
 
-    os.system("git config --global user.email '<>'")
+    os.system("git config --global user.email 'action@github.com'")
     os.system("git config --global user.name 'Github Actions Bot'")
 
     # Assumes we are in the scripts/ dir
