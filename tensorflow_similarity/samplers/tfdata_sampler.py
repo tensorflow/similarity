@@ -102,8 +102,7 @@ def apply_augmenter_ds(ds: tf.data.Dataset, augmenter: Callable, warmup: int = 0
     Args:
         ds: A `tf.data.Dataset` object.
         augmenter: A callable function used to apply data augmentation to
-            individual examples within each batch. If `None`, no data
-            augmentation is applied.
+            individual examples. If `None`, no data augmentation is applied.
         warmup: An integer representing the number of examples to wait
             before applying the data augmentation function.
 
@@ -140,37 +139,36 @@ def TFDataSampler(
     label_output: int | str | None = None,
 ) -> tf.data.Dataset:
     """
-    Returns a `tf.data.Dataset` object that generates batches of examples with
-    equal number of examples per class. The input dataset cardinality must be
-    finite and known.
+    Returns a `tf.data.Dataset` object that generates batches of examples with an
+    equal number of examples per class. The input dataset cardinality must be finite
+    and known.
 
     Args:
         ds: A `tf.data.Dataset` object representing the original dataset.
         classes_per_batch: An integer specifying the number of classes per batch.
         examples_per_class_per_batch: An integer specifying the number of examples
             per class per batch.
-        class_list: An optional sequence of integers representing the class IDs
-            to include in the dataset. If `None`, all classes in the original
-            dataset will be used.
-        total_examples_per_class: An optional integer representing the total
-            number of examples per class to use.  If `None`, all examples for
-            each class will be used.
-        augmenter: An optional function to apply data augmentation to each
-            example in a batch.
-        load_fn: An optional callable function for loading real examples from `x`.
-            It is useful for loading images from their corresponding file path
-            provided in `x` or similar situations.
+        class_list: An optional sequence of integers representing the class IDs to
+            include in the dataset. If `None`, all classes in the original dataset
+            will be used.
+        total_examples_per_class: An optional integer representing the total number
+            of examples per class to use. If `None`, all examples for each class will
+            be used.
+        augmenter: An optional function to apply data augmentation to each example.
+        load_fn: An optional callable function for loading real examples from `x`. It
+            is useful for loading images from their corresponding file path provided
+            in `x` or similar situations.
         warmup: An integer specifying the number of examples to use for unaugmented
             warmup.
-        label_output: An optional integer or string representing the label output
-            used to create the balanced dataset batches. If `None`, y is assumed
-            to be a 1D integer tensor containing the class IDs. If `int`, y is
-            assumed to be a tuple of tensors with the class IDs in the element
-            specified by `label_output`. If `str`, y is assumed to be a dictionary
-            with the class IDs in the key specified by `label_output`.
-    Returnsk:
-        A `tf.data.Dataset` object representing the balanced dataset for few-shot learning tasks.
+        label_output: An optional integer or string representing the label output used
+            to create the balanced dataset batches. If `None`, y is assumed to be a 1D
+            integer tensor containing the class IDs.
 
+    Returns:
+        A `tf.data.Dataset` object representing the balanced dataset batches.
+
+    Raises:
+        ValueError: If `ds` is an infinite dataset or the cardinality is unknown.
     """
     if ds.cardinality() == tf.data.INFINITE_CARDINALITY:
         raise ValueError("Dataset must be finite.")
