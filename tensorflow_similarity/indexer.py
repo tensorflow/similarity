@@ -18,8 +18,8 @@ from __future__ import annotations
 
 import json
 import os
-from collections.abc import Sequence
 from collections import defaultdict, deque
+from collections.abc import Sequence
 from pathlib import Path
 from time import time
 
