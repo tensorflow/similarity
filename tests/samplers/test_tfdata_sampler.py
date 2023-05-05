@@ -248,6 +248,46 @@ class TestTFDataSampler(tf.test.TestCase):
             self.assertAllEqual(x.numpy(), tf.constant([b"loaded_img"] * 4))
             break
 
+    def test_label_output_dict(self):
+        ds = tf.data.Dataset.from_tensor_slices(
+            (
+                tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]),
+                {
+                    "A": tf.constant([1, 1, 1, 1, 1, 1, 1, 1]),
+                    "B": tf.constant([3, 3, 3, 3, 2, 2, 2, 2]),
+                },
+            )
+        )
+        out_ds = tfds.TFDataSampler(
+            ds,
+            classes_per_batch=2,
+            examples_per_class_per_batch=3,
+            label_output="B",
+        )
+        for _, y in out_ds.take(4):
+            self.assertSetEqual(set(tf.unique(y["B"]).y.numpy()), set([2, 3]))
+            self.assertAllEqual(tf.math.bincount(y["B"]), [0, 0, 3, 3])
+
+    def test_label_output_tuple(self):
+        ds = tf.data.Dataset.from_tensor_slices(
+            (
+                tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]),
+                (
+                    tf.constant([1, 1, 1, 1, 1, 1, 1, 1]),
+                    tf.constant([3, 3, 3, 3, 2, 2, 2, 2]),
+                ),
+            )
+        )
+        out_ds = tfds.TFDataSampler(
+            ds,
+            classes_per_batch=2,
+            examples_per_class_per_batch=3,
+            label_output=1,
+        )
+        for _, y in out_ds.take(4):
+            self.assertSetEqual(set(tf.unique(y[1]).y.numpy()), set([2, 3]))
+            self.assertAllEqual(tf.math.bincount(y[1]), [0, 0, 3, 3])
+
 
 if __name__ == "__main__":
     tf.test.main()

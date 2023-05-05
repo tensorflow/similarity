@@ -8,6 +8,7 @@ import tensorflow as tf
 def filter_classes(
     ds: tf.data.Dataset,
     class_list: Sequence[int] | None = None,
+    y_parser: Callable = lambda y: y,
 ) -> tf.data.Dataset:
     """
     Filters a dataset by class id.
@@ -16,6 +17,7 @@ def filter_classes(
         ds: A `tf.data.Dataset` object.
         class_list: An optional `Sequence` of integers representing the classes
             to include in the dataset. If `None`, all classes are included.
+        y_parser: A callable function used to parse the class id from the y outputs.
 
     Returns:
         A `tf.data.Dataset` object filtered by class id.
@@ -23,7 +25,7 @@ def filter_classes(
 
     if class_list is not None:
         class_list = tf.constant(class_list)
-        ds = ds.filter(lambda x, y, *args: tf.reduce_any(tf.equal(y, class_list)))
+        ds = ds.filter(lambda x, y, *args: tf.reduce_any(tf.equal(y_parser(y), class_list)))
 
     return ds
 
@@ -33,6 +35,7 @@ def create_grouped_dataset(
     window_size: int,
     total_examples: int | None = None,
     buffer_size: int | None = None,
+    y_parser: Callable = lambda y: y,
 ) -> list[tf.data.Dataset]:
     """
     Creates a list of datasets grouped by class id.
@@ -44,13 +47,14 @@ def create_grouped_dataset(
             to include in the dataset. If `None`, all examples are included.
         buffer_size: An optional integer representing the size of the buffer
             for shuffling. Default is None.
+        y_parser: A callable function used to parse the class id from the y outputs.
 
     Returns:
         A List of `tf.data.Dataset` objects grouped by class id.
     """
     # NOTE: We need to cast the key_func as the group_op expects an int64.
     grouped_by_cid = ds.group_by_window(
-        key_func=lambda x, y, *args: tf.cast(y, dtype=tf.int64),
+        key_func=lambda x, y, *args: tf.cast(y_parser(y), dtype=tf.int64),
         reduce_func=lambda key, ds: ds.batch(window_size),
         window_size=window_size,
     )
@@ -133,6 +137,7 @@ def TFDataSampler(
     augmenter: Callable | None = None,
     load_fn: Callable | None = None,
     warmup: int = 0,
+    label_output: int | str | None = None,
 ) -> tf.data.Dataset:
     """
     Returns a `tf.data.Dataset` object that generates batches of examples with
@@ -157,21 +162,38 @@ def TFDataSampler(
             provided in `x` or similar situations.
         warmup: An integer specifying the number of examples to use for unaugmented
             warmup.
-
-    Returns:
+        label_output: An optional integer or string representing the label output
+            used to create the balanced dataset batches. If `None`, y is assumed
+            to be a 1D integer tensor containing the class IDs. If `int`, y is
+            assumed to be a tuple of tensors with the class IDs in the element
+            specified by `label_output`. If `str`, y is assumed to be a dictionary
+            with the class IDs in the key specified by `label_output`.
+    Returnsk:
         A `tf.data.Dataset` object representing the balanced dataset for few-shot learning tasks.
+
     """
     if ds.cardinality() == tf.data.INFINITE_CARDINALITY:
         raise ValueError("Dataset must be finite.")
     if ds.cardinality() == tf.data.UNKNOWN_CARDINALITY:
         raise ValueError("Dataset cardinality must be known.")
 
+    def y_parser(y):
+        return y if label_output is None else y[label_output]
+
     window_size = ds.cardinality().numpy()
     batch_size = examples_per_class_per_batch * classes_per_batch
 
-    ds = filter_classes(ds, class_list)
-    ds = create_grouped_dataset(ds, window_size, total_examples_per_class)
-    choices_ds = create_choices_dataset(len(ds), examples_per_class_per_batch)
+    ds = filter_classes(ds, class_list=class_list, y_parser=y_parser)
+    ds = create_grouped_dataset(
+        ds,
+        window_size=window_size,
+        total_examples=total_examples_per_class,
+        y_parser=y_parser,
+    )
+    choices_ds = create_choices_dataset(
+        len(ds),
+        examples_per_class=examples_per_class_per_batch,
+    )
     ds = tf.data.Dataset.choose_from_datasets(ds, choices_ds)
 
     if load_fn is not None:
