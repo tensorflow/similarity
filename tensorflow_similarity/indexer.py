@@ -19,9 +19,9 @@ from __future__ import annotations
 import json
 import os
 from collections import defaultdict, deque
+from collections.abc import Sequence
 from pathlib import Path
 from time import time
-from typing import DefaultDict, Deque, List, Optional, Sequence, Union
 
 import numpy as np
 import tensorflow as tf
@@ -62,11 +62,11 @@ class Indexer(BaseIndexer):
     def __init__(
         self,
         embedding_size: int,
-        distance: Union[Distance, str] = "cosine",
-        search: Union[Search, str] = "nmslib",
-        kv_store: Union[Store, str] = "memory",
-        evaluator: Union[Evaluator, str] = "memory",
-        embedding_output: Optional[int] = None,
+        distance: Distance | str = "cosine",
+        search: Search | str = "nmslib",
+        kv_store: Store | str = "memory",
+        evaluator: Evaluator | str = "memory",
+        embedding_output: int | None = None,
         stat_buffer_size: int = 1000,
     ) -> None:
         """Index embeddings to make them searchable via KNN
@@ -147,8 +147,8 @@ class Indexer(BaseIndexer):
         "(re)initialize internal stats structure"
 
         # stats
-        self._stats: DefaultDict[str, int] = defaultdict(int)
-        self._lookup_timings_buffer: Deque[float] = deque([], maxlen=self.stat_buffer_size)
+        self._stats: defaultdict[str, int] = defaultdict(int)
+        self._lookup_timings_buffer: deque[float] = deque([], maxlen=self.stat_buffer_size)
 
         # calibration data
         self.is_calibrated = False
@@ -196,7 +196,7 @@ class Indexer(BaseIndexer):
             embeddings = predictions
         return embeddings
 
-    def _cast_label(self, label: Optional[int]) -> Optional[int]:
+    def _cast_label(self, label: int | None) -> int | None:
         if label is not None:
             label = int(label)
         return label
@@ -207,7 +207,7 @@ class Indexer(BaseIndexer):
     def add(
         self,
         prediction: FloatTensor,
-        label: Optional[int] = None,
+        label: int | None = None,
         data: Tensor = None,
         build: bool = True,
         verbose: int = 1,
@@ -244,8 +244,8 @@ class Indexer(BaseIndexer):
     def batch_add(
         self,
         predictions: FloatTensor,
-        labels: Optional[Sequence[int]] = None,
-        data: Optional[Tensor] = None,
+        labels: Sequence[int] | None = None,
+        data: Tensor | None = None,
         build: bool = True,
         verbose: int = 1,
     ):
@@ -275,7 +275,7 @@ class Indexer(BaseIndexer):
         idxs = self.kv_store.batch_add(embeddings, labels, data)
         self.search.batch_add(embeddings, idxs, build=build, verbose=verbose)
 
-    def single_lookup(self, prediction: FloatTensor, k: int = 5) -> List[Lookup]:
+    def single_lookup(self, prediction: FloatTensor, k: int = 5) -> list[Lookup]:
         """Find the k closest matches of a given embedding
 
         Args:
@@ -310,8 +310,7 @@ class Indexer(BaseIndexer):
         self._stats["num_lookups"] += 1
         return lookups
 
-    def batch_lookup(self, predictions: FloatTensor, k: int = 5, verbose: int = 1) -> List[List[Lookup]]:
-
+    def batch_lookup(self, predictions: FloatTensor, k: int = 5, verbose: int = 1) -> list[list[Lookup]]:
         """Find the k closest matches for a set of embeddings
 
         Args:

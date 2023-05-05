@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Mapping, MutableMapping, Sequence
-from typing import Optional, Union
 
 import numpy as np
 import tensorflow as tf
@@ -26,10 +25,10 @@ from .utils import unpack_lookup_distances, unpack_lookup_labels
 class BaseIndexer(ABC):
     def __init__(
         self,
-        distance: Union[Distance, str],
-        embedding_output: Optional[int],
+        distance: Distance | str,
+        embedding_output: int | None,
         embedding_size: int,
-        evaluator: Union[Evaluator, str],
+        evaluator: Evaluator | str,
         stat_buffer_size: int,
     ) -> None:
         distance = distance_canonicalizer(distance)
@@ -284,7 +283,7 @@ class BaseIndexer(ABC):
         self,
         predictions: FloatTensor,
         no_match_label: int = -1,
-        k=1,
+        k: int = 1,
         matcher: str | ClassificationMatch = "match_nearest",
         verbose: int = 1,
     ) -> dict[str, list[int]]:

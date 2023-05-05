@@ -11,6 +11,8 @@ release.sh
 benchmark/supervised/datasets/
 benchmark/supervised/models/
 datasets/
+multi_modal_datasets/
+*.h5
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
