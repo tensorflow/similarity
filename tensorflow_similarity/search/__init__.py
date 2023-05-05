@@ -38,7 +38,7 @@ import logging
 logging.getLogger("nmslib").setLevel(logging.WARNING)
 
 from .faiss_search import FaissSearch  # noqa
-from .linear_search import LinearSearch
+from .linear_search import LinearSearch  # noqa
 from .nmslib_search import NMSLibSearch  # noqa
 from .search import Search  # noqa
 from .utils import make_search  # noqa
