@@ -113,10 +113,10 @@ def apply_augmenter_ds(ds: tf.data.Dataset, augmenter: Callable, warmup: int = 0
         return ds.map(augmenter, name="augmenter")
 
     aug_ds = ds.map(augmenter, name="augmenter").skip(warmup)
-    tf_version_split = tf.__version__.split(".")
-    if int(tf_version_split[0]) >= 2 and int(tf_version_split[1]) >= 10:
+
+    try:
         count_ds = tf.data.Dataset.counter()
-    else:
+    except AttributeError:
         count_ds = tf.data.experimental.Counter()
 
     ds = tf.data.Dataset.choose_from_datasets(
