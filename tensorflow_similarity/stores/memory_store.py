@@ -206,7 +206,7 @@ class MemoryStore(Store):
         data = {
             "embeddings": self.embeddings[:num_records],
             "data": self.data[:num_records],
-            "lables": self.labels[:num_records],
+            "labels": self.labels[:num_records],
         }
 
         # forcing type from Any to PandasFrame
