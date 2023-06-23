@@ -26,7 +26,6 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 
 def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
-
     if cfg.get("tfds_data_dir", None):
         os.environ["TFDS_DATA_DIR"] = cfg["tfds_data_dir"]
 
@@ -246,7 +245,6 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Train model")
     parser.add_argument("--config", "-c", help="config path")
     parser.add_argument("--filter", "-f", help="run only the run groups that match the regexp", default=".*")

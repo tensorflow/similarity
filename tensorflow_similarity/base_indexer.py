@@ -431,7 +431,6 @@ class BaseIndexer(ABC):
 
     @abstractmethod
     def batch_lookup(self, predictions: FloatTensor, k: int = 5, verbose: int = 1) -> list[list[Lookup]]:
-
         """Find the k closest matches for a set of embeddings
 
         Args:

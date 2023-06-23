@@ -310,6 +310,7 @@ class Indexer(BaseIndexer):
         self._stats["num_lookups"] += 1
         return lookups
 
+
     def batch_lookup(self, predictions: FloatTensor, k: int = 5, verbose: int = 1) -> list[list[Lookup]]:
         """Find the k closest matches for a set of embeddings
 
