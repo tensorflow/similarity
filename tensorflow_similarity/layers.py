@@ -35,7 +35,7 @@ class MetricEmbedding(layers.Dense):
         x = super().call(inputs)
         normed_x: FloatTensor = tf.math.l2_normalize(x, axis=1)
         return normed_x
-        
+
 
 def normalize_data_format(value):
     if value is None:
@@ -43,8 +43,7 @@ def normalize_data_format(value):
     data_format = value.lower()
     if data_format not in {"channels_first", "channels_last"}:
         raise ValueError(
-            "The `data_format` argument must be one of "
-            f'"channels_first", "channels_last". Received: {value}'
+            "The `data_format` argument must be one of " f'"channels_first", "channels_last". Received: {value}'
         )
     return data_format
 
