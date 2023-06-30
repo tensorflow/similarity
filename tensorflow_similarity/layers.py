@@ -19,7 +19,6 @@ from typing import Any
 
 import tensorflow as tf
 from tensorflow.keras import layers
-from tensorflow.python.keras.utils import conv_utils
 
 from .types import FloatTensor, IntTensor
 
@@ -36,6 +35,18 @@ class MetricEmbedding(layers.Dense):
         x = super().call(inputs)
         normed_x: FloatTensor = tf.math.l2_normalize(x, axis=1)
         return normed_x
+        
+
+def normalize_data_format(value):
+    if value is None:
+        value = tf.keras.backend.image_data_format()
+    data_format = value.lower()
+    if data_format not in {"channels_first", "channels_last"}:
+        raise ValueError(
+            "The `data_format` argument must be one of "
+            f'"channels_first", "channels_last". Received: {value}'
+        )
+    return data_format
 
 
 class GeneralizedMeanPooling(layers.Layer):
@@ -43,7 +54,7 @@ class GeneralizedMeanPooling(layers.Layer):
         super().__init__(**kwargs)
 
         self.p = p
-        self.data_format = conv_utils.normalize_data_format(data_format)
+        self.data_format = normalize_data_format(data_format)
         self.keepdims = keepdims
 
         if tf.math.abs(self.p) < 0.00001:
