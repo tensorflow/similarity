@@ -17,194 +17,149 @@
     https://arxiv.org/abs/1511.06452
 """
 
+from typing import Any
+
 import tensorflow as tf
-from typing import Any, Callable, Union
 
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.algebra import build_masks
+from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor, IntTensor
-from .utils import negative_distances
+from typing import Callable
 from .metric_loss import MetricLoss
+from .utils import compute_loss, negative_distances, positive_distances
 
 
-@tf.keras.utils.register_keras_serializable(package="Similarity")
-@tf.function
-def lifted_struct_loss(labels: IntTensor,
-                       embeddings: FloatTensor,
-                       distance: Callable,
-                       positive_mining_strategy: str = 'hard',
-                       negative_mining_strategy: str = 'easy',
-                       soft_margin: bool = False,
-                       margin: float = 1.0) -> Any:
+def lifted_struct_loss(
+    labels: IntTensor,
+    embeddings: FloatTensor,
+    distance: Distance,
+    positive_mining_strategy: str = "hard",
+    negative_mining_strategy: str = "easy",
+    soft_margin: bool = False,
+    margin: float = 1.0,
+) -> FloatTensor:
     """Lifted Struct loss computations
 
     Args:
         labels: labels associated with the embed
-
         embeddings: Embedded examples.
-
         distance: Which distance function to use to compute the pairwise
-        distances between embeddings. Defaults to 'cosine'.
-
+            distances between embeddings.
         positive_mining_strategy: What mining strategy to use to select
-        embedding from the same class. Defaults to 'hard'.
-        Available: {'easy', 'hard'}
-
+            embedding from the same class. Defaults to 'hard'.
+            Available: {'easy', 'hard'}
         negative_mining_strategy: What mining strategy to use for select the
-        embedding from the different class. Defaults to 'easy'.
-        Available: {'hard', 'semi-hard', 'easy'}
-
-        soft_margin: [description]. Defaults to True. Use a soft margin
-        instead of an explicit one.
-
-        margin: Use an explicit value for the margin term. Defaults to 1.0.
+            embedding from the different class. Defaults to 'easy'.
+            Available: {'hard', 'semi-hard', 'easy'}
+        soft_margin: Use a soft margin instead of an explicit one.
+        margin: Use an explicit value for the margin term.
 
     Returns:
         Loss: The loss value for the current batch.
     """
 
-    # [Label]
-    # ! Weirdness to be investigated
-    # do not remove this code. It is actually needed for specific situation
-    # Reshape label tensor to [batch_size, 1] if not already in that format.
-    # labels = tf.reshape(labels, (labels.shape[0], 1))
-    batch_size = tf.size(labels)
-
-    # [distances]
+    # Compute pairwise distances
     pairwise_distances = distance(embeddings)
-    diff = margin - pairwise_distances
 
-    # [masks]
-    positive_mask, negative_mask = build_masks(labels, batch_size)
-    positive_mask = tf.cast(positive_mask, dtype='float32')
-    negative_mask = tf.cast(negative_mask, dtype='float32')
+    # Build masks for positive and negative pairs
+    positive_mask, negative_mask = build_masks(labels, tf.shape(embeddings)[0])
 
-    # [Negative distances computation]
-    neg_distances, _ = negative_distances(
-            negative_mining_strategy,
-            diff,
-            negative_mask,
-            positive_mask,
-            batch_size,
+    # Get positive distances and indices
+    positive_dists, positive_indices = positive_distances(
+        positive_mining_strategy, pairwise_distances, positive_mask
     )
 
-    max_elements = tf.math.maximum(
-            neg_distances, tf.transpose(neg_distances)
-    )
-    diff_tiled = tf.tile(diff, [batch_size, 1])
-    neg_mask_tiled = tf.tile(negative_mask, [batch_size, 1])
-    max_elements_vect = tf.reshape(tf.transpose(max_elements), [-1, 1])
-
-    loss_exp_left = tf.math.multiply(
-        tf.math.exp(diff_tiled - max_elements_vect),
-        neg_mask_tiled
-    )
-    loss_exp_left = tf.reshape(
-        tf.math.reduce_sum(loss_exp_left, 1, keepdims=True,),
-        [batch_size, batch_size],
+    # Get negative distances
+    negative_dists = negative_distances(
+        negative_mining_strategy, pairwise_distances, negative_mask
     )
 
-    loss_mat = loss_exp_left + tf.transpose(loss_exp_left)
-    loss_mat = max_elements + tf.math.log(loss_mat)
-    # Add the positive distance.
-    loss_mat += pairwise_distances
+    # Reorder pairwise distances and negative mask based on positive indices
+    reordered_pairwise_distances = tf.gather(pairwise_distances, positive_indices, axis=1)
+    reordered_negative_mask = tf.gather(negative_mask, positive_indices, axis=1)
 
-    # *0.5 for upper triangular, and another *0.5 for 1/2 factor for loss^2.
-    num_positives = tf.math.reduce_sum(positive_mask) / 2.0
+    # Concatenate pairwise distances and negative masks along axis=1
+    concatenated_distances = tf.concat([pairwise_distances, reordered_pairwise_distances], axis=1)
+    concatenated_negative_mask = tf.concat([negative_mask, reordered_negative_mask], axis=1)
 
-    lifted_loss = tf.math.truediv(
-        0.25
-        * tf.math.reduce_sum(
-            tf.math.square(
-                tf.math.maximum(tf.math.multiply(loss_mat, positive_mask), 0.0)
-            )
-        ),
-        num_positives,
-    )
+    # Compute log sum exp with concatenated distances and negative mask
+    logsumexp_result = tf.reduce_logsumexp(concatenated_distances, axis=1, keepdims=True)
+    masked_logsumexp = tf.where(concatenated_negative_mask, logsumexp_result, tf.zeros_like(concatenated_distances))
 
-    return lifted_loss
+    # Calculate the loss
+    pairwise_diff = pairwise_distances - masked_logsumexp
+    j_values = tf.reduce_sum(tf.maximum(0.0, pairwise_diff), axis=1)
+    loss = tf.reduce_mean(j_values) / (2 * tf.reduce_sum(positive_mask))
+
+    return loss
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
 class LiftedStructLoss(MetricLoss):
-    """Computes the lifted struct loss in an online fashion.
+    """Computes the lifted structured loss in an online fashion.
 
     This loss encourages the positive distances between a pair of embeddings
-    with the same labels to be smaller than the minimum negative distances
-    between pair of embeddings of different labels.
-    Lifted struct loss is designed to learn a similarity metric that preserves structure of the data,
-    whereas triplet loss maximizes the distance between dissimilar data points and minimizes the distance
-    between similar data points.
-    See: https://arxiv.org/abs/1511.06452 for details.
+    with the same labels to be smaller than the negative distances between pair
+    of embeddings of different labels.
+    See: https://arxiv.org/abs/1511.06452 for the original paper.
 
-
-    `y_true` must be  a 1-D integer `Tensor` of shape (batch_size,).
+    `y_true` must be a 1-D integer `Tensor` of shape (batch_size,).
     It's values represent the classes associated with the examples as
-    **integer  values**.
+    **integer values**.
 
-    `y_pred` must be 2-D float `Tensor`  of L2 normalized embedding vectors.
-    you can use the layer `tensorflow_similarity.layers.L2Embedding()` as the
-    last layer of your model to ensure your model output is properly
-    normalized.
+    `y_pred` must be 2-D float `Tensor` of L2 normalized embedding vectors.
+    You can use the layer `tensorflow_similarity.layers.L2Embedding()` as the
+    last layer of your model to ensure your model output is properly normalized.
     """
 
-    def __init__(self,
-                 distance: Union[Distance, str] = 'cosine',
-                 positive_mining_strategy: str = 'hard',
-                 negative_mining_strategy: str = 'easy',
-                 soft_margin: bool = False,
-                 margin: float = 1.0,
-                 name: str = None):
-        """Initializes the LiftedStuctLoss
+    def __init__(
+        self,
+        distance: Distance | str = "cosine",
+        positive_mining_strategy: str = "hard",
+        negative_mining_strategy: str = "easy",
+        soft_margin: bool = False,
+        margin: float = 1.0,
+        name: str = "LiftedStructLoss",
+        **kwargs,
+    ):
+        """Initializes the LiftedStructLoss.
 
         Args:
-            distance: Which distance function to use to compute
-            the pairwise distances between embeddings. Defaults to 'cosine'.
-
-            positive_mining_strategy: What mining strategy to
-            use to select embedding from the same class. Defaults to 'hard'.
-            available: {'easy', 'hard'}
-
-            negative_mining_strategy: What mining strategy to
-            use for select the embedding from the different class.
-            Defaults to 'easy'. Available: {'hard', 'semi-hard', 'easy'}
-
-            soft_margi: [description]. Defaults to True.
-            Use a soft margin instead of an explicit one.
-
-            margin: Use an explicit value for the margin
-            term. Defaults to 1.0.
-
-            name: Loss name. Defaults to None.
+            distance: Which distance function to use to compute the pairwise
+                distances between embeddings.
+            positive_mining_strategy: What mining strategy to use to select
+                embedding from the same class. Defaults to 'hard'.
+                Available: {'easy', 'hard'}
+            negative_mining_strategy: What mining strategy to use for select the
+                embedding from the different class. Defaults to 'easy'.
+                Available: {'hard', 'semi-hard', 'easy'}
+            soft_margin: Use a soft margin instead of an explicit one.
+            margin: Use an explicit value for the margin term.
+            name: Loss name. Defaults to "LiftedStructLoss".
 
         Raises:
             ValueError: Invalid positive mining strategy.
             ValueError: Invalid negative mining strategy.
-            ValueError: Margin value is not used when soft_margin is set
-                        to True.
         """
 
         # distance canonicalization
         distance = distance_canonicalizer(distance)
         self.distance = distance
+
         # sanity checks
+        if positive_mining_strategy not in ["easy", "hard"]:
+            raise ValueError("Invalid positive mining strategy")
 
-        if positive_mining_strategy not in ['easy', 'hard']:
-            raise ValueError('Invalid positive mining strategy')
+        if negative_mining_strategy not in ["easy", "hard", "semi-hard"]:
+            raise ValueError("Invalid negative mining strategy")
 
-        if negative_mining_strategy not in ['easy', 'hard', 'semi-hard']:
-            raise ValueError('Invalid negative mining strategy')
-
-        # Ensure users knows its one or the other
-        if margin != 1.0 and soft_margin:
-            raise ValueError('Margin value is not used when soft_margin is\
-                              set to True')
-
-        super().__init__(lifted_struct_loss,
-                         name=name,
-                         reduction=tf.keras.losses.Reduction.NONE,
-                         distance=distance,
-                         positive_mining_strategy=positive_mining_strategy,
-                         negative_mining_strategy=negative_mining_strategy,
-                         soft_margin=soft_margin,
-                         margin=margin)
+        super().__init__(
+            lifted_struct_loss,
+            name=name,
+            distance=distance,
+            positive_mining_strategy=positive_mining_strategy,
+            negative_mining_strategy=negative_mining_strategy,
+            soft_margin=soft_margin,
+            margin=margin,
+            **kwargs,
+        )
