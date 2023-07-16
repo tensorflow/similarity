@@ -56,11 +56,15 @@ def lifted_struct_loss(
     )
 
     # Reorder pairwise distances and negative mask based on positive indices
-    reordered_pairwise_distances = tf.gather(pairwise_distances, positive_indices, axis=1)
+    reordered_pairwise_distances = tf.gather(negative_dists, positive_indices, axis=1)
     reordered_negative_mask = tf.gather(negative_mask, positive_indices, axis=1)
 
+    # Concatenate pairwise distances and negative masks along axis=1
+    concatenated_distances = tf.concat([pairwise_distances, reordered_pairwise_distances], axis=1)
+    concatenated_negative_mask = tf.concat([negative_mask, reordered_negative_mask], axis=1)
+
     # Compute (margin - neg_dist) logsum_exp values for each row (equation 4 in the paper)
-    neg_logsumexp = tfsim_losses.utils.logsumexp(margin - reordered_pairwise_distances, reordered_negative_mask)
+    neg_logsumexp = tfsim_losses.utils.logsumexp(margin - concatenated_distances, concatenated_negative_mask)
 
     # Calculate the loss
     j_values = neg_logsumexp + positive_dists
