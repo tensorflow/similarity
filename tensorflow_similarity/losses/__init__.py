@@ -27,4 +27,4 @@ from .softnn_loss import SoftNearestNeighborLoss  # noqa
 from .triplet_loss import TripletLoss  # noqa
 from .vicreg import VicReg  # noqa
 from .xbm_loss import XBM  # noqa
-from .lifted_structure_loss import LiftedStructLoss
+from .lifted_structure_loss import LiftedStructLoss # noqa

@@ -17,8 +17,6 @@
     https://arxiv.org/abs/1511.06452
 """
 
-from typing import Any
-
 import tensorflow as tf
 
 from tensorflow_similarity.algebra import build_masks
@@ -26,7 +24,7 @@ from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor, IntTensor
 from tensorflow_similarity import losses as tfsim_losses
 from .metric_loss import MetricLoss
-from .utils import compute_loss, negative_distances, positive_distances
+from .utils import negative_distances, positive_distances
 
 
 def lifted_struct_loss(
@@ -43,7 +41,7 @@ def lifted_struct_loss(
     pairwise_distances = distance(embeddings)
 
     # Build masks for positive and negative pairs
-    positive_mask, negative_mask = build_masks(labels, tf.shape(embeddings)[0])
+    positive_mask, negative_mask = build_masks(query_labels=labels, batch_size=tf.shape(embeddings)[0])
 
     # Get positive distances and indices
     positive_dists, positive_indices = positive_distances(
@@ -52,7 +50,7 @@ def lifted_struct_loss(
 
     # Get negative distances
     negative_dists, _ = negative_distances(
-        negative_mining_strategy, pairwise_distances, negative_mask
+        negative_mining_strategy, pairwise_distances, negative_mask, positive_mask
     )
 
     # Reorder pairwise distances and negative mask based on positive indices
@@ -68,7 +66,7 @@ def lifted_struct_loss(
 
     # Calculate the loss
     j_values = neg_logsumexp + positive_dists
-    
+
     loss = j_values / 2.0
 
     return loss
