@@ -24,7 +24,7 @@ from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor, IntTensor
 from tensorflow_similarity import losses as tfsim_losses
 from .metric_loss import MetricLoss
-from .utils import negative_distances, positive_distances
+from .utils import positive_distances
 
 
 def lifted_struct_loss(
