@@ -32,7 +32,6 @@ def lifted_struct_loss(
     embeddings: FloatTensor,
     distance: Distance,
     positive_mining_strategy: str = "hard",
-    negative_mining_strategy: str = "easy",
     margin: float = 1.0,
 ) -> FloatTensor:
     """Lifted Struct loss computations"""
@@ -89,7 +88,6 @@ class LiftedStructLoss(MetricLoss):
         self,
         distance: Distance | str = "cosine",
         positive_mining_strategy: str = "hard",
-        negative_mining_strategy: str = "easy",
         margin: float = 1.0,
         name: str = "LiftedStructLoss",
         **kwargs,
@@ -102,15 +100,11 @@ class LiftedStructLoss(MetricLoss):
             positive_mining_strategy: What mining strategy to use to select
                 embedding from the same class. Defaults to 'hard'.
                 Available: {'easy', 'hard'}
-            negative_mining_strategy: What mining strategy to use for select the
-                embedding from the different class. Defaults to 'easy'.
-                Available: {'hard', 'semi-hard', 'easy'}
             margin: Use an explicit value for the margin term.
             name: Loss name. Defaults to "LiftedStructLoss".
 
         Raises:
             ValueError: Invalid positive mining strategy.
-            ValueError: Invalid negative mining strategy.
         """
 
         # distance canonicalization
@@ -121,15 +115,11 @@ class LiftedStructLoss(MetricLoss):
         if positive_mining_strategy not in ["easy", "hard"]:
             raise ValueError("Invalid positive mining strategy")
 
-        if negative_mining_strategy not in ["easy", "hard", "semi-hard"]:
-            raise ValueError("Invalid negative mining strategy")
-
         super().__init__(
             lifted_struct_loss,
             name=name,
             distance=distance,
             positive_mining_strategy=positive_mining_strategy,
-            negative_mining_strategy=negative_mining_strategy,
             margin=margin,
             **kwargs,
         )
