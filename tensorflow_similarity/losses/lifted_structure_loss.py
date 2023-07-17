@@ -48,13 +48,8 @@ def lifted_struct_loss(
         positive_mining_strategy, pairwise_distances, positive_mask
     )
 
-    # Get negative distances
-    negative_dists, _ = negative_distances(
-        negative_mining_strategy, pairwise_distances, negative_mask, positive_mask
-    )
-
     # Reorder pairwise distances and negative mask based on positive indices
-    reordered_pairwise_distances = tf.gather(negative_dists, positive_indices, axis=1)
+    reordered_pairwise_distances = tf.gather(pairwise_distances, positive_indices, axis=1)
     reordered_negative_mask = tf.gather(negative_mask, positive_indices, axis=1)
 
     # Concatenate pairwise distances and negative masks along axis=1
