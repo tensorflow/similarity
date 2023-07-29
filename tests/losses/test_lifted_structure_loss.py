@@ -11,11 +11,18 @@ class TestLiftedStructLoss(tf.test.TestCase, parameterized.TestCase):
         lifted_obj = losses.LiftedStructLoss(
             reduction=Reduction.SUM,
             name="lifted_loss",
-            distance="cosine",
         )
         self.assertEqual(lifted_obj.distance.name, "cosine")
         self.assertEqual(lifted_obj.name, "lifted_loss")
         self.assertEqual(lifted_obj.reduction, Reduction.SUM)
-
     
+    @parameterized.named_parameters(
+        {"testcase_name": "_fixed_margin", "margin": 1.1, "expected_loss": 157.68167},
+    )
+    def test_all_correct_unweighted(self, margin, expected_loss):
+        """Tests the LiftedStructLoss with different parameters."""
+        y_true, y_preds = utils.generate_perfect_test_batch()
     
+        lifted_obj = losses.LiftedStructLoss(reduction=Reduction.SUM, margin=margin)
+        loss = lifted_obj(y_true, y_preds)
+        self.assertAlmostEqual(self.evaluate(loss), expected_loss, 3)
