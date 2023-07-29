@@ -30,6 +30,8 @@ from .utils import positive_distances
 def lifted_struct_loss(
     labels: IntTensor,
     embeddings: FloatTensor,
+    key_labels: IntTensor,
+    key_embeddings: FloatTensor,
     distance: Distance,
     positive_mining_strategy: str = "hard",
     margin: float = 1.0,
@@ -37,10 +39,10 @@ def lifted_struct_loss(
     """Lifted Struct loss computations"""
 
     # Compute pairwise distances
-    pairwise_distances = distance(embeddings)
+    pairwise_distances = distance(embeddings, key_embeddings)
 
     # Build masks for positive and negative pairs
-    positive_mask, negative_mask = build_masks(query_labels=labels, batch_size=tf.shape(embeddings)[0])
+    positive_mask, negative_mask = build_masks(query_labels=labels, key_labels=key_labels, batch_size=tf.shape(embeddings)[0])
 
     # Get positive distances and indices
     positive_dists, positive_indices = positive_distances(
@@ -54,7 +56,7 @@ def lifted_struct_loss(
     # Concatenate pairwise distances and negative masks along axis=1
     concatenated_distances = tf.concat([pairwise_distances, reordered_pairwise_distances], axis=1)
     concatenated_negative_mask = tf.concat([negative_mask, reordered_negative_mask], axis=1)
-
+    concatenated_negative_mask = tf.cast(concatenated_negative_mask, tf.float32)
     # Compute (margin - neg_dist) logsum_exp values for each row (equation 4 in the paper)
     neg_logsumexp = tfsim_losses.utils.logsumexp(margin - concatenated_distances, concatenated_negative_mask)
 
@@ -86,7 +88,7 @@ class LiftedStructLoss(MetricLoss):
 
     def __init__(
         self,
-        distance: Distance | str = "cosine",
+        distance: Distance = "cosine",
         positive_mining_strategy: str = "hard",
         margin: float = 1.0,
         name: str = "LiftedStructLoss",
