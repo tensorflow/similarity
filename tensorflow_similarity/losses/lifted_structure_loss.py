@@ -16,9 +16,8 @@
     Deep Metric Learning via Lifted Structured Feature Embedding.
     https://arxiv.org/abs/1511.06452
 """
-
+from __future__ import annotations
 import tensorflow as tf
-
 from tensorflow_similarity.algebra import build_masks
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor, IntTensor
@@ -42,12 +41,12 @@ def lifted_struct_loss(
     pairwise_distances = distance(embeddings, key_embeddings)
 
     # Build masks for positive and negative pairs
-    positive_mask, negative_mask = build_masks(query_labels=labels, key_labels=key_labels, batch_size=tf.shape(embeddings)[0])
+    positive_mask, negative_mask = build_masks(
+        query_labels=labels, key_labels=key_labels, batch_size=tf.shape(embeddings)[0]
+    )
 
     # Get positive distances and indices
-    positive_dists, positive_indices = positive_distances(
-        positive_mining_strategy, pairwise_distances, positive_mask
-    )
+    positive_dists, positive_indices = positive_distances(positive_mining_strategy, pairwise_distances, positive_mask)
 
     # Reorder pairwise distances and negative mask based on positive indices
     reordered_pairwise_distances = tf.gather(pairwise_distances, positive_indices, axis=1)
@@ -63,7 +62,7 @@ def lifted_struct_loss(
     # Calculate the loss
     j_values = neg_logsumexp + positive_dists
 
-    loss = j_values / 2.0
+    loss: FloatTensor = j_values / 2.0
 
     return loss
 
@@ -85,7 +84,7 @@ class LiftedStructLoss(MetricLoss):
 
     def __init__(
         self,
-        distance: Distance = "cosine",
+        distance: Distance | str = "cosine",
         positive_mining_strategy: str = "hard",
         margin: float = 1.0,
         name: str = "LiftedStructLoss",
