@@ -5,6 +5,7 @@ from tensorflow.keras.losses import Reduction
 from tensorflow_similarity import losses
 from . import utils
 
+
 @combinations.generate(combinations.combine(mode=["graph", "eager"]))
 class TestLiftedStructLoss(tf.test.TestCase, parameterized.TestCase):
     def test_config(self):
@@ -52,7 +53,7 @@ class TestLiftedStructLoss(tf.test.TestCase, parameterized.TestCase):
         self.assertArrayNear(loss, expected_loss, 0.001)
 
     @parameterized.named_parameters(
-        {"testcase_name": "_fixed_margin", "margin": 1.0, "expected_loss": 2.414156913757324 },
+        {"testcase_name": "_fixed_margin", "margin": 1.0, "expected_loss": 2.414156913757324},
     )
     def test_sum_reduction(self, margin, expected_loss):
         """Tests the LiftedStructLoss with different parameters."""
