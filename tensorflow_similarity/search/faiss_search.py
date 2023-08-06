@@ -140,6 +140,11 @@ class FaissSearch(Search):
         if normalize:
             faiss.normalize_L2(int_embedding)
         sims, indices = self.index.search(int_embedding, k)
+        # FAISS might return less than k items, in which case the rest will
+        # be set to -1
+        if -1 in indices:
+            item_count = indices.find(-1)
+            return indices[0][:item_count], sims[0][:item_count]
         return indices[0], sims[0]
 
     def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, normalize: bool = True, **kwargs):
