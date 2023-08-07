@@ -59,7 +59,7 @@ class RedisStore(Store):
         """
         num_items = int(self.__conn.incr("num_items"))
         idx = num_items - 1
-        self.__conn.set(idx, pickle.dumps((embedding, label, data)))
+        self.__conn.set(str(idx), pickle.dumps((embedding, label, data)))
 
         return idx
 
@@ -106,7 +106,7 @@ class RedisStore(Store):
             record associated with the requested id.
         """
 
-        ret_bytes: bytes = self.__conn.get(idx)
+        ret_bytes: bytes = self.__conn.get(str(idx))
         ret: tuple = pickle.loads(ret_bytes)
         return (ret[0], ret[1], ret[2])
 
