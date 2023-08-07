@@ -127,7 +127,12 @@ class FaissSearch(Search):
         if normalize:
             faiss.normalize_L2(embeddings)
         sims, indices = self.index.search(embeddings, k)
-        return indices, sims
+        out_indices = []
+        out_sims = []
+        for i in range(len(indices)):
+          out_indices.append(list(indices[i][indices[i] != -1]))
+          out_sims = list(sims[i])[:len(out_indices[i])]
+        return out_indices, out_sims
 
     def lookup(self, embedding: FloatTensor, k: int = 5, normalize: bool = True) -> tuple[list[int], list[float]]:
         """Find embedding K nearest neighboors embeddings.
@@ -142,10 +147,9 @@ class FaissSearch(Search):
         sims, indices = self.index.search(int_embedding, k)
         # FAISS might return less than k items, in which case the rest will
         # be set to -1
-        if -1 in indices:
-            item_count = indices.find(-1)
-            return indices[0][:item_count], sims[0][:item_count]
-        return indices[0], sims[0]
+        out_indices = list(indices[0][indices[0] != -1])
+        out_sims = list(sims[0])[:len(out_indices)]
+        return out_indices, out_sims
 
     def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, normalize: bool = True, **kwargs):
         """Add a single embedding to the search index.

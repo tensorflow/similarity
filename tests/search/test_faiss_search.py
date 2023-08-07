@@ -78,7 +78,7 @@ def test_batch_vs_single(tmp_path):
 
     for i in range(num_targets):
         # k neigboors are the same?
-        for k in range(3):
+        for k in range(len(batch_idxs[i])):
             assert batch_idxs[i][k] == singles_idxs[i][k]
 
 
@@ -105,12 +105,13 @@ def test_ivfpq():
         last_idx += index_size
         search_index.batch_add(embs, idxs)
     found_idxs, found_dists = search_index.batch_lookup(targets, 2)
-    assert found_idxs.shape == (10, 2)
+    assert len(found_idxs) == 10
+    assert len(found_idxs[0]) == 2
 
 
 def test_reset():
     target = np.array([1, 2, 3], dtype="float32")
-    embs = np.array([[3, 2, 1], [2, 3, 4]], dtype="float32")
+    embs = np.array([[3, 2, 1], [2, 3, 4], [3, 6, 9]], dtype="float32")
 
     search_index = FaissSearch("cosine", 3, algo="flat")
     search_index.add(embs[0], 0)
@@ -126,5 +127,5 @@ def test_reset():
     search_index.add(embs[0], 0)
     idxs, out_embs = search_index.lookup(target, k=2)
     print(f"idxs={idxs}, embs={out_embs}")
-    assert len(out_embs) == 2
-    assert list(idxs) == [0, -1]
+    assert len(out_embs) == 1
+    assert list(idxs) == [0]
