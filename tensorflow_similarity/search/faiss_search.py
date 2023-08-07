@@ -130,8 +130,8 @@ class FaissSearch(Search):
         out_indices = []
         out_sims = []
         for i in range(len(indices)):
-          out_indices.append(list(indices[i][indices[i] != -1]))
-          out_sims.append(list(sims[i])[:len(out_indices[i])])
+            out_indices.append(list(indices[i][indices[i] != -1]))
+            out_sims.append(list(sims[i])[: len(out_indices[i])])
         return out_indices, out_sims
 
     def lookup(self, embedding: FloatTensor, k: int = 5, normalize: bool = True) -> tuple[list[int], list[float]]:
@@ -148,7 +148,7 @@ class FaissSearch(Search):
         # FAISS might return less than k items, in which case the rest will
         # be set to -1
         out_indices = list(indices[0][indices[0] != -1])
-        out_sims = list(sims[0])[:len(out_indices)]
+        out_sims = list(sims[0])[: len(out_indices)]
         return out_indices, out_sims
 
     def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, normalize: bool = True, **kwargs):
