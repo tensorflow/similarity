@@ -317,7 +317,6 @@ class MemoryEvaluator(Evaluator):
             "value": metrics[calibration_metric.name][idx].item(),
         }
         for metric_name in metrics.keys():
-
             optimal_cp[metric_name] = metrics[metric_name][idx].item()
 
         return optimal_cp
