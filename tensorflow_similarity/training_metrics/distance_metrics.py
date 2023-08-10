@@ -36,7 +36,6 @@ class DistanceMetric(Metric):
         negative_mining_strategy: str = "hard",
         **kwargs,
     ):
-
         if not name:
             name = "%s_%s" % (aggregate, anchor[:3])
         super().__init__(name=name, **kwargs)
@@ -63,7 +62,6 @@ class DistanceMetric(Metric):
         self.aggregated_distances = tf.Variable(0, dtype=tf.keras.backend.floatx())
 
     def update_state(self, labels: IntTensor, embeddings: FloatTensor, sample_weight: FloatTensor) -> None:
-
         # [distances]
         pairwise_distances = self.distance(embeddings, embeddings)
 

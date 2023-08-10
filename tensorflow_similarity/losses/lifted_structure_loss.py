@@ -17,11 +17,14 @@
     https://arxiv.org/abs/1511.06452
 """
 from __future__ import annotations
+
 import tensorflow as tf
+
+from tensorflow_similarity import losses as tfsim_losses
 from tensorflow_similarity.algebra import build_masks
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.types import FloatTensor, IntTensor
-from tensorflow_similarity import losses as tfsim_losses
+
 from .metric_loss import MetricLoss
 from .utils import positive_distances
 
