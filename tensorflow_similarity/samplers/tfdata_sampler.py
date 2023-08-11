@@ -171,6 +171,8 @@ def TFDataSampler(
     Returns:
         A `tf.data.Dataset` object representing the balanced dataset for few-shot learning tasks.
 
+    Raises:
+        ValueError: If `ds` is an infinite dataset or the cardinality is unknown.
     """
     if ds.cardinality() == tf.data.INFINITE_CARDINALITY:
         raise ValueError("Dataset must be finite.")
