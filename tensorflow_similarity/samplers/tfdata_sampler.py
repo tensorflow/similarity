@@ -168,7 +168,7 @@ def TFDataSampler(
             assumed to be a tuple of tensors with the class IDs in the element
             specified by `label_output`. If `str`, y is assumed to be a dictionary
             with the class IDs in the key specified by `label_output`.
-    Returnsk:
+    Returns:
         A `tf.data.Dataset` object representing the balanced dataset for few-shot learning tasks.
 
     """

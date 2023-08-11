@@ -17,6 +17,30 @@ def test_index_match():
     assert list(idxs) == [0, 1]
 
 
+def test_reset():
+    target = np.array([1, 2, 3], dtype="float32")
+    embs = np.array([[4, 2, 1], [2, 3, 5]], dtype="float32")
+
+    search_index = NMSLibSearch("cosine", 3)
+    search_index.add(embs[0], 0)
+    search_index.add(embs[1], 1)
+
+    idxs, dists = search_index.lookup(target, k=2)
+
+    assert len(dists) == 2
+    print(dists)
+    assert list(idxs) == [1, 0]
+
+    search_index.reset()
+    # switch order
+    search_index.add(embs[1], 0)
+    search_index.add(embs[0], 1)
+    idxs, dists = search_index.lookup(target, k=2)
+
+    assert len(dists) == 2
+    assert list(idxs) == [0, 1]
+
+
 def test_index_save(tmp_path):
     target = np.array([1, 1, 2], dtype="float32")
     embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
