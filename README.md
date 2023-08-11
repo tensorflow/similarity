@@ -16,7 +16,7 @@ With Tensorflow Similarity you can train two main types of models:
 
 ## What's new
 
-- [Mar 2032]: 0.17 more losses and metric and massive refactoring 
+- [Mar 2023]: 0.17 more losses and metric and massive refactoring 
    * Added VicReg Loss to contrastive losses.
    * Added metrics used in retrieval papers such as Precision@K
    * Native support for distributed training e.g SimClr now works correctly with distributed training.
