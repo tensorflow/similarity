@@ -24,7 +24,6 @@ class MatchMajorityVote(ClassificationMatch):
     """Match metrics for the most common label in a result set."""
 
     def __init__(self, name: str = "majority_vote", **kwargs) -> None:
-
         if "canonical_name" not in kwargs:
             kwargs["canonical_name"] = "match_majority_vote"
 
