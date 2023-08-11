@@ -22,7 +22,7 @@ With Tensorflow Similarity you can train two main types of models:
    * Native support for distributed training e.g SimClr now works correctly with distributed training.
    * Multi-modal embedding initial support (CLIP)
 
-For more details and previous releases informaiton - see [the changelog](./releases.md)
+For more details and previous releases information - see [the changelog](./releases.md)
 
 ## Getting Started
 
