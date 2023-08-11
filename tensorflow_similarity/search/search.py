@@ -107,6 +107,10 @@ class Search(ABC):
             path: where to store the data
         """
 
+    @abstractmethod
+    def reset(self):
+        "Remove all data, as if the instance were just created empty"
+
     def get_config(self) -> dict[str, Any]:
         """Contains the search configuration.
 
@@ -122,3 +126,7 @@ class Search(ABC):
         }
 
         return config
+
+    @abstractmethod
+    def is_built(self):
+        "Returns whether or not the index is built and ready for querying." ""
