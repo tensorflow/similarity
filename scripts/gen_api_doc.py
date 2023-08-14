@@ -75,6 +75,7 @@ def replace_in_file(fname, replacements):
     body = []
     is_head = True
     for line in content.split("\n"):
+
         # fix h3 first
         line = line.replace("><code>", ">")
         line = line.replace("</code></h3>", "</h3>")
@@ -89,6 +90,7 @@ def replace_in_file(fname, replacements):
         line = line.replace("&#x27;", "")
 
         if is_head:
+
             # remove remaining html
             if "on GitHub" in line:
                 continue
@@ -123,6 +125,7 @@ def _hide_layer_and_module_methods():
     optimizer_contents = list(tf.compat.v1.train.Optimizer.__dict__.items())
 
     for name, obj in model_contents + layer_contents + module_contents + optimizer_contents:
+
         if name == "__init__":
             continue
 

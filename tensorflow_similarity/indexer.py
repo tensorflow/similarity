@@ -17,9 +17,8 @@ sub-linear search"""
 from __future__ import annotations
 
 import json
-import os
 from collections import defaultdict, deque
-from collections.abc import Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from pathlib import Path
 from time import time
 
@@ -28,18 +27,24 @@ import tensorflow as tf
 from tabulate import tabulate
 from tqdm.auto import tqdm
 
-from .base_indexer import BaseIndexer
-from .classification_metrics import F1Score, make_classification_metric
+from .classification_metrics import (
+    ClassificationMetric,
+    F1Score,
+    make_classification_metric,
+)
 
 # internal
-from .distances import Distance
-from .evaluators import Evaluator
-from .search import LinearSearch, NMSLibSearch, Search, make_search
-from .stores import MemoryStore, Store, make_store
-from .types import FloatTensor, Lookup, PandasDataFrame, Tensor
+from .distances import Distance, distance_canonicalizer
+from .evaluators import Evaluator, MemoryEvaluator
+from .matchers import ClassificationMatch, make_classification_matcher
+from .retrieval_metrics import RetrievalMetric
+from .search import NMSLibSearch, Search, make_search
+from .stores import MemoryStore, Store
+from .types import CalibrationResults, FloatTensor, Lookup, PandasDataFrame, Tensor
+from .utils import unpack_lookup_distances, unpack_lookup_labels
 
 
-class Indexer(BaseIndexer):
+class Indexer:
     """Indexing system that allows to efficiently find nearest embeddings
     by indexing known embeddings and make them searchable using an
     [Approximate Nearest Neighbors Search]
@@ -99,20 +104,38 @@ class Indexer(BaseIndexer):
         Raises:
             ValueError: Invalid search framework or key value store.
         """
-        super().__init__(distance, embedding_output, embedding_size, evaluator, stat_buffer_size)
+        distance = distance_canonicalizer(distance)
+        self.distance = distance  # needed for save()/load()
+        self.embedding_output = embedding_output
+        self.embedding_size = embedding_size
+
         # internal structure naming
         # FIXME support custom objects
-        self.search_type = search if isinstance(search, str) else search.name
-        if isinstance(search, Search):
-            self.search: Search = search
-        self.kv_store_type = kv_store if isinstance(kv_store, str) else type(kv_store).__name__
-        if isinstance(kv_store, Store):
-            self.kv_store: Store = kv_store
+        self.search_type = search
+        self.kv_store_type = kv_store
+        self.evaluator_type = evaluator
+
+        # stats configuration
+        self.stat_buffer_size = stat_buffer_size
+
+        # calibration
+        self.is_calibrated = False
+        self.calibration_metric: ClassificationMetric = F1Score()
+        self.cutpoints: Mapping[str, Mapping[str, float | str]] = {}
+        self.calibration_thresholds: Mapping[str, np.ndarray] = {}
+
+        # initialize internal structures
+        self._init_structures()
+
+    def reset(self) -> None:
+        "Reinitialize the indexer"
+        self._init_structures()
+
+    def _init_structures(self) -> None:
+        "(re)initialize internal storage structure"
 
         if self.search_type == "nmslib":
-            self.search = NMSLibSearch(distance=self.distance, dim=self.embedding_size)
-        elif self.search_type == "linear":
-            self.search = LinearSearch(distance=self.distance, dim=self.embedding_size)
+            self.search: Search = NMSLibSearch(distance=self.distance, dim=self.embedding_size)
         elif isinstance(self.search_type, Search):
             # TODO: Temporary fix to support resetting custom objects. Currently only supports NMSLibSearch.
             #       Search class should provide a reset method instead.
@@ -120,31 +143,25 @@ class Indexer(BaseIndexer):
                 raise ValueError("Currently NMSLibSearch is the only supported Search object.")
             search = make_search(self.search_type.get_config())
             self.search = search
-        elif not hasattr(self, "search") or not isinstance(self.search, Search):
-            # self.search should have been already initialized
+        else:
             raise ValueError("You need to either supply a known search " "framework name or a Search() object")
 
         # mapper from id to record data
         if self.kv_store_type == "memory":
-            self.kv_store = MemoryStore()
+            self.kv_store: Store = MemoryStore()
         elif isinstance(self.kv_store_type, Store):
             print("WARNING: custom store objects are not currently supported and will not be reset.")
             self.kv_store = self.kv_store_type
-        elif not hasattr(self, "search") or not isinstance(self.kv_store, Store):
-            # self.kv_store should have been already initialized
+        else:
             raise ValueError("You need to either supply a know key value " "store name or a Store() object")
 
-        # initialize internal structures
-        self._init_structures()
-
-    def reset(self) -> None:
-        "Reinitialize the indexer"
-        self.search.reset()
-        self.kv_store.reset()
-        self._init_structures()
-
-    def _init_structures(self) -> None:
-        "(re)initialize internal stats structure"
+        # code used to evaluate indexer performance
+        if self.evaluator_type == "memory":
+            self.evaluator: Evaluator = MemoryEvaluator()
+        elif isinstance(self.evaluator_type, Evaluator):
+            self.evaluator = self.evaluator_type
+        else:
+            raise ValueError("You need to either supply a know evaluator name " "or an Evaluator() object")
 
         # stats
         self._stats: defaultdict[str, int] = defaultdict(int)
@@ -200,9 +217,6 @@ class Indexer(BaseIndexer):
         if label is not None:
             label = int(label)
         return label
-
-    def build_index(self, samples, **kwargss):
-        self.search.build_index(samples)
 
     def add(
         self,
@@ -311,6 +325,7 @@ class Indexer(BaseIndexer):
         return lookups
 
     def batch_lookup(self, predictions: FloatTensor, k: int = 5, verbose: int = 1) -> list[list[Lookup]]:
+
         """Find the k closest matches for a set of embeddings
 
         Args:
@@ -371,6 +386,306 @@ class Indexer(BaseIndexer):
 
         return batch_lookups
 
+    # evaluation related functions
+    def evaluate_retrieval(
+        self,
+        predictions: FloatTensor,
+        target_labels: Sequence[int],
+        retrieval_metrics: Sequence[RetrievalMetric],
+        verbose: int = 1,
+    ) -> dict[str, np.ndarray]:
+        """Evaluate the quality of the index against a test dataset.
+
+        Args:
+            predictions: TF similarity model predictions, may be a multi-headed
+            output.
+
+            target_labels: Sequence of the expected labels associated with the
+            embedded queries.
+
+            retrieval_metrics: list of
+            [RetrievalMetric()](retrieval_metrics/overview.md) to compute.
+
+            verbose (int, optional): Display results if set to 1 otherwise
+            results are returned silently. Defaults to 1.
+
+        Returns:
+            Dictionary of metric results where keys are the metric names and
+            values are the metrics values.
+        """
+        # Determine the maximum number of neighbors needed by the retrieval
+        # metrics because we do a single lookup.
+        k = 1
+        for m in retrieval_metrics:
+            if not isinstance(m, RetrievalMetric):
+                raise ValueError(
+                    m,
+                    "is not a valid RetrivalMetric(). The "
+                    "RetrivialMetric() must be instantiated with "
+                    "a valid K.",
+                )
+            if m.k > k:
+                k = m.k
+
+        # Add one more K to handle the case where we drop the closest lookup.
+        # This ensures that we always have enough lookups in the result set.
+        k += 1
+
+        # Find NN
+        lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
+
+        # Evaluate them
+        return self.evaluator.evaluate_retrieval(
+            retrieval_metrics=retrieval_metrics,
+            target_labels=target_labels,
+            lookups=lookups,
+        )
+
+    def evaluate_classification(
+        self,
+        predictions: FloatTensor,
+        target_labels: Sequence[int],
+        distance_thresholds: Sequence[float] | FloatTensor,
+        metrics: Sequence[str | ClassificationMetric] = ["f1"],
+        matcher: str | ClassificationMatch = "match_nearest",
+        k: int = 1,
+        verbose: int = 1,
+    ) -> dict[str, np.ndarray]:
+        """Evaluate the classification performance.
+
+        Compute the classification metrics given a set of queries, lookups, and
+        distance thresholds.
+
+        Args:
+            predictions: TF similarity model predictions, may be a multi-headed
+            output.
+
+            target_labels: Sequence of expected labels for the lookups.
+
+            distance_thresholds: A 1D tensor denoting the distances points at
+            which we compute the metrics.
+
+            metrics: The set of classification metrics.
+
+            matcher: {'match_nearest', 'match_majority_vote'} or
+            ClassificationMatch object. Defines the classification matching,
+            e.g., match_nearest will count a True Positive if the query_label
+            is equal to the label of the nearest neighbor and the distance is
+            less than or equal to the distance threshold.
+
+            distance_rounding: How many digit to consider to
+            decide if the distance changed. Defaults to 8.
+
+            verbose: Be verbose. Defaults to 1.
+        Returns:
+            A Mapping from metric name to the list of values computed for each
+            distance threshold.
+        """
+        combined_metrics: list[ClassificationMetric] = [make_classification_metric(m) for m in metrics]
+
+        lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
+
+        # we also convert to np.ndarray first to avoid a slow down if
+        # convert_to_tensor is called on a list.
+        query_labels = tf.convert_to_tensor(np.array(target_labels))
+
+        lookup_distances = unpack_lookup_distances(lookups, dtype=tf.keras.backend.floatx())
+        lookup_labels = unpack_lookup_labels(lookups, dtype=query_labels.dtype)
+        thresholds: FloatTensor = tf.cast(
+            tf.convert_to_tensor(distance_thresholds),
+            dtype=tf.keras.backend.floatx(),
+        )
+
+        results = self.evaluator.evaluate_classification(
+            query_labels=query_labels,
+            lookup_labels=lookup_labels,
+            lookup_distances=lookup_distances,
+            distance_thresholds=thresholds,
+            metrics=combined_metrics,
+            matcher=matcher,
+            verbose=verbose,
+        )
+
+        return results
+
+    def calibrate(
+        self,
+        predictions: FloatTensor,
+        target_labels: Sequence[int],
+        thresholds_targets: MutableMapping[str, float],
+        calibration_metric: str | ClassificationMetric = "f1_score",  # noqa
+        k: int = 1,
+        matcher: str | ClassificationMatch = "match_nearest",
+        extra_metrics: Sequence[str | ClassificationMetric] = [
+            "precision",
+            "recall",
+        ],  # noqa
+        rounding: int = 2,
+        verbose: int = 1,
+    ) -> CalibrationResults:
+        """Calibrate model thresholds using a test dataset.
+
+        FIXME: more detailed explanation.
+
+        Args:
+            predictions: TF similarity model predictions, may be a multi-headed
+            output.
+
+            target_labels: Sequence of the expected labels associated with the
+            embedded queries.
+
+            thresholds_targets: Dict of performance targets to (if possible)
+            meet with respect to the `calibration_metric`.
+
+            calibration_metric: [ClassificationMetric()](metrics/overview.md)
+            used to evaluate the performance of the index.
+
+            k: How many neighbors to use during the calibration.
+            Defaults to 1.
+
+            matcher: {'match_nearest', 'match_majority_vote'} or
+            ClassificationMatch object. Defines the classification matching,
+            e.g., match_nearest will count a True Positive if the query_label
+            is equal to the label of the nearest neighbor and the distance is
+            less than or equal to the distance threshold.
+            Defaults to 'match_nearest'.
+
+            extra_metrics: list of additional
+            `tf.similarity.classification_metrics.ClassificationMetric()` to
+            compute and report. Defaults to ['precision', 'recall'].
+
+            rounding: Metric rounding. Default to 2 digits.
+
+            verbose: Be verbose and display calibration results. Defaults to 1.
+
+        Returns:
+            CalibrationResults containing the thresholds and cutpoints Dicts.
+        """
+
+        # find NN
+        lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
+
+        # making sure our metrics are all ClassificationMetric objects
+        calibration_metric = make_classification_metric(calibration_metric)
+
+        combined_metrics: list[ClassificationMetric] = [make_classification_metric(m) for m in extra_metrics]
+
+        # running calibration
+        calibration_results = self.evaluator.calibrate(
+            target_labels=target_labels,
+            lookups=lookups,
+            thresholds_targets=thresholds_targets,
+            calibration_metric=calibration_metric,
+            matcher=matcher,
+            extra_metrics=combined_metrics,
+            metric_rounding=rounding,
+            verbose=verbose,
+        )
+
+        # display cutpoint results if requested
+        if verbose:
+            headers = ["name", "value", "distance"]  # noqa
+            cutpoints = list(calibration_results.cutpoints.values())
+            # dynamically find which metrics we need. We only need to look at
+            # the first cutpoints dictionary as all subsequent ones will have
+            # the same metric keys.
+            for metric_name in cutpoints[0].keys():
+                if metric_name not in headers:
+                    headers.append(metric_name)
+
+            rows = []
+            for data in cutpoints:
+                rows.append([data[v] for v in headers])
+            print("\n", tabulate(rows, headers=headers))
+
+        # store info for serialization purpose
+        self.is_calibrated = True
+        self.calibration_metric = calibration_metric
+        self.cutpoints = calibration_results.cutpoints
+        self.calibration_thresholds = calibration_results.thresholds
+        return calibration_results
+
+    def match(
+        self,
+        predictions: FloatTensor,
+        no_match_label: int = -1,
+        k=1,
+        matcher: str | ClassificationMatch = "match_nearest",
+        verbose: int = 1,
+    ) -> dict[str, list[int]]:
+        """Match embeddings against the various cutpoints thresholds
+
+        Args:
+            predictions: TF similarity model predictions, may be a multi-headed
+            output.
+
+            no_match_label: What label value to assign when there is no match.
+            Defaults to -1.
+
+            k: How many neighboors to use during the calibration.
+            Defaults to 1.
+
+            matcher: {'match_nearest', 'match_majority_vote'} or
+            ClassificationMatch object. Defines the classification matching,
+            e.g., match_nearest will count a True Positive if the query_label
+            is equal to the label of the nearest neighbor and the distance is
+            less than or equal to the distance threshold.
+
+            verbose: display progression. Default to 1.
+
+        Notes:
+
+            1. It is up to the [`SimilarityModel.match()`](similarity_model.md)
+            code to decide which of cutpoints results to use / show to the
+            users. This function returns all of them as there is little
+            performance downside to do so and it makes the code clearer
+            and simpler.
+
+            2. The calling function is responsible to return the list of class
+            matched to allows implementation to use additional criteria if they
+            choose to.
+
+        Returns:
+            Dict of cutpoint names mapped to lists of matches.
+        """
+        matcher = make_classification_matcher(matcher)
+
+        lookups = self.batch_lookup(predictions, k=k, verbose=verbose)
+
+        lookup_distances = unpack_lookup_distances(lookups, dtype=tf.keras.backend.floatx())
+        # TODO(ovallis): The int type should be derived from the model.
+        lookup_labels = unpack_lookup_labels(lookups, dtype="int32")
+
+        if verbose:
+            pb = tqdm(
+                total=len(lookup_distances) * len(self.cutpoints),
+                desc="matching embeddings",
+            )
+
+        matches: defaultdict[str, list[int]] = defaultdict(list)
+        for cp_name, cp_data in self.cutpoints.items():
+            distance_threshold = float(cp_data["distance"])
+
+            pred_labels, pred_dist = matcher.derive_match(
+                lookup_labels=lookup_labels, lookup_distances=lookup_distances
+            )
+
+            for label, distance in zip(pred_labels, pred_dist):
+                if distance <= distance_threshold:
+                    label = int(label)
+                else:
+                    label = no_match_label
+
+                matches[cp_name].append(label)
+
+                if verbose:
+                    pb.update()
+
+        if verbose:
+            pb.close()
+
+        return matches
+
     def save(self, path: str, compression: bool = True):
         """Save the index to disk
 
@@ -388,7 +703,6 @@ class Indexer(BaseIndexer):
             "embedding_output": self.embedding_output,
             "embedding_size": self.embedding_size,
             "kv_store": self.kv_store_type,
-            "kv_store_config": self.kv_store.get_config(),
             "evaluator": self.evaluator_type,
             "search_config": self.search.get_config(),
             "stat_buffer_size": self.stat_buffer_size,
@@ -402,10 +716,8 @@ class Indexer(BaseIndexer):
         metadata_fname = self.__make_metadata_fname(path)
         tf.io.write_file(metadata_fname, json.dumps(metadata))
 
-        os.mkdir(Path(path) / "store")
-        os.mkdir(Path(path) / "search")
-        self.kv_store.save(str(Path(path) / "store"), compression=compression)
-        self.search.save(str(Path(path) / "search"))
+        self.kv_store.save(path, compression=compression)
+        self.search.save(path)
 
     @staticmethod
     def load(path: str | Path, verbose: int = 1):
@@ -426,12 +738,11 @@ class Indexer(BaseIndexer):
         metadata = tf.keras.backend.eval(metadata)
         md = json.loads(metadata)
         search = make_search(md["search_config"])
-        kv_store = make_store(md["kv_store_config"])
         index = Indexer(
             distance=md["distance"],
             embedding_size=md["embedding_size"],
             embedding_output=md["embedding_output"],
-            kv_store=kv_store,
+            kv_store=md["kv_store"],
             evaluator=md["evaluator"],
             search=search,
             stat_buffer_size=md["stat_buffer_size"],
@@ -440,12 +751,12 @@ class Indexer(BaseIndexer):
         # reload the key value store
         if verbose:
             print("Loading index data")
-        index.kv_store.load(str(Path(path) / "store"))
+        index.kv_store.load(path)
 
         # rebuild the index
         if verbose:
             print("Loading search index")
-        index.search.load(str(Path(path) / "search"))
+        index.search.load(path)
 
         # reload calibration data if any
         index.is_calibrated = md["is_calibrated"]

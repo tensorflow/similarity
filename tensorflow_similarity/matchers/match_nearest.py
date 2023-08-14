@@ -22,6 +22,7 @@ class MatchNearest(ClassificationMatch):
     """Match metrics for labels at k=1."""
 
     def __init__(self, name: str = "nearest", **kwargs) -> None:
+
         if "canonical_name" not in kwargs:
             kwargs["canonical_name"] = "match_nearest"
 

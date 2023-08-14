@@ -40,6 +40,7 @@ def visualize_views(
     # Plot the images
     fig, axes = plt.subplots(num_row, num_col, figsize=fig_size)
     for i in range(num_imgs):
+
         # If the number of rows is 1, the axes array is one-dimensional
         if num_row == 1:
             ax = axes[i % num_col]

@@ -29,19 +29,14 @@ from .store import Store
 class MemoryStore(Store):
     """Efficient in-memory dataset store"""
 
-    def __init__(self, **kw_args) -> None:
+    def __init__(self) -> None:
         # We are using a native python array in memory for its row speed.
         # Serialization / export relies on Arrow.
         self.labels: list[int | None] = []
         self.embeddings: list[FloatTensor] = []
         self.data: list[Tensor | None] = []
         self.num_items: int = 0
-
-    def reset(self):
-        self.labels = []
-        self.embeddings = []
-        self.data = []
-        self.num_items = 0
+        pass
 
     def add(
         self,
