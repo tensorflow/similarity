@@ -56,6 +56,7 @@ def test_distance_metric_serialize():
 
 class DistanceMetricsTest(tf.test.TestCase):
     def test_avg_positive(self):
+
         agg = ["avg", tf.reduce_mean]
 
         # metric computation

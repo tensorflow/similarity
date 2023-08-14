@@ -57,9 +57,39 @@ class NMSLibSearch(Search):
         self.space_params = space_params
         self.index_params = index_params
         self.query_params = query_params
-        self.verbose = verbose
 
-        self.reset()
+        # convert to nmslib word
+        if self.distance.name == "cosine":
+            space = "cosinesimil"
+        elif self.distance.name in ("euclidean", "squared_euclidean"):
+            space = "l2"
+        elif self.distance.name == "manhattan":
+            space = "l1"
+        else:
+            raise ValueError("Unsupported metric space")
+
+        if verbose:
+            t_msg = [
+                "\n|-Initialize NMSLib Index",
+                f"|  - space:        {space}",
+                f"|  - method:       {self.method}",
+                f"|  - data_type:    {self.data_type}",
+                f"|  - dist_type:    {self.dtype}",
+                f"|  - space_params: {self.space_params}",
+                f"|  - index_params: {self.index_params}",
+                f"|  - query_params: {self.query_params}",
+            ]
+            cprint("\n".join(t_msg) + "\n", "green")
+
+        self._search_index = nmslib.init(
+            space=space,
+            space_params=self.space_params,
+            method=self.method,
+            data_type=self.data_type,
+            dtype=self.dtype,
+        )
+        self._search_index.createIndex(index_params=self.index_params)
+        self._search_index.setQueryTimeParams(params=self.query_params)
 
     def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, build: bool = True, **kwargs):
         """Add an embedding to the index
@@ -83,8 +113,6 @@ class NMSLibSearch(Search):
         self._search_index.addDataPoint(idx, embedding)
         if build:
             self._build(verbose=verbose)
-        else:
-            self.built = False
 
     def batch_add(self, embeddings: FloatTensor, idxs: Sequence[int], verbose: int = 1, build: bool = True, **kwargs):
         """Add a batch of embeddings to the search index.
@@ -111,11 +139,6 @@ class NMSLibSearch(Search):
             if verbose:
                 print("|-Building index.")
             self._build(verbose=verbose)
-        else:
-            self.built = False
-
-    def is_built(self):
-        return self.built
 
     def lookup(self, embedding: FloatTensor, k: int = 5) -> tuple[list[int], list[float]]:
         """Find embedding K nearest neighboors embeddings.
@@ -190,45 +213,10 @@ class NMSLibSearch(Search):
 
             self._search_index.loadIndex(tmpidx, load_data=True)
 
-    def reset(self):
-        self.built: bool = False
-        if self.distance.name == "cosine":
-            space = "cosinesimil"
-        elif self.distance.name in ("euclidean", "squared_euclidean"):
-            space = "l2"
-        elif self.distance.name == "manhattan":
-            space = "l1"
-        else:
-            raise ValueError("Unsupported metric space")
-
-        if self.verbose:
-            t_msg = [
-                "\n|-Initialize NMSLib Index",
-                f"|  - space:        {space}",
-                f"|  - method:       {self.method}",
-                f"|  - data_type:    {self.data_type}",
-                f"|  - dist_type:    {self.dtype}",
-                f"|  - space_params: {self.space_params}",
-                f"|  - index_params: {self.index_params}",
-                f"|  - query_params: {self.query_params}",
-            ]
-            cprint("\n".join(t_msg) + "\n", "green")
-
-        self._search_index = nmslib.init(
-            space=space,
-            space_params=self.space_params,
-            method=self.method,
-            data_type=self.data_type,
-            dtype=self.dtype,
-        )
-        self._search_index.createIndex(index_params=self.index_params)
-        self._search_index.setQueryTimeParams(params=self.query_params)
-
     def _build(self, verbose=0):
         """Build the index this is need to take into account the new points"""
         show = True if verbose else False
         self._search_index.createIndex(index_params=self.index_params, print_progress=show)
-        self.built = True
 
     def __make_fname(self, path):
         return str(Path(path) / "search_index.bin")

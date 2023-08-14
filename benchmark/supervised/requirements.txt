@@ -1,4 +1,0 @@
-keras_cv
-keras-tuner
-tensorflow_addons
-opencv-python
