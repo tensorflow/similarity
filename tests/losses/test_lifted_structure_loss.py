@@ -1,10 +1,8 @@
 import tensorflow as tf
 from absl.testing import parameterized
-from tensorflow.keras.losses import Reduction
 from tensorflow.python.framework import combinations
-
+from tensorflow.keras.losses import Reduction
 from tensorflow_similarity import losses
-
 from . import utils
 
 

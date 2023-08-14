@@ -39,6 +39,7 @@ class SimCLRLoss(tf.keras.losses.Loss):
         self.temperature = temperature
 
     def contrast(self, hidden1: FloatTensor, hidden2: FloatTensor) -> FloatTensor:
+
         # local replica batch size
         batch_size = tf.shape(hidden1)[0]
 
