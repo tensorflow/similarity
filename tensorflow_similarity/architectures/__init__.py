@@ -16,3 +16,4 @@ training"""
 from .efficientnet import EfficientNetSim  # noqa
 from .resnet18 import ResNet18Sim  # noqa
 from .resnet50 import ResNet50Sim  # noqa
+from .convnext import ConvNeXtSim  # noqa
