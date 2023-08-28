@@ -13,7 +13,7 @@ class IndexerTest(tf.test.TestCase):
         # CALIB TEST
         SIZE = 20
 
-        FNAME = str(DATA_DIR / "mnist_fashion_embeddings.npz")
+        FNAME = DATA_DIR / "mnist_fashion_embeddings.npz"
         data = np.load(FNAME, allow_pickle=True)
         thresholds_targets = {"0.5": 0.5}
 

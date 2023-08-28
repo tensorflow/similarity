@@ -1,5 +1,5 @@
-import pytest
 import tensorflow as tf
+from absl.testing import parameterized
 from tensorflow.keras.models import load_model
 
 from tensorflow_similarity.layers import MetricEmbedding
@@ -7,11 +7,8 @@ from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.models import SimilarityModel
 from tensorflow_similarity.samplers import TFDataSampler
 from tensorflow_similarity.search import make_search
-from tensorflow_similarity.stores.cached import Cached
+from tensorflow_similarity.stores import make_store
 from tensorflow_similarity.training_metrics import dist_gap, max_pos, min_neg
-
-# Set seed to fix flaky tests.
-tf.random.set_seed(303)
 
 
 def generate_dataset(num_classes, num_examples_per_class, reps=4):
@@ -37,120 +34,133 @@ def generate_dataset(num_classes, num_examples_per_class, reps=4):
     return tf.constant(x, dtype=tf.keras.backend.floatx()), tf.constant(y, dtype="int32")
 
 
-@pytest.mark.parametrize(
-    "precision,search_type,store_type",
-    [("float32", "faiss", "cached"), ("float16", "default", "default"), ("mixed_float16", "default", "cached")],
+@parameterized.named_parameters(
+    {"testcase_name": "float32", "precision": "float32", "search_type": "faiss", "store_type": "cached"},
+    {"testcase_name": "float16", "precision": "float16", "search_type": "linear", "store_type": "default"},
+    {"testcase_name": "mixed_float16", "precision": "mixed_float16", "search_type": "default", "store_type": "memory"},
 )
-def test_basic_flow(tmp_path, precision, search_type, store_type):
-    policy = tf.keras.mixed_precision.Policy(precision)
-    tf.keras.mixed_precision.set_global_policy(policy)
+class BasicFlowTest(tf.test.TestCase, parameterized.TestCase):
+    def test_basic_flow(self, precision, search_type, store_type):
+        tmp_dir = self.get_temp_dir()
+        policy = tf.keras.mixed_precision.Policy(precision)
+        tf.keras.mixed_precision.set_global_policy(policy)
 
-    NUM_CLASSES = 8
-    REPS = 4
-    EXAMPLES_PER_CLASS = 64
-    CLASS_PER_BATCH = 8
-    STEPS_PER_EPOCH = 500
-    K = 5
-    NUM_MATCHES = 3
+        NUM_CLASSES = 8
+        REPS = 4
+        EXAMPLES_PER_CLASS = 64
+        CLASS_PER_BATCH = 8
+        STEPS_PER_EPOCH = 500
+        K = 5
+        NUM_MATCHES = 3
 
-    distance = "cosine"
-    positive_mining_strategy = "hard"
-    negative_mining_strategy = "semi-hard"
+        distance = "cosine"
+        positive_mining_strategy = "hard"
+        negative_mining_strategy = "semi-hard"
 
-    x, y = generate_dataset(NUM_CLASSES, EXAMPLES_PER_CLASS)
-    sampler = TFDataSampler(tf.data.Dataset.from_tensor_slices((x, y)), classes_per_batch=CLASS_PER_BATCH)
+        x, y = generate_dataset(NUM_CLASSES, EXAMPLES_PER_CLASS)
+        sampler = TFDataSampler(tf.data.Dataset.from_tensor_slices((x, y)), classes_per_batch=CLASS_PER_BATCH)
 
-    # Search
-    search = None
-    if search_type == "linear":
-        search = make_search(config={"canonical_name": search_type, "distance": "cosine", "dim": 4})
-    elif search_type == "faiss":
-        search = make_search(
-            config={"canonical_name": search_type, "distance": "cosine", "dim": 4, "m": 4, "nlist": 8, "nprobe": 8}
+        # Search
+        search = None
+        if search_type == "linear":
+            search = make_search(config={"canonical_name": search_type, "distance": "cosine", "dim": 4})
+        elif search_type == "faiss":
+            search = make_search(
+                config={"canonical_name": search_type, "distance": "cosine", "dim": 4, "m": 4, "nlist": 8, "nprobe": 8}
+            )
+
+        # Store
+        kv_store = None
+        if store_type == "cached":
+            kv_store = make_store(config={"canonical_name": store_type, "path": tmp_dir})
+        if store_type == "memory":
+            kv_store = make_store(config={"canonical_name": store_type})
+
+        # model
+        inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS,))
+        # dont use x as variable
+        m = tf.keras.layers.Dense(8, activation="relu")(inputs)
+        m = tf.keras.layers.Dense(4, activation="relu")(m)
+        outputs = MetricEmbedding(4)(m)
+        model = SimilarityModel(inputs, outputs)
+
+        # loss
+        triplet_loss = TripletLoss(
+            distance=distance,
+            positive_mining_strategy=positive_mining_strategy,
+            negative_mining_strategy=negative_mining_strategy,
         )
 
-    # Store
-    kv_store = None
-    if store_type == "cached":
-        kv_store = Cached()
+        # compile
+        metrics = [dist_gap(distance), min_neg(distance), max_pos(distance)]
+        compile_params = {"optimizer": "adam", "metrics": metrics, "loss": triplet_loss}
+        if search is not None:
+            compile_params["search"] = search
+        if kv_store is not None:
+            compile_params["kv_store"] = kv_store
+        model.compile(**compile_params)
 
-    # model
-    inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS,))
-    # dont use x as variable
-    m = tf.keras.layers.Dense(8, activation="relu")(inputs)
-    m = tf.keras.layers.Dense(4, activation="relu")(m)
-    outputs = MetricEmbedding(4)(m)
-    model = SimilarityModel(inputs, outputs)
+        # train
+        history = model.fit(sampler, steps_per_epoch=STEPS_PER_EPOCH, epochs=15)
 
-    # loss
-    triplet_loss = TripletLoss(
-        distance=distance,
-        positive_mining_strategy=positive_mining_strategy,
-        negative_mining_strategy=negative_mining_strategy,
-    )
+        # check that history is properly filled
+        self.assertIn("loss", history.history)
+        self.assertIn("dist_gap", history.history)
 
-    # compile
-    metrics = [dist_gap(distance), min_neg(distance), max_pos(distance)]
-    compile_params = {"optimizer": "adam", "metrics": metrics, "loss": triplet_loss}
-    if search:
-        compile_params["search"] = search
-    if kv_store:
-        compile_params["kv_store"] = kv_store
-    model.compile(**compile_params)
+        # indexing ensuring that index is working
+        model.reset_index()
+        model.index(x, y)
+        self.assertLen(x, model.index_size())
 
-    # train
-    history = model.fit(sampler, steps_per_epoch=STEPS_PER_EPOCH, epochs=15)
+        # # lookup
+        neighbors = model.single_lookup(x[0], k=K)
+        self.assertLen(neighbors, K)
 
-    # check that history is properly filled
-    assert "loss" in history.history
-    assert "dist_gap" in history.history
+        # FIXME(ovallis): This seems to produce flakey tests at the moment.
+        # check the model returns reasonable matching
+        # assert neighbors[0].label == 0
 
-    # indexing ensuring that index is working
-    model.reset_index()
-    model.index(x, y)
-    assert model.index_size() == len(x)
+        # check also the last x example which should be for the last class
+        neighbors = model.single_lookup(x[-1], k=K)
+        self.assertLen(neighbors, K)
 
-    # # lookup
-    neighboors = model.single_lookup(x[0], k=K)
-    assert len(neighboors) == K
-    # FIXME(ovallis): This seems to produce flakey tests at the moment.
-    # check the model returns reasonable matching
-    # assert neighboors[0].label == 0
+        # FIXME(ovallis): This seems to produce flakey tests at the moment.
+        # # check the model returns reasonable matching
+        # assert neighbors[0].label == NUM_CLASSES - 1
 
-    # check also the last x example which should be for the last class
-    neighboors = model.single_lookup(x[-1], k=K)
-    assert len(neighboors) == K
+        # batch lookup
+        batch_neighbors = model.lookup(x[:10], k=K)
+        self.assertLen(batch_neighbors, 10)
 
-    # FIXME(ovallis): This seems to produce flakey tests at the moment.
-    # # check the model returns reasonable matching
-    # assert neighboors[0].label == NUM_CLASSES - 1
+        # calibration
+        calibration = model.calibrate(x, y, verbose=0)
+        # calibration is a DataClass with two attributes.
+        self.assertIn("thresholds", calibration.__dict__)
+        self.assertIn("cutpoints", calibration.__dict__)
 
-    # batch lookup
-    batch_neighboors = model.lookup(x[:10], k=K)
-    assert len(batch_neighboors) == 10
+        # # evaluation
+        metrics = model.evaluate_classification(x, y)
+        self.assertIn("optimal", metrics)
+        self.assertGreaterEqual(metrics["optimal"]["precision"], 0)
+        self.assertLessEqual(metrics["optimal"]["precision"], 1)
+        self.assertGreaterEqual(metrics["optimal"]["recall"], 0)
+        self.assertLessEqual(metrics["optimal"]["recall"], 1)
 
-    # calibration
-    calibration = model.calibrate(x, y, verbose=0)
-    # calibration is a DataClass with two attributes.
-    assert "thresholds" in calibration.__dict__
-    assert "cutpoints" in calibration.__dict__
+        # matchings
+        matches = model.match(x[:NUM_MATCHES], cutpoint="optimal")
+        self.assertLen(matches, NUM_MATCHES)
 
-    # # evaluation
-    metrics = model.evaluate_classification(x, y)
-    assert "optimal" in metrics
-    assert 0 <= metrics["optimal"]["precision"] <= 1
-    assert 0 <= metrics["optimal"]["recall"] <= 1
+        # # index summary
+        model.index_summary()
 
-    # matchings
-    matches = model.match(x[:NUM_MATCHES], cutpoint="optimal")
-    assert len(matches) == NUM_MATCHES
+        # # model save
+        model.save(tmp_dir)
 
-    # # index summary
-    model.index_summary()
+        # # model load
+        mdl2 = load_model(tmp_dir)
+        mdl2.load_index(tmp_dir)
+        self.assertEqual(model.index_size(), mdl2.index_size())
 
-    # # model save
-    model.save(tmp_path)
 
-    # # model load
-    mdl2 = load_model(tmp_path)
-    mdl2.load_index(tmp_path)
+if __name__ == "__main__":
+    tf.test.main()

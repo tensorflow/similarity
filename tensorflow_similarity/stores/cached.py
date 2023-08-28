@@ -34,7 +34,7 @@ class Cached(Store):
     def __init__(
         self,
         shard_size: int = 1000000,
-        path: str = ".",
+        path: Path | str = ".",
         num_items: int = 0,
         verbose: int = 0,
         **kwargs,
@@ -45,7 +45,7 @@ class Cached(Store):
         self.db: list[dict[str, bytes]] = []
         self.shard_size = shard_size
         self.num_items: int = num_items
-        self.path: str = path
+        self.path: Path = Path(path)
 
     def reset(self):
         shard_no = len(self.db)
@@ -55,16 +55,17 @@ class Cached(Store):
             self._delete_shard(i)
 
     def _get_shard_file_path(self, shard_no):
-        return f"{self.path}/cache{shard_no}"
+        return self.path / f"cache{shard_no}"
 
     def _make_new_shard(self, shard_no: int):
-        return dbm.dumb.open(self._get_shard_file_path(shard_no), "c")
+        return dbm.dumb.open(str(self._get_shard_file_path(shard_no)), "c")
 
     def _add_new_shard(self):
         shard_no = len(self.db)
         self.db.append(self._make_new_shard(shard_no))
 
     def _delete_shard(self, n):
+        # TODO(ovallis): This is not actually deleting the file.
         self._get_shard_file_path(n)
 
     def _reopen_all_shards(self):
@@ -178,9 +179,9 @@ class Cached(Store):
 
     def _copy_shards(self, path):
         for shard_no in range(len(self.db)):
-            shutil.copy(Path(self._get_shard_file_path(shard_no)).with_suffix(".bak"), path)
-            shutil.copy(Path(self._get_shard_file_path(shard_no)).with_suffix(".dat"), path)
-            shutil.copy(Path(self._get_shard_file_path(shard_no)).with_suffix(".dir"), path)
+            shutil.copy(self._get_shard_file_path(shard_no).with_suffix(".bak"), path)
+            shutil.copy(self._get_shard_file_path(shard_no).with_suffix(".dat"), path)
+            shutil.copy(self._get_shard_file_path(shard_no).with_suffix(".dir"), path)
 
     def _make_config_file_path(self, path):
         return Path(path) / "config.json"
@@ -217,7 +218,7 @@ class Cached(Store):
         base_config = super().get_config()
         return {**base_config, **config}
 
-    def load(self, path: str) -> int:
+    def load(self, path: Path | str) -> int:
         """load index on disk
 
         Args:
@@ -228,7 +229,7 @@ class Cached(Store):
         """
         self._load_config(path)
         num_shards = int(math.ceil(self.num_items / self.shard_size))
-        self.path = path
+        self.path = Path(path)
         for i in range(num_shards):
             self._add_new_shard()
         return self.size()
