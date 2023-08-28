@@ -13,40 +13,40 @@
 # limitations under the License.
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from typing import Any
+from collections.abc import Callable
+from typing import Any, Dict
 
 from .search import Search
 
-LoadFn = Callable[[Mapping[str, Any]], Search]
+LoadFn = Callable[[Dict[str, Any]], Search]
 
 
-def load_faiss(config: Mapping[str, Any]):
+def load_faiss(config: Dict[str, Any]):
     from .faiss import Faiss
 
     return Faiss(**config)
 
 
-def load_linear(config: Mapping[str, Any]):
+def load_linear(config: Dict[str, Any]):
     from .linear import Linear
 
     return Linear(**config)
 
 
-def load_nmslib(config: Mapping[str, Any]):
+def load_nmslib(config: Dict[str, Any]):
     from .nmslib import NMSLib
 
     return NMSLib(**config)
 
 
-SEARCH_ALIASES: dict[str, LoadFn] = {
+SEARCH_ALIASES: Dict[str, LoadFn] = {
     "faiss": load_faiss,
     "linear": load_linear,
     "nmslib": load_nmslib,
 }
 
 
-def make_search(config: dict[str, Any]) -> Search:
+def make_search(config: Dict[str, Any]) -> Search:
     """Creates a search instance from its config.
 
     This method is the reverse of `get_config`,

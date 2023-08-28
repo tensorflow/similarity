@@ -13,40 +13,40 @@
 # limitations under the License.
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from typing import Any
+from collections.abc import Callable
+from typing import Any, Dict
 
 from .store import Store
 
-LoadFn = Callable[[Mapping[str, Any]], Store]
+LoadFn = Callable[[Dict[str, Any]], Store]
 
 
-def load_redis(config: Mapping[str, Any]):
+def load_redis(config: Dict[str, Any]):
     from .redis import Redis
 
     return Redis(**config)
 
 
-def load_cached(config: Mapping[str, Any]):
+def load_cached(config: Dict[str, Any]):
     from .cached import Cached
 
     return Cached(**config)
 
 
-def load_memory(config: Mapping[str, Any]):
+def load_memory(config: Dict[str, Any]):
     from .memory import Memory
 
     return Memory(**config)
 
 
-STORE_ALIASES: dict[str, LoadFn] = {
+STORE_ALIASES: Dict[str, LoadFn] = {
     "redis": load_redis,
     "cached": load_cached,
     "memory": load_memory,
 }
 
 
-def make_store(config: dict[str, Any]) -> Store:
+def make_store(config: Dict[str, Any]) -> Store:
     """Creates a store instance from its config.
 
     This method is the reverse of `get_config`,
