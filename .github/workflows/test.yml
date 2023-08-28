@@ -36,7 +36,7 @@ jobs:
 
     - name: Install dev packages
       run: |
-        pip install ".[dev]"
+        pip install ".[dev,visualize,faiss,nmslib,redis]"
 
     - name: Install TF package
       run: |
