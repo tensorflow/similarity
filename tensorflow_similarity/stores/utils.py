@@ -21,19 +21,19 @@ from .store import Store
 LoadFn = Callable[[Mapping[str, Any]], Store]
 
 
-def load_redis(config: dict[str, Any]):
+def load_redis(config: Mapping[str, Any]):
     from .redis import Redis
 
     return Redis(**config)
 
 
-def load_cached(config: dict[str, Any]):
+def load_cached(config: Mapping[str, Any]):
     from .cached import Cached
 
     return Cached(**config)
 
 
-def load_memory(config: dict[str, Any]):
+def load_memory(config: Mapping[str, Any]):
     from .memory import Memory
 
     return Memory(**config)

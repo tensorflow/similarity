@@ -21,19 +21,19 @@ from .search import Search
 LoadFn = Callable[[Mapping[str, Any]], Search]
 
 
-def load_faiss(config: dict[str, Any]):
+def load_faiss(config: Mapping[str, Any]):
     from .faiss import Faiss
 
     return Faiss(**config)
 
 
-def load_linear(config: dict[str, Any]):
+def load_linear(config: Mapping[str, Any]):
     from .linear import Linear
 
     return Linear(**config)
 
 
-def load_nmslib(config: dict[str, Any]):
+def load_nmslib(config: Mapping[str, Any]):
     from .nmslib import NMSLib
 
     return NMSLib(**config)
