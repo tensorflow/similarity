@@ -13,17 +13,36 @@
 # limitations under the License.
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any, Type
 
-from .faiss_search import FaissSearch
-from .linear_search import LinearSearch
-from .nmslib_search import NMSLibSearch
 from .search import Search
 
-SEARCH_ALIASES: dict[str, Type[Search]] = {
-    "NMSLibSearch": NMSLibSearch,
-    "LinearSearch": LinearSearch,
-    "FaissSearch": FaissSearch,
+LoadFn = Callable[[dict[str, Any]], Search]
+
+
+def load_faiss(config: dict[str, Any]):
+    from .faiss import Faiss
+
+    return Faiss(**config)
+
+
+def load_linear(config: dict[str, Any]):
+    from .linear import Linear
+
+    return Linear(**config)
+
+
+def load_nmslib(config: dict[str, Any]):
+    from .nmslib import NMSLib
+
+    return NMSLib(**config)
+
+
+SEARCH_ALIASES: dict[str, LoadFn] = {
+    "faiss": load_faiss,
+    "linear": load_linear,
+    "nmslib": load_nmslib,
 }
 
 
@@ -40,9 +59,10 @@ def make_search(config: dict[str, Any]) -> Search:
         A search instance.
     """
 
-    if config["canonical_name"] in SEARCH_ALIASES:
-        search: Search = SEARCH_ALIASES[config["canonical_name"]](**config)
+    canonical_name = config["canonical_name"].lower()
+    if canonical_name in SEARCH_ALIASES:
+        search: Search = SEARCH_ALIASES[canonical_name](config)
     else:
-        raise ValueError(f"Unknown search type: {config['canonical_name']}")
+        raise ValueError(f"Unknown search type: {canonical_name}")
 
     return search

@@ -5,9 +5,9 @@ from tensorflow.keras.models import load_model
 from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.models import SimilarityModel
-from tensorflow_similarity.samplers import MultiShotMemorySampler
-from tensorflow_similarity.search import FaissSearch, LinearSearch
-from tensorflow_similarity.stores import CachedStore
+from tensorflow_similarity.samplers import TFDataSampler
+from tensorflow_similarity.search import make_search
+from tensorflow_similarity.stores.cached import Cached
 from tensorflow_similarity.training_metrics import dist_gap, max_pos, min_neg
 
 # Set seed to fix flaky tests.
@@ -58,19 +58,21 @@ def test_basic_flow(tmp_path, precision, search_type, store_type):
     negative_mining_strategy = "semi-hard"
 
     x, y = generate_dataset(NUM_CLASSES, EXAMPLES_PER_CLASS)
-    sampler = MultiShotMemorySampler(x, y, classes_per_batch=CLASS_PER_BATCH, steps_per_epoch=STEPS_PER_EPOCH)
+    sampler = TFDataSampler(tf.data.Dataset.from_tensor_slices((x, y)), classes_per_batch=CLASS_PER_BATCH)
 
     # Search
     search = None
     if search_type == "linear":
-        search = LinearSearch()
+        search = make_search(config={"canonical_name": search_type, "distance": "cosine", "dim": 4})
     elif search_type == "faiss":
-        search = FaissSearch(distance=distance, dim=4, m=4, nlist=8, nprobe=8)
+        search = make_search(
+            config={"canonical_name": search_type, "distance": "cosine", "dim": 4, "m": 4, "nlist": 8, "nprobe": 8}
+        )
 
     # Store
     kv_store = None
     if store_type == "cached":
-        kv_store = CachedStore()
+        kv_store = Cached()
 
     # model
     inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS,))
@@ -97,7 +99,7 @@ def test_basic_flow(tmp_path, precision, search_type, store_type):
     model.compile(**compile_params)
 
     # train
-    history = model.fit(sampler, epochs=15)
+    history = model.fit(sampler, steps_per_epoch=STEPS_PER_EPOCH, epochs=15)
 
     # check that history is properly filled
     assert "loss" in history.history

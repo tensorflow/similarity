@@ -3,11 +3,11 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 
-from tensorflow_similarity.stores import RedisStore
+from tensorflow_similarity.stores.redis import Redis
 
 
 def build_store(records):
-    kv_store = RedisStore()
+    kv_store = Redis()
     idxs = []
     for r in records:
         idx = kv_store.add(r[0], r[1], r[2])
@@ -49,7 +49,7 @@ def test_batch_add(mock_redis):
     mock_redis.return_value.get.side_effect = serialized_records
     mock_redis.return_value.incr.side_effect = [1, 2, 3, 4, 5]
 
-    kv_store = RedisStore()
+    kv_store = Redis()
     idxs = kv_store.batch_add(embs, lbls, data)
     for idx in idxs:
         emb, lbl, dt = kv_store.get(idx)

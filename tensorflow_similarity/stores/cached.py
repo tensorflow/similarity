@@ -28,10 +28,18 @@ from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 from .store import Store
 
 
-class CachedStore(Store):
+class Cached(Store):
     """Efficient cached dataset store"""
 
-    def __init__(self, shard_size: int = 1000000, path: str = ".", num_items: int = 0, **kw_args) -> None:
+    def __init__(
+        self,
+        shard_size: int = 1000000,
+        path: str = ".",
+        num_items: int = 0,
+        verbose: int = 0,
+        **kwargs,
+    ) -> None:
+        super().__init__(verbose=verbose)
         # We are using a native python cached dictionary
         # db[id] = pickle((embedding, label, data))
         self.db: list[dict[str, bytes]] = []
@@ -44,26 +52,26 @@ class CachedStore(Store):
         self.db = []
         self.num_items = 0
         for i in range(shard_no):
-            self.__delete_shard(i)
+            self._delete_shard(i)
 
-    def __get_shard_file_path(self, shard_no):
+    def _get_shard_file_path(self, shard_no):
         return f"{self.path}/cache{shard_no}"
 
-    def __make_new_shard(self, shard_no: int):
-        return dbm.dumb.open(self.__get_shard_file_path(shard_no), "c")
+    def _make_new_shard(self, shard_no: int):
+        return dbm.dumb.open(self._get_shard_file_path(shard_no), "c")
 
-    def __add_new_shard(self):
+    def _add_new_shard(self):
         shard_no = len(self.db)
-        self.db.append(self.__make_new_shard(shard_no))
+        self.db.append(self._make_new_shard(shard_no))
 
-    def __delete_shard(self, n):
-        self.__get_shard_file_path(n)
+    def _delete_shard(self, n):
+        self._get_shard_file_path(n)
 
-    def __reopen_all_shards(self):
+    def _reopen_all_shards(self):
         for shard_no in range(len(self.db)):
-            self.db[shard_no] = self.__make_new_shard(shard_no)
+            self.db[shard_no] = self._make_new_shard(shard_no)
 
-    def __get_shard_no(self, idx: int) -> int:
+    def _get_shard_no(self, idx: int) -> int:
         return idx // self.shard_size
 
     def add(
@@ -85,9 +93,9 @@ class CachedStore(Store):
             Associated record id.
         """
         idx = self.num_items
-        shard_no = self.__get_shard_no(idx)
+        shard_no = self._get_shard_no(idx)
         if len(self.db) <= shard_no:
-            self.__add_new_shard()
+            self._add_new_shard()
         self.db[shard_no][str(idx)] = pickle.dumps((embedding, label, data))
         self.num_items += 1
         return idx
@@ -118,9 +126,9 @@ class CachedStore(Store):
             idx = i + self.num_items
             label = None if labels is None else labels[i]
             rec_data = None if data is None else data[i]
-            shard_no = self.__get_shard_no(idx)
+            shard_no = self._get_shard_no(idx)
             if len(self.db) <= shard_no:
-                self.__add_new_shard()
+                self._add_new_shard()
             self.db[shard_no][str(idx)] = pickle.dumps((embedding, label, rec_data))
             idxs.append(idx)
         self.num_items += len(embeddings)
@@ -137,7 +145,7 @@ class CachedStore(Store):
             record associated with the requested id.
         """
 
-        shard_no = self.__get_shard_no(idx)
+        shard_no = self._get_shard_no(idx)
         embedding, label, data = pickle.loads(self.db[shard_no][str(idx)])
         return embedding, label, data
 
@@ -164,33 +172,33 @@ class CachedStore(Store):
         "Number of record in the key value store."
         return self.num_items
 
-    def __close_all_shards(self):
+    def _close_all_shards(self):
         for shard in self.db:
             shard.close()
 
-    def __copy_shards(self, path):
+    def _copy_shards(self, path):
         for shard_no in range(len(self.db)):
-            shutil.copy(Path(self.__get_shard_file_path(shard_no)).with_suffix(".bak"), path)
-            shutil.copy(Path(self.__get_shard_file_path(shard_no)).with_suffix(".dat"), path)
-            shutil.copy(Path(self.__get_shard_file_path(shard_no)).with_suffix(".dir"), path)
+            shutil.copy(Path(self._get_shard_file_path(shard_no)).with_suffix(".bak"), path)
+            shutil.copy(Path(self._get_shard_file_path(shard_no)).with_suffix(".dat"), path)
+            shutil.copy(Path(self._get_shard_file_path(shard_no)).with_suffix(".dir"), path)
 
-    def __make_config_file_path(self, path):
+    def _make_config_file_path(self, path):
         return Path(path) / "config.json"
 
-    def __save_config(self, path):
-        with open(self.__make_config_file_path(path), "wt") as f:
+    def _save_config(self, path):
+        with open(self._make_config_file_path(path), "wt") as f:
             json.dump(self.get_config(), f)
 
-    def __set_config(self, num_items, shard_size, **kw_args):
+    def _set_config(self, num_items, shard_size, **kw_args):
         self.num_items = num_items
         self.shard_size = shard_size
 
-    def __load_config(self, path):
-        with open(self.__make_config_file_path(path), "rt") as f:
+    def _load_config(self, path):
+        with open(self._make_config_file_path(path), "rt") as f:
             config = json.load(f)
-            self.__set_config(**config)
+            self._set_config(**config)
 
-    def save(self, path: str, compression: bool = True) -> None:
+    def save(self, path: Path | str, compression: bool = True) -> None:
         """Serializes index on disk.
 
         Args:
@@ -199,10 +207,10 @@ class CachedStore(Store):
         """
         # Writing to a buffer to avoid read error in np.savez when using GFile.
         # See: https://github.com/tensorflow/tensorflow/issues/32090
-        self.__close_all_shards()
-        self.__copy_shards(path)
-        self.__save_config(path)
-        self.__reopen_all_shards()
+        self._close_all_shards()
+        self._copy_shards(path)
+        self._save_config(path)
+        self._reopen_all_shards()
 
     def get_config(self):
         config = {"shard_size": self.shard_size, "num_items": self.num_items}
@@ -218,11 +226,11 @@ class CachedStore(Store):
         Returns:
            Number of records reloaded.
         """
-        self.__load_config(path)
+        self._load_config(path)
         num_shards = int(math.ceil(self.num_items / self.shard_size))
         self.path = path
         for i in range(num_shards):
-            self.__add_new_shard()
+            self._add_new_shard()
         return self.size()
 
     def to_data_frame(self, num_records: int = 0) -> PandasDataFrame:

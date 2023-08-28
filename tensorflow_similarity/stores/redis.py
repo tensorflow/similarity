@@ -26,18 +26,26 @@ from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 from .store import Store
 
 
-class RedisStore(Store):
+class Redis(Store):
     """Efficient Redis dataset store"""
 
-    def __init__(self, host: str = "localhost", port: int = 6379, db: int = 0, **kw_args) -> None:
+    def __init__(
+        self,
+        host: str = "localhost",
+        port: int = 6379,
+        db: int = 0,
+        verbose: int = 0,
+        **kwargs,
+    ) -> None:
+        super().__init__(verbose=verbose)
         # Currently does not support authentication
         self.host = host
         self.port = port
         self.db = db
-        self.__connect()
+        self._connect()
 
     def reset(self):
-        self.__conn.flushdb()
+        self._conn.flushdb()
 
     def add(
         self,
@@ -57,14 +65,14 @@ class RedisStore(Store):
         Returns:
             Associated record id.
         """
-        num_items = int(self.__conn.incr("num_items"))
+        num_items = int(self._conn.incr("num_items"))
         idx = num_items - 1
-        self.__conn.set(str(idx), pickle.dumps((embedding, label, data)))
+        self._conn.set(str(idx), pickle.dumps((embedding, label, data)))
 
         return idx
 
     def get_num_items(self) -> int:
-        return int(self.__conn.get("num_items")) or 0
+        return int(self._conn.get("num_items")) or 0
 
     def batch_add(
         self,
@@ -106,7 +114,7 @@ class RedisStore(Store):
             record associated with the requested id.
         """
 
-        ret_bytes: bytes = self.__conn.get(str(idx))
+        ret_bytes: bytes = self._conn.get(str(idx))
         ret: tuple = pickle.loads(ret_bytes)
         return (ret[0], ret[1], ret[2])
 
@@ -133,27 +141,27 @@ class RedisStore(Store):
         "Number of record in the key value store."
         return self.get_num_items()
 
-    def __make_config_file_path(self, path):
+    def _make_config_file_path(self, path):
         return Path(path) / "config.json"
 
-    def __save_config(self, path):
-        with open(self.__make_config_file_path(path), "wt") as f:
+    def _save_config(self, path):
+        with open(self._make_config_file_path(path), "wt") as f:
             json.dump(self.get_config(), f)
 
-    def __set_config(self, host, port, db, **kw_args):
+    def _set_config(self, host, port, db, **kw_args):
         self.host = host
         self.port = port
         self.db = db
 
-    def __connect(self):
-        self.__conn = redis.Redis(host=self.host, port=self.port, db=self.db)
+    def _connect(self):
+        self._conn = redis.Redis(host=self.host, port=self.port, db=self.db)
 
-    def __load_config(self, path):
-        with open(self.__make_config_file_path(path), "rt") as f:
-            self.__set_config(**json.load(f))
-        self.__connect()
+    def _load_config(self, path):
+        with open(self._make_config_file_path(path), "rt") as f:
+            self._set_config(**json.load(f))
+        self._connect()
 
-    def save(self, path: str, compression: bool = True) -> None:
+    def save(self, path: Path | str, compression: bool = True) -> None:
         """Serializes index on disk.
 
         Args:
@@ -162,14 +170,14 @@ class RedisStore(Store):
         """
         # Writing to a buffer to avoid read error in np.savez when using GFile.
         # See: https://github.com/tensorflow/tensorflow/issues/32090
-        self.__save_config(path)
+        self._save_config(path)
 
     def get_config(self):
         config = {"host": self.host, "port": self.port, "db": self.db, "num_items": self.get_num_items()}
         base_config = super().get_config()
         return {**base_config, **config}
 
-    def load(self, path: str) -> int:
+    def load(self, path: Path | str) -> int:
         """load index on disk
 
         Args:
@@ -178,7 +186,7 @@ class RedisStore(Store):
         Returns:
            Number of records reloaded.
         """
-        self.__load_config(path)
+        self._load_config(path)
         return self.size()
 
     def to_data_frame(self, num_records: int = 0) -> PandasDataFrame:

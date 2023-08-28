@@ -24,7 +24,8 @@ def filter_classes(
     """
 
     if class_list is not None:
-        class_list = tf.constant(class_list)
+        # Ensure class_list values are the same dtype as the y values.
+        class_list = tf.constant(class_list, dtype=ds.element_spec[1].dtype)
         ds = ds.filter(lambda x, y, *args: tf.reduce_any(tf.equal(y_parser(y), class_list)))
 
     return ds

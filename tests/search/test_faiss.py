@@ -1,13 +1,13 @@
 import numpy as np
 
-from tensorflow_similarity.search import FaissSearch
+from tensorflow_similarity.search.faiss import Faiss
 
 
 def test_index_match():
     target = np.array([1, 1, 2], dtype="float32")
     embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
 
-    search_index = FaissSearch("cosine", 3, algo="flat")
+    search_index = Faiss("cosine", 3, algo="flat")
     search_index.add(embs[0], 0)
     search_index.add(embs[1], 1)
 
@@ -23,7 +23,7 @@ def test_index_save(tmp_path):
     embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
     k = 2
 
-    search_index = FaissSearch("cosine", 3, algo="flat")
+    search_index = Faiss("cosine", 3, algo="flat")
     search_index.add(embs[0], 0)
     search_index.add(embs[1], 1)
 
@@ -35,7 +35,7 @@ def test_index_save(tmp_path):
 
     search_index.save(tmp_path)
 
-    search_index2 = FaissSearch("cosine", 3, algo="flat")
+    search_index2 = Faiss("cosine", 3, algo="flat")
     search_index2.load(tmp_path)
 
     idxs2, embs2 = search_index.lookup(target, k=k)
@@ -64,7 +64,7 @@ def test_batch_vs_single(tmp_path):
     embs = np.random.random((index_size, vect_dim)).astype("float32")
 
     # build search_index
-    search_index = FaissSearch("cosine", vect_dim, algo="flat")
+    search_index = Faiss("cosine", vect_dim, algo="flat")
     search_index.batch_add(embs, idxs)
 
     # batch
@@ -94,7 +94,7 @@ def test_ivfpq():
     targets = np.random.random((num_targets, vect_dim)).astype("float32")
     embs = np.random.random((index_size, vect_dim)).astype("float32")
 
-    search_index = FaissSearch("cosine", vect_dim, algo="ivfpq")
+    search_index = Faiss("cosine", vect_dim, algo="ivfpq")
     assert search_index.is_built() == False
     search_index.build_index(embs)
     assert search_index.is_built() == True
@@ -113,7 +113,7 @@ def test_reset():
     target = np.array([1, 2, 3], dtype="float32")
     embs = np.array([[3, 2, 1], [2, 3, 4], [3, 6, 9]], dtype="float32")
 
-    search_index = FaissSearch("cosine", 3, algo="flat")
+    search_index = Faiss("cosine", 3, algo="flat")
     search_index.add(embs[0], 0)
     search_index.add(embs[1], 1)
 

@@ -21,58 +21,52 @@ INITIAL_DB_SIZE = 10000
 DB_SIZE_STEPS = 10000
 
 
-class LinearSearch(Search):
+class Linear(Search):
     """This class implements the Linear Search interface.
 
     It implements the Search interface.
     """
 
-    def __init__(self, distance: Distance | str, dim: int, verbose: int = 0, name: str | None = None, **kw_args):
+    def __init__(self, distance: Distance | str, dim: int, verbose: int = 0, **kwargs):
         """Initiate Linear indexer.
 
         Args:
-          d: number of dimensions
-          m: number of centroid IDs in final compressed vectors. d must be divisible
-            by m
-          nbits: number of bits in each centroid
-          nlist: how many Voronoi cells (must be greater than or equal to 2**nbits)
-          nprobe: how many of the nearest cells to include in search
-        """
-        super().__init__(distance=distance, dim=dim, verbose=verbose, name=name)
+            distance: the distance used to compute the distance between
+            embeddings.
 
-        if verbose:
-            t_msg = [
-                "\n|-Initialize NMSLib Index",
-                f"|  - distance:       {self.distance}",
-                f"|  - dim:            {self.dim}",
-                f"|  - verbose:        {self.verbose}",
-                f"|  - name:           {self.name}",
-            ]
-            cprint("\n".join(t_msg) + "\n", "green")
+            dim: the size of the embeddings.
+
+            verbose: be verbose.
+        """
+        super().__init__(distance=distance, dim=dim, verbose=verbose)
+
         self.reset()
 
     def is_built(self):
-        return True
-
-    def needs_building(self):
-        return False
+        return self.built
 
     def batch_lookup(
         self, embeddings: FloatTensor, k: int = 5, normalize: bool = True
     ) -> tuple[list[list[int]], list[list[float]]]:
-        """Find embeddings K nearest neighboors embeddings.
+        """Find embeddings K nearest neighbors embeddings.
 
         Args:
             embedding: Batch of query embeddings as predicted by the model.
-            k: Number of nearest neighboors embedding to lookup. Defaults to 5.
+            k: Number of nearest neighbors embedding to lookup. Defaults to 5.
         """
 
         if normalize:
             query = tf.math.l2_normalize(embeddings, axis=1)
         else:
             query = embeddings
-        db_tensor = tf.convert_to_tensor(self.db)
+        db_tensor = tf.convert_to_tensor(np.array(self._index), dtype=query.dtype)
         dists = self.distance(query, db_tensor)
+        # Clip K in case the index is smaller than K
+        k = min(k, tf.shape(dists)[1])
+        # NOTE: kTop K takes the largest K elements, so we need to negate
+        # the distances to get the top K smallest distances.
+        # NOTE: dists and id_idxs will be a tensor of shape (batch_size, k),
+        # with each row a top_k result set of k elements.
         dists, id_idxs = tf.math.top_k(tf.math.negative(dists), k)
         dists = tf.math.negative(dists)
         id_idxs = id_idxs.numpy()
@@ -80,11 +74,11 @@ class LinearSearch(Search):
         return list(np.array([ids_array[x] for x in id_idxs])), list(dists)
 
     def lookup(self, embedding: FloatTensor, k: int = 5, normalize: bool = True) -> tuple[list[int], list[float]]:
-        """Find embedding K nearest neighboors embeddings.
+        """Find embedding K nearest neighbors embeddings.
 
         Args:
             embedding: Query embedding as predicted by the model.
-            k: Number of nearest neighboors embedding to lookup. Defaults to 5.
+            k: Number of nearest neighbors embedding to lookup. Defaults to 5.
         """
         embeddings: FloatTensor = tf.convert_to_tensor([embedding], dtype=np.float32)
         idxs, dists = self.batch_lookup(embeddings, k=k, normalize=normalize)
@@ -101,7 +95,7 @@ class LinearSearch(Search):
         if normalize:
             embedding = tf.math.l2_normalize(np.array([embedding], dtype=tf.keras.backend.floatx()), axis=1)[0]
         self.ids.append(idx)
-        self.db.append(embedding)
+        self._index.append(embedding)
 
     def batch_add(
         self,
@@ -123,41 +117,50 @@ class LinearSearch(Search):
         if normalize:
             embeddings = tf.math.l2_normalize(embeddings, axis=1)
         self.ids.extend(idxs)
-        self.db.extend(embeddings)
+        self._index.extend(embeddings)
 
-    def __make_file_path(self, path):
+    def _make_file_path(self, path):
         return Path(path) / "index.pickle"
 
-    def save(self, path: str):
+    def save(self, path: Path | str):
         """Serializes the index data on disk
 
         Args:
             path: where to store the data
         """
-        with open(self.__make_file_path(path), "wb") as f:
-            pickle.dump((self.db, self.ids), f)
-        self.__save_config(path)
+        with open(self._make_file_path(path), "wb") as f:
+            pickle.dump((self._index, self.ids), f)
+        self._save_config(path)
 
-    def load(self, path: str):
+    def load(self, path: Path | str):
         """load index on disk
 
         Args:
             path: where to store the data
         """
-        with open(self.__make_file_path(path), "rb") as f:
+        with open(self._make_file_path(path), "rb") as f:
             data = pickle.load(f)
-        self.db = data[0]
+        self._index = data[0]
         self.ids = data[1]
 
     def reset(self):
-        self.db: List[FloatTensor] = []
+        self._index: List[FloatTensor] = []
         self.ids: List[int] = []
+        self.built = True
 
-    def __make_config_path(self, path):
+        if self.verbose:
+            t_msg = [
+                "\n|-Initialize Linear Index",
+                f"|  - distance:       {self.distance}",
+                f"|  - dim:            {self.dim}",
+            ]
+            cprint("\n".join(t_msg) + "\n", "green")
+
+    def _make_config_path(self, path):
         return Path(path) / "config.json"
 
-    def __save_config(self, path):
-        with open(self.__make_config_path(path), "wt") as f:
+    def _save_config(self, path):
+        with open(self._make_config_path(path), "wt") as f:
             json.dump(self.get_config(), f)
 
     def get_config(self) -> dict[str, Any]:
@@ -166,10 +169,5 @@ class LinearSearch(Search):
         Returns:
             A Python dict containing the configuration of the search obj.
         """
-        config = {
-            "distance": self.distance.name,
-            "dim": self.dim,
-        }
-
         base_config = super().get_config()
-        return {**base_config, **config}
+        return base_config

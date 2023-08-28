@@ -13,17 +13,36 @@
 # limitations under the License.
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any, Type
 
-from .cached_store import CachedStore
-from .memory_store import MemoryStore
-from .redis_store import RedisStore
 from .store import Store
 
-STORE_ALIASES: dict[str, Type[Store]] = {
-    "RedisStore": RedisStore,
-    "CachedStore": CachedStore,
-    "MemoryStore": MemoryStore,
+LoadFn = Callable[[dict[str, Any]], Store]
+
+
+def load_redis(config: dict[str, Any]):
+    from .redis import Redis
+
+    return Redis(**config)
+
+
+def load_cached(config: dict[str, Any]):
+    from .cached import Cached
+
+    return Cached(**config)
+
+
+def load_memory(config: dict[str, Any]):
+    from .memory import Memory
+
+    return Memory(**config)
+
+
+STORE_ALIASES: dict[str, LoadFn] = {
+    "redis": load_redis,
+    "cached": load_cached,
+    "memory": load_memory,
 }
 
 
@@ -40,11 +59,10 @@ def make_store(config: dict[str, Any]) -> Store:
         A Store instance.
     """
 
-    if config["canonical_name"] in STORE_ALIASES:
-        config_copy = dict(config)
-        del config_copy["canonical_name"]
-        store: Store = STORE_ALIASES[config["canonical_name"]](**config_copy)
+    canonical_name = config["canonical_name"].lower()
+    if canonical_name in STORE_ALIASES:
+        store: Store = STORE_ALIASES[canonical_name](config)
     else:
-        raise ValueError(f"Unknown search type: {config['canonical_name']}")
+        raise ValueError(f"Unknown search type: {canonical_name}")
 
     return store

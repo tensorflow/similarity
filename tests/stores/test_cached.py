@@ -2,11 +2,11 @@ import os
 
 import numpy as np
 
-from tensorflow_similarity.stores import CachedStore
+from tensorflow_similarity.stores.cached import Cached
 
 
 def build_store(records, path):
-    kv_store = CachedStore(path=path)
+    kv_store = Cached(path=path)
     idxs = []
     for r in records:
         idx = kv_store.add(r[0], r[1], r[2])
@@ -55,7 +55,7 @@ def test_batch_add(tmp_path):
     lbls = np.array([1, 2])
     data = np.array([[0, 0, 0], [1, 1, 1]])
 
-    kv_store = CachedStore(path=tmp_path)
+    kv_store = Cached(path=tmp_path)
     idxs = kv_store.batch_add(embs, lbls, data)
     for idx in idxs:
         emb, lbl, dt = kv_store.get(idx)
@@ -76,7 +76,7 @@ def test_save_and_reload(tmp_path):
     kv_store.save(save_path)
 
     # reload
-    reloaded_store = CachedStore()
+    reloaded_store = Cached()
     print(f"loading from {save_path}")
     reloaded_store.load(save_path)
 

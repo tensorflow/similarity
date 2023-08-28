@@ -26,10 +26,15 @@ from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 from .store import Store
 
 
-class MemoryStore(Store):
+class Memory(Store):
     """Efficient in-memory dataset store"""
 
-    def __init__(self, **kw_args) -> None:
+    def __init__(
+        self,
+        verbose: int = 0,
+        **kwargs,
+    ) -> None:
+        super().__init__(verbose=verbose)
         # We are using a native python array in memory for its row speed.
         # Serialization / export relies on Arrow.
         self.labels: list[int | None] = []
@@ -131,7 +136,7 @@ class MemoryStore(Store):
         "Number of record in the key value store."
         return self.num_items
 
-    def save(self, path: str, compression: bool = True) -> None:
+    def save(self, path: Path | str, compression: bool = True) -> None:
         """Serializes index on disk.
 
         Args:
@@ -178,7 +183,7 @@ class MemoryStore(Store):
         print("loaded %d records from %s" % (self.size(), path))
         return self.size()
 
-    def _make_fname(self, path: str, check_file_exit: bool = False) -> str:
+    def _make_fname(self, path: Path | str, check_file_exit: bool = False) -> Path:
         p = Path(path)
         if not tf.io.gfile.exists(p):
             raise ValueError("Index path doesn't exist")
@@ -187,7 +192,7 @@ class MemoryStore(Store):
         # only for loading
         if check_file_exit and not tf.io.gfile.exists(fname):
             raise ValueError("Index file not found")
-        return str(fname)
+        return fname
 
     def to_data_frame(self, num_records: int = 0) -> PandasDataFrame:
         """Export data as a Pandas dataframe.

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 
 from tensorflow_similarity.distances import Distance, distance_canonicalizer
@@ -27,7 +28,6 @@ class Search(ABC):
         distance: Distance | str,
         dim: int,
         verbose: int = 0,
-        name: str | None = None,
         **kwargs,
     ):
         """Initializes a nearest neigboors search index.
@@ -43,7 +43,8 @@ class Search(ABC):
         self.distance: Distance = distance_canonicalizer(distance)
         self.dim = dim
         self.verbose = verbose
-        self.name = name if name is not None else self.__class__.__name__
+        self.built = False
+        self.canonical_name = self.__class__.__name__
 
     @abstractmethod
     def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, **kwargs):
@@ -92,7 +93,7 @@ class Search(ABC):
         """
 
     @abstractmethod
-    def save(self, path: str):
+    def save(self, path: Path | str):
         """Serializes the index data on disk
 
         Args:
@@ -100,7 +101,7 @@ class Search(ABC):
         """
 
     @abstractmethod
-    def load(self, path: str):
+    def load(self, path: Path | str):
         """load index on disk
 
         Args:
@@ -121,12 +122,11 @@ class Search(ABC):
             "distance": self.distance.name,
             "dim": self.dim,
             "verbose": self.verbose,
-            "name": self.name,
-            "canonical_name": self.__class__.__name__,
+            "canonical_name": self.canonical_name,
         }
 
         return config
 
-    @abstractmethod
     def is_built(self):
         "Returns whether or not the index is built and ready for querying." ""
+        return self.built

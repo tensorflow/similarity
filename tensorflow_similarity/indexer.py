@@ -17,7 +17,6 @@ sub-linear search"""
 from __future__ import annotations
 
 import json
-import os
 from collections import defaultdict, deque
 from collections.abc import Sequence
 from pathlib import Path
@@ -34,8 +33,8 @@ from .classification_metrics import F1Score, make_classification_metric
 # internal
 from .distances import Distance
 from .evaluators import Evaluator
-from .search import LinearSearch, NMSLibSearch, Search, make_search
-from .stores import MemoryStore, Store, make_store
+from .search import Search, make_search
+from .stores import Store, make_store
 from .types import FloatTensor, Lookup, PandasDataFrame, Tensor
 
 
@@ -63,7 +62,7 @@ class Indexer(BaseIndexer):
         self,
         embedding_size: int,
         distance: Distance | str = "cosine",
-        search: Search | str = "nmslib",
+        search: Search | str = "linear",
         kv_store: Store | str = "memory",
         evaluator: Evaluator | str = "memory",
         embedding_output: int | None = None,
@@ -82,7 +81,7 @@ class Indexer(BaseIndexer):
             Defaults to 'memory'.
 
             search: Which `Search()` framework to use to perform KNN
-            search. Defaults to 'nmslib'.
+            search. Defaults to 'linear'.
 
             evaluator: What type of `Evaluator()` to use to evaluate index
             performance. Defaults to in-memory one.
@@ -100,39 +99,26 @@ class Indexer(BaseIndexer):
             ValueError: Invalid search framework or key value store.
         """
         super().__init__(distance, embedding_output, embedding_size, evaluator, stat_buffer_size)
-        # internal structure naming
-        # FIXME support custom objects
-        self.search_type = search if isinstance(search, str) else search.name
-        if isinstance(search, Search):
-            self.search: Search = search
-        self.kv_store_type = kv_store if isinstance(kv_store, str) else type(kv_store).__name__
-        if isinstance(kv_store, Store):
-            self.kv_store: Store = kv_store
 
-        if self.search_type == "nmslib":
-            self.search = NMSLibSearch(distance=self.distance, dim=self.embedding_size)
-        elif self.search_type == "linear":
-            self.search = LinearSearch(distance=self.distance, dim=self.embedding_size)
-        elif isinstance(self.search_type, Search):
-            # TODO: Temporary fix to support resetting custom objects. Currently only supports NMSLibSearch.
-            #       Search class should provide a reset method instead.
-            if type(self.search_type).__name__ != "NMSLibSearch":
-                raise ValueError("Currently NMSLibSearch is the only supported Search object.")
-            search = make_search(self.search_type.get_config())
+        if isinstance(search, str):
+            self.search: Search = make_search(
+                config={"canonical_name": search, "distance": distance, "dim": embedding_size}
+            )
+        elif isinstance(search, Search):
             self.search = search
-        elif not hasattr(self, "search") or not isinstance(self.search, Search):
+        else:
             # self.search should have been already initialized
             raise ValueError("You need to either supply a known search " "framework name or a Search() object")
+        self.search_type = self.search.canonical_name
 
-        # mapper from id to record data
-        if self.kv_store_type == "memory":
-            self.kv_store = MemoryStore()
-        elif isinstance(self.kv_store_type, Store):
-            print("WARNING: custom store objects are not currently supported and will not be reset.")
-            self.kv_store = self.kv_store_type
-        elif not hasattr(self, "search") or not isinstance(self.kv_store, Store):
+        if isinstance(kv_store, str):
+            self.kv_store: Store = make_store(config={"canonical_name": kv_store})
+        elif isinstance(kv_store, Store):
+            self.kv_store = kv_store
+        else:
             # self.kv_store should have been already initialized
             raise ValueError("You need to either supply a know key value " "store name or a Store() object")
+        self.kv_store_type = self.kv_store.canonical_name
 
         # initialize internal structures
         self._init_structures()
@@ -371,14 +357,18 @@ class Indexer(BaseIndexer):
 
         return batch_lookups
 
-    def save(self, path: str, compression: bool = True):
+    def save(self, path: Path | str, compression: bool = True, overwrite: bool = True):
         """Save the index to disk
 
         Args:
             path: directory where to save the index
             compression: Store index data compressed. Defaults to True.
+            overwrite: Overwrite previous index. Defaults to True.
         """
-        path = str(path)
+        path = Path(path)
+
+        if path.exists() and overwrite:
+            tf.io.gfile.rmtree(path)
 
         # saving metadata
         metadata = {
@@ -399,16 +389,16 @@ class Indexer(BaseIndexer):
             "calibration_thresholds": {k: v.tolist() for k, v in self.calibration_thresholds.items()},
         }
 
-        metadata_fname = self.__make_metadata_fname(path)
+        metadata_fname = self.__make_metadata_fname(str(path))
         tf.io.write_file(metadata_fname, json.dumps(metadata))
 
-        os.mkdir(Path(path) / "store")
-        os.mkdir(Path(path) / "search")
-        self.kv_store.save(str(Path(path) / "store"), compression=compression)
-        self.search.save(str(Path(path) / "search"))
+        (path / "store").mkdir(parents=True)
+        (path / "search").mkdir(parents=True)
+        self.kv_store.save(path / "store", compression=compression)
+        self.search.save(path / "search")
 
     @staticmethod
-    def load(path: str | Path, verbose: int = 1):
+    def load(path: Path | str, verbose: int = 1):
         """Load Index data from a checkpoint and initialize underlying
         structure with the reloaded data.
 

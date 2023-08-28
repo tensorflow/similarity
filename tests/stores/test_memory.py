@@ -1,10 +1,10 @@
 import numpy as np
 
-from tensorflow_similarity.stores import MemoryStore
+from tensorflow_similarity.stores.memory import Memory
 
 
 def build_store(records):
-    kv_store = MemoryStore()
+    kv_store = Memory()
     idxs = []
     for r in records:
         idx = kv_store.add(r[0], r[1], r[2])
@@ -53,7 +53,7 @@ def test_batch_add():
     lbls = np.array([1, 2])
     data = np.array([[0, 0, 0], [1, 1, 1]])
 
-    kv_store = MemoryStore()
+    kv_store = Memory()
     idxs = kv_store.batch_add(embs, lbls, data)
     for idx in idxs:
         emb, lbl, dt = kv_store.get(idx)
@@ -69,7 +69,7 @@ def test_save_and_reload(tmp_path):
     kv_store.save(str(tmp_path))
 
     # reload
-    reloaded_store = MemoryStore()
+    reloaded_store = Memory()
     reloaded_store.load(tmp_path)
 
     assert reloaded_store.size() == 2

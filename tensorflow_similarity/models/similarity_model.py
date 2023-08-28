@@ -101,7 +101,7 @@ class SimilarityModel(tf.keras.Model):
         distance: Distance | str = "auto",
         embedding_output: int | None = None,
         kv_store: Store | str = "memory",
-        search: Search | str = "nmslib",
+        search: Search | str = "linear",
         evaluator: Evaluator | str = "memory",
         stat_buffer_size: int = 1000,
         **kwargs,
@@ -184,7 +184,7 @@ class SimilarityModel(tf.keras.Model):
             kv_store: How to store the indexed records.  Defaults to 'memory'.
 
             search: Which `Search()` framework to use to perform KNN search.
-              Defaults to 'nmslib'.
+              Defaults to 'linear'.
 
             evaluator: What type of `Evaluator()` to use to evaluate index
               performance. Defaults to in-memory one.
@@ -266,7 +266,7 @@ class SimilarityModel(tf.keras.Model):
     def create_index(
         self,
         distance: Distance | str = "cosine",
-        search: Search | str = "nmslib",
+        search: Search | str = "linear",
         kv_store: Store | str = "memory",
         evaluator: Evaluator | str = "memory",
         embedding_output: int | None = None,
@@ -288,7 +288,7 @@ class SimilarityModel(tf.keras.Model):
             kv_store: How to store the indexed records.  Defaults to 'memory'.
 
             search: Which `Search()` framework to use to perform KNN search.
-            Defaults to 'nmslib'.
+            Defaults to 'linear'.
 
             evaluator: What type of `Evaluator()` to use to evaluate index
             performance. Defaults to in-memory one.
@@ -770,15 +770,16 @@ class SimilarityModel(tf.keras.Model):
         index_path = Path(filepath) / "index"
         self._index = Indexer.load(index_path)
 
-    def save_index(self, filepath, compression=True):
+    def save_index(self, filepath, compression=True, overwrite=True):
         """Save the index to disk
 
         Args:
             path: directory where to save the index
             compression: Store index data compressed. Defaults to True.
+            overwrite: Overwrite previous index. Defaults to False.
         """
         index_path = Path(filepath) / "index"
-        self._index.save(index_path, compression=compression)
+        self._index.save(index_path, compression=compression, overwrite=overwrite)
 
     def save(
         self,
@@ -834,7 +835,7 @@ class SimilarityModel(tf.keras.Model):
         )
 
         if hasattr(self, "_ix") and self._index and save_index:
-            self.save_index(filepath, compression=compression)
+            self.save_index(filepath, compression=compression, overwrite=overwrite)
         else:
             msg = "The index was not saved with the model."
             if not hasattr(self, "_ix"):
