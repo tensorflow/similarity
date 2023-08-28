@@ -13,12 +13,12 @@
 # limitations under the License.
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any, Type
+from collections.abc import Callable, Mapping
+from typing import Any
 
 from .store import Store
 
-LoadFn = Callable[[dict[str, Any]], Store]
+LoadFn = Callable[[Mapping[str, Any]], Store]
 
 
 def load_redis(config: dict[str, Any]):

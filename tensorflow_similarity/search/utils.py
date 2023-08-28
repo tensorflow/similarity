@@ -13,12 +13,12 @@
 # limitations under the License.
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any, Type
+from collections.abc import Callable, Mapping
+from typing import Any
 
 from .search import Search
 
-LoadFn = Callable[[dict[str, Any]], Search]
+LoadFn = Callable[[Mapping[str, Any]], Search]
 
 
 def load_faiss(config: dict[str, Any]):
