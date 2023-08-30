@@ -23,7 +23,7 @@ from tensorflow_similarity.models import SimilarityModel
 
 def _make_batchnorm(epsilon, name, layer):
     tf_version = [int(v) for v in tf.__version__.split(".")]
-    if tf_version[0] == 2 and tf_version[1] < 11:
+    if tf_version[0] == 2 and tf_version[1] < 12:
         layer = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=epsilon, name=name)(layer)
     else:
         layer = tf.keras.layers.BatchNormalization(epsilon=epsilon, name=name, synchronized=True)(layer)

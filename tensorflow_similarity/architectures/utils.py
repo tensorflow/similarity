@@ -34,7 +34,7 @@ def convert_sync_batchnorm(model: tf.keras.Model) -> tf.keras.Model:
             x = layer2newtensor[layer.inbound_nodes[0].inbound_layers.name]
         if isinstance(layer, tf.keras.layers.BatchNormalization):
             tf_version = [int(v) for v in tf.__version__.split(".")]
-            if tf_version[0] == 2 and tf_version[1] < 11:
+            if tf_version[0] == 2 and tf_version[1] < 12:
                 layer = tf.keras.layers.experimental.SyncBatchNormalization(**layer.get_config())
             else:
                 layer = tf.keras.layers.BatchNormalization(**layer.get_config(), synchronized=True)
