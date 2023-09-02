@@ -17,6 +17,7 @@ import json
 import pickle
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import redis
@@ -26,7 +27,7 @@ from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 from .store import Store
 
 
-class Redis(Store):
+class RedisStore(Store):
     """Efficient Redis dataset store"""
 
     def __init__(
@@ -43,9 +44,6 @@ class Redis(Store):
         self.port = port
         self.db = db
         self._connect()
-
-    def reset(self):
-        self._conn.flushdb()
 
     def add(
         self,
@@ -65,14 +63,10 @@ class Redis(Store):
         Returns:
             Associated record id.
         """
-        num_items = int(self._conn.incr("num_items"))
-        idx = num_items - 1
+        idx = self.size()
         self._conn.set(str(idx), pickle.dumps((embedding, label, data)))
 
         return idx
-
-    def get_num_items(self) -> int:
-        return int(self._conn.get("num_items")) or 0
 
     def batch_add(
         self,
@@ -139,7 +133,67 @@ class Redis(Store):
 
     def size(self) -> int:
         "Number of record in the key value store."
-        return self.get_num_items()
+        return int(self._conn.get("num_items")) or 0
+
+    def save(self, path: Path | str, compression: bool = True) -> None:
+        """Serializes index on disk.
+
+        Args:
+            path: where to store the data.
+            compression: Compress index data. Defaults to True.
+        """
+        # Writing to a buffer to avoid read error in np.savez when using GFile.
+        # See: https://github.com/tensorflow/tensorflow/issues/32090
+        self._save_config(path)
+
+    def load(self, path: Path | str) -> int:
+        """load index on disk
+
+        Args:
+            path: which directory to use to store the index data.
+
+        Returns:
+           Number of records reloaded.
+        """
+        self._load_config(path)
+        return self.size()
+
+    def get_config(self):
+        config = {"host": self.host, "port": self.port, "db": self.db}
+        base_config = super().get_config()
+        return {**base_config, **config}
+
+    def to_data_frame(self, num_records: int = 0) -> PandasDataFrame:
+        """Export data as a Pandas dataframe.
+
+        Args:
+            num_records: Number of records to export to the dataframe.
+            Defaults to 0 (unlimited).
+
+        Returns:
+            Empty DataFrame
+        """
+        if num_records:
+            idxs = list(range(num_records))
+            embeddings, labels, data = self.batch_get(idxs)
+            records: dict[str, list[Any]] = {
+                "embedding": embeddings,
+                "label": labels,
+                "data": data,
+            }
+        else:
+            records = {
+                "embedding": [],
+                "label": [],
+                "data": [],
+            }
+
+        # forcing type from Any to PandasFrame
+        df: PandasDataFrame = pd.DataFrame.from_dict(records)
+        return df
+
+    def reset(self):
+        self._conn.flushdb()
 
     def _make_config_file_path(self, path):
         return Path(path) / "config.json"
@@ -160,47 +214,3 @@ class Redis(Store):
         with open(self._make_config_file_path(path), "rt") as f:
             self._set_config(**json.load(f))
         self._connect()
-
-    def save(self, path: Path | str, compression: bool = True) -> None:
-        """Serializes index on disk.
-
-        Args:
-            path: where to store the data.
-            compression: Compress index data. Defaults to True.
-        """
-        # Writing to a buffer to avoid read error in np.savez when using GFile.
-        # See: https://github.com/tensorflow/tensorflow/issues/32090
-        self._save_config(path)
-
-    def get_config(self):
-        config = {"host": self.host, "port": self.port, "db": self.db, "num_items": self.get_num_items()}
-        base_config = super().get_config()
-        return {**base_config, **config}
-
-    def load(self, path: Path | str) -> int:
-        """load index on disk
-
-        Args:
-            path: which directory to use to store the index data.
-
-        Returns:
-           Number of records reloaded.
-        """
-        self._load_config(path)
-        return self.size()
-
-    def to_data_frame(self, num_records: int = 0) -> PandasDataFrame:
-        """Export data as a Pandas dataframe.
-
-        Cached store does not fit in memory, therefore we do not implement this.
-
-        Args:
-            num_records: Number of records to export to the dataframe.
-            Defaults to 0 (unlimited).
-
-        Returns:
-            Empty DataFrame
-        """
-        # forcing type from Any to PandasFrame
-        df: PandasDataFrame = pd.DataFrame()
-        return df

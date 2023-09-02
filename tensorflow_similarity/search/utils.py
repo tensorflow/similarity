@@ -21,24 +21,27 @@ LoadFn = Callable[[Dict[str, Any]], Search]
 
 
 def load_faiss(config: Dict[str, Any]):
-    from .faiss import Faiss
+    from .faiss import FaissSearch
 
-    return Faiss(**config)
+    return FaissSearch(**config)
 
 
 def load_linear(config: Dict[str, Any]):
-    from .linear import Linear
+    from .linear import LinearSearch
 
-    return Linear(**config)
+    return LinearSearch(**config)
 
 
 def load_nmslib(config: Dict[str, Any]):
-    from .nmslib import NMSLib
+    from .nmslib import NMSLibSearch
 
-    return NMSLib(**config)
+    return NMSLibSearch(**config)
 
 
 SEARCH_ALIASES: Dict[str, LoadFn] = {
+    "faisssearch": load_faiss,
+    "linearsearch": load_linear,
+    "nmslibsearch": load_nmslib,
     "faiss": load_faiss,
     "linear": load_linear,
     "nmslib": load_nmslib,

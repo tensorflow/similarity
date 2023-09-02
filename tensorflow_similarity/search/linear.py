@@ -21,7 +21,7 @@ INITIAL_DB_SIZE = 10000
 DB_SIZE_STEPS = 10000
 
 
-class Linear(Search):
+class LinearSearch(Search):
     """This class implements the Linear Search interface.
 
     It implements the Search interface.
@@ -41,48 +41,6 @@ class Linear(Search):
         super().__init__(distance=distance, dim=dim, verbose=verbose)
 
         self.reset()
-
-    def is_built(self):
-        return self.built
-
-    def batch_lookup(
-        self, embeddings: FloatTensor, k: int = 5, normalize: bool = True
-    ) -> tuple[list[list[int]], list[list[float]]]:
-        """Find embeddings K nearest neighbors embeddings.
-
-        Args:
-            embedding: Batch of query embeddings as predicted by the model.
-            k: Number of nearest neighbors embedding to lookup. Defaults to 5.
-        """
-
-        if normalize:
-            query = tf.math.l2_normalize(embeddings, axis=1)
-        else:
-            query = embeddings
-        db_tensor = tf.convert_to_tensor(np.array(self._index), dtype=query.dtype)
-        dists = self.distance(query, db_tensor)
-        # Clip K in case the index is smaller than K
-        k = min(k, tf.shape(dists)[1])
-        # NOTE: kTop K takes the largest K elements, so we need to negate
-        # the distances to get the top K smallest distances.
-        # NOTE: dists and id_idxs will be a tensor of shape (batch_size, k),
-        # with each row a top_k result set of k elements.
-        dists, id_idxs = tf.math.top_k(tf.math.negative(dists), k)
-        dists = tf.math.negative(dists)
-        id_idxs = id_idxs.numpy()
-        ids_array = np.array(self.ids)
-        return list(np.array([ids_array[x] for x in id_idxs])), list(dists)
-
-    def lookup(self, embedding: FloatTensor, k: int = 5, normalize: bool = True) -> tuple[list[int], list[float]]:
-        """Find embedding K nearest neighbors embeddings.
-
-        Args:
-            embedding: Query embedding as predicted by the model.
-            k: Number of nearest neighbors embedding to lookup. Defaults to 5.
-        """
-        embeddings: FloatTensor = tf.convert_to_tensor([embedding], dtype=np.float32)
-        idxs, dists = self.batch_lookup(embeddings, k=k, normalize=normalize)
-        return idxs[0], dists[0]
 
     def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, normalize: bool = True, **kwargs):
         """Add a single embedding to the search index.
@@ -119,8 +77,44 @@ class Linear(Search):
         self.ids.extend(idxs)
         self._index.extend(embeddings)
 
-    def _make_file_path(self, path):
-        return Path(path) / "index.pickle"
+    def lookup(self, embedding: FloatTensor, k: int = 5, normalize: bool = True) -> tuple[list[int], list[float]]:
+        """Find embedding K nearest neighbors embeddings.
+
+        Args:
+            embedding: Query embedding as predicted by the model.
+            k: Number of nearest neighbors embedding to lookup. Defaults to 5.
+        """
+        embeddings: FloatTensor = tf.convert_to_tensor([embedding], dtype=np.float32)
+        idxs, dists = self.batch_lookup(embeddings, k=k, normalize=normalize)
+        return idxs[0], dists[0]
+
+    def batch_lookup(
+        self, embeddings: FloatTensor, k: int = 5, normalize: bool = True
+    ) -> tuple[list[list[int]], list[list[float]]]:
+        """Find embeddings K nearest neighbors embeddings.
+
+        Args:
+            embedding: Batch of query embeddings as predicted by the model.
+            k: Number of nearest neighbors embedding to lookup. Defaults to 5.
+        """
+
+        if normalize:
+            query = tf.math.l2_normalize(embeddings, axis=1)
+        else:
+            query = embeddings
+        db_tensor = tf.convert_to_tensor(np.array(self._index), dtype=query.dtype)
+        dists = self.distance(query, db_tensor)
+        # Clip K in case the index is smaller than K
+        k = min(k, tf.shape(dists)[1])
+        # NOTE: kTop K takes the largest K elements, so we need to negate
+        # the distances to get the top K smallest distances.
+        # NOTE: dists and id_idxs will be a tensor of shape (batch_size, k),
+        # with each row a top_k result set of k elements.
+        dists, id_idxs = tf.math.top_k(tf.math.negative(dists), k)
+        dists = tf.math.negative(dists)
+        id_idxs = id_idxs.numpy()
+        ids_array = np.array(self.ids)
+        return list(np.array([ids_array[x] for x in id_idxs])), list(dists)
 
     def save(self, path: Path | str):
         """Serializes the index data on disk
@@ -156,13 +150,6 @@ class Linear(Search):
             ]
             cprint("\n".join(t_msg) + "\n", "green")
 
-    def _make_config_path(self, path):
-        return Path(path) / "config.json"
-
-    def _save_config(self, path):
-        with open(self._make_config_path(path), "wt") as f:
-            json.dump(self.get_config(), f)
-
     def get_config(self) -> dict[str, Any]:
         """Contains the search configuration.
 
@@ -171,3 +158,16 @@ class Linear(Search):
         """
         base_config = super().get_config()
         return base_config
+
+    def is_built(self):
+        return self.built
+
+    def _make_config_path(self, path):
+        return Path(path) / "config.json"
+
+    def _save_config(self, path):
+        with open(self._make_config_path(path), "wt") as f:
+            json.dump(self.get_config(), f)
+
+    def _make_file_path(self, path):
+        return Path(path) / "index.pickle"

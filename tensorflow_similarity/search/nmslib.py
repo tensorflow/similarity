@@ -32,7 +32,7 @@ from .search import Search
 logging.getLogger("nmslib").setLevel(logging.WARNING)
 
 
-class NMSLib(Search):
+class NMSLibSearch(Search):
     """
     Efficiently find nearest embeddings by indexing known embeddings and make them searchable using the
     [Approximate Nearest Neigboors Search](https://en.wikipedia.org/wiki/Nearest_neighbor_search)

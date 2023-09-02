@@ -187,9 +187,6 @@ class Indexer(BaseIndexer):
             label = int(label)
         return label
 
-    def build_index(self, samples, **kwargss):
-        self.search.build_index(samples)
-
     def add(
         self,
         prediction: FloatTensor,

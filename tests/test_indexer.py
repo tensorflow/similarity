@@ -3,7 +3,7 @@ import tensorflow as tf
 
 from tensorflow_similarity.indexer import Indexer
 from tensorflow_similarity.search import make_search
-from tensorflow_similarity.stores.cached import Cached
+from tensorflow_similarity.stores.cached import CachedStore
 
 from . import DATA_DIR
 
@@ -141,7 +141,7 @@ class IndexerTest(tf.test.TestCase):
                 "dim": 3,
             }
         )
-        store = Cached()
+        store = CachedStore()
 
         indexer = Indexer(3, search=search, kv_store=store)
         indexer.batch_add(embs, verbose=0)
@@ -167,10 +167,10 @@ class IndexerTest(tf.test.TestCase):
                 "nlist": 2,
             }
         )
-        store = Cached()
+        store = CachedStore()
 
         indexer = Indexer(8, search=search, kv_store=store)
-        indexer.build_index(embs)
+        indexer.search.train_index(embs)
         indexer.batch_add(embs, verbose=0)
         self.assertEqual(indexer.size(), 1024)
 

@@ -21,24 +21,27 @@ LoadFn = Callable[[Dict[str, Any]], Store]
 
 
 def load_redis(config: Dict[str, Any]):
-    from .redis import Redis
+    from .redis import RedisStore
 
-    return Redis(**config)
+    return RedisStore(**config)
 
 
 def load_cached(config: Dict[str, Any]):
-    from .cached import Cached
+    from .cached import CachedStore
 
-    return Cached(**config)
+    return CachedStore(**config)
 
 
 def load_memory(config: Dict[str, Any]):
-    from .memory import Memory
+    from .memory import MemoryStore
 
-    return Memory(**config)
+    return MemoryStore(**config)
 
 
 STORE_ALIASES: Dict[str, LoadFn] = {
+    "redisstore": load_redis,
+    "cachedstore": load_cached,
+    "memorystore": load_memory,
     "redis": load_redis,
     "cached": load_cached,
     "memory": load_memory,

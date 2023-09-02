@@ -14,24 +14,6 @@
 __version__ = "0.18.0.dev8"
 
 
-from . import algebra  # noqa
 from . import architectures  # noqa
-from . import augmenters  # noqa
-from . import callbacks  # noqa
-from . import classification_metrics  # noqa
-from . import distances  # noqa
-from . import evaluators  # noqa
-from . import indexer  # noqa
-from . import layers  # noqa
-from . import losses  # noqa
-from . import matchers  # noqa
 from . import models  # noqa
-from . import retrieval_metrics  # noqa
 from . import samplers  # noqa
-from . import schedules  # noqa
-from . import search  # noqa
-from . import stores  # noqa
-from . import training_metrics  # noqa
-from . import types  # noqa
-from . import utils  # noqa
-from . import visualization  # noqa

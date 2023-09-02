@@ -20,6 +20,7 @@ import pickle
 import shutil
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -28,7 +29,7 @@ from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 from .store import Store
 
 
-class Cached(Store):
+class CachedStore(Store):
     """Efficient cached dataset store"""
 
     def __init__(
@@ -46,34 +47,6 @@ class Cached(Store):
         self.shard_size = shard_size
         self.num_items: int = num_items
         self.path: Path = Path(path)
-
-    def reset(self):
-        shard_no = len(self.db)
-        self.db = []
-        self.num_items = 0
-        for i in range(shard_no):
-            self._delete_shard(i)
-
-    def _get_shard_file_path(self, shard_no):
-        return self.path / f"cache{shard_no}"
-
-    def _make_new_shard(self, shard_no: int):
-        return dbm.dumb.open(str(self._get_shard_file_path(shard_no)), "c")
-
-    def _add_new_shard(self):
-        shard_no = len(self.db)
-        self.db.append(self._make_new_shard(shard_no))
-
-    def _delete_shard(self, n):
-        # TODO(ovallis): This is not actually deleting the file.
-        self._get_shard_file_path(n)
-
-    def _reopen_all_shards(self):
-        for shard_no in range(len(self.db)):
-            self.db[shard_no] = self._make_new_shard(shard_no)
-
-    def _get_shard_no(self, idx: int) -> int:
-        return idx // self.shard_size
 
     def add(
         self,
@@ -173,6 +146,98 @@ class Cached(Store):
         "Number of record in the key value store."
         return self.num_items
 
+    def save(self, path: Path | str, compression: bool = True) -> None:
+        """Serializes index on disk.
+
+        Args:
+            path: where to store the data.
+            compression: Compress index data. Defaults to True.
+        """
+        # Writing to a buffer to avoid read error in np.savez when using GFile.
+        # See: https://github.com/tensorflow/tensorflow/issues/32090
+        self._close_all_shards()
+        self._copy_shards(path)
+        self._save_config(path)
+        self._reopen_all_shards()
+
+    def load(self, path: Path | str) -> int:
+        """load index on disk
+
+        Args:
+            path: which directory to use to store the index data.
+
+        Returns:
+           Number of records reloaded.
+        """
+        self._load_config(path)
+        num_shards = int(math.ceil(self.num_items / self.shard_size))
+        self.path = Path(path)
+        for i in range(num_shards):
+            self._add_new_shard()
+        return self.size()
+
+    def to_data_frame(self, num_records: int = 0) -> PandasDataFrame:
+        """Export data as a Pandas dataframe.
+
+        Args:
+            num_records: Number of records to export to the dataframe.
+            Defaults to 0 (unlimited).
+
+        Returns:
+            Empty DataFrame
+        """
+        if num_records:
+            idxs = list(range(num_records))
+            embeddings, labels, data = self.batch_get(idxs)
+            records: dict[str, list[Any]] = {
+                "embedding": embeddings,
+                "label": labels,
+                "data": data,
+            }
+        else:
+            records = {
+                "embedding": [],
+                "label": [],
+                "data": [],
+            }
+
+        # forcing type from Any to PandasFrame
+        df: PandasDataFrame = pd.DataFrame.from_dict(records)
+        return df
+
+    def reset(self):
+        shard_no = len(self.db)
+        self.db = []
+        self.num_items = 0
+        for i in range(shard_no):
+            self._delete_shard(i)
+
+    def get_config(self):
+        config = {"shard_size": self.shard_size, "num_items": self.num_items}
+        base_config = super().get_config()
+        return {**base_config, **config}
+
+    def _get_shard_file_path(self, shard_no):
+        return self.path / f"cache{shard_no}"
+
+    def _make_new_shard(self, shard_no: int):
+        return dbm.dumb.open(str(self._get_shard_file_path(shard_no)), "c")
+
+    def _add_new_shard(self):
+        shard_no = len(self.db)
+        self.db.append(self._make_new_shard(shard_no))
+
+    def _delete_shard(self, n):
+        # TODO(ovallis): This is not actually deleting the file.
+        self._get_shard_file_path(n)
+
+    def _reopen_all_shards(self):
+        for shard_no in range(len(self.db)):
+            self.db[shard_no] = self._make_new_shard(shard_no)
+
+    def _get_shard_no(self, idx: int) -> int:
+        return idx // self.shard_size
+
     def _close_all_shards(self):
         for shard in self.db:
             shard.close()
@@ -198,55 +263,3 @@ class Cached(Store):
         with open(self._make_config_file_path(path), "rt") as f:
             config = json.load(f)
             self._set_config(**config)
-
-    def save(self, path: Path | str, compression: bool = True) -> None:
-        """Serializes index on disk.
-
-        Args:
-            path: where to store the data.
-            compression: Compress index data. Defaults to True.
-        """
-        # Writing to a buffer to avoid read error in np.savez when using GFile.
-        # See: https://github.com/tensorflow/tensorflow/issues/32090
-        self._close_all_shards()
-        self._copy_shards(path)
-        self._save_config(path)
-        self._reopen_all_shards()
-
-    def get_config(self):
-        config = {"shard_size": self.shard_size, "num_items": self.num_items}
-        base_config = super().get_config()
-        return {**base_config, **config}
-
-    def load(self, path: Path | str) -> int:
-        """load index on disk
-
-        Args:
-            path: which directory to use to store the index data.
-
-        Returns:
-           Number of records reloaded.
-        """
-        self._load_config(path)
-        num_shards = int(math.ceil(self.num_items / self.shard_size))
-        self.path = Path(path)
-        for i in range(num_shards):
-            self._add_new_shard()
-        return self.size()
-
-    def to_data_frame(self, num_records: int = 0) -> PandasDataFrame:
-        """Export data as a Pandas dataframe.
-
-        Cached store does not fit in memory, therefore we do not implement this.
-
-        Args:
-            num_records: Number of records to export to the dataframe.
-            Defaults to 0 (unlimited).
-
-        Returns:
-            Empty DataFrame
-        """
-
-        # forcing type from Any to PandasFrame
-        df: PandasDataFrame = pd.DataFrame()
-        return df

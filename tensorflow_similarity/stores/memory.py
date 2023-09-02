@@ -26,7 +26,7 @@ from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 from .store import Store
 
 
-class Memory(Store):
+class MemoryStore(Store):
     """Efficient in-memory dataset store"""
 
     def __init__(
@@ -41,12 +41,6 @@ class Memory(Store):
         self.embeddings: list[FloatTensor] = []
         self.data: list[Tensor | None] = []
         self.num_items: int = 0
-
-    def reset(self):
-        self.labels = []
-        self.embeddings = []
-        self.data = []
-        self.num_items = 0
 
     def add(
         self,
@@ -183,17 +177,6 @@ class Memory(Store):
         print("loaded %d records from %s" % (self.size(), path))
         return self.size()
 
-    def _make_fname(self, path: Path | str, check_file_exit: bool = False) -> Path:
-        p = Path(path)
-        if not tf.io.gfile.exists(p):
-            raise ValueError("Index path doesn't exist")
-        fname = p / "index.npz"
-
-        # only for loading
-        if check_file_exit and not tf.io.gfile.exists(fname):
-            raise ValueError("Index file not found")
-        return fname
-
     def to_data_frame(self, num_records: int = 0) -> PandasDataFrame:
         """Export data as a Pandas dataframe.
 
@@ -208,12 +191,29 @@ class Memory(Store):
         if not num_records:
             num_records = self.num_items
 
-        data = {
+        records = {
             "embeddings": self.embeddings[:num_records],
             "data": self.data[:num_records],
             "labels": self.labels[:num_records],
         }
 
         # forcing type from Any to PandasFrame
-        df: PandasDataFrame = pd.DataFrame.from_dict(data)
+        df: PandasDataFrame = pd.DataFrame.from_dict(records)
         return df
+
+    def reset(self):
+        self.labels = []
+        self.embeddings = []
+        self.data = []
+        self.num_items = 0
+
+    def _make_fname(self, path: Path | str, check_file_exit: bool = False) -> Path:
+        p = Path(path)
+        if not tf.io.gfile.exists(p):
+            raise ValueError("Index path doesn't exist")
+        fname = p / "index.npz"
+
+        # only for loading
+        if check_file_exit and not tf.io.gfile.exists(fname):
+            raise ValueError("Index file not found")
+        return fname
