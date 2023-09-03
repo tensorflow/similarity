@@ -53,11 +53,12 @@ from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
 from tqdm.auto import tqdm
 
-from tensorflow_similarity import distances
+import tensorflow_similarity.distances
 from tensorflow_similarity.classification_metrics import (
     ClassificationMetric,
     make_classification_metric,
 )
+from tensorflow_similarity.distances import Distance
 from tensorflow_similarity.evaluators.evaluator import Evaluator
 from tensorflow_similarity.indexer import Indexer
 from tensorflow_similarity.losses import MetricLoss
@@ -98,7 +99,7 @@ class SimilarityModel(tf.keras.Model):
         weighted_metrics: Metric | DistanceMetric | str | Mapping | Sequence | None = None,  # noqa
         run_eagerly: bool = False,
         steps_per_execution: int = 1,
-        distance: distances.Distance | str = "auto",
+        distance: Distance | str = "auto",
         embedding_output: int | None = None,
         kv_store: Store | str = "memory",
         search: Search | str = "linear",
@@ -199,7 +200,7 @@ class SimilarityModel(tf.keras.Model):
         # Fetching the distance used from the first loss if auto
         if distance == "auto":
             if loss is None:
-                distance = distances.get("cosine")
+                distance = tensorflow_similarity.distances.get("cosine")
             else:
                 metric_loss = loss[0] if isinstance(loss, list) else loss
 
@@ -211,7 +212,7 @@ class SimilarityModel(tf.keras.Model):
 
             print(f"Distance metric automatically set to {distance} use the " "distance arg to override.")
         else:
-            distance = distances.get(distance)
+            distance = tensorflow_similarity.distances.get(distance)
 
         # init index
         self.create_index(
@@ -265,7 +266,7 @@ class SimilarityModel(tf.keras.Model):
 
     def create_index(
         self,
-        distance: distances.Distance | str = "cosine",
+        distance: Distance | str = "cosine",
         search: Search | str = "linear",
         kv_store: Store | str = "memory",
         evaluator: Evaluator | str = "memory",

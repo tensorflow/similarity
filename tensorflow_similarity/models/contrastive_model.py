@@ -28,11 +28,12 @@ from tensorflow.keras.optimizers import Optimizer
 from termcolor import cprint
 from tqdm.auto import tqdm
 
-from tensorflow_similarity import distances
+import tensorflow_similarity.distances
 from tensorflow_similarity.classification_metrics import (  # noqa
     ClassificationMetric,
     make_classification_metric,
 )
+from tensorflow_similarity.distances import Distance
 from tensorflow_similarity.evaluators.evaluator import Evaluator
 from tensorflow_similarity.indexer import Indexer
 from tensorflow_similarity.layers import ActivationStdLoggingLayer
@@ -189,7 +190,7 @@ class ContrastiveModel(tf.keras.Model):
         weighted_metrics: Metric | DistanceMetric | str | Mapping | Sequence | None = None,  # noqa
         run_eagerly: bool = False,
         steps_per_execution: int = 1,
-        distance: distances.Distance | str = "cosine",
+        distance: Distance | str = "cosine",
         kv_store: Store | str = "memory",
         search: Search | str = "linear",
         evaluator: Evaluator | str = "memory",
@@ -271,7 +272,7 @@ class ContrastiveModel(tf.keras.Model):
             ValueError: In case of invalid arguments for
                 `optimizer`, `loss` or `metrics`.
         """
-        distance_obj = distances.get(distance)
+        distance_obj = tensorflow_similarity.distances.get(distance)
 
         # init index
         self.create_index(
@@ -481,7 +482,7 @@ class ContrastiveModel(tf.keras.Model):
 
     def create_index(
         self,
-        distance: distances.Distance | str = "cosine",
+        distance: Distance | str = "cosine",
         search: Search | str = "linear",
         kv_store: Store | str = "memory",
         evaluator: Evaluator | str = "memory",
