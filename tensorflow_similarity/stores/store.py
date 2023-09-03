@@ -24,16 +24,18 @@ from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 class Store(ABC):
     def __init__(
         self,
+        name: str,
         verbose: int = 0,
         **kwargs,
     ):
         """Initializes a Key Value Store for entity metadata.
 
         Args:
+            name: Name of the store.
             verbose: be verbose.
         """
+        self.name = name
         self.verbose = verbose
-        self.canonical_name = self.__class__.__name__
 
     @abstractmethod
     def add(self, embedding: FloatTensor, label: int | None = None, data: Tensor | None = None) -> int:
@@ -142,8 +144,8 @@ class Store(ABC):
             A Python dict containing the configuration of the Store obj.
         """
         config = {
+            "name": self.name,
             "verbose": self.verbose,
-            "canonical_name": self.canonical_name,
         }
 
         return config

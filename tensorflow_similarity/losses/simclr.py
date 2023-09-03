@@ -34,8 +34,8 @@ class SimCLRLoss(tf.keras.losses.Loss):
 
     LARGE_NUM = 1e9
 
-    def __init__(self, temperature: float = 0.05, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, temperature: float = 0.05, name: str = "simclr_loss", **kwargs):
+        super().__init__(name=name, **kwargs)
         self.temperature = temperature
 
     def contrast(self, hidden1: FloatTensor, hidden2: FloatTensor) -> FloatTensor:
@@ -131,8 +131,10 @@ class SimCLRLoss(tf.keras.losses.Loss):
             return tf.reshape(ext_tensor, [-1] + ext_tensor.shape.as_list()[2:])
 
     def get_config(self) -> dict[str, Any]:
-        config = {
-            "temperature": self.temperature,
-        }
-        base_config = super().get_config()
-        return {**base_config, **config}
+        config: dict[str, Any] = super().get_config()
+        config.update(
+            {
+                "temperature": self.temperature,
+            }
+        )
+        return config

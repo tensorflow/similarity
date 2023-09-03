@@ -18,7 +18,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
+import tensorflow_similarity.distances
+from tensorflow_similarity.distances import Distance
 from tensorflow_similarity.types import FloatTensor
 
 
@@ -27,6 +28,7 @@ class Search(ABC):
         self,
         distance: Distance | str,
         dim: int,
+        name: str,
         verbose: int = 0,
         **kwargs,
     ):
@@ -40,11 +42,11 @@ class Search(ABC):
 
             verbose: be verbose.
         """
-        self.distance: Distance = distance_canonicalizer(distance)
+        self.distance: Distance = tensorflow_similarity.distances.get(distance)
         self.dim = dim
+        self.name = name
         self.verbose = verbose
         self.built = False
-        self.canonical_name = self.__class__.__name__
 
     @abstractmethod
     def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, **kwargs):
@@ -121,8 +123,8 @@ class Search(ABC):
         config = {
             "distance": self.distance.name,
             "dim": self.dim,
+            "name": self.name,
             "verbose": self.verbose,
-            "canonical_name": self.canonical_name,
         }
 
         return config

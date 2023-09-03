@@ -19,17 +19,21 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-import nmslib
 import tensorflow as tf
 from termcolor import cprint
 
-from tensorflow_similarity.distances import Distance
+from tensorflow_similarity.distances import (
+    CosineDistance,
+    Distance,
+    EuclideanDistance,
+    InnerProductSimilarity,
+    ManhattanDistance,
+    SNRDistance,
+    SquaredEuclideanDistance,
+)
 from tensorflow_similarity.types import FloatTensor
 
 from .search import Search
-
-# Disable the INFO logging from NMSLIB
-logging.getLogger("nmslib").setLevel(logging.WARNING)
 
 
 class NMSLibSearch(Search):
@@ -45,14 +49,20 @@ class NMSLibSearch(Search):
         dim: int,
         method: str = "hnsw",
         space_params: Mapping[str, Any] | None = None,
-        data_type: nmslib.DataType | int = nmslib.DataType.DENSE_VECTOR,
-        dtype: nmslib.DistType | int = nmslib.DistType.FLOAT,
+        data_type: int = 0,  # nmslib.DataType.DENSE_VECTOR
+        dtype: int = 0,  # nmslib.DistType.FLOAT
         index_params: Mapping[str, Any] | None = None,
         query_params: Mapping[str, Any] | None = None,
+        name: str = "nmslib",
         verbose: int = 0,
         **kwargs,
     ):
-        super().__init__(distance=distance, dim=dim, verbose=verbose)
+        super().__init__(distance=distance, dim=dim, name=name, verbose=verbose)
+        import nmslib
+
+        # Disable the INFO logging from NMSLIB
+        logging.getLogger("nmslib").setLevel(logging.WARNING)
+
         self.method = method
         self.data_type = nmslib.DataType(data_type) if isinstance(data_type, int) else data_type
         self.dtype = nmslib.DistType(dtype) if isinstance(dtype, int) else dtype
@@ -189,12 +199,18 @@ class NMSLibSearch(Search):
             self._index.loadIndex(str(tmpidx), load_data=True)
 
     def reset(self):
+        import nmslib
+
         self.built: bool = False
-        if self.distance.name == "cosine":
+        if isinstance(self.distance, CosineDistance) or isinstance(self.distance, InnerProductSimilarity):
             space = "cosinesimil"
-        elif self.distance.name in ("euclidean", "squared_euclidean"):
+        elif (
+            isinstance(self.distance, EuclideanDistance)
+            or isinstance(self.distane, SquaredEuclideanDistance)  # noqa: W503
+            or isinstance(self.distane, SNRDistance)  # noqa: W503
+        ):
             space = "l2"
-        elif self.distance.name == "manhattan":
+        elif isinstance(self.distance, ManhattanDistance):
             space = "l1"
         else:
             raise ValueError("Unsupported metric space")
@@ -239,14 +255,16 @@ class NMSLibSearch(Search):
         Returns:
             A Python dict containing the configuration of the search obj.
         """
-        config = {
-            "method": self.method,
-            "space_params": self.space_params,
-            "data_type": int(self.data_type),
-            "dtype": int(self.dtype),
-            "index_params": self.index_params,
-            "query_params": self.query_params,
-        }
+        config = super().get_config()
+        config.update(
+            {
+                "method": self.method,
+                "space_params": self.space_params,
+                "data_type": int(self.data_type),
+                "dtype": int(self.dtype),
+                "index_params": self.index_params,
+                "query_params": self.query_params,
+            }
+        )
 
-        base_config = super().get_config()
-        return {**base_config, **config}
+        return config

@@ -27,7 +27,7 @@ class LinearSearch(Search):
     It implements the Search interface.
     """
 
-    def __init__(self, distance: Distance | str, dim: int, verbose: int = 0, **kwargs):
+    def __init__(self, distance: Distance | str, dim: int, name: str = "linear", verbose: int = 0, **kwargs):
         """Initiate Linear indexer.
 
         Args:
@@ -38,7 +38,7 @@ class LinearSearch(Search):
 
             verbose: be verbose.
         """
-        super().__init__(distance=distance, dim=dim, verbose=verbose)
+        super().__init__(distance=distance, dim=dim, name=name, verbose=verbose)
 
         self.reset()
 
@@ -156,8 +156,8 @@ class LinearSearch(Search):
         Returns:
             A Python dict containing the configuration of the search obj.
         """
-        base_config = super().get_config()
-        return base_config
+        config = super().get_config()
+        return config
 
     def is_built(self):
         return self.built

@@ -20,9 +20,10 @@ from __future__ import annotations
 
 import tensorflow as tf
 
+import tensorflow_similarity.distances
 from tensorflow_similarity import losses as tfsim_losses
 from tensorflow_similarity.algebra import build_masks
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
+from tensorflow_similarity.distances import Distance
 from tensorflow_similarity.types import FloatTensor, IntTensor
 
 from .metric_loss import MetricLoss
@@ -90,7 +91,7 @@ class LiftedStructLoss(MetricLoss):
         distance: Distance | str = "cosine",
         positive_mining_strategy: str = "hard",
         margin: float = 1.0,
-        name: str = "LiftedStructLoss",
+        name: str = "lifted_struct_loss",
         **kwargs,
     ):
         """Initializes the LiftedStructLoss.
@@ -101,14 +102,13 @@ class LiftedStructLoss(MetricLoss):
                 embedding from the same class. Defaults to 'hard'.
                 Available: {'easy', 'hard'}
             margin: Use an explicit value for the margin term.
-            name: Loss name. Defaults to "LiftedStructLoss".
+            name: Optional name for the instance. Defaults to 'lifted_struct_loss'.
         Raises:
             ValueError: Invalid positive mining strategy.
         """
 
         # distance canonicalization
-        distance = distance_canonicalizer(distance)
-        self.distance = distance
+        self.distance = tensorflow_similarity.distances.get(distance)
 
         # sanity checks
         if positive_mining_strategy not in ["easy", "hard"]:
@@ -117,7 +117,8 @@ class LiftedStructLoss(MetricLoss):
         super().__init__(
             lifted_struct_loss,
             name=name,
-            distance=distance,
+            # The following are passed to the lifted_struct_loss function as fn_kwargs
+            distance=self.distance,
             positive_mining_strategy=positive_mining_strategy,
             margin=margin,
             **kwargs,

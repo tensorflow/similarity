@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from tensorflow_similarity.indexer import Indexer
-from tensorflow_similarity.search import make_search
+from tensorflow_similarity.search import FaissSearch, LinearSearch
 from tensorflow_similarity.stores.cached import CachedStore
 
 from . import DATA_DIR
@@ -134,13 +134,7 @@ class IndexerTest(tf.test.TestCase):
     def test_linear_search_reload(self):
         "Ensure the save and load of custom search and store work"
         embs = np.array([[1, 1, 3], [3, 1, 2]], dtype="float32")
-        search = make_search(
-            config={
-                "canonical_name": "Linear",
-                "distance": "cosine",
-                "dim": 3,
-            }
-        )
+        search = LinearSearch(distance="cosine", dim=3)
         store = CachedStore()
 
         indexer = Indexer(3, search=search, kv_store=store)
@@ -158,15 +152,7 @@ class IndexerTest(tf.test.TestCase):
     def test_faiss_search_reload(self):
         "Ensure the save and load of Faiss search and store work"
         embs = np.random.random((1024, 8)).astype(np.float32)
-        search = make_search(
-            config={
-                "canonical_name": "Faiss",
-                "distance": "cosine",
-                "dim": 8,
-                "m": 4,
-                "nlist": 2,
-            }
-        )
+        search = FaissSearch(distance="cosine", dim=8, m=4, nlist=2)
         store = CachedStore()
 
         indexer = Indexer(8, search=search, kv_store=store)

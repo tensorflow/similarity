@@ -9,12 +9,14 @@ import tensorflow as tf
 from tabulate import tabulate
 from tqdm.auto import tqdm
 
+import tensorflow_similarity.distances
+from tensorflow_similarity.distances import Distance
+
 from .classification_metrics import (
     ClassificationMetric,
     F1Score,
     make_classification_metric,
 )
-from .distances import Distance, distance_canonicalizer
 from .evaluators import Evaluator, MemoryEvaluator
 from .matchers import ClassificationMatch, make_classification_matcher
 from .retrieval_metrics import RetrievalMetric
@@ -31,8 +33,7 @@ class BaseIndexer(ABC):
         evaluator: Evaluator | str,
         stat_buffer_size: int,
     ) -> None:
-        distance = distance_canonicalizer(distance)
-        self.distance = distance  # needed for save()/load()
+        self.distance = tensorflow_similarity.distances.get(distance)  # needed for save()/load()
         self.embedding_output = embedding_output
         self.embedding_size = embedding_size
 
@@ -55,8 +56,6 @@ class BaseIndexer(ABC):
         self.calibration_metric: ClassificationMetric = F1Score()
         self.cutpoints: Mapping[str, Mapping[str, float | str]] = {}
         self.calibration_thresholds: Mapping[str, np.ndarray] = {}
-
-        return
 
     # evaluation related functions
     def evaluate_retrieval(

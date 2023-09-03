@@ -22,8 +22,9 @@ from typing import Any
 
 import tensorflow as tf
 
+import tensorflow_similarity.distances
 from tensorflow_similarity.algebra import build_masks, masked_max, masked_min
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
+from tensorflow_similarity.distances import Distance
 from tensorflow_similarity.types import FloatTensor, IntTensor
 
 from .metric_loss import MetricLoss
@@ -167,7 +168,7 @@ class MultiSimilarityLoss(MetricLoss):
         epsilon: float = 0.1,
         lmda: float = 0.5,
         center: float = 1.0,
-        name: str = "MultiSimilarityLoss",
+        name: str = "multisim_loss",
         **kwargs,
     ):
         """Initializes the Multi Similarity Loss.
@@ -175,27 +176,22 @@ class MultiSimilarityLoss(MetricLoss):
         Args:
             distance: Which distance function to use to compute the pairwise
                 distances between embeddings. Defaults to 'cosine'.
-
             alpha: The exponential weight for the positive pairs. Increasing
                 alpha makes the logsumexp softmax closer to the max positive
                 pair distance, while decreasing it makes it closer to
                 max(P) + log(batch_size).
-
             beta: The exponential weight for the negative pairs. Increasing
                 beta makes the logsumexp softmax closer to the max negative
                 pair distance, while decreasing it makes the softmax closer
                 to max(N) + log(batch_size).
-
             epsilon: Used to remove easy positive and negative pairs. We only
                 keep positives that we greater than the (smallest negative
                 pair - epsilon) and we only keep negatives that are less than
                 the (largest positive pair + epsilon).
-
             lmda: Used to weight the distance. Below this distance, negatives
                 are up weighted and positives are down weighted. Similarly,
                 above this distance negatives are down weighted and positive
                 are up weighted.
-
             center: This represents the expected distance value and will be used
                 to center the values in the pairwise distance matrix. This is
                 used when weighting the positive and negative examples, with the
@@ -203,18 +199,17 @@ class MultiSimilarityLoss(MetricLoss):
                 receiving a down weight. This should 1 for cosine distances which
                 we expect to be between [0,2]. The value will depend on the data
                 for L2 and L1 distances.
-
-            name: Loss name. Defaults to 'MultiSimilarityLoss'.
+            name: Optional name for the instance. Defaults to 'multisim_loss'.
         """
 
         # distance canonicalization
-        distance = distance_canonicalizer(distance)
-        self.distance = distance
+        self.distance = tensorflow_similarity.distances.get(distance)
 
         super().__init__(
             multisimilarity_loss,
             name=name,
-            distance=distance,
+            # The following are passed to the multisim_loss function as fn_kwargs
+            distance=self.distance,
             alpha=alpha,
             beta=beta,
             epsilon=epsilon,

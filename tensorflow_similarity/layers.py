@@ -278,6 +278,7 @@ class GeneralizedMeanPooling2D(GeneralizedMeanPooling):
         return x
 
 
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 class ActivationStdLoggingLayer(layers.Layer):
     """Computes the mean std of the activations of a layer.
 

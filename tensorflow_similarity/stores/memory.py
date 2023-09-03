@@ -31,10 +31,11 @@ class MemoryStore(Store):
 
     def __init__(
         self,
+        name: str = "memory",
         verbose: int = 0,
         **kwargs,
     ) -> None:
-        super().__init__(verbose=verbose)
+        super().__init__(name=name, verbose=verbose)
         # We are using a native python array in memory for its row speed.
         # Serialization / export relies on Arrow.
         self.labels: list[int | None] = []

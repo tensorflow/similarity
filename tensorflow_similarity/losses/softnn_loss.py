@@ -22,8 +22,9 @@ from typing import Any
 
 import tensorflow as tf
 
+import tensorflow_similarity.distances
 from tensorflow_similarity.algebra import build_masks
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
+from tensorflow_similarity.distances import Distance
 from tensorflow_similarity.types import FloatTensor, IntTensor
 
 from .metric_loss import MetricLoss
@@ -110,30 +111,26 @@ class SoftNearestNeighborLoss(MetricLoss):
         self,
         distance: Distance | str = "sql2",
         temperature: float = 1,
-        name: str = "SoftNearestNeighborLoss",
+        name: str = "soft_nn_loss",
         **kwargs,
     ):
         """Initializes the SoftNearestNeighborLoss Loss
 
         Args:
-            `distance`: Which distance function to use to compute
-                        the pairwise distances between embeddings.
-                        Defaults to 'sql2'.
-
-            `temperature`: Alters the value of loss function.
-                           Defaults to 1.
-
-            `name`: Loss name. Defaults to SoftNearestNeighborLoss.
+            distance: Which distance function to use to compute the pairwise
+                distances between embeddings. Defaults to 'sql2'.
+            temperature: Alters the value of loss function. Defaults to 1.
+            name: Optional name for the instance. Defaults to 'soft_nn_loss'.
         """
         # distance canonicalization
-        distance = distance_canonicalizer(distance)
-        self.distance = distance
+        self.distance = tensorflow_similarity.distances.get(distance)
         self.temperature = temperature
 
         super().__init__(
             fn=soft_nn_loss,
             name=name,
-            distance=distance,
-            temperature=temperature,
+            # The following are passed to the soft_nn_loss function as fn_kwargs
+            distance=self.distance,
+            temperature=self.temperature,
             **kwargs,
         )

@@ -27,14 +27,16 @@ import tensorflow as tf
 from tabulate import tabulate
 from tqdm.auto import tqdm
 
+# internal
+import tensorflow_similarity.search
+import tensorflow_similarity.stores
+from tensorflow_similarity.distances import Distance
+from tensorflow_similarity.search import Search
+from tensorflow_similarity.stores import Store
+
 from .base_indexer import BaseIndexer
 from .classification_metrics import F1Score, make_classification_metric
-
-# internal
-from .distances import Distance
 from .evaluators import Evaluator
-from .search import Search, make_search
-from .stores import Store, make_store
 from .types import FloatTensor, Lookup, PandasDataFrame, Tensor
 
 
@@ -100,25 +102,8 @@ class Indexer(BaseIndexer):
         """
         super().__init__(distance, embedding_output, embedding_size, evaluator, stat_buffer_size)
 
-        if isinstance(search, str):
-            self.search: Search = make_search(
-                config={"canonical_name": search, "distance": distance, "dim": embedding_size}
-            )
-        elif isinstance(search, Search):
-            self.search = search
-        else:
-            # self.search should have been already initialized
-            raise ValueError("You need to either supply a known search " "framework name or a Search() object")
-        self.search_type = self.search.canonical_name
-
-        if isinstance(kv_store, str):
-            self.kv_store: Store = make_store(config={"canonical_name": kv_store})
-        elif isinstance(kv_store, Store):
-            self.kv_store = kv_store
-        else:
-            # self.kv_store should have been already initialized
-            raise ValueError("You need to either supply a know key value " "store name or a Store() object")
-        self.kv_store_type = self.kv_store.canonical_name
+        self.search: Search = tensorflow_similarity.search.get(search, distance=distance, dim=embedding_size)
+        self.kv_store: Store = tensorflow_similarity.stores.get(kv_store)
 
         # initialize internal structures
         self._init_structures()
@@ -374,10 +359,9 @@ class Indexer(BaseIndexer):
             "distance": self.distance.name,
             "embedding_output": self.embedding_output,
             "embedding_size": self.embedding_size,
-            "kv_store": self.kv_store_type,
-            "kv_store_config": self.kv_store.get_config(),
+            "kv_store_config": tensorflow_similarity.stores.serialize(self.kv_store),
             "evaluator": self.evaluator_type,
-            "search_config": self.search.get_config(),
+            "search_config": tensorflow_similarity.search.serialize(self.search),
             "stat_buffer_size": self.stat_buffer_size,
             "is_calibrated": self.is_calibrated,
             "calibration_metric_config": self.calibration_metric.get_config(),
@@ -412,8 +396,8 @@ class Indexer(BaseIndexer):
         metadata = tf.io.read_file(metadata_fname)
         metadata = tf.keras.backend.eval(metadata)
         md = json.loads(metadata)
-        search = make_search(md["search_config"])
-        kv_store = make_store(md["kv_store_config"])
+        search = tensorflow_similarity.search.get(md["search_config"])
+        kv_store = tensorflow_similarity.stores.get(md["kv_store_config"])
         index = Indexer(
             distance=md["distance"],
             embedding_size=md["embedding_size"],
@@ -488,8 +472,8 @@ class Indexer(BaseIndexer):
         print("[Info]")
         rows = [
             ["distance", self.distance],
-            ["key value store", self.kv_store_type],
-            ["search algorithm", self.search_type],
+            ["key value store", self.kv_store.__class__.__name__],
+            ["search algorithm", self.search.__class__.__name__],
             ["evaluator", self.evaluator_type],
             ["index size", self.size()],
             ["calibrated", self.is_calibrated],

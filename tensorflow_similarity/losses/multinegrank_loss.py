@@ -22,7 +22,8 @@ from typing import Any
 
 import tensorflow as tf
 
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
+import tensorflow_similarity.distances
+from tensorflow_similarity.distances import Distance
 from tensorflow_similarity.types import FloatTensor
 
 from .metric_loss import MetricLoss
@@ -72,25 +73,29 @@ class MultiNegativesRankLoss(MetricLoss):
 
     def __init__(
         self,
-        name: str = "MultipleNegativesRankingLoss",
         distance: Distance | str = "inner_product",
         scale: float = 20,
+        name: str = "multineg_rank_loss",
         **kwargs,
     ):
-        """Initializes the MultipleNegativesRankingLoss Loss
+        """Initializes the MultipleNegativesRankLoss Loss
 
         Args:
-            `distance`: Which distance function to use.
-            `scale`: float value for scaling the loss value.
-                     Defaults to 20
-            `name`: Loss name. Defaults to MultipleNegativesRankingLoss.
+            distance: Which distance function to use.
+            scale: Float value for scaling the loss value. Defaults to 20
+            name: Optional name for the instance. Defaults to 'multineg_rank_loss'.
         """
         # distance canonicalization
-        distance = distance_canonicalizer(distance)
-        self.distance = distance
+        self.distance = tensorflow_similarity.distances.get(distance)
         self.scale = scale
 
-        super().__init__(multineg_ranking_loss, name=name, distance=distance, **kwargs)
+        super().__init__(
+            multineg_ranking_loss,
+            name=name,
+            # The following are passed to the multi_neg_loss function as fn_kwargs
+            distance=self.distance,
+            **kwargs,
+        )
 
     def call(self, query_emb: FloatTensor, key_emb: FloatTensor) -> FloatTensor:
         """Invokes the `LossFunctionWrapper` instance.

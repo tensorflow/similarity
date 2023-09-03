@@ -21,8 +21,9 @@ from typing import Any
 
 import tensorflow as tf
 
+import tensorflow_similarity.distances
 from tensorflow_similarity.algebra import build_masks
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
+from tensorflow_similarity.distances import Distance
 from tensorflow_similarity.types import FloatTensor, IntTensor
 
 from .metric_loss import MetricLoss
@@ -162,30 +163,34 @@ class CircleLoss(MetricLoss):
         distance: Distance | str = "cosine",
         gamma: float = 80.0,
         margin: float = 0.40,
-        name: str = "CircleLoss",
+        name: str = "circle_loss",
         **kwargs,
     ):
         """Initializes a CircleLoss
 
         Args:
             distance: Which distance function to use to compute the pairwise
-            distances between embeddings. The distance is expected to be
-            between [0, 2]. Defaults to 'cosine'.
-
+                distances between embeddings. The distance is expected to be
+                between [0, 2]. Defaults to 'cosine'.
             gamma: Scaling term. Defaults to 80. Note: Large values cause the
-            LogSumExp to return the Max pair and reduces the weighted mixing
-            of all pairs. Should be hypertuned.
-
+                LogSumExp to return the Max pair and reduces the weighted mixing
+                of all pairs. Should be hypertuned.
             margin: Used to weight the distance. Below this distance, negatives
-            are up weighted and positives are down weighted. Similarly, above
-            this distance negatives are down weighted and positive are up
-            weighted. Defaults to 0.4.
-
-            name: Loss name. Defaults to CircleLoss.
+                are up weighted and positives are down weighted. Similarly, above
+                this distance negatives are down weighted and positive are up
+                weighted. Defaults to 0.4.
+            name: Optional name for the instance. Defaults to 'circle_loss'.
         """
 
         # distance canonicalization
-        distance = distance_canonicalizer(distance)
-        self.distance = distance
+        self.distance = tensorflow_similarity.distances.get(distance)
 
-        super().__init__(circle_loss, name=name, distance=distance, gamma=gamma, margin=margin, **kwargs)
+        super().__init__(
+            circle_loss,
+            name=name,
+            # The following are passed to the circle_loss function as fn_kwargs
+            distance=self.distance,
+            gamma=gamma,
+            margin=margin,
+            **kwargs,
+        )

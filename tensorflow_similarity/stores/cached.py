@@ -13,7 +13,6 @@
 # limitations under the License.
 from __future__ import annotations
 
-import dbm.dumb
 import json
 import math
 import pickle
@@ -37,10 +36,11 @@ class CachedStore(Store):
         shard_size: int = 1000000,
         path: Path | str = ".",
         num_items: int = 0,
+        name: str = "cached",
         verbose: int = 0,
         **kwargs,
     ) -> None:
-        super().__init__(verbose=verbose)
+        super().__init__(name=name, verbose=verbose)
         # We are using a native python cached dictionary
         # db[id] = pickle((embedding, label, data))
         self.db: list[dict[str, bytes]] = []
@@ -213,14 +213,16 @@ class CachedStore(Store):
             self._delete_shard(i)
 
     def get_config(self):
-        config = {"shard_size": self.shard_size, "num_items": self.num_items}
-        base_config = super().get_config()
-        return {**base_config, **config}
+        config = super().get_config()
+        config.update({"shard_size": self.shard_size, "num_items": self.num_items})
+        return config
 
     def _get_shard_file_path(self, shard_no):
         return self.path / f"cache{shard_no}"
 
     def _make_new_shard(self, shard_no: int):
+        import dbm.dumb
+
         return dbm.dumb.open(str(self._get_shard_file_path(shard_no)), "c")
 
     def _add_new_shard(self):

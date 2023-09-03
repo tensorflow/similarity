@@ -28,11 +28,11 @@ from tensorflow.keras.optimizers import Optimizer
 from termcolor import cprint
 from tqdm.auto import tqdm
 
+from tensorflow_similarity import distances
 from tensorflow_similarity.classification_metrics import (  # noqa
     ClassificationMetric,
     make_classification_metric,
 )
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
 from tensorflow_similarity.evaluators.evaluator import Evaluator
 from tensorflow_similarity.indexer import Indexer
 from tensorflow_similarity.layers import ActivationStdLoggingLayer
@@ -189,7 +189,7 @@ class ContrastiveModel(tf.keras.Model):
         weighted_metrics: Metric | DistanceMetric | str | Mapping | Sequence | None = None,  # noqa
         run_eagerly: bool = False,
         steps_per_execution: int = 1,
-        distance: Distance | str = "cosine",
+        distance: distances.Distance | str = "cosine",
         kv_store: Store | str = "memory",
         search: Search | str = "linear",
         evaluator: Evaluator | str = "memory",
@@ -271,7 +271,7 @@ class ContrastiveModel(tf.keras.Model):
             ValueError: In case of invalid arguments for
                 `optimizer`, `loss` or `metrics`.
         """
-        distance_obj = distance_canonicalizer(distance)
+        distance_obj = distances.get(distance)
 
         # init index
         self.create_index(
@@ -481,7 +481,7 @@ class ContrastiveModel(tf.keras.Model):
 
     def create_index(
         self,
-        distance: Distance | str = "cosine",
+        distance: distances.Distance | str = "cosine",
         search: Search | str = "linear",
         kv_store: Store | str = "memory",
         evaluator: Evaluator | str = "memory",
@@ -1042,14 +1042,16 @@ class ContrastiveModel(tf.keras.Model):
         return self._index.to_data_frame(num_items=num_items)
 
     def get_config(self) -> dict[str, Any]:
-        config = {
-            "backbone": self.backbone,
-            "projector": self.projector,
-            "predictor": self.predictor,
-            "algorithm": self.algorithm,
-        }
-        base_config = super().get_config()
-        return {**base_config, **config}
+        config: dict[str, Any] = super().get_config()
+        config.update(
+            {
+                "backbone": self.backbone,
+                "projector": self.projector,
+                "predictor": self.predictor,
+                "algorithm": self.algorithm,
+            }
+        )
+        return config
 
     @classmethod
     def from_config(cls, config):

@@ -2,12 +2,11 @@ import tensorflow as tf
 from absl.testing import parameterized
 from tensorflow.keras.models import load_model
 
+from tensorflow_similarity import search, stores
 from tensorflow_similarity.layers import MetricEmbedding
 from tensorflow_similarity.losses import TripletLoss
 from tensorflow_similarity.models import SimilarityModel
 from tensorflow_similarity.samplers import TFDataSampler
-from tensorflow_similarity.search import make_search
-from tensorflow_similarity.stores import make_store
 from tensorflow_similarity.training_metrics import dist_gap, max_pos, min_neg
 
 
@@ -61,20 +60,18 @@ class BasicFlowTest(tf.test.TestCase, parameterized.TestCase):
         sampler = TFDataSampler(tf.data.Dataset.from_tensor_slices((x, y)), classes_per_batch=CLASS_PER_BATCH)
 
         # Search
-        search = None
+        search_obj = None
         if search_type == "linear":
-            search = make_search(config={"canonical_name": search_type, "distance": "cosine", "dim": 4})
+            search_obj = search.LinearSearch(distance="cosine", dim=4)
         elif search_type == "faiss":
-            search = make_search(
-                config={"canonical_name": search_type, "distance": "cosine", "dim": 4, "m": 4, "nlist": 8, "nprobe": 8}
-            )
+            search_obj = search.FaissSearch(distance="cosine", dim=4, m=4, nlist=8, nprobe=8)
 
         # Store
         kv_store = None
         if store_type == "cached":
-            kv_store = make_store(config={"canonical_name": store_type, "path": tmp_dir})
+            kv_store = stores.CachedStore(path=tmp_dir)
         if store_type == "memory":
-            kv_store = make_store(config={"canonical_name": store_type})
+            kv_store = stores.MemoryStore()
 
         # model
         inputs = tf.keras.layers.Input(shape=(NUM_CLASSES * REPS,))
@@ -94,8 +91,8 @@ class BasicFlowTest(tf.test.TestCase, parameterized.TestCase):
         # compile
         metrics = [dist_gap(distance), min_neg(distance), max_pos(distance)]
         compile_params = {"optimizer": "adam", "metrics": metrics, "loss": triplet_loss}
-        if search is not None:
-            compile_params["search"] = search
+        if search_obj is not None:
+            compile_params["search"] = search_obj
         if kv_store is not None:
             compile_params["kv_store"] = kv_store
         model.compile(**compile_params)

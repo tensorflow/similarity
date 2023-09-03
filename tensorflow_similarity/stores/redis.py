@@ -20,7 +20,6 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-import redis
 
 from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 
@@ -35,10 +34,11 @@ class RedisStore(Store):
         host: str = "localhost",
         port: int = 6379,
         db: int = 0,
+        name: str = "redis",
         verbose: int = 0,
         **kwargs,
     ) -> None:
-        super().__init__(verbose=verbose)
+        super().__init__(name=name, verbose=verbose)
         # Currently does not support authentication
         self.host = host
         self.port = port
@@ -159,9 +159,9 @@ class RedisStore(Store):
         return self.size()
 
     def get_config(self):
-        config = {"host": self.host, "port": self.port, "db": self.db}
-        base_config = super().get_config()
-        return {**base_config, **config}
+        config = super().get_config()
+        config.update({"host": self.host, "port": self.port, "db": self.db})
+        return config
 
     def to_data_frame(self, num_records: int = 0) -> PandasDataFrame:
         """Export data as a Pandas dataframe.
@@ -208,6 +208,8 @@ class RedisStore(Store):
         self.db = db
 
     def _connect(self):
+        import redis
+
         self._conn = redis.Redis(host=self.host, port=self.port, db=self.db)
 
     def _load_config(self, path):
