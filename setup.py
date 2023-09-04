@@ -83,7 +83,7 @@ setup(
             "types-tabulate",
             "wheel",
         ],
-        "visualize": ["bokeh", "umap-learn", "matplotlib", "Pillow", "distinctipy"],
+        "visualization": ["bokeh", "umap-learn", "matplotlib", "Pillow", "distinctipy"],
         "redis": ["redis"],
         "faiss": ["faiss-gpu"],
         "nmslib": ["nmslib"],
