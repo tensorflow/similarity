@@ -13,11 +13,14 @@
 # limitations under the License.
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from typing import TYPE_CHECKING
 
 from matplotlib import pyplot as plt
 
-from tensorflow_similarity.types import Lookup, Tensor
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
+    from tensorflow_similarity.types import Lookup, Tensor
 
 
 def viz_neigbors_imgs(

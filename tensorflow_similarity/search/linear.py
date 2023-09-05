@@ -4,16 +4,17 @@ from __future__ import annotations
 
 import json
 import pickle
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, List
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import tensorflow as tf
 from termcolor import cprint
 
-from tensorflow_similarity.distances import Distance
-from tensorflow_similarity.types import FloatTensor
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from tensorflow_similarity.distances import Distance
+    from tensorflow_similarity.types import FloatTensor
 
 from .search import Search
 
@@ -138,8 +139,8 @@ class LinearSearch(Search):
         self.ids = data[1]
 
     def reset(self):
-        self._index: List[FloatTensor] = []
-        self.ids: List[int] = []
+        self._index: list[FloatTensor] = []
+        self.ids: list[int] = []
         self.built = True
 
         if self.verbose:

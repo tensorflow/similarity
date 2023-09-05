@@ -14,25 +14,26 @@
 from __future__ import annotations
 
 from collections.abc import MutableMapping, Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 import tensorflow as tf
 from tqdm.auto import tqdm
 
-from tensorflow_similarity.classification_metrics import ClassificationMetric
-from tensorflow_similarity.matchers import (
-    ClassificationMatch,
-    make_classification_matcher,
-)
-from tensorflow_similarity.retrieval_metrics import RetrievalMetric
+from tensorflow_similarity.matchers import make_classification_matcher
 from tensorflow_similarity.retrieval_metrics.utils import compute_match_mask
-from tensorflow_similarity.types import (
-    CalibrationResults,
-    FloatTensor,
-    IntTensor,
-    Lookup,
-)
+from tensorflow_similarity.types import CalibrationResults
 from tensorflow_similarity.utils import unpack_lookup_distances, unpack_lookup_labels
+
+if TYPE_CHECKING:
+    from tensorflow_similarity.classification_metrics import ClassificationMetric
+    from tensorflow_similarity.matchers import ClassificationMatch
+    from tensorflow_similarity.retrieval_metrics import RetrievalMetric
+    from tensorflow_similarity.types import (
+        FloatTensor,
+        IntTensor,
+        Lookup,
+    )
 
 from .evaluator import Evaluator
 

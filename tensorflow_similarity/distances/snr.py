@@ -14,9 +14,12 @@
 """Inner product similarity computation functions for embeddings."""
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import tensorflow as tf
 
-from tensorflow_similarity.types import FloatTensor
+if TYPE_CHECKING:
+    from tensorflow_similarity.types import FloatTensor
 
 from .distance import Distance
 

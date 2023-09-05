@@ -15,13 +15,14 @@ from __future__ import annotations
 
 import json
 import pickle
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
-from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 
 from .store import Store
 
@@ -55,9 +56,7 @@ class RedisStore(Store):
 
         Args:
             embedding: Embedding predicted by the model.
-
             label: Class numerical id. Defaults to None.
-
             data: Data associated with the embedding. Defaults to None.
 
         Returns:
@@ -65,6 +64,7 @@ class RedisStore(Store):
         """
         idx = self.size()
         self._conn.set(str(idx), pickle.dumps((embedding, label, data)))
+        self._conn.incr("num_items")
 
         return idx
 
@@ -133,7 +133,8 @@ class RedisStore(Store):
 
     def size(self) -> int:
         "Number of record in the key value store."
-        return int(self._conn.get("num_items")) or 0
+        size: str | None = self._conn.get("num_items")
+        return int(size) if size is not None else 0
 
     def save(self, path: Path | str, compression: bool = True) -> None:
         """Serializes index on disk.

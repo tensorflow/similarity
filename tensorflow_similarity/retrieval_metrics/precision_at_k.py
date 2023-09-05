@@ -13,11 +13,13 @@
 # limitations under the License.
 from __future__ import annotations
 
-from collections.abc import Mapping
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
 
 import tensorflow as tf
-
-from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
 
 from .retrieval_metric import RetrievalMetric
 

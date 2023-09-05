@@ -14,11 +14,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 
 
 class Store(ABC):

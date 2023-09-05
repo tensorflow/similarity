@@ -15,8 +15,7 @@ from __future__ import annotations
 
 import base64
 import io
-from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import PIL
@@ -26,7 +25,10 @@ from bokeh.plotting import ColumnDataSource, figure, output_notebook, show
 from distinctipy import distinctipy
 from tqdm.auto import tqdm
 
-from tensorflow_similarity.types import FloatTensor, Tensor
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
+    from tensorflow_similarity.types import FloatTensor, Tensor
 
 
 def tensor2images(tensor: Tensor, size: int = 64) -> list[str]:

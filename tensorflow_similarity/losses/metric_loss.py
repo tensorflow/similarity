@@ -15,12 +15,14 @@
 """Metric losses  base class."""
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import tensorflow as tf
 
-from tensorflow_similarity.types import FloatTensor
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from tensorflow_similarity.types import FloatTensor
+
 from tensorflow_similarity.utils import is_tensor_or_variable
 
 

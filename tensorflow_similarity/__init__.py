@@ -14,6 +14,5 @@
 __version__ = "0.18.0.dev8"
 
 
-from . import architectures  # noqa
 from . import models  # noqa
 from . import samplers  # noqa

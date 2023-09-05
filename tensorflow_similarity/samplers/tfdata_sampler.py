@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING
 
 import tensorflow as tf
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
 
 
 def filter_classes(

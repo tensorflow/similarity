@@ -18,13 +18,15 @@
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import tensorflow as tf
 
+if TYPE_CHECKING:
+    from tensorflow_similarity.types import FloatTensor
+    from tensorflow_similarity.distances import Distance
+
 import tensorflow_similarity.distances
-from tensorflow_similarity.distances import Distance
-from tensorflow_similarity.types import FloatTensor
 
 from .metric_loss import MetricLoss
 from .utils import logsumexp

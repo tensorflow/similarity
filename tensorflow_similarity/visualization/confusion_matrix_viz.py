@@ -15,13 +15,14 @@
 from __future__ import annotations
 
 import itertools
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt
 
-from tensorflow_similarity.types import FloatTensor, IntTensor
+if TYPE_CHECKING:
+    from tensorflow_similarity.types import FloatTensor, IntTensor
 
 
 def confusion_matrix(

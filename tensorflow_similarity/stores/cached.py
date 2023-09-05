@@ -17,13 +17,14 @@ import json
 import math
 import pickle
 import shutil
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
-from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 
 from .store import Store
 

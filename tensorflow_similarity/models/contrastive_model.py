@@ -14,43 +14,51 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from copy import copy
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import tensorflow as tf
 from tabulate import tabulate
-from tensorflow.keras.losses import Loss
-from tensorflow.keras.metrics import Metric
-from tensorflow.keras.optimizers import Optimizer
 from termcolor import cprint
 from tqdm.auto import tqdm
 
 import tensorflow_similarity.distances
-from tensorflow_similarity.classification_metrics import (  # noqa
-    ClassificationMetric,
-    make_classification_metric,
-)
-from tensorflow_similarity.distances import Distance
-from tensorflow_similarity.evaluators.evaluator import Evaluator
+from tensorflow_similarity.classification_metrics import make_classification_metric
 from tensorflow_similarity.indexer import Indexer
 from tensorflow_similarity.layers import ActivationStdLoggingLayer
-from tensorflow_similarity.losses import MetricLoss
-from tensorflow_similarity.matchers import ClassificationMatch
-from tensorflow_similarity.retrieval_metrics import RetrievalMetric
-from tensorflow_similarity.search import Search
-from tensorflow_similarity.stores import Store
-from tensorflow_similarity.training_metrics import DistanceMetric
-from tensorflow_similarity.types import (
-    CalibrationResults,
-    FloatTensor,
-    IntTensor,
-    Lookup,
-    PandasDataFrame,
-    Tensor,
-)
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        Mapping,
+        MutableMapping,
+        MutableSequence,
+        Sequence,
+    )
+
+    from tensorflow.keras.losses import Loss
+    from tensorflow.keras.metrics import Metric
+    from tensorflow.keras.optimizers import Optimizer
+
+    from tensorflow_similarity.classification_metrics import ClassificationMetric
+    from tensorflow_similarity.distances import Distance
+    from tensorflow_similarity.evaluators.evaluator import Evaluator
+    from tensorflow_similarity.losses import MetricLoss
+    from tensorflow_similarity.matchers import ClassificationMatch
+    from tensorflow_similarity.retrieval_metrics import RetrievalMetric
+    from tensorflow_similarity.search import Search
+    from tensorflow_similarity.stores import Store
+    from tensorflow_similarity.training_metrics import DistanceMetric
+    from tensorflow_similarity.types import (
+        CalibrationResults,
+        FloatTensor,
+        IntTensor,
+        Lookup,
+        PandasDataFrame,
+        Tensor,
+    )
 
 # Value based on implementation from original papers.
 BN_EPSILON = 1.001e-5

@@ -14,14 +14,16 @@
 from __future__ import annotations
 
 import io
-from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 
 from .store import Store
 

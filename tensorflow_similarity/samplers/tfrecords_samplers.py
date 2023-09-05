@@ -14,10 +14,13 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import tensorflow as tf
 from absl import logging
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def TFRecordDatasetSampler(

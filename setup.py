@@ -83,6 +83,7 @@ setup(
             "types-tabulate",
             "wheel",
         ],
+        "benchmark": ["keras-tuner"],
         "visualization": ["bokeh", "umap-learn", "matplotlib", "Pillow", "distinctipy"],
         "redis": ["redis"],
         "faiss": ["faiss-gpu"],

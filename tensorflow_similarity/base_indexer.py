@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from collections.abc import Mapping, MutableMapping, Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 import tensorflow as tf
@@ -10,17 +10,18 @@ from tabulate import tabulate
 from tqdm.auto import tqdm
 
 import tensorflow_similarity.distances
-from tensorflow_similarity.distances import Distance
 
-from .classification_metrics import (
-    ClassificationMetric,
-    F1Score,
-    make_classification_metric,
-)
+if TYPE_CHECKING:
+    from collections.abc import Mapping, MutableMapping, Sequence
+    from tensorflow_similarity.distances import Distance
+    from .classification_metrics import ClassificationMetric
+    from .matchers import ClassificationMatch
+    from .types import CalibrationResults, FloatTensor, Lookup, Tensor
+
+from .classification_metrics import F1Score, make_classification_metric
 from .evaluators import Evaluator, MemoryEvaluator
-from .matchers import ClassificationMatch, make_classification_matcher
+from .matchers import make_classification_matcher
 from .retrieval_metrics import RetrievalMetric
-from .types import CalibrationResults, FloatTensor, Lookup, Tensor
 from .utils import unpack_lookup_distances, unpack_lookup_labels
 
 

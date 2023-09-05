@@ -18,9 +18,9 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict, deque
-from collections.abc import Sequence
 from pathlib import Path
 from time import time
+from typing import TYPE_CHECKING
 
 import numpy as np
 import tensorflow as tf
@@ -30,14 +30,20 @@ from tqdm.auto import tqdm
 # internal
 import tensorflow_similarity.search
 import tensorflow_similarity.stores
-from tensorflow_similarity.distances import Distance
-from tensorflow_similarity.search import Search
-from tensorflow_similarity.stores import Store
 
 from .base_indexer import BaseIndexer
 from .classification_metrics import F1Score, make_classification_metric
-from .evaluators import Evaluator
-from .types import FloatTensor, Lookup, PandasDataFrame, Tensor
+from .types import Lookup
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tensorflow_similarity.distances import Distance
+    from tensorflow_similarity.search import Search
+    from tensorflow_similarity.stores import Store
+
+    from .evaluators import Evaluator
+    from .types import FloatTensor, PandasDataFrame, Tensor
 
 
 class Indexer(BaseIndexer):

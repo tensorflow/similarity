@@ -13,20 +13,23 @@
 # limitations under the License.
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Callable, Tuple, TypeVar
+from typing import TYPE_CHECKING, Callable, Tuple, TypeVar
 
 import tensorflow_datasets as tfds
 from tqdm.auto import tqdm
 
-from tensorflow_similarity.types import FloatTensor, IntTensor
-
 from .memory_samplers import MultiShotMemorySampler
-from .samplers import Augmenter
 
-PreProcessFn = Callable[[FloatTensor, IntTensor], Tuple[FloatTensor, IntTensor]]
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
-T = TypeVar("T", FloatTensor, IntTensor)
+    from tensorflow_similarity.types import FloatTensor, IntTensor
+
+    from .samplers import Augmenter
+
+    PreProcessFn = Callable[[FloatTensor, IntTensor], Tuple[FloatTensor, IntTensor]]
+
+    T = TypeVar("T", FloatTensor, IntTensor)
 
 
 class TFDatasetMultiShotMemorySampler(MultiShotMemorySampler):

@@ -1,24 +1,31 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from functools import partial
 from typing import Any
 
-import keras_cv
-import tensorflow as tf
+from tensorflow.image import random_flip_left_right, random_flip_up_down
+
+from tensorflow_similarity.augmenters.augmentation_utils.cropping import (
+    center_crop,
+    crop_and_resize,
+)
 
 AUGMENTATIONS = {}
-AUGMENTATIONS["random_resized_crop"] = lambda p: keras_cv.layers.RandomCropAndResize(
-    target_size=p.get("target_size", (227, 227)),
-    crop_area_factor=p.get("crop_area_factor", (0.15625, 1.0)),
-    aspect_ratio_factor=p.get("aspect_ratio_factor", (0.75, 1.333)),
+AUGMENTATIONS["random_resized_crop"] = lambda p: partial(
+    crop_and_resize,
+    height=p.get("height", 277),
+    width=p.get("width", 277),
+    area_range=p.get("area_range", (0.2, 1.0)),
 )
-AUGMENTATIONS["random_flip"] = lambda p: keras_cv.layers.RandomFlip(
-    mode=p.get("mode", "horizontal"),
+AUGMENTATIONS["random_flip"] = (
+    lambda p: random_flip_left_right if p.get("mode", "horizontal") == "horizontal" else random_flip_up_down
 )
-AUGMENTATIONS["center_crop"] = lambda p: tf.keras.layers.Resizing(
+AUGMENTATIONS["center_crop"] = lambda p: partial(
+    center_crop,
     height=p.get("height", 256),
     width=p.get("width", 256),
-    crop_to_aspect_ratio=True,
+    crop_proportion=p.get("crop_proportion", 1.0),
 )
 
 

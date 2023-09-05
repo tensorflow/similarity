@@ -14,13 +14,16 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import tensorflow_similarity.distances
-from tensorflow_similarity.distances import Distance
-from tensorflow_similarity.types import FloatTensor
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tensorflow_similarity.distances import Distance
+    from tensorflow_similarity.types import FloatTensor
 
 
 class Search(ABC):

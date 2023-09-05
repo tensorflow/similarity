@@ -18,13 +18,17 @@
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import tensorflow as tf
+
+if TYPE_CHECKING:
+    from tensorflow_similarity.types import FloatTensor, IntTensor
+    from tensorflow_similarity.distances import Distance
 
 import tensorflow_similarity.distances
 from tensorflow_similarity import losses as tfsim_losses
 from tensorflow_similarity.algebra import build_masks
-from tensorflow_similarity.distances import Distance
-from tensorflow_similarity.types import FloatTensor, IntTensor
 
 from .metric_loss import MetricLoss
 from .utils import positive_distances

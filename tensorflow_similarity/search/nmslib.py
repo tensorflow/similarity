@@ -15,23 +15,25 @@ from __future__ import annotations
 
 import logging
 import tempfile
-from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import tensorflow as tf
 from termcolor import cprint
 
 from tensorflow_similarity.distances import (
     CosineDistance,
-    Distance,
     EuclideanDistance,
     InnerProductSimilarity,
     ManhattanDistance,
     SNRDistance,
     SquaredEuclideanDistance,
 )
-from tensorflow_similarity.types import FloatTensor
+
+if TYPE_CHECKING:
+    from tensorflow_similarity.distances import Distance
+    from collections.abc import Mapping, Sequence
+    from tensorflow_similarity.types import FloatTensor
 
 from .search import Search
 
