@@ -1,5 +1,6 @@
+from unittest.mock import patch
+
 import numpy as np
-from mock import patch
 
 from tensorflow_similarity.stores.redis import RedisStore
 
