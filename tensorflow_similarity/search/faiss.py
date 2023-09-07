@@ -156,7 +156,7 @@ class FaissSearch(Search):
         Args:
             path: where to store the data
         """
-        import faiss
+        faiss = self._try_import_faiss()
 
         chunk = faiss.serialize_index(self._index)
         np.save(self._make_fname(path), chunk)
@@ -167,13 +167,12 @@ class FaissSearch(Search):
         Args:
             path: where to store the data
         """
-        import faiss
+        faiss = self._try_import_faiss()
 
         self._index = faiss.deserialize_index(np.load(self._make_fname(path)))  # identical to index
 
     def reset(self):
-        import faiss
-
+        faiss = self._try_import_faiss()
         self.built: bool = False
         if self.algo == "ivfpq":
             assert self.dim % self.m == 0, f"dim={self.dim}, m={self.m}"
@@ -260,3 +259,12 @@ class FaissSearch(Search):
 
     def _make_fname(self, path):
         return Path(path) / "faiss_index.npy"
+
+    def _try_import_faiss(self):
+        try:
+            import faiss
+        except ModuleNotFoundError as e:
+            raise ModuleNotFoundError(
+                "faiss is not installed. Please install it with `pip install tensorflow_similarity[faiss]`"
+            ) from e
+        return faiss

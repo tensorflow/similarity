@@ -209,11 +209,19 @@ class RedisStore(Store):
         self.db = db
 
     def _connect(self):
-        import redis
-
+        redis = self._try_import_redis()
         self._conn = redis.Redis(host=self.host, port=self.port, db=self.db)
 
     def _load_config(self, path):
         with open(self._make_config_file_path(path), "rt") as f:
             self._set_config(**json.load(f))
         self._connect()
+
+    def _try_import_redis(self):
+        try:
+            import redis
+        except ModuleNotFoundError as e:
+            raise ModuleNotFoundError(
+                "redis is not installed. Please install it with `pip install tensorflow_similarity[redis]`"
+            ) from e
+        return redis

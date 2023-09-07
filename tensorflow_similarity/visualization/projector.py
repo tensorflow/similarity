@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import PIL
 import umap
-from bokeh import __version__
+from bokeh import __version__ as bokeh_version
 from bokeh.plotting import ColumnDataSource, figure, output_notebook, show
 from distinctipy import distinctipy
 from tqdm.auto import tqdm
@@ -189,7 +189,7 @@ def projector(
     source = ColumnDataSource(data=data)
     output_notebook()
     # Bokeh backward compatibility
-    if int(__version__.split(".")[0]) >= 3:
+    if int(bokeh_version.split(".")[0]) >= 3:
         fig = figure(
             tooltips=tooltips,
             width=plot_size,

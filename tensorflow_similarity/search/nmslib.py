@@ -60,7 +60,7 @@ class NMSLibSearch(Search):
         **kwargs,
     ):
         super().__init__(distance=distance, dim=dim, name=name, verbose=verbose)
-        import nmslib
+        nmslib = self._try_import_nmslib()
 
         # Disable the INFO logging from NMSLIB
         logging.getLogger("nmslib").setLevel(logging.WARNING)
@@ -201,7 +201,7 @@ class NMSLibSearch(Search):
             self._index.loadIndex(str(tmpidx), load_data=True)
 
     def reset(self):
-        import nmslib
+        nmslib = self._try_import_nmslib()
 
         self.built: bool = False
         if isinstance(self.distance, CosineDistance) or isinstance(self.distance, InnerProductSimilarity):
@@ -270,3 +270,12 @@ class NMSLibSearch(Search):
         )
 
         return config
+
+    def _try_import_nmslib(self):
+        try:
+            import nmslib
+        except ModuleNotFoundError as e:
+            raise ModuleNotFoundError(
+                "nmslib is not installed. Please install it with `pip install tensorflow_similarity[nmslib]`"
+            ) from e
+        return nmslib

@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+import dbm.dumb
 import json
 import math
 import pickle
@@ -222,8 +223,6 @@ class CachedStore(Store):
         return self.path / f"cache{shard_no}"
 
     def _make_new_shard(self, shard_no: int):
-        import dbm.dumb
-
         return dbm.dumb.open(str(self._get_shard_file_path(shard_no)), "c")
 
     def _add_new_shard(self):
