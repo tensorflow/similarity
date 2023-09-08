@@ -16,6 +16,7 @@ training"""
 from .efficientnet import EfficientNetSim  # noqa
 from .resnet18 import ResNet18Sim  # noqa
 from .resnet50 import ResNet50Sim  # noqa
+
 try:
     from .convnext import ConvNeXtSim  # noqa
 except ImportError:
