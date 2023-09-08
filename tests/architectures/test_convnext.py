@@ -3,7 +3,14 @@ import re
 import pytest
 import tensorflow as tf
 
-from tensorflow_similarity.architectures import convnext as convneXt
+
+MIN_TF_MAJOR_VERSION = 2
+MIN_TF_MINOR_VERSION = 10
+
+major_version = tf.__version__.split(".")[0]
+minor_version = tf.__version__.split(".")[1]
+
+convneXt = pytest.importorskip("tensorflow_similarity.architectures.convnext")
 
 TF_MAJOR_VERSION = int(tf.__version__.split(".")[0])
 TF_MINOR_VERSION = int(tf.__version__.split(".")[1])

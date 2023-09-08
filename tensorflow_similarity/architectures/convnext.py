@@ -18,8 +18,19 @@ import re
 
 import tensorflow as tf
 from tensorflow.keras import layers
-from tensorflow.keras.applications import convnext
 
+def convnext_exists_tf_version():
+    tf_major_version = int(tf.__version__.split(".")[0])
+    tf_minor_version = int(tf.__version__.split(".")[1])
+    if 2 <= tf_major_version and 10 < tf_minor_version:
+        return True
+    return False
+
+if not convnext_exists_tf_version():
+    raise ImportError(f"This code requires TensorFlow version 2.10 or higher. "
+                      f"Please upgrade TensorFlow to use this code.")
+
+from tensorflow.keras.applications import convnext
 from tensorflow_similarity.layers import GeneralizedMeanPooling2D, MetricEmbedding
 from tensorflow_similarity.models import SimilarityModel
 
@@ -31,6 +42,7 @@ CONVNEXT_ARCHITECTURE = {
     "LARGE": convnext.ConvNeXtLarge,
     "XLARGE": convnext.ConvNeXtXLarge,
 }
+
 
 
 def ConvNeXtSim(
