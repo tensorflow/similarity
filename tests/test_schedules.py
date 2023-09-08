@@ -49,7 +49,7 @@ def np_warmup_cosine_decay(*, step, max_lr, total_steps, warmup_steps, alpha=0.0
     )
 )
 class WarmupCosineDecayTest(tf.test.TestCase, parameterized.TestCase):
-    def testDecay(self, serialize):
+    def test_decay(self, serialize):
         num_training_steps = 1000
         warmup_steps = 500
         max_lr = 1.0
@@ -64,7 +64,7 @@ class WarmupCosineDecayTest(tf.test.TestCase, parameterized.TestCase):
             )
             self.assertAllClose(self.evaluate(decayed_lr(step)), expected, 1e-6)
 
-    def testAlpha(self, serialize):
+    def test_alpha(self, serialize):
         num_training_steps = 1000
         warmup_steps = 500
         max_lr = 1.0
@@ -81,7 +81,7 @@ class WarmupCosineDecayTest(tf.test.TestCase, parameterized.TestCase):
             )
             self.assertAllClose(self.evaluate(decayed_lr(step)), expected, 1e-6)
 
-    def testFloat64InitLearningRate(self, serialize):
+    def test_float64_init_learning_rate(self, serialize):
         num_training_steps = 1000
         warmup_steps = 500
         max_lr = np.float64(1.0)
@@ -96,7 +96,7 @@ class WarmupCosineDecayTest(tf.test.TestCase, parameterized.TestCase):
             )
             self.assertAllClose(self.evaluate(decayed_lr(step)), expected, 1e-6)
 
-    def testMaxWarmupSteps(self, serialize):
+    def test_max_warmup_steps(self, serialize):
         num_training_steps = 1000
         warmup_steps = 1000
         max_lr = 1.0

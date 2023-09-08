@@ -14,13 +14,14 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, Callable, List, Mapping, Union
+from typing import TYPE_CHECKING, Any, Callable, List, Mapping, Union
 
 import numpy as np
 from tensorflow import Tensor
 from tensorflow.keras.utils import Sequence as KerasSequence
 
-from tensorflow_similarity.augmenters import Augmenter
+if TYPE_CHECKING:
+    from tensorflow_similarity.augmenters import Augmenter
 
 # Not currently used. Might be useful to allows gradual call of augmenter
 Scheduler = Callable[[Any], Any]

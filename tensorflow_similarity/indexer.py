@@ -17,26 +17,33 @@ sub-linear search"""
 from __future__ import annotations
 
 import json
-import os
 from collections import defaultdict, deque
-from collections.abc import Sequence
 from pathlib import Path
 from time import time
+from typing import TYPE_CHECKING
 
 import numpy as np
 import tensorflow as tf
 from tabulate import tabulate
 from tqdm.auto import tqdm
 
+# internal
+import tensorflow_similarity.search
+import tensorflow_similarity.stores
+
 from .base_indexer import BaseIndexer
 from .classification_metrics import F1Score, make_classification_metric
+from .types import Lookup
 
-# internal
-from .distances import Distance
-from .evaluators import Evaluator
-from .search import LinearSearch, NMSLibSearch, Search, make_search
-from .stores import MemoryStore, Store, make_store
-from .types import FloatTensor, Lookup, PandasDataFrame, Tensor
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tensorflow_similarity.distances import Distance
+    from tensorflow_similarity.search import Search
+    from tensorflow_similarity.stores import Store
+
+    from .evaluators import Evaluator
+    from .types import FloatTensor, PandasDataFrame, Tensor
 
 
 class Indexer(BaseIndexer):
@@ -63,7 +70,7 @@ class Indexer(BaseIndexer):
         self,
         embedding_size: int,
         distance: Distance | str = "cosine",
-        search: Search | str = "nmslib",
+        search: Search | str = "linear",
         kv_store: Store | str = "memory",
         evaluator: Evaluator | str = "memory",
         embedding_output: int | None = None,
@@ -82,7 +89,7 @@ class Indexer(BaseIndexer):
             Defaults to 'memory'.
 
             search: Which `Search()` framework to use to perform KNN
-            search. Defaults to 'nmslib'.
+            search. Defaults to 'linear'.
 
             evaluator: What type of `Evaluator()` to use to evaluate index
             performance. Defaults to in-memory one.
@@ -100,39 +107,9 @@ class Indexer(BaseIndexer):
             ValueError: Invalid search framework or key value store.
         """
         super().__init__(distance, embedding_output, embedding_size, evaluator, stat_buffer_size)
-        # internal structure naming
-        # FIXME support custom objects
-        self.search_type = search if isinstance(search, str) else search.name
-        if isinstance(search, Search):
-            self.search: Search = search
-        self.kv_store_type = kv_store if isinstance(kv_store, str) else type(kv_store).__name__
-        if isinstance(kv_store, Store):
-            self.kv_store: Store = kv_store
 
-        if self.search_type == "nmslib":
-            self.search = NMSLibSearch(distance=self.distance, dim=self.embedding_size)
-        elif self.search_type == "linear":
-            self.search = LinearSearch(distance=self.distance, dim=self.embedding_size)
-        elif isinstance(self.search_type, Search):
-            # TODO: Temporary fix to support resetting custom objects. Currently only supports NMSLibSearch.
-            #       Search class should provide a reset method instead.
-            if type(self.search_type).__name__ != "NMSLibSearch":
-                raise ValueError("Currently NMSLibSearch is the only supported Search object.")
-            search = make_search(self.search_type.get_config())
-            self.search = search
-        elif not hasattr(self, "search") or not isinstance(self.search, Search):
-            # self.search should have been already initialized
-            raise ValueError("You need to either supply a known search " "framework name or a Search() object")
-
-        # mapper from id to record data
-        if self.kv_store_type == "memory":
-            self.kv_store = MemoryStore()
-        elif isinstance(self.kv_store_type, Store):
-            print("WARNING: custom store objects are not currently supported and will not be reset.")
-            self.kv_store = self.kv_store_type
-        elif not hasattr(self, "search") or not isinstance(self.kv_store, Store):
-            # self.kv_store should have been already initialized
-            raise ValueError("You need to either supply a know key value " "store name or a Store() object")
+        self.search: Search = tensorflow_similarity.search.get(search, distance=distance, dim=embedding_size)
+        self.kv_store: Store = tensorflow_similarity.stores.get(kv_store)
 
         # initialize internal structures
         self._init_structures()
@@ -200,9 +177,6 @@ class Indexer(BaseIndexer):
         if label is not None:
             label = int(label)
         return label
-
-    def build_index(self, samples, **kwargss):
-        self.search.build_index(samples)
 
     def add(
         self,
@@ -371,14 +345,18 @@ class Indexer(BaseIndexer):
 
         return batch_lookups
 
-    def save(self, path: str, compression: bool = True):
+    def save(self, path: Path | str, compression: bool = True, overwrite: bool = True):
         """Save the index to disk
 
         Args:
             path: directory where to save the index
             compression: Store index data compressed. Defaults to True.
+            overwrite: Overwrite previous index. Defaults to True.
         """
-        path = str(path)
+        path = Path(path)
+
+        if path.exists() and overwrite:
+            tf.io.gfile.rmtree(path)
 
         # saving metadata
         metadata = {
@@ -387,10 +365,9 @@ class Indexer(BaseIndexer):
             "distance": self.distance.name,
             "embedding_output": self.embedding_output,
             "embedding_size": self.embedding_size,
-            "kv_store": self.kv_store_type,
-            "kv_store_config": self.kv_store.get_config(),
+            "kv_store_config": tensorflow_similarity.stores.serialize(self.kv_store),
             "evaluator": self.evaluator_type,
-            "search_config": self.search.get_config(),
+            "search_config": tensorflow_similarity.search.serialize(self.search),
             "stat_buffer_size": self.stat_buffer_size,
             "is_calibrated": self.is_calibrated,
             "calibration_metric_config": self.calibration_metric.get_config(),
@@ -399,16 +376,16 @@ class Indexer(BaseIndexer):
             "calibration_thresholds": {k: v.tolist() for k, v in self.calibration_thresholds.items()},
         }
 
-        metadata_fname = self.__make_metadata_fname(path)
+        metadata_fname = self.__make_metadata_fname(str(path))
         tf.io.write_file(metadata_fname, json.dumps(metadata))
 
-        os.mkdir(Path(path) / "store")
-        os.mkdir(Path(path) / "search")
-        self.kv_store.save(str(Path(path) / "store"), compression=compression)
-        self.search.save(str(Path(path) / "search"))
+        (path / "store").mkdir(parents=True)
+        (path / "search").mkdir(parents=True)
+        self.kv_store.save(path / "store", compression=compression)
+        self.search.save(path / "search")
 
     @staticmethod
-    def load(path: str | Path, verbose: int = 1):
+    def load(path: Path | str, verbose: int = 1):
         """Load Index data from a checkpoint and initialize underlying
         structure with the reloaded data.
 
@@ -425,8 +402,8 @@ class Indexer(BaseIndexer):
         metadata = tf.io.read_file(metadata_fname)
         metadata = tf.keras.backend.eval(metadata)
         md = json.loads(metadata)
-        search = make_search(md["search_config"])
-        kv_store = make_store(md["kv_store_config"])
+        search = tensorflow_similarity.search.get(md["search_config"])
+        kv_store = tensorflow_similarity.stores.get(md["kv_store_config"])
         index = Indexer(
             distance=md["distance"],
             embedding_size=md["embedding_size"],
@@ -501,8 +478,8 @@ class Indexer(BaseIndexer):
         print("[Info]")
         rows = [
             ["distance", self.distance],
-            ["key value store", self.kv_store_type],
-            ["search algorithm", self.search_type],
+            ["key value store", self.kv_store.__class__.__name__],
+            ["search algorithm", self.search.__class__.__name__],
             ["evaluator", self.evaluator_type],
             ["index size", self.size()],
             ["calibrated", self.is_calibrated],

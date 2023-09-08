@@ -21,6 +21,15 @@ from tensorflow_similarity.layers import GeneralizedMeanPooling2D, MetricEmbeddi
 from tensorflow_similarity.models import SimilarityModel
 
 
+def _make_batchnorm(epsilon, name, layer):
+    tf_version = [int(v) for v in tf.__version__.split(".")]
+    if tf_version[0] == 2 and tf_version[1] < 12:
+        layer = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=epsilon, name=name)(layer)
+    else:
+        layer = tf.keras.layers.BatchNormalization(epsilon=epsilon, name=name, synchronized=True)(layer)
+    return layer
+
+
 # Create an image augmentation pipeline.
 def ResNet18Sim(
     input_shape: tuple[int, int, int],
@@ -113,7 +122,7 @@ def build_resnet(input_shape: tuple[int, int, int]) -> layers.Layer:
         kernel_initializer=tf.keras.initializers.LecunUniform(),
         name="conv1_conv",
     )(layer)
-    layer = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=1.001e-5, name="conv1_bn")(layer)
+    layer = _make_batchnorm(epsilon=1.001e-5, name="conv1_bn", layer=layer)
     layer = tf.keras.layers.Activation("relu", name="conv1_relu")(layer)
 
     outputs = stack_fn(layer)
@@ -140,7 +149,7 @@ def block0(
             kernel_initializer=tf.keras.initializers.LecunUniform(),
             name=f"{name}_0_conv",
         )(x)
-        shortcut = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=1.001e-5, name=f"{name}_0_bn")(shortcut)
+        shortcut = _make_batchnorm(epsilon=1.001e-5, name=f"{name}_0_bn", layer=shortcut)
     else:
         shortcut = x
 
@@ -153,7 +162,7 @@ def block0(
         kernel_initializer=tf.keras.initializers.LecunUniform(),
         name=f"{name}_1_conv",
     )(x)
-    x = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=1.001e-5, name=f"{name}_1_bn")(x)
+    x = _make_batchnorm(epsilon=1.001e-5, name=f"{name}_1_bn", layer=x)
     x = tf.keras.layers.Activation("relu", name=f"{name}_1_relu")(x)
 
     x = tf.keras.layers.Conv2D(
@@ -164,7 +173,7 @@ def block0(
         kernel_initializer=tf.keras.initializers.LecunUniform(),
         name=f"{name}_2_conv",
     )(x)
-    x = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=1.001e-5, name=f"{name}_2_bn")(x)
+    x = _make_batchnorm(epsilon=1.001e-5, name=f"{name}_2_bn", layer=x)
 
     x = tf.keras.layers.Add(name=f"{name}_add")([shortcut, x])
     x = tf.keras.layers.Activation("relu", name=f"{name}_out")(x)

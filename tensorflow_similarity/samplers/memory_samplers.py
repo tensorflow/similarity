@@ -15,15 +15,18 @@ from __future__ import annotations
 
 import random
 from collections import defaultdict
-from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 import tensorflow as tf
 from tqdm.auto import tqdm
 
-from tensorflow_similarity.types import FloatTensor, IntTensor
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+    from tensorflow_similarity.types import FloatTensor, IntTensor
+    from .samplers import Augmenter
 
-from .samplers import Augmenter, Sampler
+from .samplers import Sampler
 from .utils import select_examples
 
 

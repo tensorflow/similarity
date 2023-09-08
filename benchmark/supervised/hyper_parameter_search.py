@@ -11,6 +11,7 @@ from functools import partial
 from typing import Any
 
 import keras_tuner
+import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend
 import tensorflow.random
@@ -20,7 +21,6 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from termcolor import cprint
 
 from tensorflow_similarity.schedules import WarmupCosineDecay
-from tensorflow_similarity.search import NMSLibSearch
 from tensorflow_similarity.utils import tf_cap_memory
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
@@ -86,28 +86,35 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
 
             fold_ds = ds.get_fold_ds(fid)
 
-            cprint("\n|-building train dataset\n", "blue")
-            train_ds = datasets.utils.make_sampler(
-                fold_ds["train"][0],
-                fold_ds["train"][1],
-                exp.training.params["train"],
-                train_aug_fns,
-            )
-            exp.training.params["train"]["num_examples"] = train_ds.num_examples
+            with tf.device("CPU"):
+                cprint("\n|-building train dataset\n", "blue")
+                train_x = tf.constant(np.array(fold_ds["train"][0]))
+                train_y = tf.constant(np.array(fold_ds["train"][1]))
+                train_ds = datasets.utils.make_sampler(
+                    train_x,
+                    train_y,
+                    exp.training.params["train"],
+                    train_aug_fns,
+                )
+                exp.training.params["train"]["num_examples"] = train_x.shape[0]
 
-            cprint("\n|-building val dataset\n", "blue")
-            val_ds = datasets.utils.make_sampler(
-                fold_ds["val"][0],
-                fold_ds["val"][1],
-                exp.training.params["val"],
-                train_aug_fns,
-            )
-            exp.training.params["val"]["num_examples"] = val_ds.num_examples
+                cprint("\n|-building val dataset\n", "blue")
+                val_x = tf.constant(np.array(fold_ds["val"][0]))
+                val_y = tf.constant(np.array(fold_ds["val"][1]))
+                val_ds = datasets.utils.make_sampler(
+                    val_x,
+                    val_y,
+                    exp.training.params["val"],
+                    train_aug_fns,
+                )
+                exp.training.params["val"]["num_examples"] = val_x.shape[0]
 
             # Training params
             callbacks = [
                 metrics.make_eval_callback(
-                    val_ds,
+                    val_x,
+                    val_y,
+                    train_aug_fns,
                     exp.dataset.eval_callback.max_num_queries,
                     exp.dataset.eval_callback.max_num_targets,
                 ),
@@ -129,14 +136,18 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
             if "steps_per_epoch" in exp.training.params:
                 steps_per_epoch = exp.training.params["steps_per_epoch"]
             else:
-                batch_size = train_ds.classes_per_batch * train_ds.examples_per_class_per_batch
-                steps_per_epoch = train_ds.num_examples // batch_size
+                train_params = exp.training.params["train"]
+                batch_size = train_params.get("classes_per_batch", 2) * train_params.get(
+                    "examples_per_class_per_batch", 2
+                )
+                steps_per_epoch = train_params["num_examples"] // batch_size
 
             if "validation_steps" in exp.training.params:
                 validation_steps = exp.training.params["validation_steps"]
             else:
-                batch_size = val_ds.classes_per_batch * val_ds.examples_per_class_per_batch
-                validation_steps = val_ds.num_examples // batch_size
+                val_params = exp.training.params["val"]
+                batch_size = val_params.get("classes_per_batch", 2) * val_params.get("examples_per_class_per_batch", 2)
+                validation_steps = val_params["num_examples"] // batch_size
 
             if "epochs" in exp.training.params:
                 epochs = exp.training.params["epochs"]
@@ -145,8 +156,7 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
 
             # TODO(ovallis): break this out into a benchmark component
             if "lr_schedule" in exp.training.params:
-                batch_size = train_ds.classes_per_batch * train_ds.examples_per_class_per_batch
-                total_steps = (train_ds.num_examples // batch_size) * epochs
+                total_steps = steps_per_epoch * epochs
                 wu_steps = int(total_steps * exp.training.params["lr_schedule"]["warmup_pctg"])
                 alpha = exp.training.params["lr_schedule"]["min_lr"] / exp.opt.params["lr"]
                 exp.lr_schedule = WarmupCosineDecay(
@@ -159,8 +169,8 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
             t_msg = [
                 "\n|-Training",
                 f"|  - Fold:               {fid}",
-                f"|  - Num train examples: {train_ds.num_examples}",
-                f"|  - Num val examples:   {val_ds.num_examples}",
+                f"|  - Num train examples: {exp.training.params['train']['num_examples']}",
+                f"|  - Num val examples:   {exp.training.params['val']['num_examples']}",
                 f"|  - Steps per epoch:    {steps_per_epoch}",
                 f"|  - Epochs:             {epochs}",
                 f"|  - Validation steps:   {validation_steps}",
@@ -193,6 +203,10 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
             )
 
             models = tuner.get_best_models(num_models=2)
+            if not models:
+                print("No models found")
+                continue
+
             model = models[0]
             cprint(model.summary(), "blue")
             cprint(tuner.results_summary(), "green")
@@ -204,13 +218,6 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
 
             eval_metrics = metrics.make_eval_metrics(cfg["evaluation"], class_counts)
 
-            del model._index.search
-            del model._index.search_type
-            model._index.search_type = NMSLibSearch(
-                distance=model.loss.distance,
-                dim=exp.architecture.params["embedding"],
-                method="brute_force",
-            )
             model.reset_index()
 
             model.index(test_x, test_y)
@@ -240,23 +247,6 @@ def run(cfg: Mapping[str, Any], filter_pattern: str) -> None:
             model.save(best_model_path, save_index=False)
 
             # Ensure we release all the mem
-            for c in callbacks:
-                del c
-            for e in eval_metrics:
-                del e
-            del model._index.search
-            del model._index.search_type
-            del model
-            if exp.lr_schedule:
-                del exp.lr_schedule
-            del train_ds._x
-            del train_ds._y
-            del val_ds._x
-            del val_ds._y
-            del train_ds
-            del val_ds
-            del test_x
-            del test_y
             tf.keras.backend.clear_session()
             gc.collect()
 

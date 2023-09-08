@@ -15,10 +15,12 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 import tensorflow as tf
 
-from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
+if TYPE_CHECKING:
+    from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
 
 
 class ClassificationMatch(ABC):

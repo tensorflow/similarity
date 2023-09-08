@@ -35,8 +35,7 @@ LOSSES["pn"] = lambda p, hp: PNLoss(
     distance=utils.get_param(p, "distance", "cosine", hp),
     positive_mining_strategy=utils.get_param(p, "positive_mining", "hard", hp),
     negative_mining_strategy=utils.get_param(p, "negative_mining", "semi-hard", hp),
-    soft_margin=utils.get_param(p, "soft_margin", True, hp),
-    margin=utils.get_param(p, "margin", 0.1, hp),
+    margin=utils.get_param(p, "margin", None, hp),
 )
 LOSSES["soft_nn"] = lambda p, hp: SoftNearestNeighborLoss(
     distance=utils.get_param(p, "distance", "sql2", hp),
@@ -46,8 +45,7 @@ LOSSES["triplet"] = lambda p, hp: TripletLoss(
     distance=utils.get_param(p, "distance", "cosine", hp),
     positive_mining_strategy=utils.get_param(p, "positive_mining", "hard", hp),
     negative_mining_strategy=utils.get_param(p, "negative_mining", "semi-hard", hp),
-    soft_margin=utils.get_param(p, "soft_margin", True, hp),
-    margin=utils.get_param(p, "margin", 0.1, hp),
+    margin=utils.get_param(p, "margin", None, hp),
 )
 
 

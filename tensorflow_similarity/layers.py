@@ -15,12 +15,13 @@
 from __future__ import annotations
 
 import math
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import tensorflow as tf
 from tensorflow.keras import layers
 
-from .types import FloatTensor, IntTensor
+if TYPE_CHECKING:
+    from .types import FloatTensor, IntTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -278,6 +279,7 @@ class GeneralizedMeanPooling2D(GeneralizedMeanPooling):
         return x
 
 
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 class ActivationStdLoggingLayer(layers.Layer):
     """Computes the mean std of the activations of a layer.
 

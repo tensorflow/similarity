@@ -13,9 +13,12 @@
 # limitations under the License.
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import tensorflow as tf
 
-from tensorflow_similarity.samplers.samplers import Sampler
+if TYPE_CHECKING:
+    from tensorflow_similarity.samplers.samplers import Sampler
 
 
 def batch_class_ratio(sampler: Sampler, num_batches: int = 100) -> float:

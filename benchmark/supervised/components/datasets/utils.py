@@ -11,7 +11,7 @@ import numpy as np
 import tensorflow as tf
 from tqdm.auto import tqdm
 
-from tensorflow_similarity.samplers import MultiShotMemorySampler
+from tensorflow_similarity.samplers import TFDataSampler
 from tensorflow_similarity.types import FloatTensor, IntTensor
 
 from .dataset import Dataset
@@ -113,15 +113,14 @@ def make_sampler(
     y: Sequence[IntTensor],
     cfg: dict[str, Any],
     aug_fns: tuple[Any, ...],
-) -> MultiShotMemorySampler:
+) -> TFDataSampler:
     def augmentation_fn(x, y, *args):
         for a in aug_fns:
             x = a(x)
         return x, y
 
-    return MultiShotMemorySampler(
-        x,
-        y,
+    return TFDataSampler(
+        tf.data.Dataset.from_tensor_slices((x, y)),
         classes_per_batch=cfg.get("classes_per_batch", 2),
         examples_per_class_per_batch=cfg.get("examples_per_class_per_batch", 2),
         augmenter=augmentation_fn,

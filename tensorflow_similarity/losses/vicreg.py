@@ -17,12 +17,14 @@
 """
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import tensorflow as tf
 
-from tensorflow_similarity.types import FloatTensor
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from tensorflow_similarity.types import FloatTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -39,7 +41,7 @@ class VicReg(tf.keras.losses.Loss):
         mu: float = 25,
         nu: float = 1,
         reduction: Callable = tf.keras.losses.Reduction.NONE,
-        name: str | None = None,
+        name: str = "vicreg_loss",
         **kwargs,
     ):
         super().__init__(reduction=reduction, name=name, **kwargs)
@@ -87,14 +89,16 @@ class VicReg(tf.keras.losses.Loss):
         return loss
 
     def get_config(self) -> dict[str, Any]:
-        config = {
-            "std_const": self.std_const,
-            "lambda_": self.lambda_,
-            "mu": self.mu,
-            "nu": self.nu,
-        }
-        base_config = super().get_config()
-        return {**base_config, **config}
+        config: dict[str, Any] = super().get_config()
+        config.update(
+            {
+                "std_const": self.std_const,
+                "lambda_": self.lambda_,
+                "mu": self.mu,
+                "nu": self.nu,
+            }
+        )
+        return config
 
     def off_diagonal(self, x: FloatTensor) -> FloatTensor:
         n = tf.shape(x)[0]

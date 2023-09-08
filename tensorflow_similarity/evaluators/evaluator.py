@@ -14,19 +14,22 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import MutableMapping, Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from tensorflow_similarity.classification_metrics import ClassificationMetric
-from tensorflow_similarity.matchers import ClassificationMatch
-from tensorflow_similarity.retrieval_metrics import RetrievalMetric
-from tensorflow_similarity.types import (
-    CalibrationResults,
-    FloatTensor,
-    IntTensor,
-    Lookup,
-)
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping, Sequence
+
+    from tensorflow_similarity.classification_metrics import ClassificationMetric
+    from tensorflow_similarity.matchers import ClassificationMatch
+    from tensorflow_similarity.retrieval_metrics import RetrievalMetric
+    from tensorflow_similarity.types import (
+        CalibrationResults,
+        FloatTensor,
+        IntTensor,
+        Lookup,
+    )
 
 
 class Evaluator(ABC):

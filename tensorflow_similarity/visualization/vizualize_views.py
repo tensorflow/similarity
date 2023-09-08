@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import tensorflow as tf
 from matplotlib import pyplot as plt
-from tensorflow import Tensor
+
+if TYPE_CHECKING:
+    from tensorflow import Tensor
 
 
 def visualize_views(

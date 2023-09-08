@@ -13,9 +13,11 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import Type
+from typing import TYPE_CHECKING, Type
 
-from .classification_match import ClassificationMatch
+if TYPE_CHECKING:
+    from .classification_match import ClassificationMatch
+
 from .match_majority_vote import MatchMajorityVote
 from .match_nearest import MatchNearest
 

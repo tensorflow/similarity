@@ -145,7 +145,9 @@ def build_resnet(weights: str | None = None, trainable: str = "full") -> tf.kera
     # Don't train the BN layers if we are loading pre-trained weights.
     if weights:
         for layer in resnet.layers:
-            if isinstance(layer, layers.experimental.SyncBatchNormalization):
+            if isinstance(layer, layers.experimental.SyncBatchNormalization) or isinstance(
+                layer, layers.BatchNormalization
+            ):
                 layer.trainable = False
 
     return resnet

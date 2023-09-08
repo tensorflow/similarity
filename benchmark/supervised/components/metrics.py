@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 import numpy as np
+import tensorflow as tf
 
 from tensorflow_similarity.callbacks import EvalCallback
 from tensorflow_similarity.retrieval_metrics import (
@@ -12,7 +13,7 @@ from tensorflow_similarity.retrieval_metrics import (
     RecallAtK,
     RetrievalMetric,
 )
-from tensorflow_similarity.samplers import MultiShotMemorySampler
+from tensorflow_similarity.types import FloatTensor, IntTensor
 
 
 def make_eval_metrics(ecfg: Mapping[str, Any], class_counts: Mapping[int, int]) -> list[RetrievalMetric]:
@@ -64,20 +65,29 @@ def make_eval_metrics(ecfg: Mapping[str, Any], class_counts: Mapping[int, int]) 
     return metrics
 
 
-def make_eval_callback(val_ds: MultiShotMemorySampler, num_queries: int, num_targets: int) -> EvalCallback:
+def make_eval_callback(
+    val_x: Sequence[FloatTensor],
+    val_y: Sequence[IntTensor],
+    aug_fns: tuple[Any, ...],
+    num_queries: int,
+    num_targets: int,
+) -> EvalCallback:
     # Setup EvalCallback by splitting the test data into targets and queries.
-    num_queries = min(num_queries, val_ds.num_examples // 2)
-    num_targets = min(val_ds.num_examples - num_queries, num_targets)
+    num_examples = len(val_x)
+    num_queries = min(num_queries, num_examples // 2)
+    num_targets = min(num_examples - num_queries, num_targets)
     print(f"Make eval callback with {num_queries} queries and {num_targets} targets")
 
-    queries_x, queries_y = val_ds.get_slice(0, num_queries)
-    queries_x, queries_y = val_ds.augmenter(
-        queries_x, queries_y, val_ds.num_augmentations_per_example, val_ds.is_warmup
-    )
-    targets_x, targets_y = val_ds.get_slice(num_queries, num_targets)
-    targets_x, targets_y = val_ds.augmenter(
-        targets_x, targets_y, val_ds.num_augmentations_per_example, val_ds.is_warmup
-    )
+    queries_x = val_x[:num_queries]
+
+    for aug_fn in aug_fns:
+        queries_x = tf.map_fn(aug_fn, queries_x)
+    queries_y = val_y[:num_queries]
+
+    targets_x = val_x[num_queries : num_queries + num_targets]
+    for aug_fn in aug_fns:
+        targets_x = tf.map_fn(aug_fn, targets_x)
+    targets_y = val_y[num_queries : num_queries + num_targets]
 
     unique, counts = np.unique(targets_y, return_counts=True)
     class_counts = {k: v for k, v in zip(unique, counts)}

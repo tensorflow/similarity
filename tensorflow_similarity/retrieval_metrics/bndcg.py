@@ -13,9 +13,12 @@
 # limitations under the License.
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import tensorflow as tf
 
-from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
+if TYPE_CHECKING:
+    from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
 
 from .retrieval_metric import RetrievalMetric
 

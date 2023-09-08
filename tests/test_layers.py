@@ -1,7 +1,5 @@
 import math
-from unittest import TestCase
 
-import numpy as np
 import tensorflow as tf
 
 from tensorflow_similarity.layers import (
@@ -184,3 +182,7 @@ class LayersTest(tf.test.TestCase):
             "bias_constraint": None,
         }
         self.assertEqual(expected_config, config)
+
+
+if __name__ == "__main__":
+    tf.test.main()

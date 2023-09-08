@@ -4,7 +4,9 @@
 
 ## Running the benchmark
 
-1. Train models: `python train.py -c config/benchmark_prod.json -f "cars.*lamb.*"`
+1. Generate initial training data with preprocessing: `python create_datasets.py -c config/benchmark_prod.json -f "cars.*lamb.*"`
+
+2. Train and Hypertune the model parameters: `python hyper_parameter_search.py -c config/benchmark_prod.json -f "cars.*lamb.*"`
 
 2. Evaluate performance:
 

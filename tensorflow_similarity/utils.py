@@ -15,13 +15,15 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping, MutableMapping, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import tensorflow as tf
 
-from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor, Lookup
+if TYPE_CHECKING:
+    from collections.abc import Mapping, MutableMapping, Sequence
+
+    from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor, Lookup
 
 
 def is_tensor_or_variable(x):

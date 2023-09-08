@@ -2,23 +2,26 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from collections.abc import Mapping, MutableMapping, Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 import tensorflow as tf
 from tabulate import tabulate
 from tqdm.auto import tqdm
 
-from .classification_metrics import (
-    ClassificationMetric,
-    F1Score,
-    make_classification_metric,
-)
-from .distances import Distance, distance_canonicalizer
+import tensorflow_similarity.distances
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, MutableMapping, Sequence
+    from tensorflow_similarity.distances import Distance
+    from .classification_metrics import ClassificationMetric
+    from .matchers import ClassificationMatch
+    from .types import CalibrationResults, FloatTensor, Lookup, Tensor
+
+from .classification_metrics import F1Score, make_classification_metric
 from .evaluators import Evaluator, MemoryEvaluator
-from .matchers import ClassificationMatch, make_classification_matcher
+from .matchers import make_classification_matcher
 from .retrieval_metrics import RetrievalMetric
-from .types import CalibrationResults, FloatTensor, Lookup, Tensor
 from .utils import unpack_lookup_distances, unpack_lookup_labels
 
 
@@ -31,8 +34,7 @@ class BaseIndexer(ABC):
         evaluator: Evaluator | str,
         stat_buffer_size: int,
     ) -> None:
-        distance = distance_canonicalizer(distance)
-        self.distance = distance  # needed for save()/load()
+        self.distance = tensorflow_similarity.distances.get(distance)  # needed for save()/load()
         self.embedding_output = embedding_output
         self.embedding_size = embedding_size
 
@@ -55,8 +57,6 @@ class BaseIndexer(ABC):
         self.calibration_metric: ClassificationMetric = F1Score()
         self.cutpoints: Mapping[str, Mapping[str, float | str]] = {}
         self.calibration_thresholds: Mapping[str, np.ndarray] = {}
-
-        return
 
     # evaluation related functions
     def evaluate_retrieval(

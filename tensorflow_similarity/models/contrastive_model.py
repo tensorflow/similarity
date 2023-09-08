@@ -14,42 +14,51 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from copy import copy
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import tensorflow as tf
 from tabulate import tabulate
-from tensorflow.keras.losses import Loss
-from tensorflow.keras.metrics import Metric
-from tensorflow.keras.optimizers import Optimizer
 from termcolor import cprint
 from tqdm.auto import tqdm
 
-from tensorflow_similarity.classification_metrics import (  # noqa
-    ClassificationMetric,
-    make_classification_metric,
-)
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
-from tensorflow_similarity.evaluators.evaluator import Evaluator
+import tensorflow_similarity.distances
+from tensorflow_similarity.classification_metrics import make_classification_metric
 from tensorflow_similarity.indexer import Indexer
 from tensorflow_similarity.layers import ActivationStdLoggingLayer
-from tensorflow_similarity.losses import MetricLoss
-from tensorflow_similarity.matchers import ClassificationMatch
-from tensorflow_similarity.retrieval_metrics import RetrievalMetric
-from tensorflow_similarity.search import Search
-from tensorflow_similarity.stores import Store
-from tensorflow_similarity.training_metrics import DistanceMetric
-from tensorflow_similarity.types import (
-    CalibrationResults,
-    FloatTensor,
-    IntTensor,
-    Lookup,
-    PandasDataFrame,
-    Tensor,
-)
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        Mapping,
+        MutableMapping,
+        MutableSequence,
+        Sequence,
+    )
+
+    from tensorflow.keras.losses import Loss
+    from tensorflow.keras.metrics import Metric
+    from tensorflow.keras.optimizers import Optimizer
+
+    from tensorflow_similarity.classification_metrics import ClassificationMetric
+    from tensorflow_similarity.distances import Distance
+    from tensorflow_similarity.evaluators.evaluator import Evaluator
+    from tensorflow_similarity.losses import MetricLoss
+    from tensorflow_similarity.matchers import ClassificationMatch
+    from tensorflow_similarity.retrieval_metrics import RetrievalMetric
+    from tensorflow_similarity.search import Search
+    from tensorflow_similarity.stores import Store
+    from tensorflow_similarity.training_metrics import DistanceMetric
+    from tensorflow_similarity.types import (
+        CalibrationResults,
+        FloatTensor,
+        IntTensor,
+        Lookup,
+        PandasDataFrame,
+        Tensor,
+    )
 
 # Value based on implementation from original papers.
 BN_EPSILON = 1.001e-5
@@ -191,7 +200,7 @@ class ContrastiveModel(tf.keras.Model):
         steps_per_execution: int = 1,
         distance: Distance | str = "cosine",
         kv_store: Store | str = "memory",
-        search: Search | str = "nmslib",
+        search: Search | str = "linear",
         evaluator: Evaluator | str = "memory",
         stat_buffer_size: int = 1000,
         **kwargs,
@@ -259,7 +268,7 @@ class ContrastiveModel(tf.keras.Model):
             kv_store: How to store the indexed records.  Defaults to 'memory'.
 
             search: Which `Search()` framework to use to perform KNN search.
-              Defaults to 'nmslib'.
+              Defaults to 'linear'.
 
             evaluator: What type of `Evaluator()` to use to evaluate index
               performance. Defaults to in-memory one.
@@ -271,7 +280,7 @@ class ContrastiveModel(tf.keras.Model):
             ValueError: In case of invalid arguments for
                 `optimizer`, `loss` or `metrics`.
         """
-        distance_obj = distance_canonicalizer(distance)
+        distance_obj = tensorflow_similarity.distances.get(distance)
 
         # init index
         self.create_index(
@@ -482,7 +491,7 @@ class ContrastiveModel(tf.keras.Model):
     def create_index(
         self,
         distance: Distance | str = "cosine",
-        search: Search | str = "nmslib",
+        search: Search | str = "linear",
         kv_store: Store | str = "memory",
         evaluator: Evaluator | str = "memory",
         stat_buffer_size: int = 1000,
@@ -503,7 +512,7 @@ class ContrastiveModel(tf.keras.Model):
             kv_store: How to store the indexed records.  Defaults to 'memory'.
 
             search: Which `Search()` framework to use to perform KNN search.
-            Defaults to 'nmslib'.
+            Defaults to 'linear'.
 
             evaluator: What type of `Evaluator()` to use to evaluate index
             performance. Defaults to in-memory one.
@@ -957,15 +966,16 @@ class ContrastiveModel(tf.keras.Model):
         index_path = Path(filepath) / "index"
         self._index = Indexer.load(index_path)
 
-    def save_index(self, filepath, compression=True):
+    def save_index(self, filepath, compression=True, overwrite=True):
         """Save the index to disk
 
         Args:
             path: directory where to save the index
             compression: Store index data compressed. Defaults to True.
+            overwrite: Overwrite previous index. Defaults to False.
         """
         index_path = Path(filepath) / "index"
-        self._index.save(index_path, compression=compression)
+        self._index.save(index_path, compression=compression, overwrite=overwrite)
 
     def save(
         self,
@@ -1013,7 +1023,7 @@ class ContrastiveModel(tf.keras.Model):
         )
 
         if hasattr(self, "_index") and self._index and save_index:
-            self.save_index(filepath, compression=compression)
+            self.save_index(filepath, compression=compression, overwrite=overwrite)
         else:
             msg = "The index was not saved with the model."
             if not hasattr(self, "_index"):
@@ -1041,14 +1051,16 @@ class ContrastiveModel(tf.keras.Model):
         return self._index.to_data_frame(num_items=num_items)
 
     def get_config(self) -> dict[str, Any]:
-        config = {
-            "backbone": self.backbone,
-            "projector": self.projector,
-            "predictor": self.predictor,
-            "algorithm": self.algorithm,
-        }
-        base_config = super().get_config()
-        return {**base_config, **config}
+        config: dict[str, Any] = super().get_config()
+        config.update(
+            {
+                "backbone": self.backbone,
+                "projector": self.projector,
+                "predictor": self.predictor,
+                "algorithm": self.algorithm,
+            }
+        )
+        return config
 
     @classmethod
     def from_config(cls, config):

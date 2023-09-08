@@ -2,38 +2,33 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
+import tensorflow_similarity.distances
 from tensorflow_similarity.distances import (
-    DISTANCES,
     CosineDistance,
     EuclideanDistance,
     InnerProductSimilarity,
     ManhattanDistance,
     SNRDistance,
-    distance_canonicalizer,
 )
 
 
 class DistancesTest(tf.test.TestCase):
     def test_distance_mapping(self):
-        for d in DISTANCES:
+        all_classes = tensorflow_similarity.distances._ALL_CLASSES
+        for name in all_classes.keys():
             # self naming
-            d2 = distance_canonicalizer(d.name)
-            self.assertEqual(d2.name, d.name)
-
-            # aliases
-            for a in d.aliases:
-                d2 = distance_canonicalizer(a)
-                self.assertEqual(d2.name, d.name)
+            d2 = tensorflow_similarity.distances.get(name)
+            self.assertEqual(d2.name, all_classes[name]().name)
 
     def test_distance_passthrough(self):
         # Canonilizer is expected to return distance object as is
         d = EuclideanDistance()
-        d2 = distance_canonicalizer(d)
+        d2 = tensorflow_similarity.distances.get(d)
         self.assertEqual(d, d2)
 
     def test_non_existing_distance(self):
         with pytest.raises(ValueError):
-            distance_canonicalizer("notadistance")
+            tensorflow_similarity.distances.get("notadistance")
 
     def test_inner_product_similarity(self):
         # pairwise

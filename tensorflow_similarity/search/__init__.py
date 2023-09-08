@@ -32,13 +32,94 @@ modifiying the [Indexer](../indexer.md) and sending a PR. In general, unless
 the backend is of general use, its better to not include it as
 a built-in option as it must be supported moving forward.
 """
-import logging
+from __future__ import annotations
 
-# Disable the INFO logging from NMSLIB
-logging.getLogger("nmslib").setLevel(logging.WARNING)
+from typing import Any, Type
 
-from .faiss_search import FaissSearch  # noqa
-from .linear_search import LinearSearch  # noqa
-from .nmslib_search import NMSLibSearch  # noqa
-from .search import Search  # noqa
-from .utils import make_search  # noqa
+from tensorflow.python.keras.utils.generic_utils import (
+    deserialize_keras_object,
+    serialize_keras_object,
+)
+
+from tensorflow_similarity.search.faiss import FaissSearch  # noqa
+from tensorflow_similarity.search.linear import LinearSearch  # noqa
+from tensorflow_similarity.search.nmslib import NMSLibSearch  # noqa
+from tensorflow_similarity.search.search import Search  # noqa
+
+
+def serialize(search: Search) -> dict[str, Any]:
+    """Serialize the search configuration to JSON compatible python dict.
+
+    The configuration can be used for persistence and reconstruct the `Search`
+    instance again.
+
+    >>> tfsim.search.serialize(tfsim.search.LinearSearch())
+    {'class_name': 'LinearSearch', 'config': { 'name': 'LinearSearch',
+                                     'distance': 'cosine',
+                                     'dim': 10, 'verbose': 0}}
+
+    Args:
+      search: A `Search` instance to serialize.
+
+    Returns:
+      Python dict which contains the configuration of the search.
+    """
+    config: dict[str, Any] = serialize_keras_object(search)
+    return config
+
+
+def deserialize(config, custom_objects=None) -> Search:
+    """Inverse of the `serialize` function.
+
+    Args:
+        config: search configuration dictionary.
+        custom_objects: Optional dictionary mapping names (strings) to custom
+          objects (classes and functions) to be considered during deserialization.
+
+    Returns:
+        A search instance.
+    """
+    all_classes: dict[str, Type[Search]] = {
+        "faiss": FaissSearch,
+        "faisssearch": FaissSearch,
+        "linear": LinearSearch,
+        "linearsearch": LinearSearch,
+        "nmslib": NMSLibSearch,
+        "nmslibsearch": NMSLibSearch,
+    }
+
+    # Make deserialization case-insensitive for built-in optimizers.
+    if config["class_name"].lower() in all_classes:
+        config["class_name"] = config["class_name"].lower()
+    search: Search = deserialize_keras_object(
+        config, module_objects=all_classes, custom_objects=custom_objects, printable_module_name="search"
+    )
+    return search
+
+
+def get(identifier, **kwargs) -> Search:
+    """Retrieves a search instance.
+
+    Args:
+        identifier: search identifier, one of
+            - String: name of a search class.
+            - Dictionary: configuration dictionary.
+            - search instance (it will be returned unchanged).
+        **kwargs: Additional keyword arguments to be passed to the Search
+            constructor. Used as the config if `identifier` is a str.
+
+    Returns:
+        A search instance.
+
+    Raises:
+        ValueError: If `identifier` cannot be interpreted.
+    """
+    if isinstance(identifier, Search):
+        return identifier
+    elif isinstance(identifier, dict):
+        return deserialize(identifier)
+    elif isinstance(identifier, str):
+        config = {"class_name": str(identifier), "config": kwargs}
+        return deserialize(config)
+    else:
+        raise ValueError("Could not interpret search identifier: {}".format(identifier))

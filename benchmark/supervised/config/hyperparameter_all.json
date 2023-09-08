@@ -1,5 +1,5 @@
 {
-    "version": "1.0.1",
+    "version": "single",
     "random_seed": 303,
     "tfds_data_dir": "/workspace/tensorflow_datasets",
     "hyperparameter_dir": "benchmark_hyperparameters",
@@ -22,22 +22,6 @@
                 "max_num_queries": 300,
                 "max_num_targets": 1000
             }
-        },
-        "caltechbirds2011_50pct_cls_splt": {
-            "component": "tfds",
-            "dataset_id": "caltech_birds2011",
-            "x_key": "image",
-            "y_key": "label",
-            "train_classes": [0, 100],
-            "test_classes": [100, 199],
-            "train_val_splits": {
-                "num_splits": 4,
-                "val_class_pctg": 0.125
-            },
-            "eval_callback": {
-                "max_num_queries": 300,
-                "max_num_targets": 1000
-            }
         }
     },
     "preprocess": {
@@ -51,9 +35,9 @@
         "train": {
             "random_resized_crop": { 
                 "component": "random_resized_crop",
-                "target_size": [227, 227],
-                "crop_area_factor": [0.15625, 1.0],
-                "aspect_ratio_factor": [0.75, 1.3333]
+                "height": 227,
+                "width": 227,
+                "area_range": [0.15625, 1.0]
             },
             "random_flip": { 
                 "component": "random_flip",
@@ -85,7 +69,6 @@
                 "component": "choice",
                 "values": ["hard", "semi-hard"]
             },
-            "soft_margin": false,
             "margin": {
                 "component": "float",
                 "min_value": 0.1,
@@ -103,8 +86,7 @@
             "negative_mining": {
                 "component": "choice",
                 "values": ["hard", "semi-hard"]
-            },
-            "soft_margin": true
+            }
         },
         "multisim": {
             "component": "multisim",
@@ -158,7 +140,6 @@
                 "component": "choice",
                 "values": ["hard", "semi-hard"]
             },
-            "soft_margin": false,
             "margin": {
                 "component": "float",
                 "min_value": 0.001,
@@ -173,8 +154,7 @@
             "negative_mining": {
                 "component": "choice",
                 "values": ["hard", "semi-hard"]
-            },
-            "soft_margin": true
+            }
         },
         "soft_nn_tmp_1": {
             "component": "soft_nn",
@@ -204,7 +184,7 @@
                 "classes_per_batch": 10,
                 "examples_per_class_per_batch": 16
             },
-            "epochs": 50
+            "epochs": 5
         }
     ],
     "evaluation": {

@@ -15,12 +15,14 @@
 """Metric losses  base class."""
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import tensorflow as tf
 
-from tensorflow_similarity.types import FloatTensor
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from tensorflow_similarity.types import FloatTensor
+
 from tensorflow_similarity.utils import is_tensor_or_variable
 
 
@@ -60,12 +62,11 @@ class MetricLoss(tf.keras.losses.Loss):
         Returns:
             A Python dict containing the configuration of the loss.
         """
-        config = {}
+        config: dict[str, Any] = super().get_config()
         for k, v in iter(self._fn_kwargs.items()):
             if is_tensor_or_variable(v):
                 config[k] = tf.keras.backend.eval(v)
             else:
                 config[k] = v
 
-        base_config = super().get_config()
-        return {**base_config, **config}
+        return config
