@@ -14,12 +14,31 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
-from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
 
 
 class Store(ABC):
+    def __init__(
+        self,
+        name: str,
+        verbose: int = 0,
+        **kwargs,
+    ):
+        """Initializes a Key Value Store for entity metadata.
+
+        Args:
+            name: Name of the store.
+            verbose: be verbose.
+        """
+        self.name = name
+        self.verbose = verbose
+
     @abstractmethod
     def add(self, embedding: FloatTensor, label: int | None = None, data: Tensor | None = None) -> int:
         """Add an Embedding record to the key value store.
@@ -85,7 +104,7 @@ class Store(ABC):
         "Number of record in the key value store."
 
     @abstractmethod
-    def save(self, path: str, compression: bool = True) -> None:
+    def save(self, path: Path | str, compression: bool = True) -> None:
         """Serializes index on disk.
 
         Args:
@@ -115,3 +134,20 @@ class Store(ABC):
         Returns:
             pd.DataFrame: a pandas dataframe.
         """
+
+    @abstractmethod
+    def reset(self) -> None:
+        """Resets the data in the store."""
+
+    def get_config(self) -> dict[str, Any]:
+        """Contains the Store configuration.
+
+        Returns:
+            A Python dict containing the configuration of the Store obj.
+        """
+        config = {
+            "name": self.name,
+            "verbose": self.verbose,
+        }
+
+        return config

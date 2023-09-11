@@ -15,18 +15,20 @@ from __future__ import annotations
 
 import base64
 import io
-from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import PIL
 import umap
-from bokeh import __version__
+from bokeh import __version__ as bokeh_version
 from bokeh.plotting import ColumnDataSource, figure, output_notebook, show
 from distinctipy import distinctipy
 from tqdm.auto import tqdm
 
-from tensorflow_similarity.types import FloatTensor, Tensor
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
+    from tensorflow_similarity.types import FloatTensor, Tensor
 
 
 def tensor2images(tensor: Tensor, size: int = 64) -> list[str]:
@@ -187,7 +189,7 @@ def projector(
     source = ColumnDataSource(data=data)
     output_notebook()
     # Bokeh backward compatibility
-    if int(__version__.split(".")[0]) >= 3:
+    if int(bokeh_version.split(".")[0]) >= 3:
         fig = figure(
             tooltips=tooltips,
             width=plot_size,

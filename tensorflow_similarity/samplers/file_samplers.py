@@ -13,17 +13,20 @@
 # limitations under the License.
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 import tensorflow as tf
 
-from tensorflow_similarity.types import FloatTensor, IntTensor
-
 from .memory_samplers import MultiShotMemorySampler
-from .samplers import Augmenter
 
-T = TypeVar("T", FloatTensor, IntTensor)
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    from tensorflow_similarity.types import FloatTensor, IntTensor
+
+    from .samplers import Augmenter
+
+    T = TypeVar("T", FloatTensor, IntTensor)
 
 
 def load_image(path: str, target_size: tuple[int, int] | None = None) -> T:

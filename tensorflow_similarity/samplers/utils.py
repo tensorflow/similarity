@@ -15,12 +15,15 @@ from __future__ import annotations
 
 import random
 from collections import defaultdict
-from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 from tqdm.auto import tqdm
 
-from tensorflow_similarity.types import FloatTensor, IntTensor
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tensorflow_similarity.types import FloatTensor, IntTensor
 
 
 def select_examples(

@@ -14,9 +14,12 @@
 "Set of useful algebraic functions used through the package"
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import tensorflow as tf
 
-from .types import BoolTensor, FloatTensor, IntTensor
+if TYPE_CHECKING:
+    from .types import BoolTensor, FloatTensor, IntTensor
 
 
 def masked_max(distances: FloatTensor, mask: BoolTensor, dim: int = 1) -> tuple[FloatTensor, FloatTensor]:

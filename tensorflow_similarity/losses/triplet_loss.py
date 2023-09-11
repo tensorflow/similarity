@@ -18,13 +18,16 @@
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import tensorflow as tf
 
+if TYPE_CHECKING:
+    from tensorflow_similarity.types import FloatTensor, IntTensor
+    from tensorflow_similarity.distances import Distance
+
+import tensorflow_similarity.distances
 from tensorflow_similarity.algebra import build_masks
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
-from tensorflow_similarity.types import FloatTensor, IntTensor
 
 from .metric_loss import MetricLoss
 from .utils import compute_loss, negative_distances, positive_distances
@@ -132,7 +135,7 @@ class TripletLoss(MetricLoss):
         positive_mining_strategy: str = "hard",
         negative_mining_strategy: str = "semi-hard",
         margin: float | None = None,
-        name: str = "TripletLoss",
+        name: str = "triplet_loss",
         **kwargs,
     ):
         """Initializes the TripletLoss.
@@ -152,7 +155,7 @@ class TripletLoss(MetricLoss):
                 A soft margin can be beneficial to pull together samples from the
                 same class as much as possible. See the paper for more details
                 https://arxiv.org/pdf/1703.07737.pdf. Defaults to None.
-            name: Loss name. Defaults to "TripletLoss".
+            name: Optional name for the instance. Defaults to 'triplet_loss'.
 
         Raises:
             ValueError: Invalid positive mining strategy.
@@ -160,8 +163,7 @@ class TripletLoss(MetricLoss):
         """
 
         # distance canonicalization
-        distance = distance_canonicalizer(distance)
-        self.distance = distance
+        self.distance = tensorflow_similarity.distances.get(distance)
 
         # sanity checks
         if positive_mining_strategy not in ["easy", "hard"]:
@@ -173,7 +175,8 @@ class TripletLoss(MetricLoss):
         super().__init__(
             triplet_loss,
             name=name,
-            distance=distance,
+            # The following are passed to the triplet_loss function as fn_kwargs
+            distance=self.distance,
             positive_mining_strategy=positive_mining_strategy,
             negative_mining_strategy=negative_mining_strategy,
             margin=margin,

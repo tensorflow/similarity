@@ -19,12 +19,14 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import tensorflow as tf
 
-from tensorflow_similarity.types import FloatTensor
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from tensorflow_similarity.types import FloatTensor
 
 
 def negative_cosine_sim(sim: FloatTensor) -> FloatTensor:
@@ -54,22 +56,22 @@ class SimSiamLoss(tf.keras.losses.Loss):
         projection_type: str = "negative_cosine_sim",
         margin: float = 0.001,
         reduction: Callable = tf.keras.losses.Reduction.AUTO,
-        name: str | None = None,
+        name: str = "simsiam_loss",
         **kwargs,
     ):
         """Create the SimSiam Loss.
 
         Args:
-          projection_type: Projects results into a metric space to allow KNN
-          search.
-            negative_cosine_sim: -1.0 * cosine similarity.
-            cosine_distance: 1.0 - cosine similarity.
-            angular_distance: 1.0 - angular similarity.
-          margin: Offset to prevent a distance of 0.
-          reduction: (Optional) Type of `tf.keras.losses.Reduction` to apply to
-            loss. Default value is `AUTO`.
-          name: (Optional) name for the loss.
-          **kwargs: The keyword arguments that are passed on to `fn`.
+            projection_type: Projects results into a metric space to allow KNN
+            search.
+              negative_cosine_sim: -1.0 * cosine similarity.
+              cosine_distance: 1.0 - cosine similarity.
+              angular_distance: 1.0 - angular similarity.
+            margin: Offset to prevent a distance of 0.
+            reduction: (Optional) Type of `tf.keras.losses.Reduction` to apply to
+              loss. Default value is `AUTO`.
+            name: Optional name for the instance. Defaults to 'simsiam_loss'.
+            **kwargs: The keyword arguments that are passed on to `fn`.
         """
         super().__init__(reduction=reduction, name=name, **kwargs)
         self.projection_type = projection_type
@@ -114,9 +116,11 @@ class SimSiamLoss(tf.keras.losses.Loss):
         return loss
 
     def get_config(self) -> dict[str, Any]:
-        config = {
-            "projection_type": self.projection_type,
-            "margin": self.margin,
-        }
-        base_config = super().get_config()
-        return {**base_config, **config}
+        config: dict[str, Any] = super().get_config()
+        config.update(
+            {
+                "projection_type": self.projection_type,
+                "margin": self.margin,
+            }
+        )
+        return config

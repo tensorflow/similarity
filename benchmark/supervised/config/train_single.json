@@ -1,0 +1,111 @@
+{
+    "version": "single",
+    "random_seed": 303,
+    "tfds_data_dir": "/workspace/tensorflow_datasets",
+    "hyperparameter_dir": "benchmark_hyperparameters",
+    "benchmark_dir": "benchmark_results",
+    "dataset_dir": "benchmark_datasets",
+
+    "datasets": {
+        "cars196_50pct_cls_splt": {
+            "component": "tfds",
+            "dataset_id": "cars196",
+            "x_key": "image",
+            "y_key": "label",
+            "train_classes": [0, 98],
+            "test_classes": [98, 196],
+            "train_val_splits": {
+                "num_splits": 4,
+                "val_class_pctg": 0.125
+            },
+            "eval_callback": {
+                "max_num_queries": 300,
+                "max_num_targets": 1000
+            }
+        }
+    },
+    "preprocess": {
+        "center_crop": {
+                "component": "center_crop",
+                "height": 256,
+                "width": 256
+            }
+    },
+    "augmentations": {
+        "train": {
+            "random_resized_crop": { 
+                "component": "random_resized_crop",
+                "height": 227,
+                "width": 227,
+                "area_range": [0.15625, 1.0]
+            },
+            "random_flip": { 
+                "component": "random_flip",
+                "mode": "horizontal"
+            }
+        },
+        "test": {
+            "center_crop": {
+                "component": "center_crop",
+                "height": 227,
+                "width": 227
+            }
+        }
+    },
+    "architectures": {
+        "resnet50": {
+            "component": "resnet50",
+            "input_shape": [227, 227, 3],
+            "embedding_sizes": [128],
+            "trainable": "full"
+        }
+    },
+    "losses": {
+        "multisim": {
+            "component": "multisim",
+            "distance": "cosine",
+            "alpha": 2.0,
+            "beta": 40.0,
+            "epsilon": 0.1,
+            "lmda": 0.5
+        }
+    },
+    "optimizer": {
+        "lamb_lr1e-4":{
+            "component": "lamb",
+            "lr": 0.0001
+        }
+    },
+    "training": [
+        {
+            "name": "basic",
+            "train": {
+                "classes_per_batch": 16,
+                "examples_per_class_per_batch": 16
+            },
+            "val": {
+                "classes_per_batch": 10,
+                "examples_per_class_per_batch": 16
+            },
+            "steps_per_epoch": 2,
+            "epochs": 20,
+            "lr_schedule": {
+                "warmup_pctg": 0.1,
+                "min_lr": 0.00001
+            }
+        }
+    ],
+    "evaluation": {
+        "recall_at_k": {
+            "k": [1,2,4,8,16,32],
+            "average": "micro"
+        },
+        "precision_at_k": {
+            "k": [1,2,4,8,16,32],
+            "average": "micro"
+        },
+        "map_at_r": { },
+        "r_precision": { }
+    }
+}
+

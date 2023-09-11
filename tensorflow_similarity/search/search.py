@@ -14,11 +14,16 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
-from typing import Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
-from tensorflow_similarity.distances import Distance, distance_canonicalizer
-from tensorflow_similarity.types import FloatTensor
+import tensorflow_similarity.distances
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tensorflow_similarity.distances import Distance
+    from tensorflow_similarity.types import FloatTensor
 
 
 class Search(ABC):
@@ -26,8 +31,8 @@ class Search(ABC):
         self,
         distance: Distance | str,
         dim: int,
+        name: str,
         verbose: int = 0,
-        name: str | None = None,
         **kwargs,
     ):
         """Initializes a nearest neigboors search index.
@@ -40,10 +45,11 @@ class Search(ABC):
 
             verbose: be verbose.
         """
-        self.distance: Distance = distance_canonicalizer(distance)
+        self.distance: Distance = tensorflow_similarity.distances.get(distance)
         self.dim = dim
+        self.name = name
         self.verbose = verbose
-        self.name = name if name is not None else self.__class__.__name__
+        self.built = False
 
     @abstractmethod
     def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, **kwargs):
@@ -92,7 +98,7 @@ class Search(ABC):
         """
 
     @abstractmethod
-    def save(self, path: str):
+    def save(self, path: Path | str):
         """Serializes the index data on disk
 
         Args:
@@ -100,12 +106,16 @@ class Search(ABC):
         """
 
     @abstractmethod
-    def load(self, path: str):
+    def load(self, path: Path | str):
         """load index on disk
 
         Args:
             path: where to store the data
         """
+
+    @abstractmethod
+    def reset(self):
+        "Remove all data, as if the instance were just created empty"
 
     def get_config(self) -> dict[str, Any]:
         """Contains the search configuration.
@@ -116,9 +126,12 @@ class Search(ABC):
         config = {
             "distance": self.distance.name,
             "dim": self.dim,
-            "verbose": self.verbose,
             "name": self.name,
-            "canonical_name": self.__class__.__name__,
+            "verbose": self.verbose,
         }
 
         return config
+
+    def is_built(self):
+        "Returns whether or not the index is built and ready for querying." ""
+        return self.built

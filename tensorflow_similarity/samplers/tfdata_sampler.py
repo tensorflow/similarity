@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING
 
 import tensorflow as tf
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
 
 
 def filter_classes(
@@ -24,7 +27,8 @@ def filter_classes(
     """
 
     if class_list is not None:
-        class_list = tf.constant(class_list)
+        # Ensure class_list values are the same dtype as the y values.
+        class_list = tf.constant(class_list, dtype=ds.element_spec[1].dtype)
         ds = ds.filter(lambda x, y, *args: tf.reduce_any(tf.equal(y_parser(y), class_list)))
 
     return ds
@@ -168,7 +172,7 @@ def TFDataSampler(
             assumed to be a tuple of tensors with the class IDs in the element
             specified by `label_output`. If `str`, y is assumed to be a dictionary
             with the class IDs in the key specified by `label_output`.
-    Returnsk:
+    Returns:
         A `tf.data.Dataset` object representing the balanced dataset for few-shot learning tasks.
 
     """

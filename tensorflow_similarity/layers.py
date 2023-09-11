@@ -15,13 +15,13 @@
 from __future__ import annotations
 
 import math
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import tensorflow as tf
 from tensorflow.keras import layers
-from tensorflow.python.keras.utils import conv_utils
 
-from .types import FloatTensor, IntTensor
+if TYPE_CHECKING:
+    from .types import FloatTensor, IntTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -38,12 +38,23 @@ class MetricEmbedding(layers.Dense):
         return normed_x
 
 
+def normalize_data_format(value):
+    if value is None:
+        value = tf.keras.backend.image_data_format()
+    data_format = value.lower()
+    if data_format not in {"channels_first", "channels_last"}:
+        raise ValueError(
+            "The `data_format` argument must be one of " f'"channels_first", "channels_last". Received: {value}'
+        )
+    return data_format
+
+
 class GeneralizedMeanPooling(layers.Layer):
     def __init__(self, p: float = 3.0, data_format: str | None = None, keepdims: bool = False, **kwargs) -> None:
         super().__init__(**kwargs)
 
         self.p = p
-        self.data_format = conv_utils.normalize_data_format(data_format)
+        self.data_format = normalize_data_format(data_format)
         self.keepdims = keepdims
 
         if tf.math.abs(self.p) < 0.00001:
@@ -268,6 +279,7 @@ class GeneralizedMeanPooling2D(GeneralizedMeanPooling):
         return x
 
 
+@tf.keras.utils.register_keras_serializable(package="Similarity")
 class ActivationStdLoggingLayer(layers.Layer):
     """Computes the mean std of the activations of a layer.
 

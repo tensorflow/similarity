@@ -14,12 +14,14 @@
 """Utility functions for computing the metric loss."""
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import tensorflow as tf
 
+if TYPE_CHECKING:
+    from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
+
 from tensorflow_similarity.algebra import masked_max, masked_min
-from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
 
 
 def positive_distances(

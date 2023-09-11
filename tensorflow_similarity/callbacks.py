@@ -15,20 +15,26 @@
 from __future__ import annotations
 
 import math
-from collections.abc import MutableMapping, Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.callbacks import Callback
 
-from .classification_metrics import ClassificationMetric, make_classification_metric
-from .evaluators import Evaluator, MemoryEvaluator
-from .matchers import ClassificationMatch
-from .models import SimilarityModel
-from .retrieval_metrics import RetrievalMetric
-from .types import FloatTensor, IntTensor, Tensor
+from .classification_metrics import make_classification_metric
+from .evaluators import MemoryEvaluator
 from .utils import unpack_lookup_distances, unpack_lookup_labels, unpack_results
+
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping, Sequence
+
+    from .classification_metrics import ClassificationMetric
+    from .evaluators import Evaluator
+    from .matchers import ClassificationMatch
+    from .models import SimilarityModel
+    from .retrieval_metrics import RetrievalMetric
+    from .types import FloatTensor, IntTensor, Tensor
 
 
 class EvalCallback(Callback):

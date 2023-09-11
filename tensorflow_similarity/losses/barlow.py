@@ -18,12 +18,14 @@
 """
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import tensorflow as tf
 
-from tensorflow_similarity.types import FloatTensor
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from tensorflow_similarity.types import FloatTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -55,7 +57,7 @@ class Barlow(tf.keras.losses.Loss):
         lambda_: float = 5e-3,
         margin: float = 1e-12,
         reduction: Callable = tf.keras.losses.Reduction.AUTO,
-        name: str | None = None,
+        name: str = "barlow",
         **kwargs,
     ):
         super().__init__(reduction=reduction, name=name, **kwargs)
@@ -96,12 +98,14 @@ class Barlow(tf.keras.losses.Loss):
         return loss
 
     def get_config(self) -> dict[str, Any]:
-        config = {
-            "lambda_": self.lambda_,
-            "margin": self.margin,
-        }
-        base_config = super().get_config()
-        return {**base_config, **config}
+        config: dict[str, Any] = super().get_config()
+        config.update(
+            {
+                "lambda_": self.lambda_,
+                "margin": self.margin,
+            }
+        )
+        return config
 
     def off_diagonal(self, x: FloatTensor) -> FloatTensor:
         n = tf.shape(x)[0]
