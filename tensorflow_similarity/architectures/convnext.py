@@ -18,10 +18,10 @@ import re
 
 import tensorflow as tf
 from tensorflow.keras import layers
-from tensorflow_similarity.layers import GeneralizedMeanPooling2D, MetricEmbedding
-from tensorflow_similarity.models import SimilarityModel
 from tensorflow.keras.applications import convnext
 
+from tensorflow_similarity.layers import GeneralizedMeanPooling2D, MetricEmbedding
+from tensorflow_similarity.models import SimilarityModel
 
 CONVNEXT_ARCHITECTURE = {
     "TINY": convnext.ConvNeXtTiny,
