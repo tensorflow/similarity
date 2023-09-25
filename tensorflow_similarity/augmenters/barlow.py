@@ -131,6 +131,7 @@ class BarlowAugmenter(Augmenter):
         num_augmentations_per_example: int = 2,
         is_warmup: bool = True,
     ) -> list[Any]:
+
         with tf.device("/cpu:0"):
             if y is None:
                 y = tf.constant([0])
@@ -160,6 +161,7 @@ class BarlowAugmenter(Augmenter):
                 solarize_thresh=self.solarize_thresh,
             )
             for _ in range(num_augmentations_per_example):
+
                 view = tf.map_fn(
                     lambda img: augment_fn(image=img),
                     inputs,

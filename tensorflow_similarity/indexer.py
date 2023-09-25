@@ -106,8 +106,13 @@ class Indexer(BaseIndexer):
         """
         super().__init__(distance, embedding_output, embedding_size, evaluator, stat_buffer_size)
 
+<<<<<<< HEAD
         self.search: Search = tfsim_search.get(search, distance=distance, dim=embedding_size)
         self.kv_store: Store = tfsim_stores.get(kv_store)
+=======
+        self.search: Search = tensorflow_similarity.search.get(search, distance=distance, dim=embedding_size)
+        self.kv_store: Store = tensorflow_similarity.stores.get(kv_store)
+>>>>>>> master
 
         # initialize internal structures
         self._init_structures()
