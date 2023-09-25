@@ -30,15 +30,6 @@ def _make_batchnorm(epsilon, name, layer):
     return layer
 
 
-def _make_batchnorm(epsilon, name, layer):
-    tf_version = [int(v) for v in tf.__version__.split(".")]
-    if tf_version[0] == 2 and tf_version[1] < 12:
-        layer = tf.keras.layers.experimental.SyncBatchNormalization(epsilon=epsilon, name=name)(layer)
-    else:
-        layer = tf.keras.layers.BatchNormalization(epsilon=epsilon, name=name, synchronized=True)(layer)
-    return layer
-
-
 # Create an image augmentation pipeline.
 def ResNet18Sim(
     input_shape: tuple[int, int, int],
