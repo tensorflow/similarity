@@ -18,8 +18,8 @@ from collections.abc import Callable
 
 import tensorflow as tf
 
-from tensorflow_similarity.augmenters import Augmenter
-from tensorflow_similarity.types import Tensor
+from ..augmenters import Augmenter
+from ..types import Tensor
 
 
 class ContrastiveAugmenter(Augmenter):

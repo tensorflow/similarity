@@ -26,7 +26,7 @@ import tensorflow as tf
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tensorflow_similarity.types import FloatTensor
+    from ..types import FloatTensor
 
 
 def negative_cosine_sim(sim: FloatTensor) -> FloatTensor:

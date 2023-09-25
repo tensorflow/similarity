@@ -19,9 +19,9 @@ from typing import TYPE_CHECKING, Any
 import tensorflow as tf
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
+    from ..types import BoolTensor, FloatTensor, IntTensor
 
-from tensorflow_similarity.algebra import masked_max, masked_min
+from ..algebra import masked_max, masked_min
 
 
 def positive_distances(

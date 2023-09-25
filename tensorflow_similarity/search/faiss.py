@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from termcolor import cprint
 
-from tensorflow_similarity.distances import (
+from ..distances import (
     CosineDistance,
     EuclideanDistance,
     InnerProductSimilarity,
@@ -18,9 +18,9 @@ from tensorflow_similarity.distances import (
 )
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.distances import Distance
+    from ..distances import Distance
     from collections.abc import Sequence
-    from tensorflow_similarity.types import FloatTensor
+    from ..types import FloatTensor
 
 from .search import Search
 

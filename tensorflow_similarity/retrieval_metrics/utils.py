@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 import tensorflow as tf
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import BoolTensor, IntTensor
+    from ..types import BoolTensor, IntTensor
 
 
 def compute_match_mask(query_labels: IntTensor, lookup_labels: IntTensor) -> BoolTensor:

@@ -17,7 +17,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import FloatTensor
+    from ..types import FloatTensor
 
 
 class ClassificationMetric(ABC):

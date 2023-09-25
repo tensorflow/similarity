@@ -23,11 +23,10 @@ from typing import TYPE_CHECKING, Any
 import tensorflow as tf
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import FloatTensor
-    from tensorflow_similarity.distances import Distance
+    from ..types import FloatTensor
+    from ..distances import Distance
 
-import tensorflow_similarity.distances
-
+from .. import distances
 from .metric_loss import MetricLoss
 from .utils import logsumexp
 
@@ -88,7 +87,7 @@ class MultiNegativesRankLoss(MetricLoss):
             name: Optional name for the instance. Defaults to 'multineg_rank_loss'.
         """
         # distance canonicalization
-        self.distance = tensorflow_similarity.distances.get(distance)
+        self.distance = distances.get(distance)
         self.scale = scale
 
         super().__init__(

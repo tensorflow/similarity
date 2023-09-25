@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Any
 import tensorflow as tf
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import FloatTensor
+    from ..types import FloatTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")

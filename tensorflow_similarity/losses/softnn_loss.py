@@ -23,12 +23,11 @@ from typing import TYPE_CHECKING, Any
 import tensorflow as tf
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import FloatTensor, IntTensor
-    from tensorflow_similarity.distances import Distance
+    from ..types import FloatTensor, IntTensor
+    from ..distances import Distance
 
-import tensorflow_similarity.distances
-from tensorflow_similarity.algebra import build_masks
-
+from .. import distances
+from ..algebra import build_masks
 from .metric_loss import MetricLoss
 
 
@@ -125,7 +124,7 @@ class SoftNearestNeighborLoss(MetricLoss):
             name: Optional name for the instance. Defaults to 'soft_nn_loss'.
         """
         # distance canonicalization
-        self.distance = tensorflow_similarity.distances.get(distance)
+        self.distance = distances.get(distance)
         self.temperature = temperature
 
         super().__init__(

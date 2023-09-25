@@ -23,7 +23,7 @@ from tqdm.auto import tqdm
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
-    from tensorflow_similarity.types import FloatTensor, IntTensor
+    from ..types import FloatTensor, IntTensor
     from .samplers import Augmenter
 
 from .samplers import Sampler

@@ -21,13 +21,13 @@ from tensorflow.python.keras.utils.generic_utils import (
     serialize_keras_object,
 )
 
-from tensorflow_similarity.distances.cosine import CosineDistance  # noqa
-from tensorflow_similarity.distances.distance import Distance  # noqa
-from tensorflow_similarity.distances.euclidean import EuclideanDistance  # noqa
-from tensorflow_similarity.distances.euclidean import SquaredEuclideanDistance  # noqa
-from tensorflow_similarity.distances.inner_product import InnerProductSimilarity  # noqa
-from tensorflow_similarity.distances.manhattan import ManhattanDistance  # noqa
-from tensorflow_similarity.distances.snr import SNRDistance  # noqa
+from .cosine import CosineDistance  # noqa
+from .distance import Distance  # noqa
+from .euclidean import EuclideanDistance  # noqa
+from .euclidean import SquaredEuclideanDistance  # noqa
+from .inner_product import InnerProductSimilarity  # noqa
+from .manhattan import ManhattanDistance  # noqa
+from .snr import SNRDistance  # noqa
 
 _ALL_CLASSES: dict[str, Type[Distance]] = {
     "inner_product": InnerProductSimilarity,

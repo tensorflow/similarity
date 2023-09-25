@@ -41,10 +41,10 @@ from tensorflow.python.keras.utils.generic_utils import (
     serialize_keras_object,
 )
 
-from tensorflow_similarity.search.faiss import FaissSearch  # noqa
-from tensorflow_similarity.search.linear import LinearSearch  # noqa
-from tensorflow_similarity.search.nmslib import NMSLibSearch  # noqa
-from tensorflow_similarity.search.search import Search  # noqa
+from .faiss import FaissSearch  # noqa
+from .linear import LinearSearch  # noqa
+from .nmslib import NMSLibSearch  # noqa
+from .search import Search  # noqa
 
 
 def serialize(search: Search) -> dict[str, Any]:

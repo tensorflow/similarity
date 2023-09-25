@@ -21,7 +21,7 @@ from tensorflow import Tensor
 from tensorflow.keras.utils import Sequence as KerasSequence
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.augmenters import Augmenter
+    from ..augmenters import Augmenter
 
 # Not currently used. Might be useful to allows gradual call of augmenter
 Scheduler = Callable[[Any], Any]

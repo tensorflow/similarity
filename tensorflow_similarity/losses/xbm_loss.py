@@ -23,9 +23,9 @@ import tensorflow as tf
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from tensorflow_similarity.types import FloatTensor
+    from ..types import FloatTensor
 
-from tensorflow_similarity.losses import MetricLoss
+from ..losses import MetricLoss
 
 
 def _add_memory_variable(tensor):

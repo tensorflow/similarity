@@ -19,12 +19,12 @@ from typing import TYPE_CHECKING, Any
 import tensorflow as tf
 from tensorflow.keras.metrics import Metric
 
-import tensorflow_similarity.distances
-from tensorflow_similarity.algebra import build_masks, masked_max, masked_min
+from .. import distances
+from ..algebra import build_masks, masked_max, masked_min
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.distances import Distance
-    from tensorflow_similarity.types import FloatTensor, IntTensor
+    from ..distances import Distance
+    from ..types import FloatTensor, IntTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -43,7 +43,7 @@ class DistanceMetric(Metric):
             name = "%s_%s" % (aggregate, anchor[:3])
         super().__init__(name=name, **kwargs)
 
-        self.distance = tensorflow_similarity.distances.get(distance)
+        self.distance = distances.get(distance)
 
         if anchor not in ["positive", "negative"]:
             raise ValueError("Invalid anchor_type")

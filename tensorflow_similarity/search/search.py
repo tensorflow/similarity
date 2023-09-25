@@ -17,13 +17,13 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import tensorflow_similarity.distances
+from .. import distances
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from tensorflow_similarity.distances import Distance
-    from tensorflow_similarity.types import FloatTensor
+    from ..distances import Distance
+    from ..types import FloatTensor
 
 
 class Search(ABC):
@@ -45,7 +45,7 @@ class Search(ABC):
 
             verbose: be verbose.
         """
-        self.distance: Distance = tensorflow_similarity.distances.get(distance)
+        self.distance: Distance = distances.get(distance)
         self.dim = dim
         self.name = name
         self.verbose = verbose

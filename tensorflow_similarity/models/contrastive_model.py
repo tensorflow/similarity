@@ -24,10 +24,10 @@ from tabulate import tabulate
 from termcolor import cprint
 from tqdm.auto import tqdm
 
-import tensorflow_similarity.distances
-from tensorflow_similarity.classification_metrics import make_classification_metric
-from tensorflow_similarity.indexer import Indexer
-from tensorflow_similarity.layers import ActivationStdLoggingLayer
+from .. import distances
+from ..classification_metrics import make_classification_metric
+from ..indexer import Indexer
+from ..layers import ActivationStdLoggingLayer
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -42,16 +42,16 @@ if TYPE_CHECKING:
     from tensorflow.keras.metrics import Metric
     from tensorflow.keras.optimizers import Optimizer
 
-    from tensorflow_similarity.classification_metrics import ClassificationMetric
-    from tensorflow_similarity.distances import Distance
-    from tensorflow_similarity.evaluators.evaluator import Evaluator
-    from tensorflow_similarity.losses import MetricLoss
-    from tensorflow_similarity.matchers import ClassificationMatch
-    from tensorflow_similarity.retrieval_metrics import RetrievalMetric
-    from tensorflow_similarity.search import Search
-    from tensorflow_similarity.stores import Store
-    from tensorflow_similarity.training_metrics import DistanceMetric
-    from tensorflow_similarity.types import (
+    from ..classification_metrics import ClassificationMetric
+    from ..distances import Distance
+    from ..evaluators.evaluator import Evaluator
+    from ..losses import MetricLoss
+    from ..matchers import ClassificationMatch
+    from ..retrieval_metrics import RetrievalMetric
+    from ..search import Search
+    from ..stores import Store
+    from ..training_metrics import DistanceMetric
+    from ..types import (
         CalibrationResults,
         FloatTensor,
         IntTensor,
@@ -280,7 +280,7 @@ class ContrastiveModel(tf.keras.Model):
             ValueError: In case of invalid arguments for
                 `optimizer`, `loss` or `metrics`.
         """
-        distance_obj = tensorflow_similarity.distances.get(distance)
+        distance_obj = distances.get(distance)
 
         # init index
         self.create_index(

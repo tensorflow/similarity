@@ -24,7 +24,7 @@ import tensorflow as tf
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tensorflow_similarity.types import FloatTensor
+    from ..types import FloatTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")

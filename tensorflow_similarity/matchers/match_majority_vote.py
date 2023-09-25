@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 import tensorflow as tf
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import FloatTensor, IntTensor
+    from ..types import FloatTensor, IntTensor
 
 from .classification_match import ClassificationMatch
 
