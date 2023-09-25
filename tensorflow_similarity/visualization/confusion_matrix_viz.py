@@ -22,7 +22,7 @@ import tensorflow as tf
 from matplotlib import pyplot as plt
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import FloatTensor, IntTensor
+    from ..types import FloatTensor, IntTensor
 
 
 def confusion_matrix(

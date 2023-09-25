@@ -35,10 +35,10 @@ from tensorflow.python.keras.utils.generic_utils import (
     serialize_keras_object,
 )
 
-from tensorflow_similarity.stores.cached import CachedStore  # noqa
-from tensorflow_similarity.stores.memory import MemoryStore  # noqa
-from tensorflow_similarity.stores.redis import RedisStore  # noqa
-from tensorflow_similarity.stores.store import Store  # noqa
+from .cached import CachedStore  # noqa
+from .memory import MemoryStore  # noqa
+from .redis import RedisStore  # noqa
+from .store import Store  # noqa
 
 
 def serialize(store: Store) -> dict[str, Any]:

@@ -21,15 +21,10 @@ import numpy as np
 if TYPE_CHECKING:
     from collections.abc import MutableMapping, Sequence
 
-    from tensorflow_similarity.classification_metrics import ClassificationMetric
-    from tensorflow_similarity.matchers import ClassificationMatch
-    from tensorflow_similarity.retrieval_metrics import RetrievalMetric
-    from tensorflow_similarity.types import (
-        CalibrationResults,
-        FloatTensor,
-        IntTensor,
-        Lookup,
-    )
+    from ..classification_metrics import ClassificationMetric
+    from ..matchers import ClassificationMatch
+    from ..retrieval_metrics import RetrievalMetric
+    from ..types import CalibrationResults, FloatTensor, IntTensor, Lookup
 
 
 class Evaluator(ABC):

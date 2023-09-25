@@ -23,13 +23,12 @@ from typing import TYPE_CHECKING
 import tensorflow as tf
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import FloatTensor, IntTensor
-    from tensorflow_similarity.distances import Distance
+    from ..types import FloatTensor, IntTensor
+    from ..distances import Distance
 
-import tensorflow_similarity.distances
-from tensorflow_similarity import losses as tfsim_losses
-from tensorflow_similarity.algebra import build_masks
-
+from .. import distances
+from .. import losses as tfsim_losses
+from ..algebra import build_masks
 from .metric_loss import MetricLoss
 from .utils import positive_distances
 
@@ -112,7 +111,7 @@ class LiftedStructLoss(MetricLoss):
         """
 
         # distance canonicalization
-        self.distance = tensorflow_similarity.distances.get(distance)
+        self.distance = distances.get(distance)
 
         # sanity checks
         if positive_mining_strategy not in ["easy", "hard"]:

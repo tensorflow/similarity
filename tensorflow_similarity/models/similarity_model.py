@@ -50,9 +50,9 @@ import tensorflow as tf
 from tabulate import tabulate
 from tqdm.auto import tqdm
 
-import tensorflow_similarity.distances
-from tensorflow_similarity.classification_metrics import make_classification_metric
-from tensorflow_similarity.indexer import Indexer
+from .. import distances
+from ..classification_metrics import make_classification_metric
+from ..indexer import Indexer
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
@@ -61,16 +61,16 @@ if TYPE_CHECKING:
     from tensorflow.keras.metrics import Metric
     from tensorflow.keras.optimizers import Optimizer
 
-    from tensorflow_similarity.classification_metrics import ClassificationMetric
-    from tensorflow_similarity.distances import Distance
-    from tensorflow_similarity.evaluators.evaluator import Evaluator
-    from tensorflow_similarity.losses import MetricLoss
-    from tensorflow_similarity.matchers import ClassificationMatch
-    from tensorflow_similarity.retrieval_metrics import RetrievalMetric
-    from tensorflow_similarity.search import Search
-    from tensorflow_similarity.stores import Store
-    from tensorflow_similarity.training_metrics import DistanceMetric
-    from tensorflow_similarity.types import (
+    from ..classification_metrics import ClassificationMetric
+    from ..distances import Distance
+    from ..evaluators.evaluator import Evaluator
+    from ..losses import MetricLoss
+    from ..matchers import ClassificationMatch
+    from ..retrieval_metrics import RetrievalMetric
+    from ..search import Search
+    from ..stores import Store
+    from ..training_metrics import DistanceMetric
+    from ..types import (
         CalibrationResults,
         FloatTensor,
         IntTensor,
@@ -203,7 +203,7 @@ class SimilarityModel(tf.keras.Model):
         # Fetching the distance used from the first loss if auto
         if distance == "auto":
             if loss is None:
-                distance = tensorflow_similarity.distances.get("cosine")
+                distance = distances.get("cosine")
             else:
                 metric_loss = loss[0] if isinstance(loss, list) else loss
 
@@ -215,7 +215,7 @@ class SimilarityModel(tf.keras.Model):
 
             print(f"Distance metric automatically set to {distance} use the " "distance arg to override.")
         else:
-            distance = tensorflow_similarity.distances.get(distance)
+            distance = distances.get(distance)
 
         # init index
         self.create_index(

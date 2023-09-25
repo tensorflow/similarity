@@ -23,12 +23,11 @@ from typing import TYPE_CHECKING, Any
 import tensorflow as tf
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import FloatTensor, IntTensor
-    from tensorflow_similarity.distances import Distance
+    from ..types import FloatTensor, IntTensor
+    from ..distances import Distance
 
-import tensorflow_similarity.distances
-from tensorflow_similarity.algebra import build_masks, masked_max, masked_min
-
+from .. import distances
+from ..algebra import build_masks, masked_max, masked_min
 from .metric_loss import MetricLoss
 from .utils import logsumexp
 
@@ -205,7 +204,7 @@ class MultiSimilarityLoss(MetricLoss):
         """
 
         # distance canonicalization
-        self.distance = tensorflow_similarity.distances.get(distance)
+        self.distance = distances.get(distance)
 
         super().__init__(
             multisimilarity_loss,

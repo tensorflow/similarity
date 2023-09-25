@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING
 import tensorflow as tf
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
+    from ..types import BoolTensor, FloatTensor, IntTensor
 
 
 class RetrievalMetric(ABC):

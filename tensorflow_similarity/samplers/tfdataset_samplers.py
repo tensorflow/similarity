@@ -23,8 +23,7 @@ from .memory_samplers import MultiShotMemorySampler
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from tensorflow_similarity.types import FloatTensor, IntTensor
-
+    from ..types import FloatTensor, IntTensor
     from .samplers import Augmenter
 
     PreProcessFn = Callable[[FloatTensor, IntTensor], Tuple[FloatTensor, IntTensor]]

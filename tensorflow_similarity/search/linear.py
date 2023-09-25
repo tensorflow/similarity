@@ -13,8 +13,8 @@ from termcolor import cprint
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from tensorflow_similarity.distances import Distance
-    from tensorflow_similarity.types import FloatTensor
+    from ..distances import Distance
+    from ..types import FloatTensor
 
 from .search import Search
 

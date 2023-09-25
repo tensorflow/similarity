@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import abc
 
-from tensorflow_similarity.types import Tensor
+from ..types import Tensor
 
 
 class Augmenter(abc.ABC):

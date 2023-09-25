@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 import tensorflow as tf
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.samplers.samplers import Sampler
+    from ..samplers.samplers import Sampler
 
 
 def batch_class_ratio(sampler: Sampler, num_batches: int = 100) -> float:

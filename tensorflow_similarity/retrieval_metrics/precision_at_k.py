@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-    from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor
+    from ..types import BoolTensor, FloatTensor, IntTensor
 
 import tensorflow as tf
 
