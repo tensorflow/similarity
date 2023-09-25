@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import FloatTensor, IntTensor
+    from ..types import FloatTensor, IntTensor
 
 from .classification_match import ClassificationMatch
 
@@ -25,7 +25,6 @@ class MatchNearest(ClassificationMatch):
     """Match metrics for labels at k=1."""
 
     def __init__(self, name: str = "nearest", **kwargs) -> None:
-
         if "canonical_name" not in kwargs:
             kwargs["canonical_name"] = "match_nearest"
 

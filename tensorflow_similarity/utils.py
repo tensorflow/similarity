@@ -23,7 +23,7 @@ import tensorflow as tf
 if TYPE_CHECKING:
     from collections.abc import Mapping, MutableMapping, Sequence
 
-    from tensorflow_similarity.types import BoolTensor, FloatTensor, IntTensor, Lookup
+    from ..types import BoolTensor, FloatTensor, IntTensor, Lookup
 
 
 def is_tensor_or_variable(x):

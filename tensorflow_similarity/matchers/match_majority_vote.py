@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 import tensorflow as tf
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import FloatTensor, IntTensor
+    from ..types import FloatTensor, IntTensor
 
 from .classification_match import ClassificationMatch
 
@@ -27,7 +27,6 @@ class MatchMajorityVote(ClassificationMatch):
     """Match metrics for the most common label in a result set."""
 
     def __init__(self, name: str = "majority_vote", **kwargs) -> None:
-
         if "canonical_name" not in kwargs:
             kwargs["canonical_name"] = "match_majority_vote"
 

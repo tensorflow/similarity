@@ -20,9 +20,8 @@ from typing import Any
 
 import tensorflow as tf
 
-from tensorflow_similarity.augmenters import Augmenter
-from tensorflow_similarity.types import Tensor
-
+from ..augmenters import Augmenter
+from ..types import Tensor
 from .augmentation_utils.blur import random_blur
 from .augmentation_utils.color_jitter import random_color_jitter
 from .augmentation_utils.cropping import random_resized_crop

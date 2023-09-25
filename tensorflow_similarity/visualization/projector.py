@@ -28,7 +28,7 @@ from tqdm.auto import tqdm
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
-    from tensorflow_similarity.types import FloatTensor, Tensor
+    from ..types import FloatTensor, Tensor
 
 
 def tensor2images(tensor: Tensor, size: int = 64) -> list[str]:

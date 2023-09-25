@@ -23,7 +23,7 @@ import tensorflow as tf
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
+    from ..types import FloatTensor, PandasDataFrame, Tensor
 
 from .store import Store
 

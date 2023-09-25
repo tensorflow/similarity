@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from tensorflow_similarity.types import FloatTensor, PandasDataFrame, Tensor
+    from ..types import FloatTensor, PandasDataFrame, Tensor
 
 
 class Store(ABC):

@@ -24,12 +24,11 @@ from typing import TYPE_CHECKING, Any
 import tensorflow as tf
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import FloatTensor, IntTensor
-    from tensorflow_similarity.distances import Distance
+    from ..types import FloatTensor, IntTensor
+    from ..distances import Distance
 
-import tensorflow_similarity.distances
-from tensorflow_similarity.algebra import build_masks
-
+from .. import distances
+from ..algebra import build_masks
 from .metric_loss import MetricLoss
 from .utils import compute_loss, negative_distances, positive_distances
 
@@ -179,7 +178,7 @@ class PNLoss(MetricLoss):
         """
 
         # distance canonicalization
-        self.distance = tensorflow_similarity.distances.get(distance)
+        self.distance = distances.get(distance)
 
         # sanity checks
         if positive_mining_strategy not in ["easy", "hard"]:

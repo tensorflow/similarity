@@ -9,11 +9,11 @@ import tensorflow as tf
 from tabulate import tabulate
 from tqdm.auto import tqdm
 
-import tensorflow_similarity.distances
+from . import distances
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, MutableMapping, Sequence
-    from tensorflow_similarity.distances import Distance
+    from ..distances import Distance
     from .classification_metrics import ClassificationMetric
     from .matchers import ClassificationMatch
     from .types import CalibrationResults, FloatTensor, Lookup, Tensor
@@ -34,7 +34,7 @@ class BaseIndexer(ABC):
         evaluator: Evaluator | str,
         stat_buffer_size: int,
     ) -> None:
-        self.distance = tensorflow_similarity.distances.get(distance)  # needed for save()/load()
+        self.distance = distances.get(distance)  # needed for save()/load()
         self.embedding_output = embedding_output
         self.embedding_size = embedding_size
 

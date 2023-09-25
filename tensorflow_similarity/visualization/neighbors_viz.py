@@ -20,7 +20,7 @@ from matplotlib import pyplot as plt
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
-    from tensorflow_similarity.types import Lookup, Tensor
+    from ..types import Lookup, Tensor
 
 
 def viz_neigbors_imgs(

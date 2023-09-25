@@ -28,9 +28,8 @@ from tabulate import tabulate
 from tqdm.auto import tqdm
 
 # internal
-import tensorflow_similarity.search
-import tensorflow_similarity.stores
-
+from . import search as tfsim_search
+from . import stores as tfsim_stores
 from .base_indexer import BaseIndexer
 from .classification_metrics import F1Score, make_classification_metric
 from .types import Lookup
@@ -38,11 +37,10 @@ from .types import Lookup
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from tensorflow_similarity.distances import Distance
-    from tensorflow_similarity.search import Search
-    from tensorflow_similarity.stores import Store
-
+    from .distances import Distance
     from .evaluators import Evaluator
+    from .search import Search
+    from .stores import Store
     from .types import FloatTensor, PandasDataFrame, Tensor
 
 
@@ -108,8 +106,8 @@ class Indexer(BaseIndexer):
         """
         super().__init__(distance, embedding_output, embedding_size, evaluator, stat_buffer_size)
 
-        self.search: Search = tensorflow_similarity.search.get(search, distance=distance, dim=embedding_size)
-        self.kv_store: Store = tensorflow_similarity.stores.get(kv_store)
+        self.search: Search = tfsim_search.get(search, distance=distance, dim=embedding_size)
+        self.kv_store: Store = tfsim_stores.get(kv_store)
 
         # initialize internal structures
         self._init_structures()
@@ -285,7 +283,6 @@ class Indexer(BaseIndexer):
         return lookups
 
     def batch_lookup(self, predictions: FloatTensor, k: int = 5, verbose: int = 1) -> list[list[Lookup]]:
-
         """Find the k closest matches for a set of embeddings
 
         Args:
@@ -366,9 +363,9 @@ class Indexer(BaseIndexer):
             "distance": self.distance.name,
             "embedding_output": self.embedding_output,
             "embedding_size": self.embedding_size,
-            "kv_store_config": tensorflow_similarity.stores.serialize(self.kv_store),
+            "kv_store_config": tfsim_stores.serialize(self.kv_store),
             "evaluator": self.evaluator_type,
-            "search_config": tensorflow_similarity.search.serialize(self.search),
+            "search_config": tfsim_search.serialize(self.search),
             "stat_buffer_size": self.stat_buffer_size,
             "is_calibrated": self.is_calibrated,
             "calibration_metric_config": self.calibration_metric.get_config(),
@@ -403,8 +400,8 @@ class Indexer(BaseIndexer):
         metadata = tf.io.read_file(metadata_fname)
         metadata = tf.keras.backend.eval(metadata)
         md = json.loads(metadata)
-        search = tensorflow_similarity.search.get(md["search_config"])
-        kv_store = tensorflow_similarity.stores.get(md["kv_store_config"])
+        search = tfsim_search.get(md["search_config"])
+        kv_store = tfsim_stores.get(md["kv_store_config"])
         index = Indexer(
             distance=md["distance"],
             embedding_size=md["embedding_size"],

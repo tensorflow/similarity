@@ -20,16 +20,16 @@ import numpy as np
 import tensorflow as tf
 from tqdm.auto import tqdm
 
-from tensorflow_similarity.matchers import make_classification_matcher
-from tensorflow_similarity.retrieval_metrics.utils import compute_match_mask
-from tensorflow_similarity.types import CalibrationResults
-from tensorflow_similarity.utils import unpack_lookup_distances, unpack_lookup_labels
+from ..matchers import make_classification_matcher
+from ..retrieval_metrics.utils import compute_match_mask
+from ..types import CalibrationResults
+from ..utils import unpack_lookup_distances, unpack_lookup_labels
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.classification_metrics import ClassificationMetric
-    from tensorflow_similarity.matchers import ClassificationMatch
-    from tensorflow_similarity.retrieval_metrics import RetrievalMetric
-    from tensorflow_similarity.types import (
+    from ..classification_metrics import ClassificationMetric
+    from ..matchers import ClassificationMatch
+    from ..retrieval_metrics import RetrievalMetric
+    from ..types import (
         FloatTensor,
         IntTensor,
         Lookup,
@@ -318,7 +318,6 @@ class MemoryEvaluator(Evaluator):
             "value": metrics[calibration_metric.name][idx].item(),
         }
         for metric_name in metrics.keys():
-
             optimal_cp[metric_name] = metrics[metric_name][idx].item()
 
         return optimal_cp

@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Any
 import tensorflow as tf
 
 if TYPE_CHECKING:
-    from tensorflow_similarity.types import FloatTensor
+    from ..types import FloatTensor
 
 
 @tf.keras.utils.register_keras_serializable(package="Similarity")
@@ -40,7 +40,6 @@ class SimCLRLoss(tf.keras.losses.Loss):
         self.temperature = temperature
 
     def contrast(self, hidden1: FloatTensor, hidden2: FloatTensor) -> FloatTensor:
-
         # local replica batch size
         batch_size = tf.shape(hidden1)[0]
 

@@ -20,9 +20,8 @@ import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.applications import efficientnet
 
-from tensorflow_similarity.layers import GeneralizedMeanPooling2D, MetricEmbedding
-from tensorflow_similarity.models import SimilarityModel
-
+from ..layers import GeneralizedMeanPooling2D, MetricEmbedding
+from ..models import SimilarityModel
 from .utils import convert_sync_batchnorm
 
 EFF_INPUT_SIZE = {

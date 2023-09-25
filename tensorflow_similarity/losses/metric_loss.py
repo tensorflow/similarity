@@ -21,9 +21,9 @@ import tensorflow as tf
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from tensorflow_similarity.types import FloatTensor
+    from ..types import FloatTensor
 
-from tensorflow_similarity.utils import is_tensor_or_variable
+from ..utils import is_tensor_or_variable
 
 
 class MetricLoss(tf.keras.losses.Loss):
