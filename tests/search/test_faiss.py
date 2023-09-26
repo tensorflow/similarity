@@ -5,10 +5,10 @@ from tensorflow_similarity.search.faiss import FaissSearch
 
 
 def test_index_match():
-    target = tf.math.l2_normalize(np.array([[1, 1, 2]], dtype="float32"), axis=-1)
-    target = np.array(target)[0]
-    embs = tf.math.l2_normalize(np.array([[1, 1, 3], [3, 1, 2]], dtype="float32"), axis=-1)
-    embs = np.array(embs)
+    target = tf.constant([[1, 1, 2]], dtype="float32")
+    target = tf.math.l2_normalize(target, axis=-1)[0]
+    embs = tf.constant([[1, 1, 3], [3, 1, 2]], dtype="float32")
+    embs = tf.math.l2_normalize(embs, axis=-1)
 
     search_index = FaissSearch("cosine", 3, algo="flat")
     search_index.add(embs[0], 0)
@@ -21,10 +21,10 @@ def test_index_match():
 
 
 def test_index_save(tmp_path):
-    target = tf.math.l2_normalize(np.array([[1, 1, 2]], dtype="float32"), axis=-1)
-    target = np.array(target)[0]
-    embs = tf.math.l2_normalize(np.array([[1, 1, 3], [3, 1, 2]], dtype="float32"), axis=-1)
-    embs = np.array(embs)
+    target = tf.constant([[1, 1, 2]], dtype="float32")
+    target = tf.math.l2_normalize(target, axis=-1)[0]
+    embs = tf.constant([[1, 1, 3], [3, 1, 2]], dtype="float32")
+    embs = tf.math.l2_normalize(embs, axis=-1)
     k = 2
 
     search_index = FaissSearch("cosine", 3, algo="flat")
@@ -48,8 +48,8 @@ def test_index_save(tmp_path):
 
     # add more
     # if the dtype is not passed we get an incompatible type error
-    emb2 = tf.math.l2_normalize(np.array([[3, 3, 3]], dtype="float32"), axis=-1)
-    emb2 = np.array(emb2)[0]
+    emb2 = tf.constant([[3, 3, 3]], dtype="float32")
+    emb2 = tf.math.l2_normalize(emb2, axis=-1)[0]
     search_index2.add(emb2, 3)
     idxs3, embs3 = search_index2.lookup(target, k=3)
 
@@ -65,10 +65,10 @@ def test_batch_vs_single(tmp_path):
     # gen
     idxs = list(range(index_size))
 
-    targets = tf.math.l2_normalize(np.random.random((num_targets, vect_dim)).astype("float32"), axis=-1)
-    targets = np.array(targets)
-    embs = tf.math.l2_normalize(np.random.random((index_size, vect_dim)).astype("float32"), axis=-1)
-    embs = np.array(embs)
+    targets = tf.random.uniform((num_targets, vect_dim), dtype="float32")
+    targets = tf.math.l2_normalize(targets, axis=-1)
+    embs = tf.random.uniform((index_size, vect_dim), dtype="float32")
+    embs = tf.math.l2_normalize(embs, axis=-1)
 
     # build search_index
     search_index = FaissSearch("cosine", vect_dim, algo="flat")
@@ -98,19 +98,20 @@ def test_ivfpq():
     # gen
     idxs = np.array(list(range(index_size)))
 
-    targets = tf.math.l2_normalize(np.random.random((num_targets, vect_dim)).astype("float32"), axis=-1)
-    targets = np.array(targets)
-    embs = tf.math.l2_normalize(np.random.random((index_size, vect_dim)).astype("float32"), axis=-1)
-    embs = np.array(embs)
+    targets = tf.random.uniform((num_targets, vect_dim), dtype="float32")
+    targets = tf.math.l2_normalize(targets, axis=-1)
+    embs = tf.random.uniform((index_size, vect_dim), dtype="float32")
+    embs = tf.math.l2_normalize(embs, axis=-1)
 
     search_index = FaissSearch("cosine", vect_dim, algo="ivfpq")
-    assert search_index.is_built() == False
+    assert not search_index.is_built()
     search_index.train_index(embs)
-    assert search_index.is_built() == True
+    assert search_index.is_built()
     last_idx = 0
     for i in range(1000):
-        idxs = np.array(list(range(last_idx, last_idx + index_size)))
-        embs = np.random.random((index_size, vect_dim)).astype("float32")
+        idxs = tf.range(last_idx, last_idx + index_size)
+        embs = tf.random.uniform((index_size, vect_dim), dtype="float32")
+        embs = tf.math.l2_normalize(embs, axis=-1)
         last_idx += index_size
         search_index.batch_add(embs, idxs)
     found_idxs, found_dists = search_index.batch_lookup(targets, 2)
@@ -119,10 +120,10 @@ def test_ivfpq():
 
 
 def test_reset():
-    target = tf.math.l2_normalize(np.array([[1, 1, 2]], dtype="float32"), axis=-1)
-    target = np.array(target)[0]
-    embs = tf.math.l2_normalize(np.array([[1, 1, 3], [3, 1, 2]], dtype="float32"), axis=-1)
-    embs = np.array(embs)
+    target = tf.constant([[1, 1, 2]], dtype="float32")
+    target = tf.math.l2_normalize(target, axis=-1)[0]
+    embs = tf.constant([[1, 1, 3], [3, 1, 2]], dtype="float32")
+    embs = tf.math.l2_normalize(embs, axis=-1)
 
     search_index = FaissSearch("cosine", 3, algo="flat")
     search_index.add(embs[0], 0)
