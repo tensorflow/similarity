@@ -63,7 +63,7 @@ class FaissSearch(Search):
 
         self.reset()
 
-    def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, **kwargs):
+    def add(self, embedding: FloatTensor | np.ndarray, idx: int, verbose: int = 1, **kwargs):
         """Add a single embedding to the search index.
 
         Args:
@@ -84,7 +84,7 @@ class FaissSearch(Search):
 
     def batch_add(
         self,
-        embeddings: FloatTensor,
+        embeddings: FloatTensor | np.ndarray,
         idxs: Sequence[int],
         verbose: int = 1,
         build: bool = True,
@@ -99,17 +99,18 @@ class FaissSearch(Search):
               embeddings.
             verbose: Be verbose. Defaults to 1.
         """
+        embeddings = np.asanyarray(embeddings, dtype=np.float32)
         if build and not self.is_built():
             print("building Faiss index")
             self.train_index(samples=embeddings)
         if self.algo != "flat":
             # flat does not accept indexes as parameters and assumes incremental
             # indexes
-            self._index.add_with_ids(embeddings, np.array(idxs))
+            self._index.add_with_ids(embeddings, np.asanyarray(idxs, dtype=np.int64))
         else:
             self._index.add(embeddings)
 
-    def lookup(self, embedding: FloatTensor, k: int = 5) -> tuple[list[int], list[float]]:
+    def lookup(self, embedding: FloatTensor | np.ndarray, k: int = 5) -> tuple[list[int], list[float]]:
         """Find embedding K nearest neighbors embeddings.
 
         Args:
@@ -117,7 +118,7 @@ class FaissSearch(Search):
             k: Number of nearest neighbors embedding to lookup. Defaults to 5.
         """
         dists, idxs = self._index.search(
-            np.array([embedding], dtype=embedding.dtype),
+            np.array([embedding], dtype=np.float32),
             k,
         )
         # Filter out invalid indexes
@@ -128,7 +129,9 @@ class FaissSearch(Search):
             dists = [1 - sim for sim in dists]
         return idxs, dists
 
-    def batch_lookup(self, embeddings: FloatTensor, k: int = 5) -> tuple[list[list[int]], list[list[float]]]:
+    def batch_lookup(
+        self, embeddings: FloatTensor | np.ndarray, k: int = 5
+    ) -> tuple[list[list[int]], list[list[float]]]:
         """Find embeddings K nearest neighbors embeddings.
 
         Args:
@@ -139,6 +142,7 @@ class FaissSearch(Search):
         batch_idxs = []
         batch_distances = []
 
+        embeddings = np.asanyarray(embeddings, dtype=np.float32)
         dists, idxs = self._index.search(embeddings, k)
         for d, ix in zip(dists, idxs):
             # Filter out invalid indexes
@@ -254,6 +258,7 @@ class FaissSearch(Search):
 
     def train_index(self, samples, **kwargss):
         if self.algo == "ivfpq":
+            samples = np.asanyarray(samples, dtype=np.float32)
             self._index.train(samples)  # we must train the index to cluster into cells
             self.built = True
 
