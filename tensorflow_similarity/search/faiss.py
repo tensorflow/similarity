@@ -63,7 +63,7 @@ class FaissSearch(Search):
 
         self.reset()
 
-    def add(self, embedding: FloatTensor, idx: int, verbose: int = 1, **kwargs):
+    def add(self, embedding: FloatTensor | np.ndarray, idx: int, verbose: int = 1, **kwargs):
         """Add a single embedding to the search index.
 
         Args:
@@ -84,7 +84,7 @@ class FaissSearch(Search):
 
     def batch_add(
         self,
-        embeddings: FloatTensor,
+        embeddings: FloatTensor | np.ndarray,
         idxs: Sequence[int],
         verbose: int = 1,
         build: bool = True,
@@ -110,7 +110,7 @@ class FaissSearch(Search):
         else:
             self._index.add(embeddings)
 
-    def lookup(self, embedding: FloatTensor, k: int = 5) -> tuple[list[int], list[float]]:
+    def lookup(self, embedding: FloatTensor | np.ndarray, k: int = 5) -> tuple[list[int], list[float]]:
         """Find embedding K nearest neighbors embeddings.
 
         Args:
@@ -129,7 +129,9 @@ class FaissSearch(Search):
             dists = [1 - sim for sim in dists]
         return idxs, dists
 
-    def batch_lookup(self, embeddings: FloatTensor, k: int = 5) -> tuple[list[list[int]], list[list[float]]]:
+    def batch_lookup(
+        self, embeddings: FloatTensor | np.ndarray, k: int = 5
+    ) -> tuple[list[list[int]], list[list[float]]]:
         """Find embeddings K nearest neighbors embeddings.
 
         Args:
