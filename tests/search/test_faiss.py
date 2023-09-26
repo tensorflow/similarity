@@ -1,12 +1,14 @@
 import numpy as np
-from sklearn.preprocessing import normalize
+import tensorflow as tf
 
 from tensorflow_similarity.search.faiss import FaissSearch
 
 
 def test_index_match():
-    target = normalize(np.array([[1, 1, 2]], dtype="float32"))[0]
-    embs = normalize(np.array([[1, 1, 3], [3, 1, 2]], dtype="float32"))
+    target = tf.math.l2_normalize(np.array([[1, 1, 2]], dtype="float32"), axis=-1)
+    target = np.array(target)[0]
+    embs = tf.math.l2_normalize(np.array([[1, 1, 3], [3, 1, 2]], dtype="float32"), axis=-1)
+    embs = np.array(embs)
 
     search_index = FaissSearch("cosine", 3, algo="flat")
     search_index.add(embs[0], 0)
@@ -19,8 +21,10 @@ def test_index_match():
 
 
 def test_index_save(tmp_path):
-    target = normalize(np.array([[1, 1, 2]], dtype="float32"))[0]
-    embs = normalize(np.array([[1, 1, 3], [3, 1, 2]], dtype="float32"))
+    target = tf.math.l2_normalize(np.array([[1, 1, 2]], dtype="float32"), axis=-1)
+    target = np.array(target)[0]
+    embs = tf.math.l2_normalize(np.array([[1, 1, 3], [3, 1, 2]], dtype="float32"), axis=-1)
+    embs = np.array(embs)
     k = 2
 
     search_index = FaissSearch("cosine", 3, algo="flat")
@@ -44,7 +48,8 @@ def test_index_save(tmp_path):
 
     # add more
     # if the dtype is not passed we get an incompatible type error
-    emb2 = normalize(np.array([[3, 3, 3]], dtype="float32"))[0]
+    emb2 = tf.math.l2_normalize(np.array([[3, 3, 3]], dtype="float32"), axis=-1)
+    emb2 = np.array(emb2)[0]
     search_index2.add(emb2, 3)
     idxs3, embs3 = search_index2.lookup(target, k=3)
 
@@ -60,8 +65,10 @@ def test_batch_vs_single(tmp_path):
     # gen
     idxs = list(range(index_size))
 
-    targets = normalize(np.random.random((num_targets, vect_dim)).astype("float32"))
-    embs = normalize(np.random.random((index_size, vect_dim)).astype("float32"))
+    targets = tf.math.l2_normalize(np.random.random((num_targets, vect_dim)).astype("float32"), axis=-1)
+    targets = np.array(targets)
+    embs = tf.math.l2_normalize(np.random.random((index_size, vect_dim)).astype("float32"), axis=-1)
+    embs = np.array(embs)
 
     # build search_index
     search_index = FaissSearch("cosine", vect_dim, algo="flat")
@@ -91,8 +98,10 @@ def test_ivfpq():
     # gen
     idxs = np.array(list(range(index_size)))
 
-    targets = normalize(np.random.random((num_targets, vect_dim)).astype("float32"))
-    embs = normalize(np.random.random((index_size, vect_dim)).astype("float32"))
+    targets = tf.math.l2_normalize(np.random.random((num_targets, vect_dim)).astype("float32"), axis=-1)
+    targets = np.array(targets)
+    embs = tf.math.l2_normalize(np.random.random((index_size, vect_dim)).astype("float32"), axis=-1)
+    embs = np.array(embs)
 
     search_index = FaissSearch("cosine", vect_dim, algo="ivfpq")
     assert search_index.is_built() == False
@@ -110,8 +119,10 @@ def test_ivfpq():
 
 
 def test_reset():
-    target = normalize(np.array([[1, 1, 2]], dtype="float32"))[0]
-    embs = normalize(np.array([[1, 1, 3], [3, 1, 2]], dtype="float32"))
+    target = tf.math.l2_normalize(np.array([[1, 1, 2]], dtype="float32"), axis=-1)
+    target = np.array(target)[0]
+    embs = tf.math.l2_normalize(np.array([[1, 1, 3], [3, 1, 2]], dtype="float32"), axis=-1)
+    embs = np.array(embs)
 
     search_index = FaissSearch("cosine", 3, algo="flat")
     search_index.add(embs[0], 0)
