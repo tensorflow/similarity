@@ -54,3 +54,20 @@ class Distance(ABC):
         config = {"name": self.name}
 
         return config
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> Distance:
+        """Build a distance from a config.
+
+        Args:
+            config: A Python dict containing the configuration of the distance.
+
+        Returns:
+            A distance instance.
+        """
+        try:
+            return cls(**config)
+        except Exception as e:
+            raise TypeError(
+                f"Error when deserializing '{cls.__name__}' using" f"config={config}.\n\nException encountered: {e}"
+            )

@@ -135,3 +135,20 @@ class Search(ABC):
     def is_built(self):
         "Returns whether or not the index is built and ready for querying." ""
         return self.built
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> Distance:
+        """Build a store from a config.
+
+        Args:
+            config: A Python dict containing the configuration of the store.
+
+        Returns:
+            A distance instance.
+        """
+        try:
+            return cls(**config)
+        except Exception as e:
+            raise TypeError(
+                f"Error when deserializing '{cls.__name__}' using" f"config={config}.\n\nException encountered: {e}"
+            )
