@@ -36,10 +36,13 @@ from __future__ import annotations
 
 from typing import Any, Type
 
-from tensorflow.python.keras.utils.generic_utils import (
-    deserialize_keras_object,
-    serialize_keras_object,
-)
+try:
+    from tensorflow.keras.utils import deserialize_keras_object, serialize_keras_object
+except ImportError:
+    from tensorflow.keras.utils.legacy import (
+        deserialize_keras_object,
+        serialize_keras_object,
+    )
 
 from .faiss import FaissSearch  # noqa
 from .linear import LinearSearch  # noqa
