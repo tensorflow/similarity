@@ -153,7 +153,7 @@ class Store(ABC):
         return config
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> Distance:
+    def from_config(cls, config: dict[str, Any]) -> Store:
         """Build a store from a config.
 
         Args:

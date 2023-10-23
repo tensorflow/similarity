@@ -137,11 +137,11 @@ class Search(ABC):
         return self.built
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> Distance:
-        """Build a store from a config.
+    def from_config(cls, config: dict[str, Any]) -> Search:
+        """Build a search from a config.
 
         Args:
-            config: A Python dict containing the configuration of the store.
+            config: A Python dict containing the configuration of the search.
 
         Returns:
             A distance instance.
