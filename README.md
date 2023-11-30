@@ -148,7 +148,7 @@ Tensorflow Similarity offers many of the most common metrics used for [classific
 Please cite this reference if you use any part of TensorFlow similarity in your research:
 
 ```bibtex
-@software{TensorFlow_Similarity_2023,
+@software{TensorFlow_Similarity_2021,
    author = {Bursztein, Elie and Long, James and Lin, Shun and Vallis, Owen and Zand, Ali and Wood, Luke and Chollet, François},
    title = {{TensorFlow Similarity: Metric Learning for Humans}},
    url = {https://github.com/tensorflow/similarity},
