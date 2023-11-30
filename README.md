@@ -149,7 +149,7 @@ Please cite this reference if you use any part of TensorFlow similarity in your 
 
 ```bibtex
 @software{TensorFlow_Similarity_2023,
-author = {Bursztein, Elie and Long, James and Lin, Shun and Vallis, Owen and Zand, Ali and Wood, Luke and Chollet, François},
+author = {Elie Bursztein, James Long, Shun Lin, Owen Vallis, Ali Zand, Luke Wood and François Chollet},
 title = {{TensorFlow Similarity: Metric Learning for Humans}},
 url = {https://github.com/tensorflow/similarity},
 version = {0.18},
