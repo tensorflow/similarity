@@ -148,11 +148,12 @@ Tensorflow Similarity offers many of the most common metrics used for [classific
 Please cite this reference if you use any part of TensorFlow similarity in your research:
 
 ```bibtex
-@article{EBSIM21,
-  title={TensorFlow Similarity: A Usable, High-Performance Metric Learning Library},
-  author={Elie Bursztein, James Long, Shun Lin, Owen Vallis, Francois Chollet},
-  journal={Fixme},
-  year={2021}
+@software{TensorFlow_Similarity_2023,
+author = {Bursztein, Elie and Long, James and Lin, Shun and Vallis, Owen and Zand, Ali and Wood, Luke and Chollet, François},
+title = {{TensorFlow Similarity: Metric Learning for Humans}},
+url = {https://github.com/tensorflow/similarity},
+version = {0.18},
+year = {2023}
 }
 ```
 
