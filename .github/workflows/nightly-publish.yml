@@ -2,9 +2,6 @@ name: NightlyPublish
 
 on:
   workflow_dispatch:  # Allow manual triggers
-  schedule:
-    # Runs every day at 3:07am UTC.
-    - cron: '7 3 * * *'
 
 jobs:
   check:

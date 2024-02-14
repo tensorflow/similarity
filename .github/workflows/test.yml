@@ -17,11 +17,11 @@ jobs:
           - python-version: '3.7'
             tf-version: '2.8'
           - python-version: '3.7'
-            tf-version: '2.11'
+            tf-version: '2.15'
           - python-version: '3.10'
             tf-version: '2.8'
           - python-version: '3.10'
-            tf-version: '2.11'
+            tf-version: '2.15'
 
     steps:
     - uses: actions/checkout@v2
