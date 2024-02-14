@@ -17,11 +17,11 @@ jobs:
           - python-version: '3.7'
             tf-version: '2.8'
           - python-version: '3.7'
-            tf-version: '2.15'
+            tf-version: '2.15.0.post1'
           - python-version: '3.10'
             tf-version: '2.8'
           - python-version: '3.10'
-            tf-version: '2.15'
+            tf-version: '2.15.0.post1'
 
     steps:
     - uses: actions/checkout@v2
@@ -36,7 +36,7 @@ jobs:
 
     - name: Install TF package
       run: |
-        pip install tensorflow==${{ matrix.tf-version }}
+        pip install tensorflow[and-cuda]==${{ matrix.tf-version }}
         # Fix proto dep issue in protobuf 4
         pip install protobuf==3.20.*
 
