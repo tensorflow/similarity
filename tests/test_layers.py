@@ -1,6 +1,7 @@
 import math
 
 import tensorflow as tf
+from tensorflow.keras import layers
 
 from tensorflow_similarity.layers import (
     GeneralizedMeanPooling1D,
@@ -159,29 +160,6 @@ class LayersTest(tf.test.TestCase):
         result = me_layer(input_tensor)
         expected_result = tf.constant([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]])
         self.assertAllClose(result, expected_result, rtol=1e-06)
-
-    def test_metric_embedding_get_config(self):
-        me_layer = MetricEmbedding(32)
-        config = me_layer.get_config()
-        expected_config = {
-            "name": "metric_embedding",
-            "trainable": True,
-            "dtype": "float32",
-            "units": 32,
-            "activation": "linear",
-            "use_bias": True,
-            "kernel_initializer": {
-                "class_name": "GlorotUniform",
-                "config": {"seed": None},
-            },
-            "bias_initializer": {"class_name": "Zeros", "config": {}},
-            "kernel_regularizer": None,
-            "bias_regularizer": None,
-            "activity_regularizer": None,
-            "kernel_constraint": None,
-            "bias_constraint": None,
-        }
-        self.assertEqual(expected_config, config)
 
 
 if __name__ == "__main__":

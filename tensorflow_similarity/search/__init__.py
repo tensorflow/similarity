@@ -117,12 +117,13 @@ def get(identifier, **kwargs) -> Search:
     Raises:
         ValueError: If `identifier` cannot be interpreted.
     """
-    if isinstance(identifier, Search):
-        return identifier
-    elif isinstance(identifier, dict):
-        return deserialize(identifier)
+    if isinstance(identifier, dict):
+        identifier = deserialize(identifier)
     elif isinstance(identifier, str):
         config = {"class_name": str(identifier), "config": kwargs}
-        return deserialize(config)
+        identifier = deserialize(config)
+
+    if isinstance(identifier, Search):
+        return identifier
     else:
         raise ValueError("Could not interpret search identifier: {}".format(identifier))

@@ -110,12 +110,13 @@ def get(identifier) -> Distance:
     Raises:
         ValueError: If `identifier` cannot be interpreted.
     """
-    if isinstance(identifier, Distance):
-        return identifier
-    elif isinstance(identifier, dict):
-        return deserialize(identifier)
+    if isinstance(identifier, dict):
+        identifier = deserialize(identifier)
     elif isinstance(identifier, str):
         config = {"class_name": str(identifier), "config": {}}
-        return deserialize(config)
+        identifier = deserialize(config)
+
+    if isinstance(identifier, Distance):
+        return identifier
     else:
         raise ValueError("Could not interpret search identifier: {}".format(identifier))
