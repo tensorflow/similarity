@@ -55,6 +55,7 @@ setup(
     author_email="tf-similarity@google.com",
     url="https://github.com/tensorflow/similarity",
     license="Apache License 2.0",
+    python_requires=">=3.8",
     install_requires=[
         "numpy",
         "pandas",
