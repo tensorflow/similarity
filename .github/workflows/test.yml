@@ -16,12 +16,12 @@ jobs:
         include:
           - python-version: '3.7'
             tf-version: '2.8'
-          - python-version: '3.7'
-            tf-version: '2.11'
+          - python-version: '3.9'
+            tf-version: '2.16.1'
           - python-version: '3.10'
             tf-version: '2.8'
-          - python-version: '3.10'
-            tf-version: '2.15.0.post1'
+          - python-version: '3.12'
+            tf-version: '2.16.1'
 
     steps:
     - uses: actions/checkout@v2
