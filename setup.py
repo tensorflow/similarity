@@ -55,6 +55,7 @@ setup(
     author_email="tf-similarity@google.com",
     url="https://github.com/tensorflow/similarity",
     license="Apache License 2.0",
+    python_requires=">=3.8",
     install_requires=[
         "numpy",
         "pandas",
@@ -88,9 +89,9 @@ setup(
         "redis": ["redis"],
         "faiss": ["faiss-gpu"],
         "nmslib": ["nmslib"],
-        "tensorflow": ["tensorflow>=2.7,<=2.11"],
-        "tensorflow-gpu": ["tensorflow-gpu>=2.7,<=2.11"],
-        "tensorflow-cpu": ["tensorflow-cpu>=2.7,<=2.11"],
+        "tensorflow": ["tensorflow>=2.8,<=2.15"],
+        "tensorflow-gpu": ["tensorflow-gpu>=2.8,<=2.15"],
+        "tensorflow-cpu": ["tensorflow-cpu>=2.8,<=2.15"],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",

@@ -109,12 +109,13 @@ def get(identifier) -> Store:
     Raises:
         ValueError: If `identifier` cannot be interpreted.
     """
-    if isinstance(identifier, Store):
-        return identifier
-    elif isinstance(identifier, dict):
-        return deserialize(identifier)
+    if isinstance(identifier, dict):
+        identifier = deserialize(identifier)
     elif isinstance(identifier, str):
         config = {"class_name": str(identifier), "config": {}}
-        return deserialize(config)
+        identifier = deserialize(config)
+
+    if isinstance(identifier, Store):
+        return identifier
     else:
         raise ValueError("Could not interpret Store identifier: {}".format(identifier))
